@@ -1,4 +1,4 @@
-# Repeat Hello World Cpp Repo
+# Mouse Simulator Repo
 
-- Simple repo identical to Repeat Hello World repo, but in C++ instead of C
-- Serves as an example of a C++ project dependent on a C project
+- A C++ project to create an optimal mouse drivers layer by simulating a mouse w/ virtual obstacles
+- Removes need for hardware to generate optimal feedback loop constants and new movement logic
