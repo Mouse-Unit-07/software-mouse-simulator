@@ -1,11 +1,11 @@
 /*-------------------------------- FILE INFO ---------------------------------*/
-/* Filename           : repeat_hello_world_cpp.hpp                            */
+/* Filename           : physics.hpp                                           */
 /*                                                                            */
-/* Interface w/ a function to repeat Hello World                              */
+/* Interface to micromouse simulation physical calculator                     */
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
-#ifndef REPEAT_HELLO_WORLD_CPP_HPP_
-#define REPEAT_HELLO_WORLD_CPP_HPP_
+#ifndef PHYSICS_HPP_
+#define PHYSICS_HPP_
 
 /*----------------------------------------------------------------------------*/
 /*                             Public Definitions                             */
@@ -15,6 +15,5 @@
 /*----------------------------------------------------------------------------*/
 /*                             Public Declarations                            */
 /*----------------------------------------------------------------------------*/
-void print_hello_world_twice(void);
 
-#endif /* REPEAT_HELLO_WORLD_CPP_HPP_ */
+#endif /* PHYSICS_HPP_ */

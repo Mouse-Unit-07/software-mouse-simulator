@@ -1,7 +1,7 @@
 /*-------------------------------- FILE INFO ---------------------------------*/
-/* Filename           : repeat_hello_world_cpp.cpp                            */
+/* Filename           : physics.cpp                                           */
 /*                                                                            */
-/* Implementation w/ a function to print Hello World twice                    */
+/* Implementation for micromouse simulation physical calculator               */
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
 
@@ -10,11 +10,10 @@
 /*----------------------------------------------------------------------------*/
 extern "C"
 {
-#include <stdio.h>
-#include "print_hello_world.h"
+
 }
 
-#include "repeat_hello_world_cpp.hpp"
+#include "physics.hpp"
 
 /*----------------------------------------------------------------------------*/
 /*                            Private Declarations                            */
@@ -29,11 +28,6 @@ extern "C"
 /*----------------------------------------------------------------------------*/
 /*                             Public Definitions                             */
 /*----------------------------------------------------------------------------*/
-void print_hello_world_twice(void)
-{
-    print_hello_world();
-    print_hello_world();
-}
 
 /*----------------------------------------------------------------------------*/
 /*                             Private Definitions                            */

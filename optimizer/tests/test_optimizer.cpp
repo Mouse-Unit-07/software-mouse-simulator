@@ -1,14 +1,14 @@
 /*================================ FILE INFO =================================*/
-/* Filename           : test_repeat_hello_world.cpp                           */
+/* Filename           : test_optimizer.cpp                                    */
 /*                                                                            */
-/* Test implementation for repeat_hello_world_cpp.cpp                         */
+/* Test implementation for optimizer.cpp                                      */
 /*                                                                            */
 /*============================================================================*/
 
 /*============================================================================*/
 /*                               Include Files                                */
 /*============================================================================*/
-#include "repeat_hello_world_cpp.hpp"
+#include "optimizer.hpp"
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
@@ -20,33 +20,28 @@
 /*============================================================================*/
 /*                            Mock Implementations                            */
 /*============================================================================*/
-extern "C" void print_hello_world(void)
-{
-    mock().actualCall("print_hello_world");
-}
+
 
 /*============================================================================*/
 /*                                 Test Group                                 */
 /*============================================================================*/
-TEST_GROUP(RepeatHelloWorldTests)
+TEST_GROUP(OptimizerTests)
 {
     void setup() override
     {
-        mock().clear();
+        
     }
 
     void teardown() override
     {
-        mock().checkExpectations();
-        mock().clear();
+        
     }
 };
 
 /*============================================================================*/
 /*                                    Tests                                   */
 /*============================================================================*/
-TEST(RepeatHelloWorldTests, CallsPrintTwice)
+TEST(OptimizerTests, DeleteMe)
 {
-    mock().expectNCalls(2, "print_hello_world");
-    print_hello_world_twice();
+    
 }
