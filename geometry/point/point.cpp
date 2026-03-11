@@ -61,6 +61,13 @@ void Point::rotate(const Point& center, double angle_rad) noexcept
     y = center.y + rotated_y_relative;
 }
 
+bool Point::operator==(const Point& other) const noexcept
+{
+    constexpr double tolerance = 1e-6;
+
+    return std::abs(x - other.x) <= tolerance && std::abs(y - other.y) <= tolerance;
+}
+
 /*----------------------------------------------------------------------------*/
 /*                             Private Definitions                            */
 /*----------------------------------------------------------------------------*/

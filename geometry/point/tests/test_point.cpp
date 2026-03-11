@@ -87,3 +87,10 @@ TEST(PointTests, PointReturnsAfterFullRotation)
     DOUBLES_EQUAL(user_x, p.x, 1e-6);
     DOUBLES_EQUAL(user_y, p.y, 1e-6);
 }
+
+TEST(PointTests, EqualityOperatorOverloaded)
+{
+    Point a{1.0, 1.0};
+    Point b{1.0, 1.0};
+    CHECK(a == b);
+}

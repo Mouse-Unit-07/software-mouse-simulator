@@ -25,6 +25,8 @@ class Point
 
         void translate(double dx, double dy) noexcept;
         void rotate(const Point& rotation_center, double angle_rad) noexcept;
+
+        bool operator==(const Point& other) const noexcept;
 };
 
 #endif /* POINT_HPP_ */
