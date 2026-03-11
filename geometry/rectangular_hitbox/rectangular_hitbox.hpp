@@ -15,5 +15,17 @@
 /*----------------------------------------------------------------------------*/
 /*                             Public Declarations                            */
 /*----------------------------------------------------------------------------*/
+class RectangularHitbox
+{
+    public:
+        Point center;
+        Point edge_1;
+        Point edge_2;
+        Point edge_3;
+        Point edge_4;
+        double vertical_size;
+        double horizontal_size;
+        RectangularHitbox(Point center, double horizontal_size, double vertical_size);
+};
 
 #endif /* RECTANGULAR_HITBOX_HPP_ */
