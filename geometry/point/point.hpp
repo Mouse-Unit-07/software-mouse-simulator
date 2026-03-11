@@ -22,6 +22,8 @@ class Point
         int y {0};
         Point() = default;
         Point(int x, int y);
+
+        void translate(int dx, int dy) noexcept;
 };
 
 #endif /* POINT_HPP_ */

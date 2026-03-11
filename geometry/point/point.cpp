@@ -34,6 +34,12 @@ Point::Point(int x, int y)
     /* no constructor logic- only field init */
 }
 
+void Point::translate(int dx, int dy) noexcept
+{
+    x += dx;
+    y += dy;
+}
+
 /*----------------------------------------------------------------------------*/
 /*                             Private Definitions                            */
 /*----------------------------------------------------------------------------*/

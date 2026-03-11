@@ -54,3 +54,15 @@ TEST(PointTests, CoordinatesMatchOnParameterizedConstructor)
     CHECK(p.x == 1);
     CHECK(p.y == 3);
 }
+
+TEST(PointTests, TranslateModifiesCoordinates)
+{
+    int user_x {1};
+    int user_y {3};
+    int user_dx {-10};
+    int user_dy {20};
+    Point p{user_x, user_y};
+    p.translate(user_dx, user_dy);
+    CHECK(p.x == user_x + user_dx);
+    CHECK(p.y == user_y + user_dy);
+}
