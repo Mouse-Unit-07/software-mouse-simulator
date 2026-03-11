@@ -54,8 +54,8 @@ TEST_GROUP(RayTests)
 /*============================================================================*/
 TEST(RayTests, PointsMatchOnParameterizedConstructor)
 {
-    CHECK(test_ray.origin == test_point_a);
-    CHECK(test_ray.direction == test_point_b);
+    CHECK(test_ray.back == test_point_a);
+    CHECK(test_ray.front == test_point_b);
 }
 
 TEST(RayTests, TranslateModifiesPoints)
@@ -66,8 +66,8 @@ TEST(RayTests, TranslateModifiesPoints)
     test_point_a.translate(test_dx, test_dy);
     test_point_b.translate(test_dx, test_dy);
 
-    CHECK(test_ray.origin == test_point_a);
-    CHECK(test_ray.direction == test_point_b);
+    CHECK(test_ray.back == test_point_a);
+    CHECK(test_ray.front == test_point_b);
 }
 
 TEST(RayTests, RotateModifiesPoints)
@@ -78,8 +78,8 @@ TEST(RayTests, RotateModifiesPoints)
     test_point_a.rotate(center, angle);
     test_point_b.rotate(center, angle);
 
-    CHECK(test_ray.origin == test_point_a);
-    CHECK(test_ray.direction == test_point_b);
+    CHECK(test_ray.back == test_point_a);
+    CHECK(test_ray.front == test_point_b);
 }
 
 TEST(RayTests, EqualityOperatorOverloaded)

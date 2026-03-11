@@ -29,27 +29,27 @@ extern "C"
 /*----------------------------------------------------------------------------*/
 /*                             Public Definitions                             */
 /*----------------------------------------------------------------------------*/
-Ray::Ray(const Point& origin, const Point& direction)
-    : origin{origin}, direction{direction}
+Ray::Ray(const Point& back, const Point& front)
+    : back{back}, front{front}
 {
     /* no logic- only field init */
 }
 
 void Ray::translate(double dx, double dy) noexcept
 {
-    origin.translate(dx, dy);
-    direction.translate(dx, dy);
+    back.translate(dx, dy);
+    front.translate(dx, dy);
 }
 
 void Ray::rotate(const Point& center, double angle_rad) noexcept
 {
-    origin.rotate(center, angle_rad);
-    direction.rotate(center, angle_rad);
+    back.rotate(center, angle_rad);
+    front.rotate(center, angle_rad);
 }
 
 bool Ray::operator==(const Ray& other) const noexcept
 {
-    return (origin == other.origin) && (direction == other.direction);
+    return (back == other.back) && (front == other.front);
 }
 
 /*----------------------------------------------------------------------------*/

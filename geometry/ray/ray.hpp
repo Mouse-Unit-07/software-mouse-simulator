@@ -18,9 +18,9 @@
 class Ray
 {
     public:
-        Point origin;
-        Point direction;
-        Ray(const Point& origin, const Point& direction);
+        Point back;
+        Point front;
+        Ray(const Point& back, const Point& front);
 
         void translate(double dx, double dy) noexcept;
         void rotate(const Point& center, double angle_rad) noexcept;
