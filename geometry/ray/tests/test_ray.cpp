@@ -17,12 +17,21 @@
 /*============================================================================*/
 /*                             Public Definitions                             */
 /*============================================================================*/
-/* none */
+Point test_point_a{1.0, 3.0}; /* arbitrary coordinates */
+Point test_point_b{2.0, 4.0}; /* arbitrary coordinates */
+Ray test_ray{test_point_a, test_point_b};
+
+void initialize_test_variables(void)
+{
+    test_point_a = Point{1.0, 3.0}; /* arbitrary coordinates */
+    test_point_b = Point{2.0, 4.0}; /* arbitrary coordinates */
+    test_ray = Ray{test_point_a, test_point_b};
+}
 
 /*============================================================================*/
 /*                            Mock Implementations                            */
 /*============================================================================*/
-
+/* none */
 
 /*============================================================================*/
 /*                                 Test Group                                 */
@@ -31,12 +40,12 @@ TEST_GROUP(RayTests)
 {
     void setup() override
     {
-        
+        initialize_test_variables();
     }
 
     void teardown() override
     {
-        
+        initialize_test_variables();
     }
 };
 
@@ -45,51 +54,37 @@ TEST_GROUP(RayTests)
 /*============================================================================*/
 TEST(RayTests, PointsMatchOnParameterizedConstructor)
 {
-    Point a{1.0, 3.0};
-    Point b{2.0, 4.0};
-    Ray ray{a, b};
-    CHECK(ray.origin == a);
-    CHECK(ray.direction == b);
+    CHECK(test_ray.origin == test_point_a);
+    CHECK(test_ray.direction == test_point_b);
 }
 
 TEST(RayTests, TranslateModifiesPoints)
 {
-    Point a{1.0, 3.0};
-    Point b{2.0, 4.0};
-    Ray ray{a, b};
+    double test_dx {-10.0};
+    double test_dy {20.0};
+    test_ray.translate(test_dx, test_dy);
+    test_point_a.translate(test_dx, test_dy);
+    test_point_b.translate(test_dx, test_dy);
 
-    double user_dx {-10.0};
-    double user_dy {20.0};
-    ray.translate(user_dx, user_dy);
-    a.translate(user_dx, user_dy);
-    b.translate(user_dx, user_dy);
-
-    CHECK(ray.origin == a);
-    CHECK(ray.direction == b);
+    CHECK(test_ray.origin == test_point_a);
+    CHECK(test_ray.direction == test_point_b);
 }
 
 TEST(RayTests, RotateModifiesPoints)
 {
-    Point a{1.0, 3.0};
-    Point b{2.0, 4.0};
-    Ray ray{a, b};
-
     Point center{0.0, 0.0};
     double angle{M_PI / 2}; /* 90 deg counter clockwise */
-    ray.rotate(center, angle);
-    a.rotate(center, angle);
-    b.rotate(center, angle);
+    test_ray.rotate(center, angle);
+    test_point_a.rotate(center, angle);
+    test_point_b.rotate(center, angle);
 
-    CHECK(ray.origin == a);
-    CHECK(ray.direction == b);
+    CHECK(test_ray.origin == test_point_a);
+    CHECK(test_ray.direction == test_point_b);
 }
 
 TEST(RayTests, EqualityOperatorOverloaded)
 {
-    Point a{1.0, 3.0};
-    Point b{2.0, 4.0};
-    Ray ray_1{a, b};
-    Ray ray_2{a, b};
+    Ray test_ray_2{test_point_a, test_point_b};
 
-    CHECK(ray_1 == ray_2);
+    CHECK(test_ray == test_ray_2);
 }
