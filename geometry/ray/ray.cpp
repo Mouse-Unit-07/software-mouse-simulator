@@ -1,7 +1,7 @@
 /*-------------------------------- FILE INFO ---------------------------------*/
-/* Filename           : vector_line.cpp                                       */
+/* Filename           : ray.cpp                                               */
 /*                                                                            */
-/* Implementation for vector_line class                                       */
+/* Implementation for ray class                                               */
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
 
@@ -14,7 +14,7 @@ extern "C"
 }
 
 #include "point.hpp"
-#include "vector_line.hpp"
+#include "ray.hpp"
 
 /*----------------------------------------------------------------------------*/
 /*                            Private Declarations                            */
@@ -29,8 +29,8 @@ extern "C"
 /*----------------------------------------------------------------------------*/
 /*                             Public Definitions                             */
 /*----------------------------------------------------------------------------*/
-VectorLine::VectorLine(const Point& start, const Point& end)
-    : start{start}, end{end}
+Ray::Ray(const Point& origin, const Point& direction)
+    : origin{origin}, direction{direction}
 {
     /* no logic- only field init */
 }

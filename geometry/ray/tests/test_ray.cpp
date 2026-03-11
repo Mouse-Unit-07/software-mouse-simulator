@@ -1,7 +1,7 @@
 /*================================ FILE INFO =================================*/
-/* Filename           : test_vector_line.cpp                                  */
+/* Filename           : test_ray.cpp                                          */
 /*                                                                            */
-/* Test implementation for vector_line.cpp                                    */
+/* Test implementation for ray.cpp                                            */
 /*                                                                            */
 /*============================================================================*/
 
@@ -9,7 +9,7 @@
 /*                               Include Files                                */
 /*============================================================================*/
 #include "point.hpp"
-#include "vector_line.hpp"
+#include "ray.hpp"
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
@@ -26,7 +26,7 @@
 /*============================================================================*/
 /*                                 Test Group                                 */
 /*============================================================================*/
-TEST_GROUP(VectorLineTests)
+TEST_GROUP(RayTests)
 {
     void setup() override
     {
@@ -42,11 +42,11 @@ TEST_GROUP(VectorLineTests)
 /*============================================================================*/
 /*                                    Tests                                   */
 /*============================================================================*/
-TEST(VectorLineTests, CoordinatesMatchOnParameterizedConstructor)
+TEST(RayTests, PointsMatchOnParameterizedConstructor)
 {
     Point a{1.0, 3.0};
     Point b{2.0, 4.0};
-    VectorLine ray{a, b};
-    CHECK(ray.start == a);
-    CHECK(ray.end == b);
+    Ray ray{a, b};
+    CHECK(ray.origin == a);
+    CHECK(ray.direction == b);
 }

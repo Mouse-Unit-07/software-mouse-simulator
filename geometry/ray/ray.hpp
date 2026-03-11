@@ -1,11 +1,11 @@
 /*-------------------------------- FILE INFO ---------------------------------*/
-/* Filename           : vector_line.hpp                                       */
+/* Filename           : ray.hpp                                               */
 /*                                                                            */
-/* Interface to vector_line class                                             */
+/* Interface to ray class                                                     */
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
-#ifndef VECTOR_LINE_HPP_
-#define VECTOR_LINE_HPP_
+#ifndef RAY_HPP_
+#define RAY_HPP_
 
 /*----------------------------------------------------------------------------*/
 /*                             Public Definitions                             */
@@ -15,13 +15,13 @@
 /*----------------------------------------------------------------------------*/
 /*                             Public Declarations                            */
 /*----------------------------------------------------------------------------*/
-class VectorLine
+class Ray
 {
     public:
-        Point start;
-        Point end;
+        Point origin;
+        Point direction;
 
-        VectorLine(const Point& start, const Point& end);
+        Ray(const Point& origin, const Point& direction);
 };
 
-#endif /* VECTOR_LINE_HPP_ */
+#endif /* RAY_HPP_ */
