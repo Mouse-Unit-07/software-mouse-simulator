@@ -17,12 +17,31 @@
 /*============================================================================*/
 /*                             Public Definitions                             */
 /*============================================================================*/
-/* none */
+Point test_center {0.0, 0.0}; /* arbitrary center */
+double test_horizontal_size {10.0}; /* arbitrary size */
+double test_vertical_size {10.0}; /* arbitrary size */
+RectangularHitbox test_hitbox {test_center, test_horizontal_size, test_vertical_size};
+Point test_edge_1 {test_center.x + (test_horizontal_size / 2), test_center.y + (test_vertical_size / 2)};
+Point test_edge_2 {test_center.x + (test_horizontal_size / 2), test_center.y - (test_vertical_size / 2)};
+Point test_edge_3 {test_center.x - (test_horizontal_size / 2), test_center.y - (test_vertical_size / 2)};
+Point test_edge_4 {test_center.x - (test_horizontal_size / 2), test_center.y + (test_vertical_size / 2)};
+
+void initialize_test_variables(void)
+{
+    test_center = Point{0.0, 0.0};
+    test_horizontal_size = 10.0;
+    test_vertical_size = 10.0;
+    test_hitbox =  RectangularHitbox{test_center, test_horizontal_size, test_vertical_size};
+    test_edge_1 = Point{test_center.x + (test_horizontal_size / 2), test_center.y + (test_vertical_size / 2)};
+    test_edge_2 = Point{test_center.x + (test_horizontal_size / 2), test_center.y - (test_vertical_size / 2)};
+    test_edge_3 = Point{test_center.x - (test_horizontal_size / 2), test_center.y - (test_vertical_size / 2)};
+    test_edge_4 = Point{test_center.x - (test_horizontal_size / 2), test_center.y + (test_vertical_size / 2)};
+}
 
 /*============================================================================*/
 /*                            Mock Implementations                            */
 /*============================================================================*/
-
+/* none */
 
 /*============================================================================*/
 /*                                 Test Group                                 */
@@ -31,12 +50,12 @@ TEST_GROUP(RectangularHitboxTests)
 {
     void setup() override
     {
-        
+        initialize_test_variables();
     }
 
     void teardown() override
     {
-        
+        initialize_test_variables();
     }
 };
 
@@ -45,74 +64,47 @@ TEST_GROUP(RectangularHitboxTests)
 /*============================================================================*/
 TEST(RectangularHitboxTests, ParameterizedConstructorInitializesAllFields)
 {
-    Point user_center {0.0, 0.0};
-    double user_horizontal_size {10.0};
-    double user_vertical_size {10.0};
-    RectangularHitbox user_hitbox{Point{}, user_horizontal_size, user_vertical_size};
-    CHECK(user_hitbox.center == user_center);
-    CHECK(user_hitbox.horizontal_size == user_horizontal_size);
-    CHECK(user_hitbox.vertical_size == user_vertical_size);
-    
-    Point user_edge_1{user_center.x + (user_horizontal_size / 2), user_center.y + (user_vertical_size / 2)};
-    Point user_edge_2{user_center.x + (user_horizontal_size / 2), user_center.y - (user_vertical_size / 2)};
-    Point user_edge_3{user_center.x - (user_horizontal_size / 2), user_center.y - (user_vertical_size / 2)};
-    Point user_edge_4{user_center.x - (user_horizontal_size / 2), user_center.y + (user_vertical_size / 2)};
-    CHECK(user_edge_1 == user_hitbox.edge_1);
-    CHECK(user_edge_2 == user_hitbox.edge_2);
-    CHECK(user_edge_3 == user_hitbox.edge_3);
-    CHECK(user_edge_4 == user_hitbox.edge_4);
+    CHECK(test_hitbox.center == test_center);
+    CHECK(test_hitbox.horizontal_size == test_horizontal_size);
+    CHECK(test_hitbox.vertical_size == test_vertical_size);
+    CHECK(test_edge_1 == test_hitbox.edge_1);
+    CHECK(test_edge_2 == test_hitbox.edge_2);
+    CHECK(test_edge_3 == test_hitbox.edge_3);
+    CHECK(test_edge_4 == test_hitbox.edge_4);
 }
 
 TEST(RectangularHitboxTests, TranslateModifiesPoints)
 {
-    Point user_center {0.0, 0.0};
-    double user_horizontal_size {10.0};
-    double user_vertical_size {10.0};
-    RectangularHitbox user_hitbox{Point{}, user_horizontal_size, user_vertical_size};
-    Point user_edge_1{user_center.x + (user_horizontal_size / 2), user_center.y + (user_vertical_size / 2)};
-    Point user_edge_2{user_center.x + (user_horizontal_size / 2), user_center.y - (user_vertical_size / 2)};
-    Point user_edge_3{user_center.x - (user_horizontal_size / 2), user_center.y - (user_vertical_size / 2)};
-    Point user_edge_4{user_center.x - (user_horizontal_size / 2), user_center.y + (user_vertical_size / 2)};
-    
-    double user_dx {-10.0};
-    double user_dy {20.0};
-    user_center.translate(user_dx, user_dy);
-    user_edge_1.translate(user_dx, user_dy);
-    user_edge_2.translate(user_dx, user_dy);
-    user_edge_3.translate(user_dx, user_dy);
-    user_edge_4.translate(user_dx, user_dy);
-    user_hitbox.translate(user_dx, user_dy);
+    double test_dx {-10.0}; /* arbitrary translation */
+    double test_dy {20.0};
+    test_center.translate(test_dx, test_dy);
+    test_edge_1.translate(test_dx, test_dy);
+    test_edge_2.translate(test_dx, test_dy);
+    test_edge_3.translate(test_dx, test_dy);
+    test_edge_4.translate(test_dx, test_dy);
+    test_hitbox.translate(test_dx, test_dy);
 
-    CHECK(user_hitbox.center == user_center);
-    CHECK(user_hitbox.edge_1 == user_edge_1);
-    CHECK(user_hitbox.edge_2 == user_edge_2);
-    CHECK(user_hitbox.edge_3 == user_edge_3);
-    CHECK(user_hitbox.edge_4 == user_edge_4);
+    CHECK(test_hitbox.center == test_center);
+    CHECK(test_hitbox.edge_1 == test_edge_1);
+    CHECK(test_hitbox.edge_2 == test_edge_2);
+    CHECK(test_hitbox.edge_3 == test_edge_3);
+    CHECK(test_hitbox.edge_4 == test_edge_4);
 }
 
 TEST(RectangularHitboxTests, RotateModifiesPoints)
 {
-    Point user_center {0.0, 0.0};
-    double user_horizontal_size {10.0};
-    double user_vertical_size {10.0};
-    RectangularHitbox user_hitbox {user_center, user_horizontal_size, user_vertical_size};
-    Point user_edge_1 {user_center.x + (user_horizontal_size / 2), user_center.y + (user_vertical_size / 2)};
-    Point user_edge_2 {user_center.x + (user_horizontal_size / 2), user_center.y - (user_vertical_size / 2)};
-    Point user_edge_3 {user_center.x - (user_horizontal_size / 2), user_center.y - (user_vertical_size / 2)};
-    Point user_edge_4 {user_center.x - (user_horizontal_size / 2), user_center.y + (user_vertical_size / 2)};
-    
-    Point user_rotation_center {10.0, 10.0};
-    double user_angle {M_PI / 2}; /* 90 deg counter clockwise */
-    user_center.rotate(user_rotation_center, user_angle);
-    user_edge_1.rotate(user_rotation_center, user_angle);
-    user_edge_2.rotate(user_rotation_center, user_angle);
-    user_edge_3.rotate(user_rotation_center, user_angle);
-    user_edge_4.rotate(user_rotation_center, user_angle);
-    user_hitbox.rotate(user_rotation_center, user_angle);
+    Point test_rotation_center {10.0, 10.0}; /* arbitrary center */
+    double test_angle {M_PI / 2}; /* arbitrary rotation (90 deg counter clockwise) */
+    test_center.rotate(test_rotation_center, test_angle);
+    test_edge_1.rotate(test_rotation_center, test_angle);
+    test_edge_2.rotate(test_rotation_center, test_angle);
+    test_edge_3.rotate(test_rotation_center, test_angle);
+    test_edge_4.rotate(test_rotation_center, test_angle);
+    test_hitbox.rotate(test_rotation_center, test_angle);
 
-    CHECK(user_hitbox.center == user_center);
-    CHECK(user_hitbox.edge_1 == user_edge_1);
-    CHECK(user_hitbox.edge_2 == user_edge_2);
-    CHECK(user_hitbox.edge_3 == user_edge_3);
-    CHECK(user_hitbox.edge_4 == user_edge_4);
+    CHECK(test_hitbox.center == test_center);
+    CHECK(test_hitbox.edge_1 == test_edge_1);
+    CHECK(test_hitbox.edge_2 == test_edge_2);
+    CHECK(test_hitbox.edge_3 == test_edge_3);
+    CHECK(test_hitbox.edge_4 == test_edge_4);
 }
