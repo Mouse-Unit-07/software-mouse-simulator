@@ -47,6 +47,15 @@ void RectangularHitbox::translate(double dx, double dy)
     edge_4.translate(dx, dy);
 }
 
+void RectangularHitbox::rotate(const Point& center, double angle_rad)
+{
+    this->center.rotate(center, angle_rad);
+    edge_1.rotate(center, angle_rad);
+    edge_2.rotate(center, angle_rad);
+    edge_3.rotate(center, angle_rad);
+    edge_4.rotate(center, angle_rad);
+}
+
 /*----------------------------------------------------------------------------*/
 /*                             Private Definitions                            */
 /*----------------------------------------------------------------------------*/

@@ -8,6 +8,7 @@
 /*============================================================================*/
 /*                               Include Files                                */
 /*============================================================================*/
+#include <cmath>
 #include "point.hpp"
 #include "rectangular_hitbox.hpp"
 #include <CppUTest/TestHarness.h>
@@ -81,6 +82,33 @@ TEST(RectangularHitboxTests, TranslateModifiesPoints)
     user_edge_3.translate(user_dx, user_dy);
     user_edge_4.translate(user_dx, user_dy);
     user_hitbox.translate(user_dx, user_dy);
+
+    CHECK(user_hitbox.center == user_center);
+    CHECK(user_hitbox.edge_1 == user_edge_1);
+    CHECK(user_hitbox.edge_2 == user_edge_2);
+    CHECK(user_hitbox.edge_3 == user_edge_3);
+    CHECK(user_hitbox.edge_4 == user_edge_4);
+}
+
+TEST(RectangularHitboxTests, RotateModifiesPoints)
+{
+    Point user_center {0.0, 0.0};
+    double user_horizontal_size {10.0};
+    double user_vertical_size {10.0};
+    RectangularHitbox user_hitbox {user_center, user_horizontal_size, user_vertical_size};
+    Point user_edge_1 {user_center.x + (user_horizontal_size / 2), user_center.y + (user_vertical_size / 2)};
+    Point user_edge_2 {user_center.x + (user_horizontal_size / 2), user_center.y - (user_vertical_size / 2)};
+    Point user_edge_3 {user_center.x - (user_horizontal_size / 2), user_center.y - (user_vertical_size / 2)};
+    Point user_edge_4 {user_center.x - (user_horizontal_size / 2), user_center.y + (user_vertical_size / 2)};
+    
+    Point user_rotation_center {10.0, 10.0};
+    double user_angle {M_PI / 2}; /* 90 deg counter clockwise */
+    user_center.rotate(user_rotation_center, user_angle);
+    user_edge_1.rotate(user_rotation_center, user_angle);
+    user_edge_2.rotate(user_rotation_center, user_angle);
+    user_edge_3.rotate(user_rotation_center, user_angle);
+    user_edge_4.rotate(user_rotation_center, user_angle);
+    user_hitbox.rotate(user_rotation_center, user_angle);
 
     CHECK(user_hitbox.center == user_center);
     CHECK(user_hitbox.edge_1 == user_edge_1);
