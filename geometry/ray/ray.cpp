@@ -35,6 +35,12 @@ Ray::Ray(const Point& origin, const Point& direction)
     /* no logic- only field init */
 }
 
+void Ray::translate(double dx, double dy) noexcept
+{
+    origin.translate(dx, dy);
+    direction.translate(dx, dy);
+}
+
 /*----------------------------------------------------------------------------*/
 /*                             Private Definitions                            */
 /*----------------------------------------------------------------------------*/

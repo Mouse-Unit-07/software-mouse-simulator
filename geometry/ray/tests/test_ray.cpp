@@ -50,3 +50,19 @@ TEST(RayTests, PointsMatchOnParameterizedConstructor)
     CHECK(ray.origin == a);
     CHECK(ray.direction == b);
 }
+
+TEST(RayTests, TranslateModifiesPoints)
+{
+    Point a{1.0, 3.0};
+    Point b{2.0, 4.0};
+    Ray ray{a, b};
+
+    double user_dx {-10.0};
+    double user_dy {20.0};
+    ray.translate(user_dx, user_dy);
+    a.translate(user_dx, user_dy);
+    b.translate(user_dx, user_dy);
+
+    CHECK(ray.origin == a);
+    CHECK(ray.direction == b);
+}

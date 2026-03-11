@@ -20,8 +20,9 @@ class Ray
     public:
         Point origin;
         Point direction;
-
         Ray(const Point& origin, const Point& direction);
+
+        void translate(double dx, double dy) noexcept;
 };
 
 #endif /* RAY_HPP_ */
