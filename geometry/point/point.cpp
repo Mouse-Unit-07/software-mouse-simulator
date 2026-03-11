@@ -1,7 +1,7 @@
 /*-------------------------------- FILE INFO ---------------------------------*/
-/* Filename           : optimizer.cpp                                         */
+/* Filename           : point.cpp                                             */
 /*                                                                            */
-/* Implementation for micromouse simulations and optimal parameter generation */
+/* Implementation for point class                                             */
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
 
@@ -13,10 +13,7 @@ extern "C"
 
 }
 
-#include "mouse.hpp"
-#include "obstacle.hpp"
-#include "interactions.hpp"
-#include "optimizer.hpp"
+#include "point.hpp"
 
 /*----------------------------------------------------------------------------*/
 /*                            Private Declarations                            */

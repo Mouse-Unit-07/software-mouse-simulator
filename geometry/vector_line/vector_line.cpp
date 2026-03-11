@@ -1,7 +1,7 @@
 /*-------------------------------- FILE INFO ---------------------------------*/
-/* Filename           : physics.cpp                                           */
+/* Filename           : vector_line.cpp                                       */
 /*                                                                            */
-/* Implementation for micromouse simulation physical calculator               */
+/* Implementation for vector_line class                                       */
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
 
@@ -13,7 +13,7 @@ extern "C"
 
 }
 
-#include "physics.hpp"
+#include "vector_line.hpp"
 
 /*----------------------------------------------------------------------------*/
 /*                            Private Declarations                            */

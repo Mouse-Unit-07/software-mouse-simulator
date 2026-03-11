@@ -1,11 +1,11 @@
 /*-------------------------------- FILE INFO ---------------------------------*/
-/* Filename           : physics.hpp                                           */
+/* Filename           : rectangular_hitbox.hpp                                */
 /*                                                                            */
-/* Interface to micromouse simulation physical calculator                     */
+/* Interface to rectangular_hitbox class                                      */
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
-#ifndef PHYSICS_HPP_
-#define PHYSICS_HPP_
+#ifndef RECTANGULAR_HITBOX_HPP_
+#define RECTANGULAR_HITBOX_HPP_
 
 /*----------------------------------------------------------------------------*/
 /*                             Public Definitions                             */
@@ -16,4 +16,4 @@
 /*                             Public Declarations                            */
 /*----------------------------------------------------------------------------*/
 
-#endif /* PHYSICS_HPP_ */
+#endif /* RECTANGULAR_HITBOX_HPP_ */

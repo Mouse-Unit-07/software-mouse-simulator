@@ -1,7 +1,7 @@
 /*-------------------------------- FILE INFO ---------------------------------*/
-/* Filename           : optimizer.cpp                                         */
+/* Filename           : rectangular_hitbox.cpp                                */
 /*                                                                            */
-/* Implementation for micromouse simulations and optimal parameter generation */
+/* Implementation for rectangular_hitbox class                                */
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
 
@@ -13,10 +13,7 @@ extern "C"
 
 }
 
-#include "mouse.hpp"
-#include "obstacle.hpp"
-#include "interactions.hpp"
-#include "optimizer.hpp"
+#include "rectangular_hitbox.hpp"
 
 /*----------------------------------------------------------------------------*/
 /*                            Private Declarations                            */

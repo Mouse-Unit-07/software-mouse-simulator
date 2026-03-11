@@ -1,14 +1,14 @@
 /*================================ FILE INFO =================================*/
-/* Filename           : test_physics.cpp                                      */
+/* Filename           : test_rectangular_hitbox.cpp                           */
 /*                                                                            */
-/* Test implementation for physics.cpp                                        */
+/* Test implementation for rectangular_hitbox.cpp                             */
 /*                                                                            */
 /*============================================================================*/
 
 /*============================================================================*/
 /*                               Include Files                                */
 /*============================================================================*/
-#include "physics.hpp"
+#include "rectangular_hitbox.hpp"
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
@@ -25,7 +25,7 @@
 /*============================================================================*/
 /*                                 Test Group                                 */
 /*============================================================================*/
-TEST_GROUP(PhysicsTests)
+TEST_GROUP(RectangularHitboxTests)
 {
     void setup() override
     {
@@ -41,7 +41,7 @@ TEST_GROUP(PhysicsTests)
 /*============================================================================*/
 /*                                    Tests                                   */
 /*============================================================================*/
-TEST(PhysicsTests, DeleteMe)
+TEST(RectangularHitboxTests, DeleteMe)
 {
     
 }
