@@ -38,6 +38,15 @@ RectangularHitbox::RectangularHitbox(Point center, double horizontal_size, doubl
     edge_4 = Point{center.x - (horizontal_size / 2), center.y + (vertical_size / 2)};
 }
 
+void RectangularHitbox::translate(double dx, double dy)
+{
+    center.translate(dx, dy);
+    edge_1.translate(dx, dy);
+    edge_2.translate(dx, dy);
+    edge_3.translate(dx, dy);
+    edge_4.translate(dx, dy);
+}
+
 /*----------------------------------------------------------------------------*/
 /*                             Private Definitions                            */
 /*----------------------------------------------------------------------------*/

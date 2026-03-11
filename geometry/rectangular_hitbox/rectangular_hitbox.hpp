@@ -26,6 +26,8 @@ class RectangularHitbox
         double vertical_size;
         double horizontal_size;
         RectangularHitbox(Point center, double horizontal_size, double vertical_size);
+
+        void translate(double dx, double dy);
 };
 
 #endif /* RECTANGULAR_HITBOX_HPP_ */
