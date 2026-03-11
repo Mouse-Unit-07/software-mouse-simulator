@@ -29,6 +29,9 @@ extern "C"
 /*----------------------------------------------------------------------------*/
 /*                             Public Definitions                             */
 /*----------------------------------------------------------------------------*/
+namespace geometry
+{
+
 Point::Point(double x, double y)
     : x{x}, y{y}
 {
@@ -68,6 +71,8 @@ bool Point::operator==(const Point& other) const noexcept
     return (std::abs(x - other.x) <= tolerance)
         && (std::abs(y - other.y) <= tolerance);
 }
+
+} /* geometry namespace */
 
 /*----------------------------------------------------------------------------*/
 /*                             Private Definitions                            */

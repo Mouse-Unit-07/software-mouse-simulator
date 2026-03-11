@@ -15,6 +15,9 @@
 /*----------------------------------------------------------------------------*/
 /*                             Public Declarations                            */
 /*----------------------------------------------------------------------------*/
+namespace geometry
+{
+
 class RectangularHitbox
 {
     public:
@@ -32,5 +35,7 @@ class RectangularHitbox
 
         bool operator==(const RectangularHitbox& other) const noexcept;
 };
+
+} /* geometry namespace */
 
 #endif /* RECTANGULAR_HITBOX_HPP_ */

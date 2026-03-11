@@ -15,6 +15,9 @@
 /*----------------------------------------------------------------------------*/
 /*                             Public Declarations                            */
 /*----------------------------------------------------------------------------*/
+namespace geometry
+{
+
 class Point
 {
     public:
@@ -28,5 +31,7 @@ class Point
 
         bool operator==(const Point& other) const noexcept;
 };
+
+} /* geometry namespace */
 
 #endif /* POINT_HPP_ */

@@ -15,6 +15,9 @@
 /*----------------------------------------------------------------------------*/
 /*                             Public Declarations                            */
 /*----------------------------------------------------------------------------*/
+namespace geometry
+{
+
 class Ray
 {
     public:
@@ -27,5 +30,7 @@ class Ray
 
         bool operator==(const Ray& other) const noexcept;
 };
+
+} /* geometry namespace */
 
 #endif /* RAY_HPP_ */

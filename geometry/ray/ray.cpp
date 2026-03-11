@@ -29,6 +29,9 @@ extern "C"
 /*----------------------------------------------------------------------------*/
 /*                             Public Definitions                             */
 /*----------------------------------------------------------------------------*/
+namespace geometry
+{
+
 Ray::Ray(const Point& back, const Point& front)
     : back{back}, front{front}
 {
@@ -51,6 +54,8 @@ bool Ray::operator==(const Ray& other) const noexcept
 {
     return (back == other.back) && (front == other.front);
 }
+
+} /* geometry namespace */
 
 /*----------------------------------------------------------------------------*/
 /*                             Private Definitions                            */

@@ -30,6 +30,9 @@ extern "C"
 /*----------------------------------------------------------------------------*/
 /*                             Public Definitions                             */
 /*----------------------------------------------------------------------------*/
+namespace geometry
+{
+
 RectangularHitbox::RectangularHitbox(Point center, double horizontal_size, double vertical_size)
     : center{center}, horizontal_size{horizontal_size}, vertical_size{vertical_size}
 {
@@ -67,6 +70,8 @@ bool RectangularHitbox::operator==(const RectangularHitbox& other) const noexcep
         && (edge_2 == other.edge_2) && (edge_3 == other.edge_3) 
         && (edge_4 == other.edge_4);
 }
+
+} /* geometry namespace */
 
 /*----------------------------------------------------------------------------*/
 /*                             Private Definitions                            */
