@@ -108,3 +108,10 @@ TEST(RectangularHitboxTests, RotateModifiesPoints)
     CHECK(test_hitbox.edge_3 == test_edge_3);
     CHECK(test_hitbox.edge_4 == test_edge_4);
 }
+
+TEST(RectangularHitboxTests, EqualityOperatorOverloaded)
+{
+    RectangularHitbox test_hitbox_2 {test_center, test_horizontal_size, test_vertical_size};
+
+    CHECK(test_hitbox_2 == test_hitbox);
+}

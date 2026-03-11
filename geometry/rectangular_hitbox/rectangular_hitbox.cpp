@@ -13,6 +13,7 @@ extern "C"
 
 }
 
+#include <cmath>
 #include "point.hpp"
 #include "rectangular_hitbox.hpp"
 
@@ -54,6 +55,17 @@ void RectangularHitbox::rotate(const Point& center, double angle_rad) noexcept
     edge_2.rotate(center, angle_rad);
     edge_3.rotate(center, angle_rad);
     edge_4.rotate(center, angle_rad);
+}
+
+bool RectangularHitbox::operator==(const RectangularHitbox& other) const noexcept
+{
+    constexpr double tolerance = 1e-6;
+
+    return (std::abs(horizontal_size - other.horizontal_size) <= tolerance)
+        && (std::abs(vertical_size - other.vertical_size) <= tolerance)
+        && (center == other.center) && (edge_1 == other.edge_1)
+        && (edge_2 == other.edge_2) && (edge_3 == other.edge_3) 
+        && (edge_4 == other.edge_4);
 }
 
 /*----------------------------------------------------------------------------*/

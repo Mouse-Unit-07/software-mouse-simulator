@@ -29,6 +29,8 @@ class RectangularHitbox
 
         void translate(double dx, double dy) noexcept;
         void rotate(const Point& center, double angle_rad) noexcept;
+
+        bool operator==(const RectangularHitbox& other) const noexcept;
 };
 
 #endif /* RECTANGULAR_HITBOX_HPP_ */
