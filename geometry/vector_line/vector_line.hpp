@@ -15,5 +15,13 @@
 /*----------------------------------------------------------------------------*/
 /*                             Public Declarations                            */
 /*----------------------------------------------------------------------------*/
+class VectorLine
+{
+    public:
+        Point start;
+        Point end;
+
+        VectorLine(const Point& start, const Point& end);
+};
 
 #endif /* VECTOR_LINE_HPP_ */

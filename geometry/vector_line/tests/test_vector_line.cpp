@@ -8,6 +8,7 @@
 /*============================================================================*/
 /*                               Include Files                                */
 /*============================================================================*/
+#include "point.hpp"
 #include "vector_line.hpp"
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
@@ -41,7 +42,11 @@ TEST_GROUP(VectorLineTests)
 /*============================================================================*/
 /*                                    Tests                                   */
 /*============================================================================*/
-TEST(VectorLineTests, DeleteMe)
+TEST(VectorLineTests, CoordinatesMatchOnParameterizedConstructor)
 {
-    
+    Point a{1.0, 3.0};
+    Point b{2.0, 4.0};
+    VectorLine ray{a, b};
+    CHECK(ray.start == a);
+    CHECK(ray.end == b);
 }

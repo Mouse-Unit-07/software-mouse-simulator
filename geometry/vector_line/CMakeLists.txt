@@ -13,3 +13,9 @@ add_library(vector_line_lib STATIC # <== Define this library's build target
 target_include_directories(vector_line_lib PUBLIC # <=== Rename to your build target
     ${CMAKE_CURRENT_LIST_DIR}
 )
+
+# \/=== Link to libraries in other GitHub projects
+# Example dependency on Hello World project:
+target_link_libraries(vector_line_lib PUBLIC
+    point_lib
+)
