@@ -41,6 +41,12 @@ void Ray::translate(double dx, double dy) noexcept
     direction.translate(dx, dy);
 }
 
+void Ray::rotate(const Point& center, double angle_rad) noexcept
+{
+    origin.rotate(center, angle_rad);
+    direction.rotate(center, angle_rad);
+}
+
 /*----------------------------------------------------------------------------*/
 /*                             Private Definitions                            */
 /*----------------------------------------------------------------------------*/

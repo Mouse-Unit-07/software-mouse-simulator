@@ -8,6 +8,7 @@
 /*============================================================================*/
 /*                               Include Files                                */
 /*============================================================================*/
+#include <cmath>
 #include "point.hpp"
 #include "ray.hpp"
 #include <CppUTest/TestHarness.h>
@@ -62,6 +63,22 @@ TEST(RayTests, TranslateModifiesPoints)
     ray.translate(user_dx, user_dy);
     a.translate(user_dx, user_dy);
     b.translate(user_dx, user_dy);
+
+    CHECK(ray.origin == a);
+    CHECK(ray.direction == b);
+}
+
+TEST(RayTests, RotateModifiesPoints)
+{
+    Point a{1.0, 3.0};
+    Point b{2.0, 4.0};
+    Ray ray{a, b};
+
+    Point center{0.0, 0.0};
+    double angle{M_PI / 2}; /* 90 deg counter clockwise */
+    ray.rotate(center, angle);
+    a.rotate(center, angle);
+    b.rotate(center, angle);
 
     CHECK(ray.origin == a);
     CHECK(ray.direction == b);

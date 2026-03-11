@@ -23,6 +23,7 @@ class Ray
         Ray(const Point& origin, const Point& direction);
 
         void translate(double dx, double dy) noexcept;
+        void rotate(const Point& center, double angle_rad) noexcept;
 };
 
 #endif /* RAY_HPP_ */
