@@ -24,7 +24,7 @@ class Point
         Point(double x, double y);
 
         void translate(double dx, double dy) noexcept;
-        void rotate(const Point& rotation_center, double angle_rad) noexcept;
+        void rotate(const Point& center, double angle_rad) noexcept;
 
         bool operator==(const Point& other) const noexcept;
 };

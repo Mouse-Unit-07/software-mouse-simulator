@@ -65,7 +65,8 @@ bool Point::operator==(const Point& other) const noexcept
 {
     constexpr double tolerance = 1e-6;
 
-    return std::abs(x - other.x) <= tolerance && std::abs(y - other.y) <= tolerance;
+    return (std::abs(x - other.x) <= tolerance)
+        && (std::abs(y - other.y) <= tolerance);
 }
 
 /*----------------------------------------------------------------------------*/
