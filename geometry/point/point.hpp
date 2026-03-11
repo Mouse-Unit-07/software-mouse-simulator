@@ -18,12 +18,13 @@
 class Point
 {
     public:
-        int x {0};
-        int y {0};
+        double x {0};
+        double y {0};
         Point() = default;
-        Point(int x, int y);
+        Point(double x, double y);
 
-        void translate(int dx, int dy) noexcept;
+        void translate(double dx, double dy) noexcept;
+        void rotate(const Point& rotation_center, double angle_rad) noexcept;
 };
 
 #endif /* POINT_HPP_ */
