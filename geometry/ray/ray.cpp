@@ -47,6 +47,11 @@ void Ray::rotate(const Point& center, double angle_rad) noexcept
     direction.rotate(center, angle_rad);
 }
 
+bool Ray::operator==(const Ray& other) const noexcept
+{
+    return (origin == other.origin) && (direction == other.direction);
+}
+
 /*----------------------------------------------------------------------------*/
 /*                             Private Definitions                            */
 /*----------------------------------------------------------------------------*/

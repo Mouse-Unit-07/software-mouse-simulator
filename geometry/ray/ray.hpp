@@ -24,6 +24,8 @@ class Ray
 
         void translate(double dx, double dy) noexcept;
         void rotate(const Point& center, double angle_rad) noexcept;
+
+        bool operator==(const Ray& other) const noexcept;
 };
 
 #endif /* RAY_HPP_ */

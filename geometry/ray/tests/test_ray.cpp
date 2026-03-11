@@ -83,3 +83,13 @@ TEST(RayTests, RotateModifiesPoints)
     CHECK(ray.origin == a);
     CHECK(ray.direction == b);
 }
+
+TEST(RayTests, EqualityOperatorOverloaded)
+{
+    Point a{1.0, 3.0};
+    Point b{2.0, 4.0};
+    Ray ray_1{a, b};
+    Ray ray_2{a, b};
+
+    CHECK(ray_1 == ray_2);
+}
