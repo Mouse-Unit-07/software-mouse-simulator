@@ -38,7 +38,7 @@ RectangularHitbox::RectangularHitbox(Point center, double horizontal_size, doubl
     edge_4 = Point{center.x - (horizontal_size / 2), center.y + (vertical_size / 2)};
 }
 
-void RectangularHitbox::translate(double dx, double dy)
+void RectangularHitbox::translate(double dx, double dy) noexcept
 {
     center.translate(dx, dy);
     edge_1.translate(dx, dy);
@@ -47,7 +47,7 @@ void RectangularHitbox::translate(double dx, double dy)
     edge_4.translate(dx, dy);
 }
 
-void RectangularHitbox::rotate(const Point& center, double angle_rad)
+void RectangularHitbox::rotate(const Point& center, double angle_rad) noexcept
 {
     this->center.rotate(center, angle_rad);
     edge_1.rotate(center, angle_rad);

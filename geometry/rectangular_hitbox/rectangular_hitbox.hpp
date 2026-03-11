@@ -27,8 +27,8 @@ class RectangularHitbox
         double horizontal_size;
         RectangularHitbox(Point center, double horizontal_size, double vertical_size);
 
-        void translate(double dx, double dy);
-        void rotate(const Point& center, double angle_rad);
+        void translate(double dx, double dy) noexcept;
+        void rotate(const Point& center, double angle_rad) noexcept;
 };
 
 #endif /* RECTANGULAR_HITBOX_HPP_ */
