@@ -47,3 +47,10 @@ TEST(PointTests, CoordinatesAreZeroOnDefaultConstructor)
     CHECK(p.x == 0);
     CHECK(p.y == 0);
 }
+
+TEST(PointTests, CoordinatesMatchOnParameterizedConstructor)
+{
+    Point p{1, 3};
+    CHECK(p.x == 1);
+    CHECK(p.y == 3);
+}
