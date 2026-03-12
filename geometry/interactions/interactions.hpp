@@ -21,6 +21,8 @@ namespace geometry
 std::optional<double> ray_hitbox_distance(const Ray& ray,
     const RectangularHitbox& hitbox);
 
+bool do_hitboxes_overlap(const RectangularHitbox& a, const RectangularHitbox& b);
+
 } /* geometry namespace */
 
 

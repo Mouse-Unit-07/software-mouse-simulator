@@ -77,3 +77,18 @@ TEST(InteractionsTests, RayAndHitboxDistanceComputable)
     double d = *distance;
     DOUBLES_EQUAL(4.0, d, 1e-6);
 }
+
+TEST(InteractionsTests, HitboxCollisionDetectable)
+{
+    geometry::RectangularHitbox test_hitbox_1 {geometry::Point{0.0, 0.0}, 1.0, 1.0};
+    geometry::RectangularHitbox test_hitbox_2 {geometry::Point{0.0, 0.0}, 1.0, 1.0};
+    geometry::RectangularHitbox test_hitbox_3 {geometry::Point{0.0, 0.0}, 1.0, 1.0};
+
+    test_hitbox_2.translate(1.0, 1.0);
+    test_hitbox_3.rotate(test_hitbox_3.center, M_PI / 4);
+    test_hitbox_3.translate(0.0, -1.0);
+
+    CHECK(do_hitboxes_overlap(test_hitbox_1, test_hitbox_2));
+    CHECK(do_hitboxes_overlap(test_hitbox_1, test_hitbox_3));
+    CHECK(!do_hitboxes_overlap(test_hitbox_2, test_hitbox_3));
+}
