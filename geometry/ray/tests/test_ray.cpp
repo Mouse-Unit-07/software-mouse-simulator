@@ -73,8 +73,8 @@ TEST(RayTests, TranslateModifiesPoints)
 
 TEST(RayTests, RotateModifiesPoints)
 {
-    geometry::Point center{0.0, 0.0};
-    double angle{M_PI / 2}; /* 90 deg counter clockwise */
+    geometry::Point center {0.0, 0.0};
+    double angle {M_PI / 2}; /* 90 deg counter clockwise */
     test_ray.rotate(center, angle);
     test_origin.rotate(center, angle);
     test_direction.rotate(center, angle);
