@@ -62,7 +62,7 @@ void RectangularHitbox::rotate(const Point& center, double angle_rad) noexcept
 
 bool RectangularHitbox::operator==(const RectangularHitbox& other) const noexcept
 {
-    constexpr double tolerance = 1e-6;
+    constexpr double tolerance {1e-6};
 
     return (std::abs(horizontal_size - other.horizontal_size) <= tolerance)
         && (std::abs(vertical_size - other.vertical_size) <= tolerance)

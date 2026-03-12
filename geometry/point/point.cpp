@@ -46,19 +46,21 @@ void Point::translate(double dx, double dy) noexcept
 
 void Point::rotate(const Point& center, double angle_rad) noexcept
 {
-    const double sine_of_angle   = std::sin(angle_rad);
-    const double cosine_of_angle = std::cos(angle_rad);
+    const double sine_of_angle {std::sin(angle_rad)};
+    const double cosine_of_angle {std::cos(angle_rad)};
 
-    const double x_relative_to_center = x - center.x;
-    const double y_relative_to_center = y - center.y;
+    const double x_relative_to_center {x - center.x};
+    const double y_relative_to_center {y - center.y};
 
-    const double rotated_x_relative =
+    const double rotated_x_relative {
         x_relative_to_center * cosine_of_angle -
-        y_relative_to_center * sine_of_angle;
+        y_relative_to_center * sine_of_angle
+    };
 
-    const double rotated_y_relative =
+    const double rotated_y_relative {
         x_relative_to_center * sine_of_angle +
-        y_relative_to_center * cosine_of_angle;
+        y_relative_to_center * cosine_of_angle
+    };
 
     x = center.x + rotated_x_relative;
     y = center.y + rotated_y_relative;
@@ -66,7 +68,7 @@ void Point::rotate(const Point& center, double angle_rad) noexcept
 
 bool Point::operator==(const Point& other) const noexcept
 {
-    constexpr double tolerance = 1e-6;
+    constexpr double tolerance {1e-6};
 
     return (std::abs(x - other.x) <= tolerance)
         && (std::abs(y - other.y) <= tolerance);
