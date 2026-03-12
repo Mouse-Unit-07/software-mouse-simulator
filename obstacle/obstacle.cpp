@@ -43,6 +43,16 @@ geometry::RectangularHitbox create_post(const geometry::Point& center,
     };
 }
 
+geometry::RectangularHitbox create_vertical_wall(const geometry::Point& center, 
+            double horizontal_size_adjustment, double vertical_size_adjustment)
+{
+    return geometry::RectangularHitbox{
+        center,
+        OFFICIAL_WALL_WIDTH_SIZE + horizontal_size_adjustment,
+        OFFICIAL_WALL_LENGTH_SIZE + vertical_size_adjustment
+    };
+}
+
 } /* obstacle namespace */
 
 /*----------------------------------------------------------------------------*/
