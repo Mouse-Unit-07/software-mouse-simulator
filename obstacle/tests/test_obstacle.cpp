@@ -8,6 +8,7 @@
 /*============================================================================*/
 /*                               Include Files                                */
 /*============================================================================*/
+#include <cmath>
 #include "point.hpp"
 #include "rectangular_hitbox.hpp"
 #include "obstacle.hpp"
@@ -73,5 +74,13 @@ TEST(ObstacleTests, TranslateModifiesHitbox)
     double test_dy = 2.0;
     test_post.translate(test_dx, test_dy);
     test_hitbox.translate(test_dx, test_dy);
+    CHECK(test_post.hitbox == test_hitbox);
+}
+
+TEST(ObstacleTests, RotateModifiesHitbox)
+{
+    double test_angle = M_PI / 4;
+    test_post.rotate(test_center, test_angle);
+    test_hitbox.rotate(test_center, test_angle);
     CHECK(test_post.hitbox == test_hitbox);
 }

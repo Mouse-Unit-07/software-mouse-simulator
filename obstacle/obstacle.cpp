@@ -45,6 +45,11 @@ void Post::translate(double dx, double dy) noexcept
     hitbox.translate(dx, dy);
 }
 
+void Post::rotate(const geometry::Point& center, double angle_rad) noexcept
+{
+    hitbox.rotate(center, angle_rad);
+}
+
 } /* obstacle namespace */
 
 /*----------------------------------------------------------------------------*/
