@@ -63,3 +63,13 @@ TEST(ObstacleTests, VerticalWallWithSpecifiedAdjustmentsCreated)
     CHECK(test_hitbox.horizontal_size == (obstacle::OFFICIAL_WALL_WIDTH_SIZE + adjustment));
     CHECK(test_hitbox.vertical_size == (obstacle::OFFICIAL_WALL_LENGTH_SIZE + adjustment));
 }
+
+TEST(ObstacleTests, HorizontalWallWithSpecifiedAdjustmentsCreated)
+{
+    double adjustment {2.0};
+    geometry::RectangularHitbox test_hitbox {
+        obstacle::create_horizontal_wall(geometry::Point{0.0, 0.0}, adjustment, adjustment)
+    };
+    CHECK(test_hitbox.horizontal_size == (obstacle::OFFICIAL_WALL_LENGTH_SIZE + adjustment));
+    CHECK(test_hitbox.vertical_size == (obstacle::OFFICIAL_WALL_WIDTH_SIZE + adjustment));
+}

@@ -31,6 +31,9 @@ geometry::RectangularHitbox create_post(const geometry::Point& center,
 geometry::RectangularHitbox create_vertical_wall(const geometry::Point& center, 
             double horizontal_size_adjustment, double vertical_size_adjustment);
 
+geometry::RectangularHitbox create_horizontal_wall(const geometry::Point& center, 
+            double horizontal_size_adjustment, double vertical_size_adjustment);
+
 } /* obstacle namespace */
 
 #endif /* OBSTACLE_HPP_ */
