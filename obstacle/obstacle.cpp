@@ -13,6 +13,8 @@ extern "C"
 
 }
 
+#include "point.hpp"
+#include "rectangular_hitbox.hpp"
 #include "obstacle.hpp"
 
 /*----------------------------------------------------------------------------*/
@@ -28,6 +30,17 @@ extern "C"
 /*----------------------------------------------------------------------------*/
 /*                             Public Definitions                             */
 /*----------------------------------------------------------------------------*/
+namespace obstacle
+{
+
+Post::Post(const geometry::Point& center, 
+        double horizontal_size_adjustment, double vertical_size_adjustment)
+    : hitbox{center, OFFICIAL_POST_SIZE + horizontal_size_adjustment, OFFICIAL_POST_SIZE + vertical_size_adjustment}
+{
+    /* no additional logic */
+}
+
+} /* obstacle namespace */
 
 /*----------------------------------------------------------------------------*/
 /*                             Private Definitions                            */
