@@ -1,7 +1,7 @@
 /*-------------------------------- FILE INFO ---------------------------------*/
-/* Filename           : vector_line.cpp                                       */
+/* Filename           : ray.cpp                                               */
 /*                                                                            */
-/* Implementation for vector_line class                                       */
+/* Implementation for ray class                                               */
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
 
@@ -13,7 +13,9 @@ extern "C"
 
 }
 
-#include "vector_line.hpp"
+#include <cmath>
+#include "point.hpp"
+#include "ray.hpp"
 
 /*----------------------------------------------------------------------------*/
 /*                            Private Declarations                            */
@@ -28,6 +30,36 @@ extern "C"
 /*----------------------------------------------------------------------------*/
 /*                             Public Definitions                             */
 /*----------------------------------------------------------------------------*/
+namespace geometry
+{
+
+Ray::Ray(const Point& origin, double angle_rad)
+    : origin{origin}
+{
+    double dir_x {std::cos(angle_rad)};
+    double dir_y {std::sin(angle_rad)};
+    direction.x = dir_x;
+    direction.y = dir_y;
+}
+
+void Ray::translate(double dx, double dy) noexcept
+{
+    origin.translate(dx, dy);
+    direction.translate(dx, dy);
+}
+
+void Ray::rotate(const Point& center, double angle_rad) noexcept
+{
+    origin.rotate(center, angle_rad);
+    direction.rotate(center, angle_rad);
+}
+
+bool Ray::operator==(const Ray& other) const noexcept
+{
+    return (origin == other.origin) && (direction == other.direction);
+}
+
+} /* geometry namespace */
 
 /*----------------------------------------------------------------------------*/
 /*                             Private Definitions                            */

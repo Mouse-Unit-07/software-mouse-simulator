@@ -1,11 +1,11 @@
 /*-------------------------------- FILE INFO ---------------------------------*/
-/* Filename           : vector_line.hpp                                       */
+/* Filename           : ray.hpp                                               */
 /*                                                                            */
-/* Interface to vector_line class                                             */
+/* Interface to ray class                                                     */
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
-#ifndef VECTOR_LINE_HPP_
-#define VECTOR_LINE_HPP_
+#ifndef RAY_HPP_
+#define RAY_HPP_
 
 /*----------------------------------------------------------------------------*/
 /*                             Public Definitions                             */
@@ -15,5 +15,22 @@
 /*----------------------------------------------------------------------------*/
 /*                             Public Declarations                            */
 /*----------------------------------------------------------------------------*/
+namespace geometry
+{
 
-#endif /* VECTOR_LINE_HPP_ */
+class Ray
+{
+    public:
+        Point origin;
+        Point direction;
+        Ray(const Point& origin, double angle_rad);
+
+        void translate(double dx, double dy) noexcept;
+        void rotate(const Point& center, double angle_rad) noexcept;
+
+        bool operator==(const Ray& other) const noexcept;
+};
+
+} /* geometry namespace */
+
+#endif /* RAY_HPP_ */

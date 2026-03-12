@@ -29,6 +29,9 @@ extern "C"
 /*----------------------------------------------------------------------------*/
 /*                             Public Definitions                             */
 /*----------------------------------------------------------------------------*/
+namespace geometry
+{
+
 Point::Point(double x, double y)
     : x{x}, y{y}
 {
@@ -60,6 +63,16 @@ void Point::rotate(const Point& center, double angle_rad) noexcept
     x = center.x + rotated_x_relative;
     y = center.y + rotated_y_relative;
 }
+
+bool Point::operator==(const Point& other) const noexcept
+{
+    constexpr double tolerance = 1e-6;
+
+    return (std::abs(x - other.x) <= tolerance)
+        && (std::abs(y - other.y) <= tolerance);
+}
+
+} /* geometry namespace */
 
 /*----------------------------------------------------------------------------*/
 /*                             Private Definitions                            */

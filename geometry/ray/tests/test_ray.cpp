@@ -1,7 +1,7 @@
 /*================================ FILE INFO =================================*/
-/* Filename           : test_point.cpp                                        */
+/* Filename           : test_ray.cpp                                          */
 /*                                                                            */
-/* Test implementation for point.cpp                                          */
+/* Test implementation for ray.cpp                                            */
 /*                                                                            */
 /*============================================================================*/
 
@@ -10,87 +10,82 @@
 /*============================================================================*/
 #include <cmath>
 #include "point.hpp"
+#include "ray.hpp"
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
 /*============================================================================*/
 /*                             Public Definitions                             */
 /*============================================================================*/
-/* none */
+geometry::Point test_origin {0.0, 0.0}; /* arbitrary coordinates */
+double test_angle {M_PI / 4}; /* arbitrary angle */
+geometry::Point test_direction {std::cos(test_angle), std::sin(test_angle)};
+geometry::Ray test_ray {test_origin, test_angle};
+
+void initialize_test_variables(void)
+{
+    test_origin = geometry::Point{0.0, 0.0}; /* arbitrary coordinates */
+    test_direction = geometry::Point{std::cos(test_angle), std::sin(test_angle)};
+    test_ray = geometry::Ray{test_origin, test_angle};
+}
 
 /*============================================================================*/
 /*                            Mock Implementations                            */
 /*============================================================================*/
-
+/* none */
 
 /*============================================================================*/
 /*                                 Test Group                                 */
 /*============================================================================*/
-TEST_GROUP(PointTests)
+TEST_GROUP(RayTests)
 {
     void setup() override
     {
-        
+        initialize_test_variables();
     }
 
     void teardown() override
     {
-        
+        initialize_test_variables();
     }
 };
 
 /*============================================================================*/
 /*                                    Tests                                   */
 /*============================================================================*/
-TEST(PointTests, CoordinatesAreZeroOnDefaultConstructor)
+TEST(RayTests, PointsMatchOnParameterizedConstructor)
 {
-    geometry::Point p;
-    CHECK(p.x == 0.0);
-    CHECK(p.y == 0.0);
+    CHECK(test_ray.origin == test_origin);
+    CHECK(test_ray.direction == test_direction);
 }
 
-TEST(PointTests, CoordinatesMatchOnParameterizedConstructor)
+TEST(RayTests, TranslateModifiesPoints)
 {
-    geometry::Point p{1.0, 3.0};
-    DOUBLES_EQUAL(1.0, p.x, 1e-6);
-    DOUBLES_EQUAL(3.0, p.y, 1e-6);
+    double test_dx {-10.0};
+    double test_dy {20.0};
+    test_ray.translate(test_dx, test_dy);
+    test_origin.translate(test_dx, test_dy);
+    test_direction.translate(test_dx, test_dy);
+
+    CHECK(test_ray.origin == test_origin);
+    CHECK(test_ray.direction == test_direction);
 }
 
-TEST(PointTests, TranslateModifiesCoordinates)
+TEST(RayTests, RotateModifiesPoints)
 {
-    double user_x {1.0};
-    double user_y {3.0};
-    double user_dx {-10.0};
-    double user_dy {20.0};
-    geometry::Point p{user_x, user_y};
-    p.translate(user_dx, user_dy);
-    DOUBLES_EQUAL(user_x + user_dx, p.x, 1e-6);
-    DOUBLES_EQUAL(user_y + user_dy, p.y, 1e-6);
+    geometry::Point center{0.0, 0.0};
+    double angle{M_PI / 2}; /* 90 deg counter clockwise */
+    test_ray.rotate(center, angle);
+    test_origin.rotate(center, angle);
+    test_direction.rotate(center, angle);
+
+    CHECK(test_ray.origin == test_origin);
+    CHECK(test_ray.direction == test_direction);
 }
 
-TEST(PointTests, RotateModifiesCoordinates)
+TEST(RayTests, EqualityOperatorOverloaded)
 {
-    geometry::Point p{1.0, 1.0};
-    p.rotate(geometry::Point{0.0, 0.0}, M_PI / 2); /* 90 deg counter clockwise */
-    DOUBLES_EQUAL(-1.0, p.x, 1e-6);
-    DOUBLES_EQUAL(1.0, p.y, 1e-6);
-}
+    geometry::Ray test_ray_2{test_origin, test_angle};
 
-TEST(PointTests, PointReturnsAfterFullRotation)
-{
-    double user_x {1.0};
-    double user_y {1.0};
-    geometry::Point p{user_x, user_y};
-    for (int i = 0; i < 360; i++) {
-        p.rotate(geometry::Point{0.0, 0.0}, M_PI / 180); /* 1 deg counter clockwise */
-    }
-    DOUBLES_EQUAL(user_x, p.x, 1e-6);
-    DOUBLES_EQUAL(user_y, p.y, 1e-6);
-}
-
-TEST(PointTests, EqualityOperatorOverloaded)
-{
-    geometry::Point a{1.0, 1.0};
-    geometry::Point b{1.0, 1.0};
-    CHECK(a == b);
+    CHECK(test_ray == test_ray_2);
 }
