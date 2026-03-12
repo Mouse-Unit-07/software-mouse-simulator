@@ -18,7 +18,8 @@
 namespace geometry
 {
 
-bool does_ray_intersect_hitbox(const Ray& ray, const RectangularHitbox& hitbox);
+std::optional<double> ray_hitbox_distance(const Ray& ray,
+    const RectangularHitbox& hitbox);
 
 } /* geometry namespace */
 

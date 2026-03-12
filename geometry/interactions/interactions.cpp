@@ -13,6 +13,8 @@ extern "C"
 
 }
 
+#include <cmath>
+#include <optional>
 #include "point.hpp"
 #include "rectangular_hitbox.hpp"
 #include "ray.hpp"
@@ -24,11 +26,11 @@ extern "C"
 namespace
 {
 
-bool ray_intersects_line_segment(const geometry::Ray& ray, 
+std::optional<double> ray_segment_distance(const geometry::Ray& ray, 
     const geometry::Point& a, const geometry::Point& b)
 {
-    double rdx = ray.front.x;
-    double rdy = ray.front.y;
+    double rdx = ray.front.x - ray.back.x;
+    double rdy = ray.front.y - ray.back.y;
 
     double sdx = b.x - a.x;
     double sdy = b.y - a.y;
@@ -36,15 +38,21 @@ bool ray_intersects_line_segment(const geometry::Ray& ray,
     double denom = rdx * sdy - rdy * sdx;
 
     if (denom == 0.0)
-        return false;  // parallel
+        return std::nullopt;
 
-    double dx = a.x - ray.back.x;
-    double dy = a.y - ray.back.y;
+    double dx = a.x - ray.front.x;
+    double dy = a.y - ray.front.y;
 
     double t = (dx * sdy - dy * sdx) / denom;
     double u = (dx * rdy - dy * rdx) / denom;
 
-    return (t >= 0.0) && (u >= 0.0) && (u <= 1.0);
+    if (t >= 0.0 && u >= 0.0 && u <= 1.0)
+    {
+        double ray_length = std::sqrt(rdx * rdx + rdy * rdy);
+        return t * ray_length;
+    }
+
+    return std::nullopt;
 }
 
 }
@@ -60,13 +68,26 @@ bool ray_intersects_line_segment(const geometry::Ray& ray,
 namespace geometry
 {
 
-bool does_ray_intersect_hitbox(const Ray& ray, const RectangularHitbox& hitbox)
+std::optional<double> ray_hitbox_distance(const Ray& ray,
+    const RectangularHitbox& hitbox)
 {
+    std::optional<double> closest;
 
-    return ray_intersects_line_segment(ray, hitbox.edge_1, hitbox.edge_2)
-        || ray_intersects_line_segment(ray, hitbox.edge_2, hitbox.edge_3)
-        || ray_intersects_line_segment(ray, hitbox.edge_3, hitbox.edge_4)
-        || ray_intersects_line_segment(ray, hitbox.edge_4, hitbox.edge_1);
+    auto update = [&](std::optional<double> d)
+    {
+        if (!d)
+            return;
+
+        if (!closest || *d < *closest)
+            closest = d;
+    };
+
+    update(ray_segment_distance(ray, hitbox.edge_1, hitbox.edge_2));
+    update(ray_segment_distance(ray, hitbox.edge_2, hitbox.edge_3));
+    update(ray_segment_distance(ray, hitbox.edge_3, hitbox.edge_4));
+    update(ray_segment_distance(ray, hitbox.edge_4, hitbox.edge_1));
+
+    return closest;
 }
 
 } /* geometry namespace */
