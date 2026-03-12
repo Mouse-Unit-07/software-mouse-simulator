@@ -29,28 +29,25 @@ namespace
 std::optional<double> ray_segment_distance(const geometry::Ray& ray, 
     const geometry::Point& a, const geometry::Point& b)
 {
-    double rdx = ray.front.x - ray.back.x;
-    double rdy = ray.front.y - ray.back.y;
+    double rdx = ray.direction.x;
+    double rdy = ray.direction.y;
 
     double sdx = b.x - a.x;
     double sdy = b.y - a.y;
 
     double denom = rdx * sdy - rdy * sdx;
 
-    if (denom == 0.0)
+    if (std::abs(denom) < 1e-6)
         return std::nullopt;
 
-    double dx = a.x - ray.front.x;
-    double dy = a.y - ray.front.y;
+    double dx = a.x - ray.origin.x;
+    double dy = a.y - ray.origin.y;
 
     double t = (dx * sdy - dy * sdx) / denom;
     double u = (dx * rdy - dy * rdx) / denom;
 
     if (t >= 0.0 && u >= 0.0 && u <= 1.0)
-    {
-        double ray_length = std::sqrt(rdx * rdx + rdy * rdy);
-        return t * ray_length;
-    }
+        return t;
 
     return std::nullopt;
 }

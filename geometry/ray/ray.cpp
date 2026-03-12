@@ -13,6 +13,7 @@ extern "C"
 
 }
 
+#include <cmath>
 #include "point.hpp"
 #include "ray.hpp"
 
@@ -32,27 +33,30 @@ extern "C"
 namespace geometry
 {
 
-Ray::Ray(const Point& back, const Point& front)
-    : back{back}, front{front}
+Ray::Ray(const Point& origin, double angle_rad)
+    : origin{origin}
 {
-    /* no logic- only field init */
+    double dir_x {std::cos(angle_rad)};
+    double dir_y {std::sin(angle_rad)};
+    direction.x = dir_x;
+    direction.y = dir_y;
 }
 
 void Ray::translate(double dx, double dy) noexcept
 {
-    back.translate(dx, dy);
-    front.translate(dx, dy);
+    origin.translate(dx, dy);
+    direction.translate(dx, dy);
 }
 
 void Ray::rotate(const Point& center, double angle_rad) noexcept
 {
-    back.rotate(center, angle_rad);
-    front.rotate(center, angle_rad);
+    origin.rotate(center, angle_rad);
+    direction.rotate(center, angle_rad);
 }
 
 bool Ray::operator==(const Ray& other) const noexcept
 {
-    return (back == other.back) && (front == other.front);
+    return (origin == other.origin) && (direction == other.direction);
 }
 
 } /* geometry namespace */

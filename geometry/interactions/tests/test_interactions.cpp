@@ -49,8 +49,7 @@ TEST_GROUP(InteractionsTests)
 TEST(InteractionsTests, RayAndHitboxIntersectionDetectable)
 {
     geometry::Point test_point_a {0.0, 0.0};
-    geometry::Point test_point_b {2.0, 0.0};
-    geometry::Ray test_ray {test_point_a, test_point_b};
+    geometry::Ray test_ray {test_point_a, 0.0};
     geometry::RectangularHitbox test_hitbox{geometry::Point{5.0, 2.0}, 2.0, 4.0};
 
     for (int i = 0; i < 360; i++) {
@@ -69,13 +68,12 @@ TEST(InteractionsTests, RayAndHitboxIntersectionDetectable)
 TEST(InteractionsTests, RayAndHitboxDistanceComputable)
 {
     geometry::Point test_point_a {0.0, 0.0};
-    geometry::Point test_point_b {2.0, 0.0};
-    geometry::Ray test_ray {test_point_a, test_point_b};
+    geometry::Ray test_ray {test_point_a, 0.0};
     geometry::RectangularHitbox test_hitbox{geometry::Point{5.0, 2.0}, 2.0, 4.0};
 
     auto distance = geometry::ray_hitbox_distance(test_ray, test_hitbox);
     CHECK(distance.has_value());
     
     double d = *distance;
-    DOUBLES_EQUAL(2.0, d, 1e-6);
+    DOUBLES_EQUAL(4.0, d, 1e-6);
 }

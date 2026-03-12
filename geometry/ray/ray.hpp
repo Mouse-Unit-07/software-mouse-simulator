@@ -21,9 +21,9 @@ namespace geometry
 class Ray
 {
     public:
-        Point back;
-        Point front;
-        Ray(const Point& back, const Point& front);
+        Point origin;
+        Point direction;
+        Ray(const Point& origin, double angle_rad);
 
         void translate(double dx, double dy) noexcept;
         void rotate(const Point& center, double angle_rad) noexcept;
