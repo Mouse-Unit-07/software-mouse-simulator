@@ -23,18 +23,8 @@ constexpr double OFFICIAL_POST_SIZE {12.07}; /* 12.07mm */
 namespace obstacle
 {
 
-class Post
-{
-    public:
-        geometry::RectangularHitbox hitbox;
-        Post(const geometry::Point& center, 
+geometry::RectangularHitbox create_post(const geometry::Point& center, 
             double horizontal_size_adjustment, double vertical_size_adjustment);
-
-        void translate(double dx, double dy) noexcept;
-        void rotate(const geometry::Point& center, double angle_rad) noexcept;
-
-        bool operator==(const Post& other) const noexcept;
-};
 
 } /* obstacle namespace */
 

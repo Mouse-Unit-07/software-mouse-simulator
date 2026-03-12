@@ -33,21 +33,14 @@ extern "C"
 namespace obstacle
 {
 
-Post::Post(const geometry::Point& center, 
-        double horizontal_size_adjustment, double vertical_size_adjustment)
-    : hitbox{center, OFFICIAL_POST_SIZE + horizontal_size_adjustment, OFFICIAL_POST_SIZE + vertical_size_adjustment}
+geometry::RectangularHitbox create_post(const geometry::Point& center, 
+            double horizontal_size_adjustment, double vertical_size_adjustment)
 {
-    /* no additional logic */
-}
-
-void Post::translate(double dx, double dy) noexcept
-{
-    hitbox.translate(dx, dy);
-}
-
-void Post::rotate(const geometry::Point& center, double angle_rad) noexcept
-{
-    hitbox.rotate(center, angle_rad);
+    return geometry::RectangularHitbox{
+        center,
+        OFFICIAL_POST_SIZE + horizontal_size_adjustment,
+        OFFICIAL_POST_SIZE + vertical_size_adjustment
+    };
 }
 
 } /* obstacle namespace */
