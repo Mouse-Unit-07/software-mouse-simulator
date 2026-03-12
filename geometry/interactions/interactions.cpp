@@ -27,30 +27,7 @@ namespace
 {
 
 std::optional<double> ray_segment_distance(const geometry::Ray& ray, 
-    const geometry::Point& a, const geometry::Point& b)
-{
-    double rdx = ray.direction.x;
-    double rdy = ray.direction.y;
-
-    double sdx = b.x - a.x;
-    double sdy = b.y - a.y;
-
-    double denom = rdx * sdy - rdy * sdx;
-
-    if (std::abs(denom) < 1e-6)
-        return std::nullopt;
-
-    double dx = a.x - ray.origin.x;
-    double dy = a.y - ray.origin.y;
-
-    double t = (dx * sdy - dy * sdx) / denom;
-    double u = (dx * rdy - dy * rdx) / denom;
-
-    if (t >= 0.0 && u >= 0.0 && u <= 1.0)
-        return t;
-
-    return std::nullopt;
-}
+    const geometry::Point& a, const geometry::Point& b);
 
 double compute_dot_product(const geometry::Point& a, const geometry::Point& b);
 geometry::Point compute_vector_between_points(const geometry::Point& a, const geometry::Point& b);
@@ -123,6 +100,32 @@ bool do_hitboxes_overlap(const RectangularHitbox& a, const RectangularHitbox& b)
 /*----------------------------------------------------------------------------*/
 namespace
 {
+
+std::optional<double> ray_segment_distance(const geometry::Ray& ray, 
+    const geometry::Point& a, const geometry::Point& b)
+{
+    double rdx = ray.direction.x;
+    double rdy = ray.direction.y;
+
+    double sdx = b.x - a.x;
+    double sdy = b.y - a.y;
+
+    double denom = rdx * sdy - rdy * sdx;
+
+    if (std::abs(denom) < 1e-6)
+        return std::nullopt;
+
+    double dx = a.x - ray.origin.x;
+    double dy = a.y - ray.origin.y;
+
+    double t = (dx * sdy - dy * sdx) / denom;
+    double u = (dx * rdy - dy * rdx) / denom;
+
+    if (t >= 0.0 && u >= 0.0 && u <= 1.0)
+        return t;
+
+    return std::nullopt;
+}
 
 double compute_dot_product(const geometry::Point& a, const geometry::Point& b)
 {
