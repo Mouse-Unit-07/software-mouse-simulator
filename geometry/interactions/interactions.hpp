@@ -15,5 +15,12 @@
 /*----------------------------------------------------------------------------*/
 /*                             Public Declarations                            */
 /*----------------------------------------------------------------------------*/
+namespace geometry
+{
+
+bool does_ray_intersect_hitbox(const Ray& ray, const RectangularHitbox& hitbox);
+
+} /* geometry namespace */
+
 
 #endif /* INTERACTIONS_HPP_ */

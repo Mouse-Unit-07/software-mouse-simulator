@@ -13,9 +13,6 @@ extern "C"
 
 }
 
-#include "mouse.hpp"
-#include "obstacle.hpp"
-#include "interactions.hpp"
 #include "optimizer.hpp"
 
 /*----------------------------------------------------------------------------*/
