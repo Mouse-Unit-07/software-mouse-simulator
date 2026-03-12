@@ -40,6 +40,11 @@ Post::Post(const geometry::Point& center,
     /* no additional logic */
 }
 
+void Post::translate(double dx, double dy) noexcept
+{
+    hitbox.translate(dx, dy);
+}
+
 } /* obstacle namespace */
 
 /*----------------------------------------------------------------------------*/
