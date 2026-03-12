@@ -8,6 +8,9 @@
 /*============================================================================*/
 /*                               Include Files                                */
 /*============================================================================*/
+#include <cmath>
+#include "point.hpp"
+#include "rectangular_hitbox.hpp"
 #include "obstacle.hpp"
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
@@ -20,7 +23,7 @@
 /*============================================================================*/
 /*                            Mock Implementations                            */
 /*============================================================================*/
-
+/* none */
 
 /*============================================================================*/
 /*                                 Test Group                                 */
@@ -29,19 +32,44 @@ TEST_GROUP(ObstacleTests)
 {
     void setup() override
     {
-        
+
     }
 
     void teardown() override
     {
-        
+
     }
 };
 
 /*============================================================================*/
 /*                                    Tests                                   */
 /*============================================================================*/
-TEST(ObstacleTests, DeleteMe)
+TEST(ObstacleTests, PostWithSpecifiedAdjustmentsCreated)
 {
-    
+    double adjustment {2.0};
+    geometry::RectangularHitbox test_hitbox {
+        obstacle::create_post(geometry::Point{0.0, 0.0}, adjustment, adjustment)
+    };
+    CHECK(test_hitbox.horizontal_size == (obstacle::OFFICIAL_POST_SIZE + adjustment));
+    CHECK(test_hitbox.vertical_size == (obstacle::OFFICIAL_POST_SIZE + adjustment));
+}
+
+TEST(ObstacleTests, VerticalWallWithSpecifiedAdjustmentsCreated)
+{
+    double adjustment {2.0};
+    geometry::RectangularHitbox test_hitbox {
+        obstacle::create_vertical_wall(geometry::Point{0.0, 0.0}, adjustment, adjustment)
+    };
+    CHECK(test_hitbox.horizontal_size == (obstacle::OFFICIAL_WALL_WIDTH_SIZE + adjustment));
+    CHECK(test_hitbox.vertical_size == (obstacle::OFFICIAL_WALL_LENGTH_SIZE + adjustment));
+}
+
+TEST(ObstacleTests, HorizontalWallWithSpecifiedAdjustmentsCreated)
+{
+    double adjustment {2.0};
+    geometry::RectangularHitbox test_hitbox {
+        obstacle::create_horizontal_wall(geometry::Point{0.0, 0.0}, adjustment, adjustment)
+    };
+    CHECK(test_hitbox.horizontal_size == (obstacle::OFFICIAL_WALL_LENGTH_SIZE + adjustment));
+    CHECK(test_hitbox.vertical_size == (obstacle::OFFICIAL_WALL_WIDTH_SIZE + adjustment));
 }
