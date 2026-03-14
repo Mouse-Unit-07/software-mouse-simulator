@@ -118,12 +118,12 @@ int32_t compute_new_encoder_2_ticks(double time_elapsed_sec)
 
 void set_encoder_1_ticks(int32_t ticks)
 {
-
+    encoder_1_ticks = ticks;
 }
 
 void set_encoder_2_ticks(int32_t ticks)
 {
-
+    encoder_2_ticks = ticks;
 }
 
 struct displacement compute_mouse_position_change(int time_elapsed)
@@ -163,22 +163,22 @@ uint32_t read_ir_4_sensor(void)
 /* magnetic_encoder mocks */
 int32_t get_encoder_1_ticks(void)
 {
-    return 0;
+    return encoder_1_ticks;
 }
 
 int32_t get_encoder_2_ticks(void)
 {
-    return 0;
+    return encoder_2_ticks;
 }
 
 void clear_1_encoder_ticks(void)
 {
-
+    encoder_1_ticks = 0;
 }
 
 void clear_2_encoder_ticks(void)
 {
-
+    encoder_2_ticks = 0;
 }
 
 /* -------------------------------------------------------------------------- */

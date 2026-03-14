@@ -73,3 +73,25 @@ TEST(MockDeviceDriversTests, NewEncoderTicksComputable)
     CHECK(compute_new_encoder_1_ticks(1.0) == 1241);
     CHECK(compute_new_encoder_2_ticks(1.0) == -618);
 }
+
+TEST(MockDeviceDriversTests, EncoderTicksSettableAndAccessible)
+{
+    int32_t encoder_1_ticks = 1000;
+    int32_t encoder_2_ticks = -1000;
+    set_encoder_1_ticks(encoder_1_ticks);
+    set_encoder_2_ticks(encoder_2_ticks);
+
+    CHECK(get_encoder_1_ticks() == encoder_1_ticks);
+    CHECK(get_encoder_2_ticks() == encoder_2_ticks);
+}
+
+TEST(MockDeviceDriversTests, EncoderTicksClearable)
+{
+    set_encoder_1_ticks(1000);
+    set_encoder_2_ticks(-1000);
+    clear_1_encoder_ticks();
+    clear_2_encoder_ticks();
+
+    CHECK(get_encoder_1_ticks() == 0);
+    CHECK(get_encoder_2_ticks() == 0);
+}
