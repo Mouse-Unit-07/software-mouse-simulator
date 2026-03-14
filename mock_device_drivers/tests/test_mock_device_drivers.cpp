@@ -12,6 +12,8 @@ extern "C"
 {
     #include <stdint.h>
     #include "infrared_sensor.h"
+    #include "magnetic_encoder.h"
+    #include "wheel_motor.h"
     #include "mock_device_drivers.h"
 }
 
@@ -57,4 +59,17 @@ TEST(MockDeviceDriversTests, DesiredIrSensorValuesSettableAndGettable)
     CHECK(read_ir_2_sensor() == 495);
     CHECK(read_ir_3_sensor() == 230);
     CHECK(read_ir_4_sensor() == 107);
+}
+
+TEST(MockDeviceDriversTests, NewEncoderTicksComputable)
+{
+    uint8_t motor_1_speed = 255;
+    uint8_t motor_2_speed = 127;
+    set_wheel_motor_1_direction_forward();
+    set_wheel_motor_2_direction_backward();
+    set_wheel_motor_1_speed(motor_1_speed);
+    set_wheel_motor_2_speed(motor_2_speed);
+
+    CHECK(compute_new_encoder_1_ticks(1.0) == 1241);
+    CHECK(compute_new_encoder_2_ticks(1.0) == -618);
 }

@@ -21,8 +21,8 @@ struct displacement
 /*----------------------------------------------------------------------------*/
 void reset_mock_device_drivers(void);
 
-int32_t compute_new_encoder_1_ticks(int time_elapsed);
-int32_t compute_new_encoder_2_ticks(int time_elapsed);
+int32_t compute_new_encoder_1_ticks(double time_elapsed_sec);
+int32_t compute_new_encoder_2_ticks(double time_elapsed_sec);
 void set_encoder_1_ticks(int32_t ticks);
 void set_encoder_2_ticks(int32_t ticks);
 uint32_t compute_ir_sensor_reading_from_distance_mm(double distance);
