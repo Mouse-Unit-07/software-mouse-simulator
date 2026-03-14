@@ -53,8 +53,8 @@ TEST(MockDeviceDriversTests, DesiredIrSensorValuesSettableAndGettable)
     set_ir_2_sensor_reading(compute_ir_sensor_reading_from_distance_mm(500.0));
     set_ir_3_sensor_reading(compute_ir_sensor_reading_from_distance_mm(1000.0));
     set_ir_4_sensor_reading(compute_ir_sensor_reading_from_distance_mm(1500.0));
-    DOUBLES_EQUAL(1024.0, read_ir_1_sensor(), 1e-6);
-    DOUBLES_EQUAL(495, read_ir_2_sensor(), 1e-6);
-    DOUBLES_EQUAL(230, read_ir_3_sensor(), 1e-6);
-    DOUBLES_EQUAL(107, read_ir_4_sensor(), 1e-6);
+    CHECK(read_ir_1_sensor() == 1024);
+    CHECK(read_ir_2_sensor() == 495);
+    CHECK(read_ir_3_sensor() == 230);
+    CHECK(read_ir_4_sensor() == 107);
 }
