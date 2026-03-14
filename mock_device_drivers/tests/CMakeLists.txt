@@ -8,8 +8,8 @@
 set(ALL_TEST_SOURCES
     ${ALL_TEST_SOURCES}
     ${CMAKE_CURRENT_SOURCE_DIR}/test_mock_device_drivers.cpp
-    ${CMAKE_SOURCE_DIR}/src/mock_device_drivers/mock_device_drivers.cpp
-    ${CMAKE_SOURCE_DIR}/src/mock_device_drivers/mock_device_drivers.hpp
+    ${CMAKE_SOURCE_DIR}/src/mock_device_drivers/mock_device_drivers.c
+    ${CMAKE_SOURCE_DIR}/src/mock_device_drivers/mock_device_drivers.h
     PARENT_SCOPE
 )
 
