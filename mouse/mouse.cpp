@@ -61,6 +61,15 @@ Mouse::Mouse()
     /* no additional logic */
 }
 
+void Mouse::translate(double dx, double dy) noexcept
+{
+    hitbox.translate(dx, dy);
+    ir_1_sensor.translate(dx, dy);
+    ir_2_sensor.translate(dx, dy);
+    ir_3_sensor.translate(dx, dy);
+    ir_4_sensor.translate(dx, dy);
+}
+
 }
 
 /*----------------------------------------------------------------------------*/
