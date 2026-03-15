@@ -200,6 +200,20 @@ TEST(MockDeviceDriversTests, WheelCircumferenceScaleHalvesDistance)
     DOUBLES_EQUAL(normal.dx * 0.5, scaled.dx, FLOATING_POINT_TEST_TOLERANCE);
 }
 
+TEST(MockDeviceDriversTests, WheelBaseScaleChangesDtheta)
+{
+    set_wheel_motor_1_speed(200);
+    set_wheel_motor_2_speed(0);
+
+    set_wheel_base_scale(1.0);
+    mouse_delta normal = compute_mouse_delta(0.0, 1.0);
+
+    set_wheel_base_scale(1.1);
+    mouse_delta scaled = compute_mouse_delta(0.0, 1.0);
+
+    CHECK(fabs(normal.dtheta_rad - scaled.dtheta_rad) > FLOATING_POINT_TEST_TOLERANCE);
+}
+
 TEST(MockDeviceDriversTests, SwappingMotorsFlipsRotation)
 {
     set_wheel_motor_1_speed(100);

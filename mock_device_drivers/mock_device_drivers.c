@@ -59,6 +59,7 @@ double motor_1_variance = 0.0;
 double motor_2_variance = 0.0;
 double motor_slip_factor = 1.0;
 double wheel_circumference_scale = 1.0;
+double wheel_base_scale = 1.0;
 
 /*----------------------------------------------------------------------------*/
 /*                             Public Definitions                             */
@@ -84,6 +85,7 @@ void reset_mock_device_drivers(void)
     motor_2_variance = 0.0;
     motor_slip_factor = 1.0;
     wheel_circumference_scale = 1.0;
+    wheel_base_scale = 1.0;
 }
 
 uint32_t compute_ir_sensor_reading_from_distance_mm(double distance)
@@ -170,6 +172,11 @@ void set_wheel_circumference_scale(double scale)
     wheel_circumference_scale = scale;
 }
 
+void set_wheel_base_scale(double scale)
+{
+    wheel_base_scale = scale;
+}
+
 struct mouse_delta compute_mouse_delta(double current_mouse_angle, double time_elapsed_sec)
 {
     double motor_1_rpm =
@@ -203,7 +210,7 @@ struct mouse_delta compute_mouse_delta(double current_mouse_angle, double time_e
 
     double omega =
         (velocity_2 - velocity_1) /
-        WHEEL_BASE_MM;
+        (WHEEL_BASE_MM * wheel_base_scale);
 
     double distance =
         combined_velocity *
