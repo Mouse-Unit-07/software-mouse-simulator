@@ -5,12 +5,10 @@
 #                                                                              #
 #------------------------------------------------------------------------------#
 cmake_minimum_required(VERSION 4.0.2)
-project(mouse_simulator_project LANGUAGES C CXX) # <== Name your software project
+project(mouse_simulator_project LANGUAGES C CXX)
 
 include(FetchContent)
 
-# \/=== Add dependencies to other GitHub repos
-# Example dependency on Hello World project:
 FetchContent_Declare(
     device_drivers
     GIT_REPOSITORY git@github.com:Mouse-Unit-07/software-device-drivers.git
@@ -18,7 +16,6 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(device_drivers)
 
-# \/=== Add all library directories (each w/ a CMakeLists.txt)
 add_subdirectory(mock_device_drivers)
 add_subdirectory(mouse)
 add_subdirectory(obstacle)
