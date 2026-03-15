@@ -11,6 +11,7 @@
 extern "C"
 {
     #include <stdint.h>
+    #include <math.h>
     #include "infrared_sensor.h"
     #include "magnetic_encoder.h"
     #include "wheel_motor.h"
@@ -23,7 +24,7 @@ extern "C"
 /*============================================================================*/
 /*                             Public Definitions                             */
 /*============================================================================*/
-/* none */
+constexpr double FLOATING_POINT_TEST_TOLERANCE {1e-6};
 
 /*============================================================================*/
 /*                            Mock Implementations                            */
@@ -94,4 +95,123 @@ TEST(MockDeviceDriversTests, EncoderTicksClearable)
 
     CHECK(get_encoder_1_ticks() == 0);
     CHECK(get_encoder_2_ticks() == 0);
+}
+
+TEST(MockDeviceDriversTests, NoMovementWhenPWMZero)
+{
+    mouse_delta delta = compute_mouse_delta(0.0, 1.0);
+
+    DOUBLES_EQUAL(0.0, delta.dx, FLOATING_POINT_TEST_TOLERANCE);
+    DOUBLES_EQUAL(0.0, delta.dy, FLOATING_POINT_TEST_TOLERANCE);
+    DOUBLES_EQUAL(0.0, delta.dtheta_rad, FLOATING_POINT_TEST_TOLERANCE);
+}
+
+TEST(MockDeviceDriversTests, StraightMotionProducesNoRotation)
+{
+    set_wheel_motor_1_speed(200);
+    set_wheel_motor_2_speed(200);
+
+    mouse_delta delta = compute_mouse_delta(0.0, 1.0);
+
+    DOUBLES_EQUAL(0.0, delta.dy, FLOATING_POINT_TEST_TOLERANCE);
+    DOUBLES_EQUAL(0.0, delta.dtheta_rad, FLOATING_POINT_TEST_TOLERANCE);
+
+    CHECK(delta.dx > 0.0);
+}
+
+TEST(MockDeviceDriversTests, CurrentMouseAngleChangesMovementDirection)
+{
+    set_wheel_motor_1_speed(200);
+    set_wheel_motor_2_speed(200);
+
+    mouse_delta delta = compute_mouse_delta(M_PI / 2.0, 1.0);
+
+    DOUBLES_EQUAL(0.0, delta.dx, FLOATING_POINT_TEST_TOLERANCE);
+    CHECK(delta.dy > 0.0);
+}
+
+TEST(MockDeviceDriversTests, OppositeMotorsRotateInPlace)
+{
+    set_wheel_motor_1_speed(200);
+    set_wheel_motor_2_speed(200);
+
+    set_wheel_motor_1_direction_backward();
+    set_wheel_motor_2_direction_forward();
+
+    mouse_delta delta = compute_mouse_delta(0.0, 1.0);
+
+    DOUBLES_EQUAL(0.0, delta.dx, FLOATING_POINT_TEST_TOLERANCE);
+    DOUBLES_EQUAL(0.0, delta.dy, FLOATING_POINT_TEST_TOLERANCE);
+
+    CHECK(delta.dtheta_rad != 0.0);
+}
+
+TEST(MockDeviceDriversTests, SpeedScaleHalvesDistance)
+{
+    set_wheel_motor_1_speed(200);
+    set_wheel_motor_2_speed(200);
+
+    set_motor_speed_scale(1.0);
+    mouse_delta normal = compute_mouse_delta(0.0, 1.0);
+
+    set_motor_speed_scale(0.5);
+    mouse_delta scaled = compute_mouse_delta(0.0, 1.0);
+
+    DOUBLES_EQUAL(normal.dx * 0.5, scaled.dx, 0.01);
+}
+
+TEST(MockDeviceDriversTests, MotorVarianceCausesTurning)
+{
+    set_wheel_motor_1_speed(200);
+    set_wheel_motor_2_speed(200);
+
+    set_motor_1_variance(0.1);
+
+    mouse_delta delta = compute_mouse_delta(0.0, 1.0);
+
+    CHECK(delta.dtheta_rad != 0.0);
+}
+
+TEST(MockDeviceDriversTests, SlipReducesDistance)
+{
+    set_wheel_motor_1_speed(200);
+    set_wheel_motor_2_speed(200);
+
+    mouse_delta normal = compute_mouse_delta(0.0, 1.0);
+
+    set_motor_slip_factor(0.5);
+
+    mouse_delta slipping = compute_mouse_delta(0.0, 1.0);
+
+    CHECK(slipping.dx < normal.dx);
+}
+
+TEST(MockDeviceDriversTests, SwappingMotorsFlipsRotation)
+{
+    set_wheel_motor_1_speed(100);
+    set_wheel_motor_2_speed(200);
+
+    mouse_delta a = compute_mouse_delta(0.0, 1.0);
+
+    set_wheel_motor_1_speed(200);
+    set_wheel_motor_2_speed(100);
+
+    mouse_delta b = compute_mouse_delta(0.0, 1.0);
+
+    DOUBLES_EQUAL(a.dtheta_rad, -b.dtheta_rad, FLOATING_POINT_TEST_TOLERANCE);
+}
+
+TEST(MockDeviceDriversTests, DistanceProportionalToPWM)
+{
+    set_wheel_motor_1_speed(100);
+    set_wheel_motor_2_speed(100);
+
+    mouse_delta slow = compute_mouse_delta(0.0, 1.0);
+
+    set_wheel_motor_1_speed(200);
+    set_wheel_motor_2_speed(200);
+
+    mouse_delta fast = compute_mouse_delta(0.0, 1.0);
+
+    CHECK(fast.dx > slow.dx);
 }

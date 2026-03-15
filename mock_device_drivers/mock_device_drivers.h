@@ -10,10 +10,11 @@
 /*----------------------------------------------------------------------------*/
 /*                             Public Definitions                             */
 /*----------------------------------------------------------------------------*/
-struct displacement
+struct mouse_delta
 {
     double dx;
     double dy;
+    double dtheta_rad;
 };
 
 /*----------------------------------------------------------------------------*/
@@ -30,7 +31,10 @@ void set_ir_1_sensor_reading(uint32_t reading);
 void set_ir_2_sensor_reading(uint32_t reading);
 void set_ir_3_sensor_reading(uint32_t reading);
 void set_ir_4_sensor_reading(uint32_t reading);
-struct displacement compute_mouse_position_change(int time_elapsed);
-double compute_mouse_angle_change(int time_elapsed);
+void set_motor_speed_scale(double speed_scale);
+void set_motor_1_variance(double variance);
+void set_motor_2_variance(double variance);
+void set_motor_slip_factor(double slip_factor);
+struct mouse_delta compute_mouse_delta(double current_mouse_angle, double time_elapsed_sec);
 
 #endif /* MOCK_DEVICE_DRIVERS_HPP_ */

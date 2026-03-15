@@ -42,10 +42,22 @@ uint8_t wheel_motor_2_speed = 0u;
 enum wheel_motor_direction wheel_motor_1_direction = FORWARD_DIRECTION;
 enum wheel_motor_direction wheel_motor_2_direction = FORWARD_DIRECTION;
 
-static const double MAX_ENCODER_TICKS_PER_SECOND = (4900.0 / 60.0) * (60.8077 / 4);
+static const double MAX_MOTOR_RPM = 4900.0;
+static const double ENCODER_EVENTS_PER_REVOLUTION = 60.8077;
+static double MAX_ENCODER_TICKS_PER_SECOND = (MAX_MOTOR_RPM / 60.0) * (ENCODER_EVENTS_PER_REVOLUTION / 4);
 
 int32_t encoder_1_ticks = 0;
 int32_t encoder_2_ticks = 0;
+
+static const double GEAR_RATIO = 13.0 / 44.0;
+static const double WHEEL_DIAMETER_MM = 32.0;
+static const double WHEEL_BASE_MM = 87.56;
+static double WHEEL_CIRCUMFERENCE_MM = M_PI * WHEEL_DIAMETER_MM;
+
+double motor_speed_scale = 1.0;
+double motor_1_variance = 0.0;
+double motor_2_variance = 0.0;
+double motor_slip_factor = 1.0;
 
 /*----------------------------------------------------------------------------*/
 /*                             Public Definitions                             */
@@ -65,6 +77,11 @@ void reset_mock_device_drivers(void)
 
     encoder_1_ticks = 0;
     encoder_2_ticks = 0;
+
+    motor_speed_scale = 1.0;
+    motor_1_variance = 0.0;
+    motor_2_variance = 0.0;
+    motor_slip_factor = 1.0;
 }
 
 uint32_t compute_ir_sensor_reading_from_distance_mm(double distance)
@@ -126,15 +143,82 @@ void set_encoder_2_ticks(int32_t ticks)
     encoder_2_ticks = ticks;
 }
 
-struct displacement compute_mouse_position_change(int time_elapsed)
+void set_motor_speed_scale(double speed_scale)
 {
-    struct displacement val = {0};
-    return val;
+    motor_speed_scale = speed_scale;
 }
 
-double compute_mouse_angle_change(int time_elapsed)
+void set_motor_1_variance(double variance)
 {
-    return 0.0;
+    motor_1_variance = variance;
+}
+
+void set_motor_2_variance(double variance)
+{
+    motor_2_variance = variance;
+}
+
+void set_motor_slip_factor(double slip_factor)
+{
+    motor_slip_factor = slip_factor;
+}
+
+struct mouse_delta compute_mouse_delta(double current_mouse_angle, double time_elapsed_sec)
+{
+    double motor_1_rpm =
+        (wheel_motor_1_speed / 255.0) *
+        MAX_MOTOR_RPM *
+        motor_speed_scale *
+        (1.0 + motor_1_variance) *
+        wheel_motor_1_direction;
+
+    double motor_2_rpm =
+        (wheel_motor_2_speed / 255.0) *
+        MAX_MOTOR_RPM *
+        motor_speed_scale *
+        (1.0 + motor_2_variance) *
+        wheel_motor_2_direction;
+
+    double wheel_1_rpm = motor_1_rpm * GEAR_RATIO;
+    double wheel_2_rpm = motor_2_rpm * GEAR_RATIO;
+
+    double velocity_1 =
+        wheel_1_rpm *
+        WHEEL_CIRCUMFERENCE_MM /
+        60.0;
+
+    double velocity_2 =
+        wheel_2_rpm *
+        WHEEL_CIRCUMFERENCE_MM /
+        60.0;
+
+    double combined_velocity = (velocity_1 + velocity_2) / 2.0;
+
+    double omega =
+        (velocity_2 - velocity_1) /
+        WHEEL_BASE_MM;
+
+    double distance =
+        combined_velocity *
+        time_elapsed_sec *
+        motor_slip_factor;
+
+    double dtheta =
+        omega *
+        time_elapsed_sec *
+        motor_slip_factor;
+
+    struct mouse_delta delta = {0};
+
+    delta.dx =
+        distance * cos(current_mouse_angle);
+
+    delta.dy =
+        distance * sin(current_mouse_angle);
+
+    delta.dtheta_rad = dtheta;
+
+    return delta;
 }
 
 /* -------------------------------------------------------------------------- */
