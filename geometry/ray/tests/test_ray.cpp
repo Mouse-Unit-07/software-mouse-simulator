@@ -89,3 +89,10 @@ TEST(RayTests, EqualityOperatorOverloaded)
 
     CHECK(test_ray == test_ray_2);
 }
+
+TEST(RayTests, InequalityOperatorOverloaded)
+{
+    geometry::Ray test_ray_2{geometry::Point{1.0, 1.0}, test_angle};
+
+    CHECK(test_ray != test_ray_2);
+}
