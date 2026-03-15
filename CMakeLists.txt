@@ -19,6 +19,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(device_drivers)
 
 # \/=== Add all library directories (each w/ a CMakeLists.txt)
+add_subdirectory(mock_device_drivers)
 add_subdirectory(mouse)
 add_subdirectory(obstacle)
 add_subdirectory(optimizer)
