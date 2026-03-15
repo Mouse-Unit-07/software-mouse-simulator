@@ -58,23 +58,23 @@ TEST(MouseTests, TranslateMovesHitboxAndRays)
 
     double test_dx = 10.0;
     double test_dy = 5.0;
-    geometry::Point center = test_mouse.hitbox.center;
-    geometry::Point ir_1_origin = test_mouse.ir_1_sensor.origin;
-    geometry::Point ir_2_origin = test_mouse.ir_2_sensor.origin;
-    geometry::Point ir_3_origin = test_mouse.ir_3_sensor.origin;
-    geometry::Point ir_4_origin = test_mouse.ir_4_sensor.origin;
+    geometry::RectangularHitbox test_hitbox = test_mouse.hitbox;
+    geometry::Ray ir_1 = test_mouse.ir_1_sensor;
+    geometry::Ray ir_2 = test_mouse.ir_2_sensor;
+    geometry::Ray ir_3 = test_mouse.ir_3_sensor;
+    geometry::Ray ir_4 = test_mouse.ir_4_sensor;
     test_mouse.translate(test_dx, test_dy);
 
-    center.translate(test_dx, test_dy);
-    ir_1_origin.translate(test_dx, test_dy);
-    ir_2_origin.translate(test_dx, test_dy);
-    ir_3_origin.translate(test_dx, test_dy);
-    ir_4_origin.translate(test_dx, test_dy);
-    CHECK(test_mouse.hitbox.center == center);
-    CHECK(test_mouse.ir_1_sensor.origin == ir_1_origin);
-    CHECK(test_mouse.ir_2_sensor.origin == ir_2_origin);
-    CHECK(test_mouse.ir_3_sensor.origin == ir_3_origin);
-    CHECK(test_mouse.ir_4_sensor.origin == ir_4_origin);
+    test_hitbox.translate(test_dx, test_dy);
+    ir_1.translate(test_dx, test_dy);
+    ir_2.translate(test_dx, test_dy);
+    ir_3.translate(test_dx, test_dy);
+    ir_4.translate(test_dx, test_dy);
+    CHECK(test_mouse.hitbox == test_hitbox);
+    CHECK(test_mouse.ir_1_sensor == ir_1);
+    CHECK(test_mouse.ir_2_sensor == ir_2);
+    CHECK(test_mouse.ir_3_sensor == ir_3);
+    CHECK(test_mouse.ir_4_sensor == ir_4);
 }
 
 TEST(MouseTests, RotateMovesHitboxAndRaysAboutHitboxCenter)
