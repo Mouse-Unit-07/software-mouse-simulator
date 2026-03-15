@@ -31,10 +31,10 @@ void set_ir_1_sensor_reading(uint32_t reading);
 void set_ir_2_sensor_reading(uint32_t reading);
 void set_ir_3_sensor_reading(uint32_t reading);
 void set_ir_4_sensor_reading(uint32_t reading);
-void set_motor_speed_scale(double speed_scale);
-void set_motor_1_variance(double variance);
-void set_motor_2_variance(double variance);
-void set_motor_slip_factor(double slip_factor);
+void set_motor_speed_scale(double scale);
+void set_motor_1_variance(double variance); /* pass value from -1.0 to 1.0 */
+void set_motor_2_variance(double variance); /* pass value from -1.0 to 1.0 */
+void set_motor_slip_factor(double factor);
 void set_wheel_circumference_scale(double scale);
 void set_wheel_base_scale(double scale);
 struct mouse_delta compute_mouse_delta(double current_mouse_angle, double time_elapsed_sec);

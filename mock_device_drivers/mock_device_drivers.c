@@ -147,9 +147,9 @@ void set_encoder_2_ticks(int32_t ticks)
     encoder_2_ticks = ticks;
 }
 
-void set_motor_speed_scale(double speed_scale)
+void set_motor_speed_scale(double scale)
 {
-    motor_speed_scale = speed_scale;
+    motor_speed_scale = scale;
 }
 
 void set_motor_1_variance(double variance)
@@ -162,9 +162,9 @@ void set_motor_2_variance(double variance)
     motor_2_variance = variance;
 }
 
-void set_motor_slip_factor(double slip_factor)
+void set_motor_slip_factor(double factor)
 {
-    motor_slip_factor = slip_factor;
+    motor_slip_factor = factor;
 }
 
 void set_wheel_circumference_scale(double scale)
