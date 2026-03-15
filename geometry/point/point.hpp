@@ -30,6 +30,7 @@ class Point
         void rotate(const Point& center, double angle_rad) noexcept;
 
         bool operator==(const Point& other) const noexcept;
+        bool operator!=(const Point& other) const noexcept;
 };
 
 } /* geometry namespace */

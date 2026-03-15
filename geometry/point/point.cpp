@@ -19,7 +19,18 @@ extern "C"
 /*----------------------------------------------------------------------------*/
 /*                            Private Declarations                            */
 /*----------------------------------------------------------------------------*/
-/* none */
+namespace
+{
+
+bool check_point_equality(const geometry::Point& p1, const geometry::Point& p2)
+{
+    constexpr double tolerance {1e-6};
+
+    return (std::abs(p1.x - p2.x) <= tolerance)
+        && (std::abs(p1.y - p2.y) <= tolerance);
+}
+
+}
 
 /*----------------------------------------------------------------------------*/
 /*                               Private Globals                              */
@@ -68,10 +79,12 @@ void Point::rotate(const Point& center, double angle_rad) noexcept
 
 bool Point::operator==(const Point& other) const noexcept
 {
-    constexpr double tolerance {1e-6};
+    return check_point_equality(*this, other);
+}
 
-    return (std::abs(x - other.x) <= tolerance)
-        && (std::abs(y - other.y) <= tolerance);
+bool Point::operator!=(const Point& other) const noexcept
+{
+    return !check_point_equality(*this, other);
 }
 
 } /* geometry namespace */

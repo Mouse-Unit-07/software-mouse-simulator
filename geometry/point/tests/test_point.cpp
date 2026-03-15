@@ -94,3 +94,10 @@ TEST(PointTests, EqualityOperatorOverloaded)
     geometry::Point b {1.0, 1.0};
     CHECK(a == b);
 }
+
+TEST(PointTests, InequalityOperatorOverloaded)
+{
+    geometry::Point a {1.0, 1.0};
+    geometry::Point b {2.0, 2.0};
+    CHECK(a != b);
+}
