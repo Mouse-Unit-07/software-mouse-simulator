@@ -33,7 +33,7 @@ extern "C"
 namespace geometry
 {
 
-RectangularHitbox::RectangularHitbox(Point center, double horizontal_size, double vertical_size)
+RectangularHitbox::RectangularHitbox(const Point& center, double horizontal_size, double vertical_size)
     : center{center}, horizontal_size{horizontal_size}, vertical_size{vertical_size}
 {
     edge_1 = Point{center.x + (horizontal_size / 2), center.y + (vertical_size / 2)};
