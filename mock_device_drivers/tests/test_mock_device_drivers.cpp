@@ -157,7 +157,7 @@ TEST(MockDeviceDriversTests, SpeedScaleHalvesDistance)
     set_motor_speed_scale(0.5);
     mouse_delta scaled = compute_mouse_delta(0.0, 1.0);
 
-    DOUBLES_EQUAL(normal.dx * 0.5, scaled.dx, 0.01);
+    DOUBLES_EQUAL(normal.dx * 0.5, scaled.dx, FLOATING_POINT_TEST_TOLERANCE);
 }
 
 TEST(MockDeviceDriversTests, MotorVarianceCausesTurning)
@@ -184,6 +184,20 @@ TEST(MockDeviceDriversTests, SlipReducesDistance)
     mouse_delta slipping = compute_mouse_delta(0.0, 1.0);
 
     CHECK(slipping.dx < normal.dx);
+}
+
+TEST(MockDeviceDriversTests, WheelCircumferenceScaleHalvesDistance)
+{
+    set_wheel_motor_1_speed(200);
+    set_wheel_motor_2_speed(200);
+
+    set_wheel_circumference_scale(1.0);
+    mouse_delta normal = compute_mouse_delta(0.0, 1.0);
+
+    set_wheel_circumference_scale(0.5);
+    mouse_delta scaled = compute_mouse_delta(0.0, 1.0);
+
+    DOUBLES_EQUAL(normal.dx * 0.5, scaled.dx, FLOATING_POINT_TEST_TOLERANCE);
 }
 
 TEST(MockDeviceDriversTests, SwappingMotorsFlipsRotation)
