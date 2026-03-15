@@ -20,7 +20,12 @@ extern "C"
 /*----------------------------------------------------------------------------*/
 /*                            Private Declarations                            */
 /*----------------------------------------------------------------------------*/
-/* none */
+namespace
+{
+
+bool check_hitbox_equality(const geometry::RectangularHitbox& h1, const geometry::RectangularHitbox& h2);
+
+}
 
 /*----------------------------------------------------------------------------*/
 /*                               Private Globals                              */
@@ -62,13 +67,12 @@ void RectangularHitbox::rotate(const Point& center, double angle_rad) noexcept
 
 bool RectangularHitbox::operator==(const RectangularHitbox& other) const noexcept
 {
-    constexpr double tolerance {1e-6};
+    return check_hitbox_equality(*this, other);
+}
 
-    return (std::abs(horizontal_size - other.horizontal_size) <= tolerance)
-        && (std::abs(vertical_size - other.vertical_size) <= tolerance)
-        && (center == other.center) && (edge_1 == other.edge_1)
-        && (edge_2 == other.edge_2) && (edge_3 == other.edge_3) 
-        && (edge_4 == other.edge_4);
+bool RectangularHitbox::operator!=(const RectangularHitbox& other) const noexcept
+{
+    return !check_hitbox_equality(*this, other);
 }
 
 } /* geometry namespace */
@@ -76,4 +80,18 @@ bool RectangularHitbox::operator==(const RectangularHitbox& other) const noexcep
 /*----------------------------------------------------------------------------*/
 /*                             Private Definitions                            */
 /*----------------------------------------------------------------------------*/
-/* none */
+namespace
+{
+
+bool check_hitbox_equality(const geometry::RectangularHitbox& h1, const geometry::RectangularHitbox& h2)
+{
+    constexpr double tolerance {1e-6};
+
+    return (std::abs(h1.horizontal_size - h2.horizontal_size) <= tolerance)
+        && (std::abs(h1.vertical_size - h2.vertical_size) <= tolerance)
+        && (h1.center == h2.center) && (h1.edge_1 == h2.edge_1)
+        && (h1.edge_2 == h2.edge_2) && (h1.edge_3 == h2.edge_3) 
+        && (h1.edge_4 == h2.edge_4);
+}
+
+}

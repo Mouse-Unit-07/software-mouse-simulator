@@ -32,6 +32,7 @@ class Mouse
         void rotate(double angle_rad) noexcept;
 
         bool operator==(const Mouse& other) const noexcept;
+        bool operator!=(const Mouse& other) const noexcept;
 };
 
 }

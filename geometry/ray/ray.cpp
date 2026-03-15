@@ -20,7 +20,12 @@ extern "C"
 /*----------------------------------------------------------------------------*/
 /*                            Private Declarations                            */
 /*----------------------------------------------------------------------------*/
-/* none */
+namespace
+{
+
+bool check_ray_inequality(const geometry::Ray& r1, const geometry::Ray& r2);
+
+}
 
 /*----------------------------------------------------------------------------*/
 /*                               Private Globals                              */
@@ -56,7 +61,12 @@ void Ray::rotate(const Point& center, double angle_rad) noexcept
 
 bool Ray::operator==(const Ray& other) const noexcept
 {
-    return (origin == other.origin) && (direction == other.direction);
+    return check_ray_inequality(*this, other);
+}
+
+bool Ray::operator!=(const Ray& other) const noexcept
+{
+    return !check_ray_inequality(*this, other);
 }
 
 } /* geometry namespace */
@@ -64,4 +74,12 @@ bool Ray::operator==(const Ray& other) const noexcept
 /*----------------------------------------------------------------------------*/
 /*                             Private Definitions                            */
 /*----------------------------------------------------------------------------*/
-/* none */
+namespace
+{
+
+bool check_ray_inequality(const geometry::Ray& r1, const geometry::Ray& r2)
+{
+    return (r1.origin == r2.origin) && (r1.direction == r2.direction);
+}
+
+}

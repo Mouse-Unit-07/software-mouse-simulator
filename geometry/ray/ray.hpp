@@ -29,6 +29,7 @@ class Ray
         void rotate(const Point& center, double angle_rad) noexcept;
 
         bool operator==(const Ray& other) const noexcept;
+        bool operator!=(const Ray& other) const noexcept;
 };
 
 } /* geometry namespace */
