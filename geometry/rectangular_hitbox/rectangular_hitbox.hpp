@@ -34,6 +34,7 @@ class RectangularHitbox
         void rotate(const Point& center, double angle_rad) noexcept;
 
         bool operator==(const RectangularHitbox& other) const noexcept;
+        bool operator!=(const RectangularHitbox& other) const noexcept;
 };
 
 } /* geometry namespace */

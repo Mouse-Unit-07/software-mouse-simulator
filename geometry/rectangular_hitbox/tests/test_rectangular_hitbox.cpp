@@ -115,3 +115,10 @@ TEST(RectangularHitboxTests, EqualityOperatorOverloaded)
 
     CHECK(test_hitbox_2 == test_hitbox);
 }
+
+TEST(RectangularHitboxTests, InequalityOperatorOverloaded)
+{
+    geometry::RectangularHitbox test_hitbox_2 {geometry::Point{1.0, 1.0}, test_horizontal_size, test_vertical_size};
+
+    CHECK(test_hitbox_2 != test_hitbox);
+}
