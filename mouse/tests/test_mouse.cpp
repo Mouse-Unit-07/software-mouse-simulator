@@ -8,6 +8,10 @@
 /*============================================================================*/
 /*                               Include Files                                */
 /*============================================================================*/
+#include <cmath>
+#include "point.hpp"
+#include "ray.hpp"
+#include "rectangular_hitbox.hpp"
 #include "mouse.hpp"
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
@@ -41,7 +45,9 @@ TEST_GROUP(MouseTests)
 /*============================================================================*/
 /*                                    Tests                                   */
 /*============================================================================*/
-TEST(MouseTests, DeleteMe)
+TEST(MouseTests, ConstructorInitializesCoordinatesToZero)
 {
-    
+    mouse::Mouse test_mouse;
+    DOUBLES_EQUAL(0.0, test_mouse.hitbox.center.x, 1e-6);
+    DOUBLES_EQUAL(0.0, test_mouse.hitbox.center.y, 1e-6);
 }
