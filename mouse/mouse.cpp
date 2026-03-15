@@ -79,6 +79,15 @@ void Mouse::rotate(double angle_rad) noexcept
     ir_4_sensor.rotate(hitbox.center, angle_rad);
 }
 
+bool Mouse::operator==(const Mouse& other) const noexcept
+{
+    return (hitbox == other.hitbox)
+        && (ir_1_sensor == other.ir_1_sensor)
+        && (ir_2_sensor == other.ir_2_sensor)
+        && (ir_3_sensor == other.ir_3_sensor)
+        && (ir_4_sensor == other.ir_4_sensor);
+}
+
 }
 
 /*----------------------------------------------------------------------------*/

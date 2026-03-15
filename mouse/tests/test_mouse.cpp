@@ -101,3 +101,18 @@ TEST(MouseTests, RotateMovesHitboxAndRaysAboutHitboxCenter)
     CHECK(test_mouse.ir_3_sensor == ir_3);
     CHECK(test_mouse.ir_4_sensor == ir_4);
 }
+
+TEST(MouseTests, EqualityOperatorOverloaded)
+{
+    mouse::Mouse test_mouse;
+    mouse::Mouse test_mouse_2;
+    mouse::Mouse test_mouse_3;
+    CHECK(test_mouse == test_mouse_2);
+    CHECK(test_mouse == test_mouse_3);
+
+    test_mouse_2.translate(10.0, 20.0);
+    test_mouse_3.rotate(M_PI / 2.0);
+
+    CHECK(!(test_mouse == test_mouse_2));
+    CHECK(!(test_mouse == test_mouse_3));
+}
