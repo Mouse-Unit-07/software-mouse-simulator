@@ -76,3 +76,28 @@ TEST(MouseTests, TranslateMovesHitboxAndRays)
     CHECK(test_mouse.ir_3_sensor.origin == ir_3_origin);
     CHECK(test_mouse.ir_4_sensor.origin == ir_4_origin);
 }
+
+TEST(MouseTests, RotateMovesHitboxAndRaysAboutHitboxCenter)
+{
+    mouse::Mouse test_mouse;
+
+    double test_angle = M_PI / 4.0;
+    geometry::Point center = test_mouse.hitbox.center;
+    geometry::RectangularHitbox test_hitbox = test_mouse.hitbox;
+    geometry::Ray ir_1 = test_mouse.ir_1_sensor;
+    geometry::Ray ir_2 = test_mouse.ir_2_sensor;
+    geometry::Ray ir_3 = test_mouse.ir_3_sensor;
+    geometry::Ray ir_4 = test_mouse.ir_4_sensor;
+    test_mouse.rotate(test_angle);
+
+    test_hitbox.rotate(center, test_angle);
+    ir_1.rotate(center, test_angle);
+    ir_2.rotate(center, test_angle);
+    ir_3.rotate(center, test_angle);
+    ir_4.rotate(center, test_angle);
+    CHECK(test_mouse.hitbox == test_hitbox);
+    CHECK(test_mouse.ir_1_sensor == ir_1);
+    CHECK(test_mouse.ir_2_sensor == ir_2);
+    CHECK(test_mouse.ir_3_sensor == ir_3);
+    CHECK(test_mouse.ir_4_sensor == ir_4);
+}

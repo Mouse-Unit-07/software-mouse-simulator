@@ -70,6 +70,15 @@ void Mouse::translate(double dx, double dy) noexcept
     ir_4_sensor.translate(dx, dy);
 }
 
+void Mouse::rotate(double angle_rad) noexcept
+{
+    hitbox.rotate(hitbox.center, angle_rad);
+    ir_1_sensor.rotate(hitbox.center, angle_rad);
+    ir_2_sensor.rotate(hitbox.center, angle_rad);
+    ir_3_sensor.rotate(hitbox.center, angle_rad);
+    ir_4_sensor.rotate(hitbox.center, angle_rad);
+}
+
 }
 
 /*----------------------------------------------------------------------------*/
