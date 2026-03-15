@@ -22,7 +22,12 @@ extern "C"
 /*----------------------------------------------------------------------------*/
 /*                            Private Declarations                            */
 /*----------------------------------------------------------------------------*/
-/* none */
+namespace
+{
+
+bool check_mouse_equality(const mouse::Mouse& m1, const mouse::Mouse& m2);
+
+}
 
 /*----------------------------------------------------------------------------*/
 /*                               Private Globals                              */
@@ -81,11 +86,12 @@ void Mouse::rotate(double angle_rad) noexcept
 
 bool Mouse::operator==(const Mouse& other) const noexcept
 {
-    return (hitbox == other.hitbox)
-        && (ir_1_sensor == other.ir_1_sensor)
-        && (ir_2_sensor == other.ir_2_sensor)
-        && (ir_3_sensor == other.ir_3_sensor)
-        && (ir_4_sensor == other.ir_4_sensor);
+    return check_mouse_equality(*this, other);
+}
+
+bool Mouse::operator!=(const Mouse& other) const noexcept
+{
+    return !check_mouse_equality(*this, other);
 }
 
 }
@@ -93,4 +99,16 @@ bool Mouse::operator==(const Mouse& other) const noexcept
 /*----------------------------------------------------------------------------*/
 /*                             Private Definitions                            */
 /*----------------------------------------------------------------------------*/
-/* none */
+namespace
+{
+
+bool check_mouse_equality(const mouse::Mouse& m1, const mouse::Mouse& m2)
+{
+    return (m1.hitbox == m2.hitbox)
+        && (m1.ir_1_sensor == m2.ir_1_sensor)
+        && (m1.ir_2_sensor == m2.ir_2_sensor)
+        && (m1.ir_3_sensor == m2.ir_3_sensor)
+        && (m1.ir_4_sensor == m2.ir_4_sensor);
+}
+
+}
