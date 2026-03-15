@@ -52,7 +52,7 @@ bool are_hitboxes_separated_on_axis(const geometry::RectangularHitbox& a,
 namespace geometry
 {
 
-std::optional<double> ray_hitbox_distance(const Ray& ray,
+std::optional<double> compute_ray_hitbox_distance(const Ray& ray,
     const RectangularHitbox& hitbox)
 {
     std::optional<double> closest;

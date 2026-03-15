@@ -28,7 +28,7 @@ class RectangularHitbox
         Point edge_4;
         double vertical_size;
         double horizontal_size;
-        RectangularHitbox(Point center, double horizontal_size, double vertical_size);
+        RectangularHitbox(const Point& center, double horizontal_size, double vertical_size);
 
         void translate(double dx, double dy) noexcept;
         void rotate(const Point& center, double angle_rad) noexcept;
