@@ -22,13 +22,7 @@ extern "C"
 namespace
 {
 
-bool check_point_equality(const geometry::Point& p1, const geometry::Point& p2)
-{
-    constexpr double tolerance {1e-6};
-
-    return (std::abs(p1.x - p2.x) <= tolerance)
-        && (std::abs(p1.y - p2.y) <= tolerance);
-}
+bool check_point_equality(const geometry::Point& p1, const geometry::Point& p2);
 
 }
 
@@ -92,4 +86,15 @@ bool Point::operator!=(const Point& other) const noexcept
 /*----------------------------------------------------------------------------*/
 /*                             Private Definitions                            */
 /*----------------------------------------------------------------------------*/
-/* none */
+namespace
+{
+
+bool check_point_equality(const geometry::Point& p1, const geometry::Point& p2)
+{
+    constexpr double tolerance {1e-6};
+
+    return (std::abs(p1.x - p2.x) <= tolerance)
+        && (std::abs(p1.y - p2.y) <= tolerance);
+}
+
+}
