@@ -18,7 +18,7 @@ FetchContent_MakeAvailable(device_drivers)
 
 add_subdirectory(mock_device_drivers)
 add_subdirectory(mouse)
-add_subdirectory(obstacle)
+add_subdirectory(maze)
 add_subdirectory(optimizer)
 add_subdirectory(geometry/interactions)
 add_subdirectory(geometry/point)
