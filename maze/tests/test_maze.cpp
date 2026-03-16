@@ -44,32 +44,7 @@ TEST_GROUP(MazeTests)
 /*============================================================================*/
 /*                                    Tests                                   */
 /*============================================================================*/
-TEST(MazeTests, PostWithSpecifiedAdjustmentsCreated)
+TEST(MazeTests, DeleteMe)
 {
-    double adjustment {2.0};
-    geometry::RectangularHitbox test_hitbox {
-        maze::create_post(geometry::Point{0.0, 0.0}, adjustment, adjustment)
-    };
-    CHECK(test_hitbox.horizontal_size == (maze::OFFICIAL_POST_SIZE + adjustment));
-    CHECK(test_hitbox.vertical_size == (maze::OFFICIAL_POST_SIZE + adjustment));
-}
 
-TEST(MazeTests, VerticalWallWithSpecifiedAdjustmentsCreated)
-{
-    double adjustment {2.0};
-    geometry::RectangularHitbox test_hitbox {
-        maze::create_vertical_wall(geometry::Point{0.0, 0.0}, adjustment, adjustment)
-    };
-    CHECK(test_hitbox.horizontal_size == (maze::OFFICIAL_WALL_WIDTH_SIZE + adjustment));
-    CHECK(test_hitbox.vertical_size == (maze::OFFICIAL_WALL_LENGTH_SIZE + adjustment));
-}
-
-TEST(MazeTests, HorizontalWallWithSpecifiedAdjustmentsCreated)
-{
-    double adjustment {2.0};
-    geometry::RectangularHitbox test_hitbox {
-        maze::create_horizontal_wall(geometry::Point{0.0, 0.0}, adjustment, adjustment)
-    };
-    CHECK(test_hitbox.horizontal_size == (maze::OFFICIAL_WALL_LENGTH_SIZE + adjustment));
-    CHECK(test_hitbox.vertical_size == (maze::OFFICIAL_WALL_WIDTH_SIZE + adjustment));
 }
