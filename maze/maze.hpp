@@ -13,7 +13,28 @@
 namespace maze
 {
 
+constexpr double OFFICIAL_POST_SIZE {12.07};
+constexpr double OFFICIAL_WALL_LENGTH_SIZE {166.37};
+constexpr double OFFICIAL_WALL_WIDTH_SIZE {12.07};
 
+constexpr double CELL_SIZE {OFFICIAL_WALL_LENGTH_SIZE + OFFICIAL_POST_SIZE};
+
+struct Cell
+{
+    std::vector<const geometry::RectangularHitbox*> obstacles;
+};
+
+class Maze
+{
+    public:
+        int rows {0};
+        int cols {0};
+        std::vector<geometry::RectangularHitbox> obstacles;
+        std::vector<Cell> cells;
+        geometry::Point mouse_start;
+
+        const Cell& get_cell(int row, int col) const;
+};
 
 } /* maze namespace */
 
@@ -23,7 +44,7 @@ namespace maze
 namespace maze
 {
 
-
+Maze build_from_ascii(const std::vector<std::string>& ascii, double obstacle_size_adjustment);
 
 } /* maze namespace */
 
