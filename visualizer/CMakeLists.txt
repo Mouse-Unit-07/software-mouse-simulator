@@ -36,7 +36,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(SFML)
 
-target_link_libraries(visualizer_lib PRIVATE
+target_link_libraries(visualizer_lib PUBLIC
     sfml-graphics
     sfml-window
     sfml-system

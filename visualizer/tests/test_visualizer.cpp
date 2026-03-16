@@ -11,9 +11,12 @@
 #include <cmath>
 #include <vector>
 #include <string>
+#include <SFML/Graphics.hpp>
 #include "point.hpp"
 #include "ray.hpp"
 #include "rectangular_hitbox.hpp"
+#include "mouse.hpp"
+#include "maze.hpp"
 #include "visualizer.hpp"
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
@@ -47,7 +50,67 @@ TEST_GROUP(VisualizerTests)
 /*============================================================================*/
 /*                                    Tests                                   */
 /*============================================================================*/
-TEST(VisualizerTests, DeleteMe)
+IGNORE_TEST(VisualizerTests, DrawEmptyMaze)
 {
-    
+    maze::Maze maze;
+    maze.rows = 4;
+    maze.cols = 4;
+
+    visualizer::run_visual_maze_test(maze);
+}
+
+IGNORE_TEST(VisualizerTests, DrawMazeWithObstacles)
+{
+    std::vector<std::string> ascii =
+    {
+        "+-+ +",
+        "|S|  ",
+        "+-+-+",
+        "  |  ",
+        "+ +-+"
+    };
+
+    maze::Maze maze = maze::build_from_ascii(ascii, 0);
+    visualizer::run_visual_maze_test(maze);
+}
+
+IGNORE_TEST(VisualizerTests, DrawFullMaze)
+{
+    std::vector<std::string> ascii =
+    {
+        "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+",
+        "| | | | | | | | | | | | | | | | |",
+        "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+",
+        "| | | | | | | | | | | | | | | | |",
+        "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+",
+        "| | | | | | | | | | | | | | | | |",
+        "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+",
+        "| | | | | | | | | | | | | | | | |",
+        "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+",
+        "| | | | | | | | | | | | | | | | |",
+        "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+",
+        "| | | | | | | | | | | | | | | | |",
+        "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+",
+        "| | | | | | | | | | | | | | | | |",
+        "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+",
+        "| | | | | | | | | | | | | | | | |",
+        "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+",
+        "| | | | | | | | | | | | | | | | |",
+        "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+",
+        "| | | | | | | | | | | | | | | | |",
+        "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+",
+        "| | | | | | | | | | | | | | | | |",
+        "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+",
+        "| | | | | | | | | | | | | | | | |",
+        "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+",
+        "| | | | | | | | | | | | | | | | |",
+        "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+",
+        "| | | | | | | | | | | | | | | | |",
+        "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+",
+        "|S| | | | | | | | | | | | | | | |",
+        "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+"
+    };
+
+    maze::Maze maze = maze::build_from_ascii(ascii, 0);
+    visualizer::run_visual_maze_test(maze, 40.0f);
 }

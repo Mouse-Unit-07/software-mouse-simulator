@@ -23,4 +23,6 @@ target_link_libraries(test_visualizer PRIVATE
     CppUTestExt
 )
 
+target_compile_definitions(test_visualizer PRIVATE SFML_STATIC)
+
 add_test(NAME test_visualizer COMMAND test_visualizer)
