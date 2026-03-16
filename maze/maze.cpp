@@ -61,23 +61,23 @@ Maze build_from_ascii(const std::vector<std::string>& ascii, double obstacle_siz
 {
     Maze maze;
 
-    int ascii_rows = ascii.size();
-    int ascii_cols = ascii[0].size();
+    int ascii_rows {static_cast<int>(ascii.size())};
+    int ascii_cols {static_cast<int>(ascii[0].size())};
 
     maze.rows = (ascii_rows - 1) / 2;
     maze.cols = (ascii_cols - 1) / 2;
 
     maze.cells.resize(maze.rows * maze.cols);
 
-    double adjusted_cell_size = CELL_SIZE + (obstacle_size_adjustment * 2);
+    double adjusted_cell_size {CELL_SIZE + (obstacle_size_adjustment * 2)};
 
-    for (int r = 0; r < ascii_rows; ++r)
+    for (int r {0}; r < ascii_rows; r++)
     {
-        for (int c = 0; c < ascii_cols; ++c)
+        for (int c {0}; c < ascii_cols; c++)
         {
-            char ch = ascii[r][c];
+            char ch {ascii[r][c]};
 
-            geometry::Point center = ascii_to_world(r, c, adjusted_cell_size);
+            geometry::Point center {ascii_to_world(r, c, adjusted_cell_size)};
 
             if (ch == '+')
             {
@@ -99,8 +99,8 @@ Maze build_from_ascii(const std::vector<std::string>& ascii, double obstacle_siz
 
             else if (ch == 'S')
             {
-                int cell_r = r / 2;
-                int cell_c = c / 2;
+                int cell_r {r / 2};
+                int cell_c {c / 2};
 
                 maze.mouse_start =
                 {
@@ -151,8 +151,8 @@ geometry::RectangularHitbox create_horizontal_wall(const geometry::Point& center
 
 geometry::Point ascii_to_world(int r, int c, double cell_size)
 {
-    double x = (c / 2.0) * cell_size;
-    double y = (r / 2.0) * cell_size;
+    double x {(c / 2.0) * cell_size};
+    double y {(r / 2.0) * cell_size};
 
     return {x, y};
 }
@@ -170,9 +170,9 @@ void attach_to_cell(maze::Maze& maze, const geometry::RectangularHitbox& obstacl
 void attach_vertical_wall_cells(maze::Maze& maze, const geometry::RectangularHitbox& wall,
         int r, int c)
 {
-    int cell_r = r / 2;
-    int left_cell  = (c / 2) - 1;
-    int right_cell = (c / 2);
+    int cell_r {r / 2};
+    int left_cell {(c / 2) - 1};
+    int right_cell {(c / 2)};
 
     attach_to_cell(maze, wall, cell_r, left_cell);
     attach_to_cell(maze, wall, cell_r, right_cell);
@@ -181,9 +181,9 @@ void attach_vertical_wall_cells(maze::Maze& maze, const geometry::RectangularHit
 void attach_horizontal_wall_cells(maze::Maze& maze, const geometry::RectangularHitbox& wall,
         int r, int c)
 {
-    int cell_c = c / 2;
-    int bottom_cell = (r / 2) - 1;
-    int top_cell    = (r / 2);
+    int cell_c {c / 2};
+    int bottom_cell {(r / 2) - 1};
+    int top_cell {r / 2};
 
     attach_to_cell(maze, wall, bottom_cell, cell_c);
     attach_to_cell(maze, wall, top_cell, cell_c);
@@ -192,8 +192,8 @@ void attach_horizontal_wall_cells(maze::Maze& maze, const geometry::RectangularH
 void attach_post_cells(maze::Maze& maze, const geometry::RectangularHitbox& post,
         int r, int c)
 {
-    int base_r = (r / 2) - 1;
-    int base_c = (c / 2) - 1;
+    int base_r {(r / 2) - 1};
+    int base_c {(c / 2) - 1};
 
     attach_to_cell(maze, post, base_r,     base_c);
     attach_to_cell(maze, post, base_r + 1, base_c);
