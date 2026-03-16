@@ -14,6 +14,6 @@ target_include_directories(optimizer_lib PUBLIC
 
 target_link_libraries(optimizer_lib PUBLIC
     mouse_lib
-    obstacle_lib
+    maze_lib
     interactions_lib
 )

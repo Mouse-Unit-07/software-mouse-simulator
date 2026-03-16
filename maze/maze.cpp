@@ -1,7 +1,7 @@
 /*-------------------------------- FILE INFO ---------------------------------*/
-/* Filename           : obstacle.cpp                                          */
+/* Filename           : maze.cpp                                              */
 /*                                                                            */
-/* Implementation for obstacle class for micromouse simulations               */
+/* Implementation for maze building logic for micromouse simulations          */
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
 
@@ -15,7 +15,7 @@ extern "C"
 
 #include "point.hpp"
 #include "rectangular_hitbox.hpp"
-#include "obstacle.hpp"
+#include "maze.hpp"
 
 /*----------------------------------------------------------------------------*/
 /*                            Private Declarations                            */
@@ -30,7 +30,7 @@ extern "C"
 /*----------------------------------------------------------------------------*/
 /*                             Public Definitions                             */
 /*----------------------------------------------------------------------------*/
-namespace obstacle
+namespace maze
 {
 
 geometry::RectangularHitbox create_post(const geometry::Point& center, 
@@ -63,7 +63,7 @@ geometry::RectangularHitbox create_horizontal_wall(const geometry::Point& center
     };
 }
 
-} /* obstacle namespace */
+} /* maze namespace */
 
 /*----------------------------------------------------------------------------*/
 /*                             Private Definitions                            */
