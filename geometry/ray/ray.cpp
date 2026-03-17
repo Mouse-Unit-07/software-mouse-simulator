@@ -50,13 +50,12 @@ Ray::Ray(const Point& origin, double angle_rad)
 void Ray::translate(double dx, double dy) noexcept
 {
     origin.translate(dx, dy);
-    direction.translate(dx, dy);
 }
 
 void Ray::rotate(const Point& center, double angle_rad) noexcept
 {
     origin.rotate(center, angle_rad);
-    direction.rotate(center, angle_rad);
+    direction.rotate(Point{0.0, 0.0}, angle_rad);
 }
 
 bool Ray::operator==(const Ray& other) const noexcept

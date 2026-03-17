@@ -59,29 +59,46 @@ TEST(RayTests, PointsMatchOnParameterizedConstructor)
     CHECK(test_ray.direction == test_direction);
 }
 
-TEST(RayTests, TranslateModifiesPoints)
+TEST(RayTests, TranslateModifiesOrigin)
 {
     double test_dx {-10.0};
     double test_dy {20.0};
     test_ray.translate(test_dx, test_dy);
     test_origin.translate(test_dx, test_dy);
-    test_direction.translate(test_dx, test_dy);
-
+    
     CHECK(test_ray.origin == test_origin);
-    CHECK(test_ray.direction == test_direction);
 }
 
-TEST(RayTests, RotateModifiesPoints)
+TEST(RayTests, RotateModifiesOrigin)
 {
-    geometry::Point center {0.0, 0.0};
+    geometry::Point center {5.0, 6.0};
     double angle {M_PI / 2}; /* 90 deg counter clockwise */
     test_ray.rotate(center, angle);
     test_origin.rotate(center, angle);
-    test_direction.rotate(center, angle);
 
     CHECK(test_ray.origin == test_origin);
+}
+
+
+TEST(RayTests, TranslateDoesNotModifyDirection)
+{
+    double test_dx {-10.0};
+    double test_dy {20.0};
+    test_ray.translate(test_dx, test_dy);
+
     CHECK(test_ray.direction == test_direction);
 }
+
+TEST(RayTests, RotateModifiesDirectionAboutOrigin)
+{
+    geometry::Point center {5.0, 6.0};
+    double angle {M_PI / 2}; /* 90 deg counter clockwise */
+    test_ray.rotate(center, angle);
+    test_direction.rotate(geometry::Point{0.0, 0.0}, angle);
+
+    CHECK(test_ray.direction == test_direction);
+}
+
 
 TEST(RayTests, EqualityOperatorOverloaded)
 {
