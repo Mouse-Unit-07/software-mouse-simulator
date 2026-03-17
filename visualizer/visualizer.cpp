@@ -68,6 +68,26 @@ void Visualizer::draw_mouse_on_maze(const mouse::Mouse& mouse)
     draw_ray(mouse.ir_4_sensor);
 }
 
+void Visualizer::draw_ir_1_sensor_beam(const mouse::Mouse& mouse, double length_mm)
+{
+    draw_ray_beam(mouse.ir_1_sensor, length_mm);
+}
+
+void Visualizer::draw_ir_2_sensor_beam(const mouse::Mouse& mouse, double length_mm)
+{
+    draw_ray_beam(mouse.ir_2_sensor, length_mm);
+}
+
+void Visualizer::draw_ir_3_sensor_beam(const mouse::Mouse& mouse, double length_mm)
+{
+    draw_ray_beam(mouse.ir_3_sensor, length_mm);
+}
+
+void Visualizer::draw_ir_4_sensor_beam(const mouse::Mouse& mouse, double length_mm)
+{
+    draw_ray_beam(mouse.ir_4_sensor, length_mm);
+}
+
 void Visualizer::save_to_image_file(const std::string& filename)
 {
     texture.display();
@@ -169,6 +189,25 @@ void Visualizer::draw_ray(const geometry::Ray& ray)
     {
         sf::Vertex(origin, sf::Color::Yellow),
         sf::Vertex(end,    sf::Color::Yellow)
+    };
+
+    texture.draw(line, 2, sf::Lines);
+}
+
+void Visualizer::draw_ray_beam(const geometry::Ray& ray, double length_mm)
+{
+    geometry::Point end_world {
+        ray.origin.x + ray.direction.x * length_mm,
+        ray.origin.y + ray.direction.y * length_mm
+    };
+
+    sf::Vector2f origin {world_to_screen(ray.origin)};
+    sf::Vector2f end {world_to_screen(end_world)};
+
+    sf::Vertex line[]
+    {
+        sf::Vertex(origin, sf::Color::Cyan),
+        sf::Vertex(end,    sf::Color::Cyan)
     };
 
     texture.draw(line, 2, sf::Lines);
