@@ -122,7 +122,7 @@ std::optional<std::pair<int, int>> get_cell_from_point(const Maze& maze, const g
 {
     const double cell {maze.cell_size};
 
-    if (cell <= 0.0)
+    if ((cell <= 0.0) || (p.x < 0) || (p.y < 0))
         return std::nullopt;
 
     const int col {static_cast<int>(p.x / cell)};
