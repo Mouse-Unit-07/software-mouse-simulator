@@ -27,7 +27,7 @@ namespace
 
 bool check_mouse_equality(const mouse::Mouse& m1, const mouse::Mouse& m2);
 
-}
+} /* unnamed namespace */
 
 /*----------------------------------------------------------------------------*/
 /*                               Private Globals                              */
@@ -48,7 +48,7 @@ constexpr Displacement IR_2_OFFSET_FROM_MOUSE_CENTER {-17.45, 38.76};
 constexpr Displacement IR_3_OFFSET_FROM_MOUSE_CENTER {17.45, 38.76};
 constexpr Displacement IR_4_OFFSET_FROM_MOUSE_CENTER {27.29, 25.24};
 
-}
+} /* mouse namespace */
 
 /*----------------------------------------------------------------------------*/
 /*                             Public Definitions                             */
@@ -94,7 +94,7 @@ bool Mouse::operator!=(const Mouse& other) const noexcept
     return !check_mouse_equality(*this, other);
 }
 
-}
+} /* mouse namespace */
 
 /*----------------------------------------------------------------------------*/
 /*                             Private Definitions                            */
@@ -111,4 +111,4 @@ bool check_mouse_equality(const mouse::Mouse& m1, const mouse::Mouse& m2)
         && (m1.ir_4_sensor == m2.ir_4_sensor);
 }
 
-}
+} /* unnamed namespace */

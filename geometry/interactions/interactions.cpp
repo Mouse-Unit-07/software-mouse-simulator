@@ -39,7 +39,8 @@ void project_hitbox_onto_axis(const geometry::RectangularHitbox& box,
 bool are_hitboxes_separated_on_axis(const geometry::RectangularHitbox& a,
                const geometry::RectangularHitbox& b,
                const geometry::Point& axis);
-}
+
+} /* unnamed namespace */
 
 /*----------------------------------------------------------------------------*/
 /*                               Private Globals                              */
@@ -178,4 +179,4 @@ bool are_hitboxes_separated_on_axis(const geometry::RectangularHitbox& a,
     return maxA < minB || maxB < minA;
 }
 
-}
+} /* unnamed namespace */

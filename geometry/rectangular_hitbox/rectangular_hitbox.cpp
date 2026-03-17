@@ -25,7 +25,7 @@ namespace
 
 bool check_hitbox_equality(const geometry::RectangularHitbox& h1, const geometry::RectangularHitbox& h2);
 
-}
+} /* unnamed namespace */
 
 /*----------------------------------------------------------------------------*/
 /*                               Private Globals                              */
@@ -94,4 +94,4 @@ bool check_hitbox_equality(const geometry::RectangularHitbox& h1, const geometry
         && (h1.edge_4 == h2.edge_4);
 }
 
-}
+} /* unnamed namespace */

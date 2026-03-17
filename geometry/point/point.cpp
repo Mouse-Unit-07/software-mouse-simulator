@@ -24,7 +24,7 @@ namespace
 
 bool check_point_equality(const geometry::Point& p1, const geometry::Point& p2);
 
-}
+} /* unnamed namespace */
 
 /*----------------------------------------------------------------------------*/
 /*                               Private Globals                              */
@@ -40,7 +40,7 @@ namespace geometry
 Point::Point(double x, double y)
     : x{x}, y{y}
 {
-    /* no constructor logic- only field init */
+    /* no additional logic */
 }
 
 void Point::translate(double dx, double dy) noexcept
@@ -97,4 +97,4 @@ bool check_point_equality(const geometry::Point& p1, const geometry::Point& p2)
         && (std::abs(p1.y - p2.y) <= tolerance);
 }
 
-}
+} /* unnamed namespace */
