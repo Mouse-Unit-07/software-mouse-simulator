@@ -41,28 +41,28 @@ namespace geometry
 RectangularHitbox::RectangularHitbox(const Point& center, double horizontal_size, double vertical_size)
     : center{center}, horizontal_size{horizontal_size}, vertical_size{vertical_size}
 {
-    edge_1 = Point{center.x + (horizontal_size / 2), center.y + (vertical_size / 2)};
-    edge_2 = Point{center.x + (horizontal_size / 2), center.y - (vertical_size / 2)};
-    edge_3 = Point{center.x - (horizontal_size / 2), center.y - (vertical_size / 2)};
-    edge_4 = Point{center.x - (horizontal_size / 2), center.y + (vertical_size / 2)};
+    top_right = Point{center.x + (horizontal_size / 2), center.y + (vertical_size / 2)};
+    top_left = Point{center.x - (horizontal_size / 2), center.y + (vertical_size / 2)};
+    bottom_left = Point{center.x - (horizontal_size / 2), center.y - (vertical_size / 2)};
+    bottom_right = Point{center.x + (horizontal_size / 2), center.y - (vertical_size / 2)};
 }
 
 void RectangularHitbox::translate(double dx, double dy) noexcept
 {
     center.translate(dx, dy);
-    edge_1.translate(dx, dy);
-    edge_2.translate(dx, dy);
-    edge_3.translate(dx, dy);
-    edge_4.translate(dx, dy);
+    top_right.translate(dx, dy);
+    top_left.translate(dx, dy);
+    bottom_left.translate(dx, dy);
+    bottom_right.translate(dx, dy);
 }
 
 void RectangularHitbox::rotate(const Point& center, double angle_rad) noexcept
 {
     this->center.rotate(center, angle_rad);
-    edge_1.rotate(center, angle_rad);
-    edge_2.rotate(center, angle_rad);
-    edge_3.rotate(center, angle_rad);
-    edge_4.rotate(center, angle_rad);
+    top_right.rotate(center, angle_rad);
+    top_left.rotate(center, angle_rad);
+    bottom_left.rotate(center, angle_rad);
+    bottom_right.rotate(center, angle_rad);
 }
 
 bool RectangularHitbox::operator==(const RectangularHitbox& other) const noexcept
@@ -89,9 +89,9 @@ bool check_hitbox_equality(const geometry::RectangularHitbox& h1, const geometry
 
     return (std::abs(h1.horizontal_size - h2.horizontal_size) <= tolerance)
         && (std::abs(h1.vertical_size - h2.vertical_size) <= tolerance)
-        && (h1.center == h2.center) && (h1.edge_1 == h2.edge_1)
-        && (h1.edge_2 == h2.edge_2) && (h1.edge_3 == h2.edge_3) 
-        && (h1.edge_4 == h2.edge_4);
+        && (h1.center == h2.center) && (h1.top_right == h2.top_right)
+        && (h1.top_left == h2.top_left) && (h1.bottom_left == h2.bottom_left) 
+        && (h1.bottom_left == h2.bottom_left);
 }
 
 } /* unnamed namespace */
