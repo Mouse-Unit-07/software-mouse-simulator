@@ -25,7 +25,7 @@ namespace
 
 bool check_ray_inequality(const geometry::Ray& r1, const geometry::Ray& r2);
 
-}
+} /* unnamed namespace */
 
 /*----------------------------------------------------------------------------*/
 /*                               Private Globals                              */
@@ -81,4 +81,4 @@ bool check_ray_inequality(const geometry::Ray& r1, const geometry::Ray& r2)
     return (r1.origin == r2.origin) && (r1.direction == r2.direction);
 }
 
-}
+} /* unnamed namespace */

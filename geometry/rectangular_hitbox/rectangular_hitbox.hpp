@@ -22,10 +22,10 @@ class RectangularHitbox
 {
     public:
         Point center;
-        Point edge_1;
-        Point edge_2;
-        Point edge_3;
-        Point edge_4;
+        Point top_right;
+        Point top_left;
+        Point bottom_left;
+        Point bottom_right;
         double vertical_size;
         double horizontal_size;
         RectangularHitbox(const Point& center, double horizontal_size, double vertical_size);

@@ -39,7 +39,8 @@ void project_hitbox_onto_axis(const geometry::RectangularHitbox& box,
 bool are_hitboxes_separated_on_axis(const geometry::RectangularHitbox& a,
                const geometry::RectangularHitbox& b,
                const geometry::Point& axis);
-}
+
+} /* unnamed namespace */
 
 /*----------------------------------------------------------------------------*/
 /*                               Private Globals                              */
@@ -66,10 +67,10 @@ std::optional<double> compute_ray_hitbox_distance(const Ray& ray,
             closest = d;
     };
 
-    update(ray_segment_distance(ray, hitbox.edge_1, hitbox.edge_2));
-    update(ray_segment_distance(ray, hitbox.edge_2, hitbox.edge_3));
-    update(ray_segment_distance(ray, hitbox.edge_3, hitbox.edge_4));
-    update(ray_segment_distance(ray, hitbox.edge_4, hitbox.edge_1));
+    update(ray_segment_distance(ray, hitbox.top_right, hitbox.top_left));
+    update(ray_segment_distance(ray, hitbox.top_left, hitbox.bottom_left));
+    update(ray_segment_distance(ray, hitbox.bottom_left, hitbox.bottom_right));
+    update(ray_segment_distance(ray, hitbox.bottom_right, hitbox.top_right));
 
     return closest;
 }
@@ -78,10 +79,10 @@ bool do_hitboxes_overlap(const RectangularHitbox& a, const RectangularHitbox& b)
 {
     Point axes[4] =
     {
-        compute_perpendicular_vector(compute_vector_between_points(a.edge_1, a.edge_2)),
-        compute_perpendicular_vector(compute_vector_between_points(a.edge_2, a.edge_3)),
-        compute_perpendicular_vector(compute_vector_between_points(b.edge_1, b.edge_2)),
-        compute_perpendicular_vector(compute_vector_between_points(b.edge_2, b.edge_3))
+        compute_perpendicular_vector(compute_vector_between_points(a.top_right, a.top_left)),
+        compute_perpendicular_vector(compute_vector_between_points(a.top_left, a.bottom_left)),
+        compute_perpendicular_vector(compute_vector_between_points(b.top_right, b.top_left)),
+        compute_perpendicular_vector(compute_vector_between_points(b.top_left, b.bottom_left))
     };
 
     for (const auto& axis : axes)
@@ -149,10 +150,10 @@ void project_hitbox_onto_axis(const geometry::RectangularHitbox& box,
 {
     const geometry::Point* pts[4] =
     {
-        &box.edge_1,
-        &box.edge_2,
-        &box.edge_3,
-        &box.edge_4
+        &box.top_right,
+        &box.top_left,
+        &box.bottom_left,
+        &box.bottom_right
     };
 
     min = max = compute_dot_product(*pts[0], axis);
@@ -178,4 +179,4 @@ bool are_hitboxes_separated_on_axis(const geometry::RectangularHitbox& a,
     return maxA < minB || maxB < minA;
 }
 
-}
+} /* unnamed namespace */

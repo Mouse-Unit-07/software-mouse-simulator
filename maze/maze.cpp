@@ -39,7 +39,7 @@ void attach_horizontal_wall_cells(maze::Maze& maze, const geometry::RectangularH
 void attach_post_cells(maze::Maze& maze, const geometry::RectangularHitbox& post,
         int r, int c);
 
-}
+} /* unnamed namespace */
 
 /*----------------------------------------------------------------------------*/
 /*                               Private Globals                              */
@@ -214,4 +214,4 @@ void attach_post_cells(maze::Maze& maze, const geometry::RectangularHitbox& post
     attach_to_cell(maze, post, base_r + 1, base_c + 1);
 }
 
-}
+} /* unnamed namespace */

@@ -35,6 +35,6 @@ class Mouse
         bool operator!=(const Mouse& other) const noexcept;
 };
 
-}
+} /* mouse namespace */
 
 #endif /* MOUSE_HPP_ */
