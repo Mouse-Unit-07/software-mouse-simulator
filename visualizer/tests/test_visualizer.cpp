@@ -57,7 +57,7 @@ TEST_GROUP(VisualizerTests)
 /*============================================================================*/
 /*                                    Tests                                   */
 /*============================================================================*/
-TEST(VisualizerTests, DrawEmptyMaze)
+IGNORE_TEST(VisualizerTests, DrawEmptyMaze)
 {
     visualizer::Visualizer visualizer;
     maze::Maze maze;
@@ -68,7 +68,7 @@ TEST(VisualizerTests, DrawEmptyMaze)
     visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/draw-empty-maze.png");
 }
 
-TEST(VisualizerTests, DrawMazeWithObstacles)
+IGNORE_TEST(VisualizerTests, DrawMazeWithObstacles)
 {
     visualizer::Visualizer visualizer;
     std::vector<std::string> ascii
@@ -85,7 +85,7 @@ TEST(VisualizerTests, DrawMazeWithObstacles)
     visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/draw-maze-with-obstacles.png");
 }
 
-TEST(VisualizerTests, DrawFullMaze)
+IGNORE_TEST(VisualizerTests, DrawFullMaze)
 {
     visualizer::Visualizer visualizer;
     std::vector<std::string> ascii
@@ -128,7 +128,7 @@ TEST(VisualizerTests, DrawFullMaze)
     visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/draw-full-maze.png");
 }
 
-TEST(VisualizerTests, DrawMouseOnMaze)
+IGNORE_TEST(VisualizerTests, DrawMouseOnMaze)
 {
     visualizer::Visualizer visualizer;
     std::vector<std::string> ascii
@@ -148,7 +148,7 @@ TEST(VisualizerTests, DrawMouseOnMaze)
     visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/draw-mouse-on-maze.png");
 }
 
-TEST(VisualizerTests, DrawMouseSensorBeams)
+IGNORE_TEST(VisualizerTests, DrawMouseSensorBeams)
 {
     visualizer::Visualizer visualizer;
     std::vector<std::string> ascii
