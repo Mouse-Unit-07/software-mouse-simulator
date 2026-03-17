@@ -18,18 +18,25 @@
 #include "mouse.hpp"
 #include "maze.hpp"
 #include "visualizer.hpp"
+
+#include <filesystem>
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
 /*============================================================================*/
 /*                             Public Definitions                             */
 /*============================================================================*/
-/* none */
+const std::string TEST_OUTPUT_DIRECTORY {"visualizer-test-images"};
+
+void create_test_images_directory(void)
+{
+    std::filesystem::create_directories(TEST_OUTPUT_DIRECTORY);
+}
 
 /*============================================================================*/
 /*                            Mock Implementations                            */
 /*============================================================================*/
-
+/* none */
 
 /*============================================================================*/
 /*                                 Test Group                                 */
@@ -38,7 +45,7 @@ TEST_GROUP(VisualizerTests)
 {
     void setup() override
     {
-        
+        create_test_images_directory();
     }
 
     void teardown() override
@@ -50,16 +57,16 @@ TEST_GROUP(VisualizerTests)
 /*============================================================================*/
 /*                                    Tests                                   */
 /*============================================================================*/
-IGNORE_TEST(VisualizerTests, DrawEmptyMaze)
+TEST(VisualizerTests, DrawEmptyMaze)
 {
     maze::Maze maze;
     maze.rows = 4;
     maze.cols = 4;
 
-    visualizer::run_visual_maze_test(maze);
+    visualizer::render_maze_to_image(maze, 100.0f, TEST_OUTPUT_DIRECTORY + "/draw-empty-maze.png");
 }
 
-IGNORE_TEST(VisualizerTests, DrawMazeWithObstacles)
+TEST(VisualizerTests, DrawMazeWithObstacles)
 {
     std::vector<std::string> ascii
     {
@@ -71,10 +78,10 @@ IGNORE_TEST(VisualizerTests, DrawMazeWithObstacles)
     };
 
     maze::Maze maze {maze::build_from_ascii(ascii, 0)};
-    visualizer::run_visual_maze_test(maze);
+    visualizer::render_maze_to_image(maze, 100.0f, TEST_OUTPUT_DIRECTORY + "/draw-maze-with-obstacles.png");
 }
 
-IGNORE_TEST(VisualizerTests, DrawFullMaze)
+TEST(VisualizerTests, DrawFullMaze)
 {
     std::vector<std::string> ascii
     {
@@ -112,5 +119,5 @@ IGNORE_TEST(VisualizerTests, DrawFullMaze)
     };
 
     maze::Maze maze {maze::build_from_ascii(ascii, 0)};
-    visualizer::run_visual_maze_test(maze, 40.0f);
+    visualizer::render_maze_to_image(maze, 40.0f, TEST_OUTPUT_DIRECTORY + "/draw-full-maze.png");
 }

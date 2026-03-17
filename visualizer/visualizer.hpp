@@ -36,30 +36,22 @@ private:
     void draw_mouse_start(sf::RenderTarget& target, const maze::Maze& maze) const;
 };
 
-inline void run_visual_maze_test(const maze::Maze& maze, float cell_size = 100.0f)
+inline void render_maze_to_image(const maze::Maze& maze, float cell_size, const std::string& filename)
 {
-    sf::RenderWindow window(
-        sf::VideoMode(800, 800),
-        "Micromouse Visual Test"
-    );
+    int width  = static_cast<int>(maze.cols * cell_size);
+    int height = static_cast<int>(maze.rows * cell_size);
+
+    sf::RenderTexture texture;
+    texture.create(width, height);
 
     Visualizer visualizer(cell_size);
 
-    while (window.isOpen())
-    {
-        sf::Event event;
-        while (window.pollEvent(event))
-        {
-            if (event.type == sf::Event::Closed)
-                window.close();
-        }
+    texture.clear(sf::Color::Black);
+    visualizer.draw(texture, maze);
+    texture.display();
 
-        window.clear(sf::Color::Black);
-
-        visualizer.draw(window, maze);
-
-        window.display();
-    }
+    sf::Image image = texture.getTexture().copyToImage();
+    image.saveToFile(filename);
 }
 
 } /* visualizer namespace */
