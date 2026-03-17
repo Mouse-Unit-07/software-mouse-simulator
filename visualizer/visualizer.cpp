@@ -43,8 +43,8 @@ namespace visualizer
 void Visualizer::draw_maze(float cell_size_pixels, const maze::Maze& maze)
 {
     cell_size = cell_size_pixels;
-    int width  = static_cast<int>(maze.cols * cell_size);
-    int height = static_cast<int>(maze.rows * cell_size);
+    int width  {static_cast<int>(maze.cols * cell_size)};
+    int height {static_cast<int>(maze.rows * cell_size)};
 
     texture.create(width, height);
     texture.clear(sf::Color::Black);
@@ -56,7 +56,7 @@ void Visualizer::draw_maze(float cell_size_pixels, const maze::Maze& maze)
 
 void Visualizer::draw_mouse_on_maze(const mouse::Mouse& mouse)
 {
-    auto rect = make_rectangle(mouse.hitbox);
+    auto rect {make_rectangle(mouse.hitbox)};
     rect.setFillColor(sf::Color::Transparent);
     rect.setOutlineColor(sf::Color::Red);
     rect.setOutlineThickness(2.0f);
@@ -71,7 +71,7 @@ void Visualizer::draw_mouse_on_maze(const mouse::Mouse& mouse)
 void Visualizer::save_to_image_file(const std::string& filename)
 {
     texture.display();
-    sf::Image image = texture.getTexture().copyToImage();
+    sf::Image image {texture.getTexture().copyToImage()};
     image.saveToFile(filename);
 }
 
@@ -165,7 +165,7 @@ void Visualizer::draw_ray(const geometry::Ray& ray)
     geometry::Point ray_end {ray.origin.x + (ray.direction.x * ray_length), ray.origin.y + (ray.direction.y * ray_length)};
     sf::Vector2f end {world_to_screen(ray_end)};
 
-    sf::Vertex line[] =
+    sf::Vertex line[]
     {
         sf::Vertex(origin, sf::Color::Yellow),
         sf::Vertex(end,    sf::Color::Yellow)
