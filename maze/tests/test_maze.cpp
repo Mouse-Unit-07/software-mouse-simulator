@@ -22,16 +22,18 @@
 /*============================================================================*/
 constexpr double FLOAT_TOLERANCE {1e-6};
 
+/* count all unique touches, including hitbox corners */
 int count_touching_obstacles(const maze::Maze& maze)
 {
     const auto& obstacles {maze.obstacles};
     int touching_count {0};
 
-    for (const auto& a : obstacles)
+    for (size_t i {0}; i < obstacles.size(); i++)
     {
-        for (const auto& b : obstacles)
+        for (size_t j {i + 1}; j < obstacles.size(); j++)
         {
-            if (&a == &b) continue;
+            const auto& a {obstacles[i]};
+            const auto& b {obstacles[j]};
 
             double dx {fabs(a.center.x - b.center.x)};
             double dy {fabs(a.center.y - b.center.y)};
@@ -39,11 +41,13 @@ int count_touching_obstacles(const maze::Maze& maze)
             double allowed_x {(a.horizontal_size / 2.0) + (b.horizontal_size / 2.0)};
             double allowed_y {(a.vertical_size / 2.0) + (b.vertical_size / 2.0)};
 
-            bool touching_x {fabs(dx - allowed_x) < FLOAT_TOLERANCE};
-            bool touching_y {fabs(dy - allowed_y) < FLOAT_TOLERANCE};
+            bool horizontal_touch {(fabs(dx - allowed_x) < FLOAT_TOLERANCE)
+                && (dy < (allowed_y + FLOAT_TOLERANCE))};
 
-            if (touching_x && touching_y)
-            {
+            bool vertical_touch {(fabs(dy - allowed_y) < FLOAT_TOLERANCE)
+                && (dx < (allowed_x + FLOAT_TOLERANCE))};
+
+            if (horizontal_touch || vertical_touch) {
                 touching_count++;
             }
         }
@@ -281,7 +285,8 @@ TEST(MazeTests, SingleCellWallsTouchPosts)
     maze::Maze maze {maze::build_from_ascii(ascii, 0)};
     int touching_count {count_touching_obstacles(maze)};
 
-    CHECK(touching_count == 8);
+    /* 8 full unique touches + 4 diagonal corner touches */
+    CHECK(touching_count == 12);
 }
 
 TEST(MazeTests, WallAdjustmentsModifySizes)
@@ -346,5 +351,6 @@ TEST(MazeTests, AdjustedWallsAndPostsTouch)
     maze::Maze maze {maze::build_from_ascii(ascii, size_adjustment)};
     int touching_count {count_touching_obstacles(maze)};
 
-    CHECK(touching_count == 8);
+    /* 8 full unique touches + 4 diagonal corner touches */
+    CHECK(touching_count == 12);
 }

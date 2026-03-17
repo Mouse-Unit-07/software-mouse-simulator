@@ -29,7 +29,7 @@ geometry::RectangularHitbox create_post(const geometry::Point& center, double si
 geometry::RectangularHitbox create_vertical_wall(const geometry::Point& center, double size_adjustment);
 geometry::RectangularHitbox create_horizontal_wall(const geometry::Point& center, double size_adjustment);
 
-geometry::Point ascii_to_world(int r, int c, double cell_size);
+geometry::Point ascii_to_world(int r, int c, double size_adjustment);
 void attach_to_cell(maze::Maze& maze, const geometry::RectangularHitbox& obstacle,
         int row, int col);
 void attach_vertical_wall_cells(maze::Maze& maze, const geometry::RectangularHitbox& wall,
@@ -77,7 +77,7 @@ Maze build_from_ascii(const std::vector<std::string>& ascii, double obstacle_siz
         {
             char ch {ascii[r][c]};
 
-            geometry::Point center {ascii_to_world(r, c, adjusted_cell_size)};
+            geometry::Point center {ascii_to_world(r, c, obstacle_size_adjustment)};
 
             if (ch == '+')
             {
@@ -149,10 +149,23 @@ geometry::RectangularHitbox create_horizontal_wall(const geometry::Point& center
     };
 }
 
-geometry::Point ascii_to_world(int r, int c, double cell_size)
+geometry::Point ascii_to_world(int r, int c, double size_adjustment)
 {
-    double x {(c / 2.0) * cell_size};
-    double y {(r / 2.0) * cell_size};
+    double post {maze::OFFICIAL_POST_SIZE + size_adjustment};
+    double wall {maze::OFFICIAL_WALL_LENGTH_SIZE + size_adjustment};
+
+    double pitch {post + wall};
+
+    double x {(c / 2) * pitch};
+    double y {(r / 2) * pitch};
+
+    if (c % 2 == 1) {
+        x += pitch / 2; /* horizontal wall */
+    }
+
+    if (r % 2 == 1) {
+        y += pitch / 2; /* vertical wall */
+    }
 
     return {x, y};
 }
