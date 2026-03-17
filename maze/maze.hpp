@@ -29,6 +29,7 @@ class Maze
     public:
         int rows {0};
         int cols {0};
+        double cell_size {0.0};
         std::vector<geometry::RectangularHitbox> obstacles;
         std::vector<Cell> cells;
         geometry::Point mouse_start;
@@ -45,6 +46,8 @@ namespace maze
 {
 
 Maze build_from_ascii(const std::vector<std::string>& ascii, double obstacle_size_adjustment);
+
+std::optional<std::pair<int, int>> get_cell_from_point(const Maze& maze, const geometry::Point& p);
 
 } /* maze namespace */
 

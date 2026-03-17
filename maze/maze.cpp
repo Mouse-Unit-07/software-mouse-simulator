@@ -15,6 +15,8 @@ extern "C"
 
 #include <vector>
 #include <string>
+#include <optional>
+#include <utility>
 #include "point.hpp"
 #include "rectangular_hitbox.hpp"
 #include "maze.hpp"
@@ -71,6 +73,8 @@ Maze build_from_ascii(const std::vector<std::string>& ascii, double obstacle_siz
 
     double adjusted_cell_size {CELL_SIZE + (obstacle_size_adjustment * 2)};
 
+    maze.cell_size = adjusted_cell_size;
+
     for (int r {0}; r < ascii_rows; r++)
     {
         for (int c {0}; c < ascii_cols; c++)
@@ -112,6 +116,25 @@ Maze build_from_ascii(const std::vector<std::string>& ascii, double obstacle_siz
     }
 
     return maze;
+}
+
+std::optional<std::pair<int, int>> get_cell_from_point(const Maze& maze, const geometry::Point& p)
+{
+    const double cell {maze.cell_size};
+
+    if (cell <= 0.0)
+        return std::nullopt;
+
+    const int col {static_cast<int>(p.x / cell)};
+    const int row {static_cast<int>(p.y / cell)};
+
+    if (row < 0 || row >= maze.rows)
+        return std::nullopt;
+
+    if (col < 0 || col >= maze.cols)
+        return std::nullopt;
+
+    return std::make_pair(row, col);
 }
 
 } /* maze namespace */

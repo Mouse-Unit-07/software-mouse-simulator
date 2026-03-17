@@ -16,6 +16,8 @@ extern "C"
 #include <cmath>
 #include <vector>
 #include <string>
+#include <optional>
+#include <utility>
 #include <SFML/Graphics.hpp>
 #include "point.hpp"
 #include "ray.hpp"
