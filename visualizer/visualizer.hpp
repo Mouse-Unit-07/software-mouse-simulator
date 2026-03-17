@@ -24,18 +24,20 @@ public:
     Visualizer() = default;
 
     void draw_maze(float cell_size_pixels, const maze::Maze& maze);
+    void draw_mouse_on_maze(const mouse::Mouse& mouse);
     void save_to_image_file(const std::string& filename);
 
 private:
     float cell_size;
     sf::RenderTexture texture;
 
-    sf::Vector2f world_to_screen(const geometry::Point& p, const maze::Maze& maze) const;
-    sf::RectangleShape make_rectangle(const geometry::RectangularHitbox& hitbox, const maze::Maze& maze) const;
+    sf::Vector2f world_to_screen(const geometry::Point& p) const;
+    sf::RectangleShape make_rectangle(const geometry::RectangularHitbox& hitbox) const;
     
-    void draw_cells(sf::RenderTarget& target, const maze::Maze& maze) const;
-    void draw_obstacles(sf::RenderTarget& target, const maze::Maze& maze) const;
-    void draw_mouse_start(sf::RenderTarget& target, const maze::Maze& maze) const;
+    void draw_cells(const maze::Maze& maze);
+    void draw_obstacles(const maze::Maze& maze);
+    void draw_mouse_start(const maze::Maze& maze);
+    void draw_ray(const geometry::Ray& ray);
 };
 
 } /* visualizer namespace */

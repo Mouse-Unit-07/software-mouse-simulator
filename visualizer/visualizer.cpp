@@ -49,15 +49,28 @@ void Visualizer::draw_maze(float cell_size_pixels, const maze::Maze& maze)
     texture.create(width, height);
     texture.clear(sf::Color::Black);
     
-    draw_cells(texture, maze);
-    draw_obstacles(texture, maze);
-    draw_mouse_start(texture, maze);
+    draw_cells(maze);
+    draw_obstacles(maze);
+    draw_mouse_start(maze);
+}
 
-    texture.display();
+void Visualizer::draw_mouse_on_maze(const mouse::Mouse& mouse)
+{
+    auto rect = make_rectangle(mouse.hitbox);
+    rect.setFillColor(sf::Color::Transparent);
+    rect.setOutlineColor(sf::Color::Red);
+    rect.setOutlineThickness(2.0f);
+    texture.draw(rect);
+
+    draw_ray(mouse.ir_1_sensor);
+    draw_ray(mouse.ir_2_sensor);
+    draw_ray(mouse.ir_3_sensor);
+    draw_ray(mouse.ir_4_sensor);
 }
 
 void Visualizer::save_to_image_file(const std::string& filename)
 {
+    texture.display();
     sf::Image image = texture.getTexture().copyToImage();
     image.saveToFile(filename);
 }
@@ -70,7 +83,7 @@ void Visualizer::save_to_image_file(const std::string& filename)
 namespace visualizer
 {
 
-sf::Vector2f Visualizer::world_to_screen(const geometry::Point& p, const maze::Maze& maze) const
+sf::Vector2f Visualizer::world_to_screen(const geometry::Point& p) const
 {
     float scale {static_cast<float>(cell_size / maze::CELL_SIZE)};
 
@@ -80,7 +93,7 @@ sf::Vector2f Visualizer::world_to_screen(const geometry::Point& p, const maze::M
     };
 }
 
-sf::RectangleShape Visualizer::make_rectangle(const geometry::RectangularHitbox& hitbox, const maze::Maze& maze) const
+sf::RectangleShape Visualizer::make_rectangle(const geometry::RectangularHitbox& hitbox) const
 {
     float scale {static_cast<float>(cell_size / maze::CELL_SIZE)};
 
@@ -89,7 +102,7 @@ sf::RectangleShape Visualizer::make_rectangle(const geometry::RectangularHitbox&
 
     sf::RectangleShape rect({width, height});
 
-    auto pos {world_to_screen(hitbox.center, maze)};
+    auto pos {world_to_screen(hitbox.center)};
 
     rect.setPosition(
         pos.x - width  / 2.0f,
@@ -99,7 +112,7 @@ sf::RectangleShape Visualizer::make_rectangle(const geometry::RectangularHitbox&
     return rect;
 }
 
-void Visualizer::draw_cells(sf::RenderTarget& target, const maze::Maze& maze) const
+void Visualizer::draw_cells(const maze::Maze& maze)
 {
     sf::RectangleShape cell;
     cell.setSize({cell_size, cell_size});
@@ -116,31 +129,49 @@ void Visualizer::draw_cells(sf::RenderTarget& target, const maze::Maze& maze) co
                 r * cell_size
             );
 
-            target.draw(cell);
+            texture.draw(cell);
         }
     }
 }
 
-void Visualizer::draw_obstacles(sf::RenderTarget& target, const maze::Maze& maze) const
+void Visualizer::draw_obstacles(const maze::Maze& maze)
 {
     for (const auto& obstacle : maze.obstacles)
     {
-        auto rect {make_rectangle(obstacle, maze)};
+        auto rect {make_rectangle(obstacle)};
         rect.setFillColor(sf::Color::White);
-        target.draw(rect);
+        texture.draw(rect);
     }
 }
 
-void Visualizer::draw_mouse_start(sf::RenderTarget& target, const maze::Maze& maze) const
+void Visualizer::draw_mouse_start(const maze::Maze& maze)
 {
     sf::CircleShape marker;
     marker.setRadius(cell_size * 0.05f);
     marker.setFillColor(sf::Color::Green);
 
-    auto pos {world_to_screen(maze.mouse_start, maze)};
+    auto pos {world_to_screen(maze.mouse_start)};
     marker.setPosition(pos.x - marker.getRadius(), pos.y - marker.getRadius());
 
-    target.draw(marker);
+    texture.draw(marker);
+}
+
+void Visualizer::draw_ray(const geometry::Ray& ray)
+{
+    float scale {static_cast<float>(cell_size / maze::CELL_SIZE)};
+    double ray_length {scale * 20.0f};
+
+    sf::Vector2f origin {world_to_screen(ray.origin)};
+    geometry::Point ray_end {ray.origin.x + (ray.direction.x * ray_length), ray.origin.y + (ray.direction.y * ray_length)};
+    sf::Vector2f end {world_to_screen(ray_end)};
+
+    sf::Vertex line[] =
+    {
+        sf::Vertex(origin, sf::Color::Yellow),
+        sf::Vertex(end,    sf::Color::Yellow)
+    };
+
+    texture.draw(line, 2, sf::Lines);
 }
 
 } /* visualizer namespace */
