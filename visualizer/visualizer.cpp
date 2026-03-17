@@ -40,17 +40,26 @@ extern "C"
 namespace visualizer
 {
 
-Visualizer::Visualizer(float cell_size_pixels)
-    : cell_size{cell_size_pixels}
+void Visualizer::draw_maze(float cell_size_pixels, const maze::Maze& maze)
 {
-    /* no additional logic */
+    cell_size = cell_size_pixels;
+    int width  = static_cast<int>(maze.cols * cell_size);
+    int height = static_cast<int>(maze.rows * cell_size);
+
+    texture.create(width, height);
+    texture.clear(sf::Color::Black);
+    
+    draw_cells(texture, maze);
+    draw_obstacles(texture, maze);
+    draw_mouse_start(texture, maze);
+
+    texture.display();
 }
 
-void Visualizer::draw(sf::RenderTarget& target, const maze::Maze& maze) const
+void Visualizer::save_to_image_file(const std::string& filename)
 {
-    draw_cells(target, maze);
-    draw_obstacles(target, maze);
-    draw_mouse_start(target, maze);
+    sf::Image image = texture.getTexture().copyToImage();
+    image.saveToFile(filename);
 }
 
 } /* visualizer namespace */

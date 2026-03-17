@@ -59,15 +59,18 @@ TEST_GROUP(VisualizerTests)
 /*============================================================================*/
 TEST(VisualizerTests, DrawEmptyMaze)
 {
+    visualizer::Visualizer visualizer;
     maze::Maze maze;
     maze.rows = 4;
     maze.cols = 4;
 
-    visualizer::render_maze_to_image(maze, 100.0f, TEST_OUTPUT_DIRECTORY + "/draw-empty-maze.png");
+    visualizer.draw_maze(100.0f, maze);
+    visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/draw-empty-maze.png");
 }
 
 TEST(VisualizerTests, DrawMazeWithObstacles)
 {
+    visualizer::Visualizer visualizer;
     std::vector<std::string> ascii
     {
         "+-+ +",
@@ -76,13 +79,15 @@ TEST(VisualizerTests, DrawMazeWithObstacles)
         "  |  ",
         "+ +-+"
     };
-
     maze::Maze maze {maze::build_from_ascii(ascii, 0)};
-    visualizer::render_maze_to_image(maze, 100.0f, TEST_OUTPUT_DIRECTORY + "/draw-maze-with-obstacles.png");
+    
+    visualizer.draw_maze(100.0f, maze);
+    visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/draw-maze-with-obstacles.png");
 }
 
 TEST(VisualizerTests, DrawFullMaze)
 {
+    visualizer::Visualizer visualizer;
     std::vector<std::string> ascii
     {
         "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+",
@@ -117,7 +122,8 @@ TEST(VisualizerTests, DrawFullMaze)
         "|S| | | | | | | | | | | | | | | |",
         "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+"
     };
-
     maze::Maze maze {maze::build_from_ascii(ascii, 0)};
-    visualizer::render_maze_to_image(maze, 40.0f, TEST_OUTPUT_DIRECTORY + "/draw-full-maze.png");
+
+    visualizer.draw_maze(40.0f, maze);
+    visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/draw-full-maze.png");
 }

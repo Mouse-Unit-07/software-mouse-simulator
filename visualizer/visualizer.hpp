@@ -21,12 +21,14 @@ namespace visualizer
 class Visualizer
 {
 public:
-    Visualizer(float cell_size_pixels);
+    Visualizer() = default;
 
-    void draw(sf::RenderTarget& target, const maze::Maze& maze) const;
+    void draw_maze(float cell_size_pixels, const maze::Maze& maze);
+    void save_to_image_file(const std::string& filename);
 
 private:
     float cell_size;
+    sf::RenderTexture texture;
 
     sf::Vector2f world_to_screen(const geometry::Point& p, const maze::Maze& maze) const;
     sf::RectangleShape make_rectangle(const geometry::RectangularHitbox& hitbox, const maze::Maze& maze) const;
@@ -35,24 +37,6 @@ private:
     void draw_obstacles(sf::RenderTarget& target, const maze::Maze& maze) const;
     void draw_mouse_start(sf::RenderTarget& target, const maze::Maze& maze) const;
 };
-
-inline void render_maze_to_image(const maze::Maze& maze, float cell_size, const std::string& filename)
-{
-    int width  = static_cast<int>(maze.cols * cell_size);
-    int height = static_cast<int>(maze.rows * cell_size);
-
-    sf::RenderTexture texture;
-    texture.create(width, height);
-
-    Visualizer visualizer(cell_size);
-
-    texture.clear(sf::Color::Black);
-    visualizer.draw(texture, maze);
-    texture.display();
-
-    sf::Image image = texture.getTexture().copyToImage();
-    image.saveToFile(filename);
-}
 
 } /* visualizer namespace */
 
