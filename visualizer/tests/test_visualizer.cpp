@@ -61,7 +61,7 @@ IGNORE_TEST(VisualizerTests, DrawEmptyMaze)
 
 IGNORE_TEST(VisualizerTests, DrawMazeWithObstacles)
 {
-    std::vector<std::string> ascii =
+    std::vector<std::string> ascii
     {
         "+-+ +",
         "|S|  ",
@@ -70,13 +70,13 @@ IGNORE_TEST(VisualizerTests, DrawMazeWithObstacles)
         "+ +-+"
     };
 
-    maze::Maze maze = maze::build_from_ascii(ascii, 0);
+    maze::Maze maze {maze::build_from_ascii(ascii, 0)};
     visualizer::run_visual_maze_test(maze);
 }
 
 IGNORE_TEST(VisualizerTests, DrawFullMaze)
 {
-    std::vector<std::string> ascii =
+    std::vector<std::string> ascii
     {
         "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+",
         "| | | | | | | | | | | | | | | | |",
@@ -111,6 +111,6 @@ IGNORE_TEST(VisualizerTests, DrawFullMaze)
         "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+"
     };
 
-    maze::Maze maze = maze::build_from_ascii(ascii, 0);
+    maze::Maze maze {maze::build_from_ascii(ascii, 0)};
     visualizer::run_visual_maze_test(maze, 40.0f);
 }

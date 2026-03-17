@@ -41,7 +41,7 @@ namespace visualizer
 {
 
 Visualizer::Visualizer(float cell_size_pixels)
-    : cell_size(cell_size_pixels)
+    : cell_size{cell_size_pixels}
 {
     /* no additional logic */
 }
@@ -61,6 +61,35 @@ void Visualizer::draw(sf::RenderTarget& target, const maze::Maze& maze) const
 namespace visualizer
 {
 
+sf::Vector2f Visualizer::world_to_screen(const geometry::Point& p, const maze::Maze& maze) const
+{
+    float scale {static_cast<float>(cell_size / maze::CELL_SIZE)};
+
+    return {
+        static_cast<float>(p.x * scale),
+        static_cast<float>(p.y * scale)
+    };
+}
+
+sf::RectangleShape Visualizer::make_rectangle(const geometry::RectangularHitbox& hitbox, const maze::Maze& maze) const
+{
+    float scale {static_cast<float>(cell_size / maze::CELL_SIZE)};
+
+    float width  {static_cast<float>(hitbox.horizontal_size * scale)};
+    float height {static_cast<float>(hitbox.vertical_size * scale)};
+
+    sf::RectangleShape rect({width, height});
+
+    auto pos {world_to_screen(hitbox.center, maze)};
+
+    rect.setPosition(
+        pos.x - width  / 2.0f,
+        pos.y - height / 2.0f
+    );
+
+    return rect;
+}
+
 void Visualizer::draw_cells(sf::RenderTarget& target, const maze::Maze& maze) const
 {
     sf::RectangleShape cell;
@@ -69,9 +98,9 @@ void Visualizer::draw_cells(sf::RenderTarget& target, const maze::Maze& maze) co
     cell.setOutlineColor(sf::Color(60, 60, 60));
     cell.setOutlineThickness(1.0f);
 
-    for (int r = 0; r < maze.rows; ++r)
+    for (int r {0}; r < maze.rows; ++r)
     {
-        for (int c = 0; c < maze.cols; ++c)
+        for (int c {0}; c < maze.cols; ++c)
         {
             cell.setPosition(
                 c * cell_size,
@@ -87,7 +116,7 @@ void Visualizer::draw_obstacles(sf::RenderTarget& target, const maze::Maze& maze
 {
     for (const auto& obstacle : maze.obstacles)
     {
-        auto rect = make_rectangle(obstacle, maze);
+        auto rect {make_rectangle(obstacle, maze)};
         rect.setFillColor(sf::Color::White);
         target.draw(rect);
     }
@@ -99,40 +128,10 @@ void Visualizer::draw_mouse_start(sf::RenderTarget& target, const maze::Maze& ma
     marker.setRadius(cell_size * 0.05f);
     marker.setFillColor(sf::Color::Green);
 
-    auto pos = world_to_screen(maze.mouse_start, maze);
+    auto pos {world_to_screen(maze.mouse_start, maze)};
     marker.setPosition(pos.x - marker.getRadius(), pos.y - marker.getRadius());
 
     target.draw(marker);
-}
-
-sf::Vector2f Visualizer::world_to_screen(const geometry::Point& p, const maze::Maze& maze) const
-{
-    float scale = cell_size / maze::CELL_SIZE;
-    float maze_height = maze.rows * maze::CELL_SIZE;
-
-    return {
-        static_cast<float>(p.x * scale),
-        static_cast<float>(p.y * scale)
-    };
-}
-
-sf::RectangleShape Visualizer::make_rectangle(const geometry::RectangularHitbox& hitbox, const maze::Maze& maze) const
-{
-    float scale = cell_size / maze::CELL_SIZE;
-
-    float width  = static_cast<float>(hitbox.horizontal_size * scale);
-    float height = static_cast<float>(hitbox.vertical_size * scale);
-
-    sf::RectangleShape rect({width, height});
-
-    auto pos = world_to_screen(hitbox.center, maze);
-
-    rect.setPosition(
-        pos.x - width  / 2.0f,
-        pos.y - height / 2.0f
-    );
-
-    return rect;
 }
 
 } /* visualizer namespace */

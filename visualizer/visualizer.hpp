@@ -28,12 +28,12 @@ public:
 private:
     float cell_size;
 
+    sf::Vector2f world_to_screen(const geometry::Point& p, const maze::Maze& maze) const;
+    sf::RectangleShape make_rectangle(const geometry::RectangularHitbox& hitbox, const maze::Maze& maze) const;
+    
     void draw_cells(sf::RenderTarget& target, const maze::Maze& maze) const;
     void draw_obstacles(sf::RenderTarget& target, const maze::Maze& maze) const;
     void draw_mouse_start(sf::RenderTarget& target, const maze::Maze& maze) const;
-
-    sf::Vector2f world_to_screen(const geometry::Point& p, const maze::Maze& maze) const;
-    sf::RectangleShape make_rectangle(const geometry::RectangularHitbox& hitbox, const maze::Maze& maze) const;
 };
 
 inline void run_visual_maze_test(const maze::Maze& maze, float cell_size = 100.0f)
