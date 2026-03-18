@@ -27,18 +27,19 @@ namespace
 {
 
 std::optional<double> ray_segment_distance(const geometry::Ray& ray, 
-    const geometry::Point& a, const geometry::Point& b);
+        const geometry::Point& a, const geometry::Point& b);
 
 double compute_dot_product(const geometry::Point& a, const geometry::Point& b);
+
 geometry::Point compute_vector_between_points(const geometry::Point& a, const geometry::Point& b);
+
 geometry::Point compute_perpendicular_vector(const geometry::Point& e);
+
 void project_hitbox_onto_axis(const geometry::RectangularHitbox& box,
-             const geometry::Point& axis,
-             double& min,
-             double& max);
+        const geometry::Point& axis, double& min, double& max);
+
 bool are_hitboxes_separated_on_axis(const geometry::RectangularHitbox& a,
-               const geometry::RectangularHitbox& b,
-               const geometry::Point& axis);
+        const geometry::RectangularHitbox& b, const geometry::Point& axis);
 
 } /* unnamed namespace */
 
@@ -54,7 +55,7 @@ namespace geometry
 {
 
 std::optional<double> compute_ray_hitbox_distance(const Ray& ray,
-    const RectangularHitbox& hitbox)
+        const RectangularHitbox& hitbox)
 {
     std::optional<double> closest;
 
@@ -103,7 +104,7 @@ namespace
 {
 
 std::optional<double> ray_segment_distance(const geometry::Ray& ray, 
-    const geometry::Point& a, const geometry::Point& b)
+        const geometry::Point& a, const geometry::Point& b)
 {
     double rdx {ray.direction.x};
     double rdy {ray.direction.y};
@@ -144,9 +145,7 @@ geometry::Point compute_perpendicular_vector(const geometry::Point& e)
 }
 
 void project_hitbox_onto_axis(const geometry::RectangularHitbox& box,
-             const geometry::Point& axis,
-             double& min,
-             double& max)
+        const geometry::Point& axis, double& min, double& max)
 {
     const geometry::Point* pts[4] =
     {
@@ -167,8 +166,7 @@ void project_hitbox_onto_axis(const geometry::RectangularHitbox& box,
 }
 
 bool are_hitboxes_separated_on_axis(const geometry::RectangularHitbox& a,
-               const geometry::RectangularHitbox& b,
-               const geometry::Point& axis)
+        const geometry::RectangularHitbox& b, const geometry::Point& axis)
 {
     double minA, maxA;
     double minB, maxB;
