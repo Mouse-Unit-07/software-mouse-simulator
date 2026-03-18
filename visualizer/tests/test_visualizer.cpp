@@ -81,7 +81,7 @@ IGNORE_TEST(VisualizerTests, DrawMazeWithObstacles)
         "  |  ",
         "+ +-+"
     };
-    maze::Maze maze {maze::build_from_ascii(ascii, 0)};
+    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0)};
     
     visualizer.draw_maze(100.0f, maze);
     visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/draw-maze-with-obstacles.png");
@@ -124,7 +124,7 @@ IGNORE_TEST(VisualizerTests, DrawFullMaze)
         "|S| | | | | | | | | | | | | | | |",
         "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+"
     };
-    maze::Maze maze {maze::build_from_ascii(ascii, 0)};
+    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0)};
 
     visualizer.draw_maze(40.0f, maze);
     visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/draw-full-maze.png");
@@ -141,7 +141,7 @@ IGNORE_TEST(VisualizerTests, DrawMouseOnMaze)
         "  |  ",
         "+ +-+"
     };
-    maze::Maze maze {maze::build_from_ascii(ascii, 0)};
+    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0)};
     mouse::Mouse mouse;
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
     
@@ -161,7 +161,7 @@ IGNORE_TEST(VisualizerTests, DrawMouseSensorBeams)
         "  |  ",
         "+ +-+"
     };
-    maze::Maze maze {maze::build_from_ascii(ascii, 0)};
+    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0)};
     mouse::Mouse mouse;
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
     

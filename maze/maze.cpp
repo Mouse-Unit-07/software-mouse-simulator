@@ -60,7 +60,7 @@ const Cell& Maze::get_cell(int row, int col) const
     return cells[row * cols + col];
 }
 
-Maze build_from_ascii(const std::vector<std::string>& ascii, double obstacle_size_adjustment)
+Maze build_maze_from_ascii(const std::vector<std::string>& ascii, double obstacle_size_adjustment)
 {
     Maze maze;
 

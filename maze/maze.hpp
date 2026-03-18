@@ -45,7 +45,7 @@ public:
 namespace maze
 {
 
-Maze build_from_ascii(const std::vector<std::string>& ascii, double obstacle_size_adjustment);
+Maze build_maze_from_ascii(const std::vector<std::string>& ascii, double obstacle_size_adjustment);
 
 std::optional<std::pair<int, int>> get_cell_from_point(const Maze& maze, const geometry::Point& p);
 
