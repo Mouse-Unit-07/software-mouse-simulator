@@ -21,7 +21,7 @@ constexpr double CELL_SIZE {OFFICIAL_WALL_LENGTH_SIZE + OFFICIAL_POST_SIZE};
 
 struct Cell
 {
-    std::vector<const geometry::RectangularHitbox*> obstacles;
+    std::vector<size_t> obstacles;
 };
 
 class Maze
@@ -29,6 +29,7 @@ class Maze
     public:
         int rows {0};
         int cols {0};
+        double cell_size {0.0};
         std::vector<geometry::RectangularHitbox> obstacles;
         std::vector<Cell> cells;
         geometry::Point mouse_start;
@@ -45,6 +46,14 @@ namespace maze
 {
 
 Maze build_from_ascii(const std::vector<std::string>& ascii, double obstacle_size_adjustment);
+
+std::optional<std::pair<int, int>> get_cell_from_point(const Maze& maze, const geometry::Point& p);
+
+std::optional<double> compute_ray_distance_in_vicinity(const Maze& maze, const geometry::Ray& ray,
+        int row, int col);
+
+bool does_hitbox_collide_in_vicinity(const maze::Maze& maze, const geometry::RectangularHitbox& hitbox,
+        int row, int col);
 
 } /* maze namespace */
 
