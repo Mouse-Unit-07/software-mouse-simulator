@@ -15,19 +15,19 @@ namespace mouse
 
 class Mouse
 {
-    public:
-        geometry::RectangularHitbox hitbox;
-        geometry::Ray ir_1_sensor;
-        geometry::Ray ir_2_sensor;
-        geometry::Ray ir_3_sensor;
-        geometry::Ray ir_4_sensor;
-        Mouse();
+public:
+    geometry::RectangularHitbox hitbox;
+    geometry::Ray ir_1_sensor;
+    geometry::Ray ir_2_sensor;
+    geometry::Ray ir_3_sensor;
+    geometry::Ray ir_4_sensor;
+    Mouse();
 
-        void translate(double dx, double dy) noexcept;
-        void rotate(double angle_rad) noexcept;
+    void translate(double dx, double dy) noexcept;
+    void rotate(double angle_rad) noexcept;
 
-        bool operator==(const Mouse& other) const noexcept;
-        bool operator!=(const Mouse& other) const noexcept;
+    bool operator==(const Mouse& other) const noexcept;
+    bool operator!=(const Mouse& other) const noexcept;
 };
 
 } /* mouse namespace */

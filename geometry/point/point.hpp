@@ -15,17 +15,17 @@ namespace geometry
 
 class Point
 {
-    public:
-        double x {0};
-        double y {0};
-        Point() = default;
-        Point(double x, double y);
+public:
+    double x {0};
+    double y {0};
+    Point() = default;
+    Point(double x, double y);
 
-        void translate(double dx, double dy) noexcept;
-        void rotate(const Point& center, double angle_rad) noexcept;
+    void translate(double dx, double dy) noexcept;
+    void rotate(const Point& center, double angle_rad) noexcept;
 
-        bool operator==(const Point& other) const noexcept;
-        bool operator!=(const Point& other) const noexcept;
+    bool operator==(const Point& other) const noexcept;
+    bool operator!=(const Point& other) const noexcept;
 };
 
 } /* geometry namespace */

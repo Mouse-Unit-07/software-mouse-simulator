@@ -26,15 +26,15 @@ struct Cell
 
 class Maze
 {
-    public:
-        int rows {0};
-        int cols {0};
-        double cell_size {0.0};
-        std::vector<geometry::RectangularHitbox> obstacles;
-        std::vector<Cell> cells;
-        geometry::Point mouse_start;
+public:
+    int rows {0};
+    int cols {0};
+    double cell_size {0.0};
+    std::vector<geometry::RectangularHitbox> obstacles;
+    std::vector<Cell> cells;
+    geometry::Point mouse_start;
 
-        const Cell& get_cell(int row, int col) const;
+    const Cell& get_cell(int row, int col) const;
 };
 
 } /* maze namespace */
