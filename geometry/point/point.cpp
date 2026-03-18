@@ -58,13 +58,13 @@ void Point::rotate(const Point& center, double angle_rad) noexcept
     const double y_relative_to_center {y - center.y};
 
     const double rotated_x_relative {
-        x_relative_to_center * cosine_of_angle -
-        y_relative_to_center * sine_of_angle
+        (x_relative_to_center * cosine_of_angle)
+        - (y_relative_to_center * sine_of_angle)
     };
 
     const double rotated_y_relative {
-        x_relative_to_center * sine_of_angle +
-        y_relative_to_center * cosine_of_angle
+        (x_relative_to_center * sine_of_angle)
+        + (y_relative_to_center * cosine_of_angle)
     };
 
     x = center.x + rotated_x_relative;

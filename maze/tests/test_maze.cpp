@@ -32,10 +32,8 @@ int count_touching_obstacles(const maze::Maze& maze)
     const auto& obstacles {maze.obstacles};
     int touching_count {0};
 
-    for (size_t i {0}; i < obstacles.size(); i++)
-    {
-        for (size_t j {i + 1}; j < obstacles.size(); j++)
-        {
+    for (size_t i {0}; i < obstacles.size(); i++) {
+        for (size_t j {i + 1}; j < obstacles.size(); j++) {
             const auto& a {obstacles[i]};
             const auto& b {obstacles[j]};
 
@@ -94,7 +92,7 @@ TEST(MazeTests, CorrectNumberOfMazeDimensions)
         "|   |",
         "+-+-+"
     };
-    maze::Maze maze {maze::build_from_ascii(ascii, 0)};
+    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0)};
 
     CHECK_EQUAL(2, maze.rows);
     CHECK_EQUAL(2, maze.cols);
@@ -102,7 +100,7 @@ TEST(MazeTests, CorrectNumberOfMazeDimensions)
 
 TEST(MazeTests, CellCoordinatesAreTopLeftOrigin)
 {
-    std::vector<std::string> ascii =
+    std::vector<std::string> ascii
     {
         "+-+ +",
         "|S|  ",
@@ -110,7 +108,7 @@ TEST(MazeTests, CellCoordinatesAreTopLeftOrigin)
         "  |  ",
         "+ +-+"
     };
-    maze::Maze maze {maze::build_from_ascii(ascii, 0)};
+    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0)};
     const maze::Cell& top_left {maze.get_cell(0, 0)};
     const maze::Cell& bottom_right {maze.get_cell(1, 1)};
 
@@ -120,13 +118,13 @@ TEST(MazeTests, CellCoordinatesAreTopLeftOrigin)
 
 TEST(MazeTests, MouseStartCoordinatesCreated)
 {
-    std::vector<std::string> ascii =
+    std::vector<std::string> ascii
     {
         "+-+",
         "|S|",
         "+-+"
     };
-    maze::Maze maze {maze::build_from_ascii(ascii, 0)};
+    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0)};
 
     CHECK(maze.mouse_start.x > 0);
     CHECK(maze.mouse_start.y > 0);
@@ -142,7 +140,7 @@ TEST(MazeTests, MouseStartPlacedAtCellCenter)
         "|   |",
         "+-+-+"
     };
-    maze::Maze maze {maze::build_from_ascii(ascii, 0)};
+    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0)};
     double expected_x {maze::CELL_SIZE / 2.0};
     double expected_y {maze::CELL_SIZE / 2.0};
 
@@ -158,17 +156,15 @@ TEST(MazeTests, CorrectNumberOfPostCreated)
         " S ",
         "+ +"
     };
-    maze::Maze maze {maze::build_from_ascii(ascii, 0)};
+    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0)};
     int post_count {0};
 
-    for (const auto& obstacle : maze.obstacles)
-    {
+    for (const auto& obstacle : maze.obstacles) {
         double width {obstacle.horizontal_size};
         double height {obstacle.vertical_size};
 
         if (fabs(width - maze::OFFICIAL_POST_SIZE) < FLOAT_TOLERANCE &&
-            fabs(height - maze::OFFICIAL_POST_SIZE) < FLOAT_TOLERANCE)
-        {
+                fabs(height - maze::OFFICIAL_POST_SIZE) < FLOAT_TOLERANCE) {
             post_count++;
         }
     }
@@ -184,14 +180,11 @@ TEST(MazeTests, CorrectNumberOfVerticalWalls)
         "|S|",
         "+ +"
     };
-    maze::Maze maze {maze::build_from_ascii(ascii, 0)};
+    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0)};
     int wall_count {0};
 
-    for (const auto& obstacle : maze.obstacles)
-    {
-        if (obstacle.vertical_size >
-            obstacle.horizontal_size)
-        {
+    for (const auto& obstacle : maze.obstacles) {
+        if (obstacle.vertical_size > obstacle.horizontal_size) {
             wall_count++;
         }
     }
@@ -207,14 +200,11 @@ TEST(MazeTests, CorrectNumberOfHorizontalWalls)
         " S ",
         "+-+"
     };
-    maze::Maze maze {maze::build_from_ascii(ascii, 0)};
+    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0)};
     int wall_count {0};
 
-    for (const auto& obstacle : maze.obstacles)
-    {
-        if (obstacle.vertical_size <
-            obstacle.horizontal_size)
-        {
+    for (const auto& obstacle : maze.obstacles) {
+        if (obstacle.vertical_size < obstacle.horizontal_size) {
             wall_count++;
         }
     }
@@ -230,17 +220,14 @@ TEST(MazeTests, VerticalWallSharedBetweenCells)
         "|S| |",
         "+-+-+"
     };
-    maze::Maze maze {maze::build_from_ascii(ascii, 0)};
+    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0)};
     const maze::Cell& left {maze.get_cell(0, 0)};
     const maze::Cell& right {maze.get_cell(0, 1)};
     bool shared {false};
 
-    for (size_t a : left.obstacles)
-    {
-        for (size_t b : right.obstacles)
-        {
-            if (a == b)
-            {
+    for (size_t a : left.obstacles) {
+        for (size_t b : right.obstacles) {
+            if (a == b) {
                 shared = true;
             }
         }
@@ -259,17 +246,14 @@ TEST(MazeTests, HorizontalWallSharedBetweenCells)
         "| |",
         "+-+"
     };
-    maze::Maze maze {maze::build_from_ascii(ascii, 0)};
+    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0)};
     const maze::Cell& bottom {maze.get_cell(0, 0)};
     const maze::Cell& top {maze.get_cell(1, 0)};
     bool shared {false};
 
-    for (size_t a : bottom.obstacles)
-    {
-        for (size_t b : top.obstacles)
-        {
-            if (a == b)
-            {
+    for (size_t a : bottom.obstacles) {
+        for (size_t b : top.obstacles) {
+            if (a == b) {
                 shared = true;
             }
         }
@@ -286,7 +270,7 @@ TEST(MazeTests, SingleCellWallsTouchPosts)
         "| |",
         "+-+"
     };
-    maze::Maze maze {maze::build_from_ascii(ascii, 0)};
+    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0)};
     int touching_count {count_touching_obstacles(maze)};
 
     /* 8 full unique touches + 4 diagonal corner touches */
@@ -303,17 +287,15 @@ TEST(MazeTests, WallAdjustmentsModifySizes)
         "| |",
         "+-+"
     };
-    maze::Maze maze {maze::build_from_ascii(ascii, size_adjustment)};
+    maze::Maze maze {maze::build_maze_from_ascii(ascii, size_adjustment)};
 
-    for (const auto& o : maze.obstacles)
-    {
+    for (const auto& o : maze.obstacles) {
         if (o.horizontal_size > o.vertical_size) {
             DOUBLES_EQUAL(maze::OFFICIAL_WALL_LENGTH_SIZE + size_adjustment, o.horizontal_size, FLOAT_TOLERANCE);
             DOUBLES_EQUAL(maze::OFFICIAL_WALL_WIDTH_SIZE + size_adjustment, o.vertical_size, FLOAT_TOLERANCE);
         }
 
-        if (o.vertical_size > o.horizontal_size)
-        {
+        if (o.vertical_size > o.horizontal_size) {
             DOUBLES_EQUAL(maze::OFFICIAL_WALL_WIDTH_SIZE + size_adjustment, o.horizontal_size, FLOAT_TOLERANCE);
             DOUBLES_EQUAL(maze::OFFICIAL_WALL_LENGTH_SIZE + size_adjustment, o.vertical_size, FLOAT_TOLERANCE);
         }
@@ -330,12 +312,10 @@ TEST(MazeTests, PostAdjustmentsModifySizes)
         "| |",
         "+-+"
     };
-    maze::Maze maze {maze::build_from_ascii(ascii, size_adjustment)};
+    maze::Maze maze {maze::build_maze_from_ascii(ascii, size_adjustment)};
 
-    for (const auto& o : maze.obstacles)
-    {
-        if (fabs(o.horizontal_size - o.vertical_size) < FLOAT_TOLERANCE)
-        {
+    for (const auto& o : maze.obstacles) {
+        if (fabs(o.horizontal_size - o.vertical_size) < FLOAT_TOLERANCE) {
             DOUBLES_EQUAL(maze::OFFICIAL_POST_SIZE + size_adjustment, o.horizontal_size, FLOAT_TOLERANCE);
             DOUBLES_EQUAL(maze::OFFICIAL_POST_SIZE + size_adjustment, o.vertical_size, FLOAT_TOLERANCE);
         }
@@ -352,7 +332,7 @@ TEST(MazeTests, AdjustedWallsAndPostsTouch)
         "| |",
         "+-+"
     };
-    maze::Maze maze {maze::build_from_ascii(ascii, size_adjustment)};
+    maze::Maze maze {maze::build_maze_from_ascii(ascii, size_adjustment)};
     int touching_count {count_touching_obstacles(maze)};
 
     /* 8 full unique touches + 4 diagonal corner touches */
@@ -369,22 +349,22 @@ TEST(MazeTests, MazeRowAndColumnComputableFromRawCoordinates)
         "  |  ",
         "+ +-+"
     };
-    maze::Maze maze {maze::build_from_ascii(ascii, 0.0)};
+    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0.0)};
 
-    auto test_1 = maze::get_cell_from_point(maze, maze.mouse_start);
-    auto test_2 = maze::get_cell_from_point(maze, geometry::Point{maze.mouse_start.x + maze::CELL_SIZE, maze.mouse_start.y});
-    auto test_3 = maze::get_cell_from_point(maze, geometry::Point{maze.mouse_start.x, maze.mouse_start.y + maze::CELL_SIZE});
-    auto test_4 = maze::get_cell_from_point(maze, geometry::Point{maze.mouse_start.x + maze::CELL_SIZE, maze.mouse_start.y + maze::CELL_SIZE});
+    auto test_1 {maze::get_cell_from_point(maze, maze.mouse_start)};
+    auto test_2 {maze::get_cell_from_point(maze, geometry::Point{maze.mouse_start.x + maze::CELL_SIZE, maze.mouse_start.y})};
+    auto test_3 {maze::get_cell_from_point(maze, geometry::Point{maze.mouse_start.x, maze.mouse_start.y + maze::CELL_SIZE})};
+    auto test_4 {maze::get_cell_from_point(maze, geometry::Point{maze.mouse_start.x + maze::CELL_SIZE, maze.mouse_start.y + maze::CELL_SIZE})};
 
     CHECK(test_1.has_value());
     CHECK(test_2.has_value());
     CHECK(test_3.has_value());
     CHECK(test_4.has_value());
 
-    auto [row_1, col_1] = *test_1;
-    auto [row_2, col_2] = *test_2;
-    auto [row_3, col_3] = *test_3;
-    auto [row_4, col_4] = *test_4;
+    auto [row_1, col_1] {*test_1};
+    auto [row_2, col_2] {*test_2};
+    auto [row_3, col_3] {*test_3};
+    auto [row_4, col_4] {*test_4};
     CHECK((row_1 == 0) && (col_1 == 0));
     CHECK((row_2 == 0) && (col_2 == 1));
     CHECK((row_3 == 1) && (col_3 == 0));
@@ -402,23 +382,23 @@ TEST(MazeTests, MazeRowAndColumnComputableFromAdjustedCoordinates)
         "  |  ",
         "+ +-+"
     };
-    maze::Maze maze {maze::build_from_ascii(ascii, adjustment)};
+    maze::Maze maze {maze::build_maze_from_ascii(ascii, adjustment)};
 
     double new_cell_size {maze::CELL_SIZE + adjustment * 2};
-    auto test_1 = maze::get_cell_from_point(maze, maze.mouse_start);
-    auto test_2 = maze::get_cell_from_point(maze, geometry::Point{maze.mouse_start.x + new_cell_size, maze.mouse_start.y});
-    auto test_3 = maze::get_cell_from_point(maze, geometry::Point{maze.mouse_start.x, maze.mouse_start.y + new_cell_size});
-    auto test_4 = maze::get_cell_from_point(maze, geometry::Point{maze.mouse_start.x + new_cell_size, maze.mouse_start.y + new_cell_size});
+    auto test_1 {maze::get_cell_from_point(maze, maze.mouse_start)};
+    auto test_2 {maze::get_cell_from_point(maze, geometry::Point{maze.mouse_start.x + new_cell_size, maze.mouse_start.y})};
+    auto test_3 {maze::get_cell_from_point(maze, geometry::Point{maze.mouse_start.x, maze.mouse_start.y + new_cell_size})};
+    auto test_4 {maze::get_cell_from_point(maze, geometry::Point{maze.mouse_start.x + new_cell_size, maze.mouse_start.y + new_cell_size})};
 
     CHECK(test_1.has_value());
     CHECK(test_2.has_value());
     CHECK(test_3.has_value());
     CHECK(test_4.has_value());
 
-    auto [row_1, col_1] = *test_1;
-    auto [row_2, col_2] = *test_2;
-    auto [row_3, col_3] = *test_3;
-    auto [row_4, col_4] = *test_4;
+    auto [row_1, col_1] {*test_1};
+    auto [row_2, col_2] {*test_2};
+    auto [row_3, col_3] {*test_3};
+    auto [row_4, col_4] {*test_4};
     CHECK((row_1 == 0) && (col_1 == 0));
     CHECK((row_2 == 0) && (col_2 == 1));
     CHECK((row_3 == 1) && (col_3 == 0));
@@ -435,10 +415,10 @@ TEST(MazeTests, NoMazeRowAndColumnFromOutOfBoundsCoordinates)
         "  |  ",
         "+ +-+"
     };
-    maze::Maze maze {maze::build_from_ascii(ascii, 0.0)};
+    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0.0)};
 
-    auto test_1 = maze::get_cell_from_point(maze, geometry::Point{maze.mouse_start.x - maze::CELL_SIZE, maze.mouse_start.y});
-    auto test_2 = maze::get_cell_from_point(maze, geometry::Point{maze.mouse_start.x, maze.mouse_start.y + (maze::CELL_SIZE * 2)});
+    auto test_1 {maze::get_cell_from_point(maze, geometry::Point{maze.mouse_start.x - maze::CELL_SIZE, maze.mouse_start.y})};
+    auto test_2 {maze::get_cell_from_point(maze, geometry::Point{maze.mouse_start.x, maze.mouse_start.y + (maze::CELL_SIZE * 2)})};
 
     CHECK(!test_1.has_value());
     CHECK(!test_2.has_value());
@@ -452,16 +432,16 @@ TEST(MazeTests, FourRayDistancesComputedInSingleCell)
         "|S|",
         "+-+"
     };
-    maze::Maze maze {maze::build_from_ascii(ascii, 0.0)};
+    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0.0)};
 
     mouse::Mouse mouse;
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
 
     for (int i {1}; i < 4; i++) {
-        auto result_1 = compute_ray_distance_in_vicinity(maze, mouse.ir_1_sensor, 0, 0);
-        auto result_2 = compute_ray_distance_in_vicinity(maze, mouse.ir_2_sensor, 0, 0);
-        auto result_3 = compute_ray_distance_in_vicinity(maze, mouse.ir_3_sensor, 0, 0);
-        auto result_4 = compute_ray_distance_in_vicinity(maze, mouse.ir_4_sensor, 0, 0);
+        auto result_1 {compute_ray_distance_in_vicinity(maze, mouse.ir_1_sensor, 0, 0)};
+        auto result_2 {compute_ray_distance_in_vicinity(maze, mouse.ir_2_sensor, 0, 0)};
+        auto result_3 {compute_ray_distance_in_vicinity(maze, mouse.ir_3_sensor, 0, 0)};
+        auto result_4 {compute_ray_distance_in_vicinity(maze, mouse.ir_4_sensor, 0, 0)};
 
         CHECK(result_1.has_value());
         CHECK(result_2.has_value());
@@ -488,7 +468,7 @@ TEST(MazeTests, FourRayDistancesComputedInClosedThreeByThree)
         "|     |",
         "+-+-+-+",
     };
-    maze::Maze maze {maze::build_from_ascii(ascii, 0.0)};
+    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0.0)};
 
     mouse::Mouse mouse;
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
@@ -497,10 +477,10 @@ TEST(MazeTests, FourRayDistancesComputedInClosedThreeByThree)
     auto [mouse_row, mouse_col] {*mouse_row_and_column};
 
     for (int i {1}; i < 4; i++) {
-        auto result_1 = compute_ray_distance_in_vicinity(maze, mouse.ir_1_sensor, mouse_row, mouse_col);
-        auto result_2 = compute_ray_distance_in_vicinity(maze, mouse.ir_2_sensor, mouse_row, mouse_col);
-        auto result_3 = compute_ray_distance_in_vicinity(maze, mouse.ir_3_sensor, mouse_row, mouse_col);
-        auto result_4 = compute_ray_distance_in_vicinity(maze, mouse.ir_4_sensor, mouse_row, mouse_col);
+        auto result_1 {compute_ray_distance_in_vicinity(maze, mouse.ir_1_sensor, mouse_row, mouse_col)};
+        auto result_2 {compute_ray_distance_in_vicinity(maze, mouse.ir_2_sensor, mouse_row, mouse_col)};
+        auto result_3 {compute_ray_distance_in_vicinity(maze, mouse.ir_3_sensor, mouse_row, mouse_col)};
+        auto result_4 {compute_ray_distance_in_vicinity(maze, mouse.ir_4_sensor, mouse_row, mouse_col)};
 
         CHECK(result_1.has_value());
         CHECK(result_2.has_value());
@@ -527,7 +507,7 @@ TEST(MazeTests, AllRayDistancesAreShortestDistance)
         "|     |",
         "+-+-+-+",
     };
-    maze::Maze maze {maze::build_from_ascii(ascii, 0.0)};
+    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0.0)};
 
     mouse::Mouse mouse;
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
@@ -566,7 +546,7 @@ TEST(MazeTests, NoRayDistancesComputedInEmptyThreeByThree)
         "       ",
         "       ",
     };
-    maze::Maze maze {maze::build_from_ascii(ascii, 0.0)};
+    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0.0)};
 
     mouse::Mouse mouse;
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
@@ -575,10 +555,10 @@ TEST(MazeTests, NoRayDistancesComputedInEmptyThreeByThree)
     auto [mouse_row, mouse_col] {*mouse_row_and_column};
 
     for (int i {1}; i < 4; i++) {
-        auto result_1 = compute_ray_distance_in_vicinity(maze, mouse.ir_1_sensor, mouse_row, mouse_col);
-        auto result_2 = compute_ray_distance_in_vicinity(maze, mouse.ir_2_sensor, mouse_row, mouse_col);
-        auto result_3 = compute_ray_distance_in_vicinity(maze, mouse.ir_3_sensor, mouse_row, mouse_col);
-        auto result_4 = compute_ray_distance_in_vicinity(maze, mouse.ir_4_sensor, mouse_row, mouse_col);
+        auto result_1 {compute_ray_distance_in_vicinity(maze, mouse.ir_1_sensor, mouse_row, mouse_col)};
+        auto result_2 {compute_ray_distance_in_vicinity(maze, mouse.ir_2_sensor, mouse_row, mouse_col)};
+        auto result_3 {compute_ray_distance_in_vicinity(maze, mouse.ir_3_sensor, mouse_row, mouse_col)};
+        auto result_4 {compute_ray_distance_in_vicinity(maze, mouse.ir_4_sensor, mouse_row, mouse_col)};
 
         CHECK(!(result_1.has_value()));
         CHECK(!(result_2.has_value()));
@@ -601,12 +581,12 @@ TEST(MazeTests, MouseAtCellCenterNoCollision)
         "| | | |",
         "+-+-+-+",
     };
-    maze::Maze maze {maze::build_from_ascii(ascii, 0.0)};
+    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0.0)};
 
     mouse::Mouse mouse;
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
 
-    auto [row, col] = *(maze::get_cell_from_point(maze, maze.mouse_start));
+    auto [row, col] {*(maze::get_cell_from_point(maze, maze.mouse_start))};
 
     CHECK(!maze::does_hitbox_collide_in_vicinity(maze, mouse.hitbox, row, col));
 }
@@ -619,7 +599,7 @@ TEST(MazeTests, MouseMovingNearWallsNoCollision)
         "|S|",
         "+-+"
     };
-    maze::Maze maze {maze::build_from_ascii(ascii, 0.0)};
+    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0.0)};
 
     mouse::Mouse mouse;
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
@@ -653,7 +633,7 @@ TEST(MazeTests, MouseMovingJustOntoWallsCausesCollision)
         "|S|",
         "+-+"
     };
-    maze::Maze maze {maze::build_from_ascii(ascii, 0.0)};
+    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0.0)};
 
     mouse::Mouse mouse;
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
@@ -687,7 +667,7 @@ TEST(MazeTests, MouseCollidesWithNearWalls)
         "|S|",
         " - "
     };
-    maze::Maze maze {maze::build_from_ascii(ascii, 0.0)};
+    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0.0)};
 
     mouse::Mouse mouse;
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
@@ -720,7 +700,7 @@ TEST(MazeTests, MouseCollidesWithNearPosts)
         " S ",
         "+ +"
     };
-    maze::Maze maze {maze::build_from_ascii(ascii, 0.0)};
+    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0.0)};
 
     mouse::Mouse mouse;
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
@@ -756,7 +736,7 @@ TEST(MazeTests, MouseCollidesWithFarWalls)
         "|     |",
         " - - - ",
     };
-    maze::Maze maze {maze::build_from_ascii(ascii, 0.0)};
+    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0.0)};
 
     mouse::Mouse mouse;
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
@@ -793,7 +773,7 @@ TEST(MazeTests, MouseCollidesWithFarPosts)
         "       ",
         "+ + + +",
     };
-    maze::Maze maze {maze::build_from_ascii(ascii, 0.0)};
+    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0.0)};
 
     mouse::Mouse mouse;
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
