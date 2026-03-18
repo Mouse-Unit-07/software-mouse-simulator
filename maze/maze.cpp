@@ -163,6 +163,36 @@ std::optional<double> compute_ray_distance_in_vicinity(const Maze& maze, const g
     return closest;
 }
 
+bool does_hitbox_collide_in_vicinity(const maze::Maze& maze, const geometry::RectangularHitbox& hitbox,
+        int row, int col)
+{
+    for (int dr = -1; dr <= 1; dr++)
+    {
+        for (int dc = -1; dc <= 1; dc++)
+        {
+            int r = row + dr;
+            int c = col + dc;
+
+            if (r < 0 || r >= maze.rows) continue;
+            if (c < 0 || c >= maze.cols) continue;
+
+            const auto& cell = maze.get_cell(r, c);
+
+            for (size_t idx : cell.obstacles)
+            {
+                const auto& obstacle = maze.obstacles[idx];
+
+                if (geometry::do_hitboxes_overlap(hitbox, obstacle))
+                {
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
 } /* maze namespace */
 
 /*----------------------------------------------------------------------------*/

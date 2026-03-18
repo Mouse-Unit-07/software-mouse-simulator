@@ -588,3 +588,231 @@ TEST(MazeTests, NoRayDistancesComputedInEmptyThreeByThree)
         mouse.rotate((M_PI / 4) * i);
     }
 }
+
+TEST(MazeTests, MouseAtCellCenterNoCollision)
+{
+    std::vector<std::string> ascii
+    {
+        "+-+-+-+",
+        "| | | |",
+        "+-+-+-+",
+        "| |S| |",
+        "+-+-+-+",
+        "| | | |",
+        "+-+-+-+",
+    };
+    maze::Maze maze {maze::build_from_ascii(ascii, 0.0)};
+
+    mouse::Mouse mouse;
+    mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
+
+    auto [row, col] = *(maze::get_cell_from_point(maze, maze.mouse_start));
+
+    CHECK(!maze::does_hitbox_collide_in_vicinity(maze, mouse.hitbox, row, col));
+}
+
+TEST(MazeTests, MouseMovingNearWallsNoCollision)
+{
+    std::vector<std::string> ascii
+    {
+        "+-+",
+        "|S|",
+        "+-+"
+    };
+    maze::Maze maze {maze::build_from_ascii(ascii, 0.0)};
+
+    mouse::Mouse mouse;
+    mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
+
+    double distance_to_wall_center {(maze::OFFICIAL_POST_SIZE + maze::OFFICIAL_WALL_LENGTH_SIZE) / 2};
+    double horizontal_distance_to_cell_wall {(distance_to_wall_center - (mouse.hitbox.horizontal_size / 2) - (maze::OFFICIAL_POST_SIZE / 2)) - 1};
+    double vertical_distance_to_cell_wall {(distance_to_wall_center - (mouse.hitbox.vertical_size / 2) - (maze::OFFICIAL_POST_SIZE / 2)) - 1};
+
+    mouse.translate(0.0, vertical_distance_to_cell_wall);
+    CHECK(!maze::does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 0.0, 0.0));
+    mouse.translate(0.0, -vertical_distance_to_cell_wall);
+
+    mouse.translate(-horizontal_distance_to_cell_wall, 0.0);
+    CHECK(!maze::does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 0.0, 0.0));
+    mouse.translate(horizontal_distance_to_cell_wall, 0.0);
+
+    mouse.translate(-0.0, -vertical_distance_to_cell_wall);
+    CHECK(!maze::does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 0.0, 0.0));
+    mouse.translate(0.0, vertical_distance_to_cell_wall);
+
+    mouse.translate(horizontal_distance_to_cell_wall, 0.0);
+    CHECK(!maze::does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 0.0, 0.0));
+    mouse.translate(-horizontal_distance_to_cell_wall, 0.0);
+}
+
+TEST(MazeTests, MouseMovingJustOntoWallsCausesCollision)
+{
+    std::vector<std::string> ascii
+    {
+        "+-+",
+        "|S|",
+        "+-+"
+    };
+    maze::Maze maze {maze::build_from_ascii(ascii, 0.0)};
+
+    mouse::Mouse mouse;
+    mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
+
+    double distance_to_wall_center {(maze::OFFICIAL_POST_SIZE + maze::OFFICIAL_WALL_LENGTH_SIZE) / 2};
+    double horizontal_distance_to_cell_wall {(distance_to_wall_center - (mouse.hitbox.horizontal_size / 2) - (maze::OFFICIAL_POST_SIZE / 2))};
+    double vertical_distance_to_cell_wall {(distance_to_wall_center - (mouse.hitbox.vertical_size / 2) - (maze::OFFICIAL_POST_SIZE / 2))};
+
+    mouse.translate(0.0, vertical_distance_to_cell_wall);
+    CHECK(maze::does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 0.0, 0.0));
+    mouse.translate(0.0, -vertical_distance_to_cell_wall);
+
+    mouse.translate(-horizontal_distance_to_cell_wall, 0.0);
+    CHECK(maze::does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 0.0, 0.0));
+    mouse.translate(horizontal_distance_to_cell_wall, 0.0);
+
+    mouse.translate(-0.0, -vertical_distance_to_cell_wall);
+    CHECK(maze::does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 0.0, 0.0));
+    mouse.translate(0.0, vertical_distance_to_cell_wall);
+
+    mouse.translate(horizontal_distance_to_cell_wall, 0.0);
+    CHECK(maze::does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 0.0, 0.0));
+    mouse.translate(-horizontal_distance_to_cell_wall, 0.0);
+}
+
+TEST(MazeTests, MouseCollidesWithNearWalls)
+{
+    std::vector<std::string> ascii
+    {
+        " - ",
+        "|S|",
+        " - "
+    };
+    maze::Maze maze {maze::build_from_ascii(ascii, 0.0)};
+
+    mouse::Mouse mouse;
+    mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
+
+    double distance_to_near_wall {maze.cell_size / 2};
+
+    mouse.translate(-(distance_to_near_wall), 0.0);
+    CHECK(maze::does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 0, 0));
+    mouse.translate(distance_to_near_wall, 0.0);
+
+    mouse.translate(distance_to_near_wall, 0.0);
+    CHECK(maze::does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 0, 0));
+    mouse.translate(-(distance_to_near_wall), 0.0);
+
+    mouse.translate(0.0, -(distance_to_near_wall));
+    CHECK(maze::does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 0, 0));
+    mouse.translate(0.0, distance_to_near_wall);
+
+    mouse.translate(0.0, distance_to_near_wall);
+    CHECK(maze::does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 0, 0));
+    mouse.translate(0.0, -(distance_to_near_wall));
+}
+
+
+TEST(MazeTests, MouseCollidesWithNearPosts)
+{
+    std::vector<std::string> ascii
+    {
+        "+ +",
+        " S ",
+        "+ +"
+    };
+    maze::Maze maze {maze::build_from_ascii(ascii, 0.0)};
+
+    mouse::Mouse mouse;
+    mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
+
+    double distance_to_near_wall {maze.cell_size / 2};
+
+    mouse.translate(distance_to_near_wall, distance_to_near_wall);
+    CHECK(maze::does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 0, 0));
+    mouse.translate(-(distance_to_near_wall), -(distance_to_near_wall));
+
+    mouse.translate(-(distance_to_near_wall), distance_to_near_wall);
+    CHECK(maze::does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 0, 0));
+    mouse.translate(distance_to_near_wall, -(distance_to_near_wall));
+
+    mouse.translate(-(distance_to_near_wall), -(distance_to_near_wall));
+    CHECK(maze::does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 0, 0));
+    mouse.translate(distance_to_near_wall, distance_to_near_wall);
+
+    mouse.translate(distance_to_near_wall, -(distance_to_near_wall));
+    CHECK(maze::does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 0, 0));
+    mouse.translate(-(distance_to_near_wall), distance_to_near_wall);
+}
+
+TEST(MazeTests, MouseCollidesWithFarWalls)
+{
+    std::vector<std::string> ascii
+    {
+        " - - - ",
+        "|     |",
+        "       ",
+        "|  S  |",
+        "       ",
+        "|     |",
+        " - - - ",
+    };
+    maze::Maze maze {maze::build_from_ascii(ascii, 0.0)};
+
+    mouse::Mouse mouse;
+    mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
+
+    double distance_to_far_wall {maze.cell_size + (maze.cell_size / 2)};
+
+    mouse.translate(-(distance_to_far_wall), 0.0);
+    CHECK(maze::does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 1, 1));
+    mouse.translate(distance_to_far_wall, 0.0);
+
+    mouse.translate(distance_to_far_wall, 0.0);
+    CHECK(maze::does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 1, 1));
+    mouse.translate(-(distance_to_far_wall), 0.0);
+
+    mouse.translate(0.0, -(distance_to_far_wall));
+    CHECK(maze::does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 1, 1));
+    mouse.translate(0.0, distance_to_far_wall);
+
+    mouse.translate(0.0, distance_to_far_wall);
+    CHECK(maze::does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 1, 1));
+    mouse.translate(0.0, -(distance_to_far_wall));
+}
+
+
+TEST(MazeTests, MouseCollidesWithFarPosts)
+{
+    std::vector<std::string> ascii
+    {
+        "+ + + +",
+        "       ",
+        "+     +",
+        "   S   ",
+        "+     +",
+        "       ",
+        "+ + + +",
+    };
+    maze::Maze maze {maze::build_from_ascii(ascii, 0.0)};
+
+    mouse::Mouse mouse;
+    mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
+
+    double distance_to_far_wall {maze.cell_size + (maze.cell_size / 2)};
+
+    mouse.translate(distance_to_far_wall, distance_to_far_wall);
+    CHECK(maze::does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 1, 1));
+    mouse.translate(-(distance_to_far_wall), -(distance_to_far_wall));
+
+    mouse.translate(-(distance_to_far_wall), distance_to_far_wall);
+    CHECK(maze::does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 1, 1));
+    mouse.translate(distance_to_far_wall, -(distance_to_far_wall));
+
+    mouse.translate(-(distance_to_far_wall), -(distance_to_far_wall));
+    CHECK(maze::does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 1, 1));
+    mouse.translate(distance_to_far_wall, distance_to_far_wall);
+
+    mouse.translate(distance_to_far_wall, -(distance_to_far_wall));
+    CHECK(maze::does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 1, 1));
+    mouse.translate(-(distance_to_far_wall), distance_to_far_wall);
+}
