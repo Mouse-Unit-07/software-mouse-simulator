@@ -112,8 +112,8 @@ Maze build_from_ascii(const std::vector<std::string>& ascii, double obstacle_siz
 
                 maze.mouse_start =
                 {
-                    cell_c * adjusted_cell_size + adjusted_cell_size / 2,
-                    cell_r * adjusted_cell_size + adjusted_cell_size / 2
+                    (cell_c * adjusted_cell_size) + (adjusted_cell_size / 2),
+                    (cell_r * adjusted_cell_size) + (adjusted_cell_size / 2)
                 };
             }
         }
@@ -126,16 +126,16 @@ std::optional<std::pair<int, int>> get_cell_from_point(const Maze& maze, const g
 {
     const double cell {maze.cell_size};
 
-    if ((cell <= 0.0) || (p.x < 0) || (p.y < 0))
+    if ((cell <= 0.0) || (p.x < 0.0) || (p.y < 0.0))
         return std::nullopt;
 
     const int col {static_cast<int>(p.x / cell)};
     const int row {static_cast<int>(p.y / cell)};
 
-    if (row < 0 || row >= maze.rows)
+    if ((row < 0) || (row >= maze.rows))
         return std::nullopt;
 
-    if (col < 0 || col >= maze.cols)
+    if ((col < 0) || (col >= maze.cols))
         return std::nullopt;
 
     return std::make_pair(row, col);
@@ -173,8 +173,8 @@ bool does_hitbox_collide_in_vicinity(const maze::Maze& maze, const geometry::Rec
             int r {row + dr};
             int c {col + dc};
 
-            if (r < 0 || r >= maze.rows) continue;
-            if (c < 0 || c >= maze.cols) continue;
+            if ((r < 0) || (r >= maze.rows)) continue;
+            if ((c < 0) || (c >= maze.cols)) continue;
 
             const auto& cell {maze.get_cell(r, c)};
 
@@ -238,11 +238,11 @@ geometry::Point ascii_to_world(int r, int c, double size_adjustment)
     double x {(c / 2) * pitch};
     double y {(r / 2) * pitch};
 
-    if (c % 2 == 1) {
+    if ((c % 2) == 1) {
         x += pitch / 2; /* horizontal wall */
     }
 
-    if (r % 2 == 1) {
+    if ((r % 2) == 1) {
         y += pitch / 2; /* vertical wall */
     }
 
@@ -251,8 +251,8 @@ geometry::Point ascii_to_world(int r, int c, double size_adjustment)
 
 void attach_to_cell(maze::Maze& maze, size_t obstacle_index, int row, int col)
 {
-    if (row < 0 || row >= maze.rows) return;
-    if (col < 0 || col >= maze.cols) return;
+    if ((row < 0) || (row >= maze.rows)) return;
+    if ((col < 0) || (col >= maze.cols)) return;
 
     maze.cells[row * maze.cols + col]
         .obstacles.push_back(obstacle_index);

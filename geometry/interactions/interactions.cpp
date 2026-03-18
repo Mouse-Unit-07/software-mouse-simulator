@@ -64,7 +64,7 @@ std::optional<double> compute_ray_hitbox_distance(const Ray& ray,
         if (!d)
             return;
 
-        if (!closest || *d < *closest)
+        if (!closest || (*d < *closest))
             closest = d;
     };
 
@@ -112,7 +112,7 @@ std::optional<double> ray_segment_distance(const geometry::Ray& ray,
     double sdx {b.x - a.x};
     double sdy {b.y - a.y};
 
-    double denom {rdx * sdy - rdy * sdx};
+    double denom {(rdx * sdy) - (rdy * sdx)};
 
     if (std::abs(denom) < 1e-6)
         return std::nullopt;
@@ -120,10 +120,10 @@ std::optional<double> ray_segment_distance(const geometry::Ray& ray,
     double dx {a.x - ray.origin.x};
     double dy {a.y - ray.origin.y};
 
-    double t {(dx * sdy - dy * sdx) / denom};
-    double u {(dx * rdy - dy * rdx) / denom};
+    double t {((dx * sdy) - (dy * sdx)) / denom};
+    double u {((dx * rdy) - (dy * rdx)) / denom};
 
-    if (t >= 0.0 && u >= 0.0 && u <= 1.0)
+    if ((t >= 0.0) && (u >= 0.0) && (u <= 1.0))
         return t;
 
     return std::nullopt;
@@ -131,7 +131,7 @@ std::optional<double> ray_segment_distance(const geometry::Ray& ray,
 
 double compute_dot_product(const geometry::Point& a, const geometry::Point& b)
 {
-    return a.x * b.x + a.y * b.y;
+    return (a.x * b.x) + (a.y * b.y);
 }
 
 geometry::Point compute_vector_between_points(const geometry::Point& a, const geometry::Point& b)
