@@ -87,21 +87,21 @@ Maze build_from_ascii(const std::vector<std::string>& ascii, double obstacle_siz
             if (ch == '+')
             {
                 maze.obstacles.push_back(create_post(center, obstacle_size_adjustment));
-                size_t obstacle_index = maze.obstacles.size() - 1;
+                size_t obstacle_index {maze.obstacles.size() - 1};
                 attach_post_cells(maze, obstacle_index, r, c);
             }
 
             else if (ch == '|')
             {
                 maze.obstacles.push_back(create_vertical_wall(center, obstacle_size_adjustment));
-                size_t obstacle_index = maze.obstacles.size() - 1;
+                size_t obstacle_index {maze.obstacles.size() - 1};
                 attach_vertical_wall_cells(maze, obstacle_index, r, c);
             }
 
             else if (ch == '-')
             {
                 maze.obstacles.push_back(create_horizontal_wall(center, obstacle_size_adjustment));
-                size_t obstacle_index = maze.obstacles.size() - 1;
+                size_t obstacle_index {maze.obstacles.size() - 1};
                 attach_horizontal_wall_cells(maze, obstacle_index, r, c);
             }
 
@@ -166,21 +166,21 @@ std::optional<double> compute_ray_distance_in_vicinity(const Maze& maze, const g
 bool does_hitbox_collide_in_vicinity(const maze::Maze& maze, const geometry::RectangularHitbox& hitbox,
         int row, int col)
 {
-    for (int dr = -1; dr <= 1; dr++)
+    for (int dr {-1}; dr <= 1; dr++)
     {
-        for (int dc = -1; dc <= 1; dc++)
+        for (int dc {-1}; dc <= 1; dc++)
         {
-            int r = row + dr;
-            int c = col + dc;
+            int r {row + dr};
+            int c {col + dc};
 
             if (r < 0 || r >= maze.rows) continue;
             if (c < 0 || c >= maze.cols) continue;
 
-            const auto& cell = maze.get_cell(r, c);
+            const auto& cell {maze.get_cell(r, c)};
 
             for (size_t idx : cell.obstacles)
             {
-                const auto& obstacle = maze.obstacles[idx];
+                const auto& obstacle {maze.obstacles[idx]};
 
                 if (geometry::do_hitboxes_overlap(hitbox, obstacle))
                 {
@@ -304,7 +304,7 @@ std::optional<double> compute_ray_distance_in_cell(const maze::Maze& maze, const
 
     for (size_t idx : cell.obstacles)
     {
-        const auto& obstacle = maze.obstacles[idx];
+        const auto& obstacle {maze.obstacles[idx]};
 
         auto d {geometry::compute_ray_hitbox_distance(ray, obstacle)};
 

@@ -78,7 +78,7 @@ std::optional<double> compute_ray_hitbox_distance(const Ray& ray,
 
 bool do_hitboxes_overlap(const RectangularHitbox& a, const RectangularHitbox& b)
 {
-    Point axes[4] =
+    Point axes[4]
     {
         compute_perpendicular_vector(compute_vector_between_points(a.top_right, a.top_left)),
         compute_perpendicular_vector(compute_vector_between_points(a.top_left, a.bottom_left)),
@@ -147,7 +147,7 @@ geometry::Point compute_perpendicular_vector(const geometry::Point& e)
 void project_hitbox_onto_axis(const geometry::RectangularHitbox& box,
         const geometry::Point& axis, double& min, double& max)
 {
-    const geometry::Point* pts[4] =
+    const geometry::Point* pts[4]
     {
         &box.top_right,
         &box.top_left,
@@ -157,9 +157,9 @@ void project_hitbox_onto_axis(const geometry::RectangularHitbox& box,
 
     min = max = compute_dot_product(*pts[0], axis);
 
-    for (int i = 1; i < 4; ++i)
+    for (int i {1}; i < 4; ++i)
     {
-        double p = compute_dot_product(*pts[i], axis);
+        double p {compute_dot_product(*pts[i], axis)};
         min = std::min(min, p);
         max = std::max(max, p);
     }
