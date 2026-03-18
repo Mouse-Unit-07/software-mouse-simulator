@@ -49,6 +49,9 @@ Maze build_from_ascii(const std::vector<std::string>& ascii, double obstacle_siz
 
 std::optional<std::pair<int, int>> get_cell_from_point(const Maze& maze, const geometry::Point& p);
 
+std::optional<double> compute_ray_distance_in_vicinity(const Maze& maze, const geometry::Ray& ray,
+        int row, int col);
+
 } /* maze namespace */
 
 #endif /* MAZE_HPP_ */

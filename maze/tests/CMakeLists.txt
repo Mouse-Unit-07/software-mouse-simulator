@@ -18,6 +18,7 @@ add_executable(test_maze
 )
 
 target_link_libraries(test_maze PRIVATE
+    mouse_lib
     maze_lib
     CppUTest::CppUTest
     CppUTestExt

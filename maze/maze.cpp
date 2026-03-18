@@ -18,7 +18,9 @@ extern "C"
 #include <optional>
 #include <utility>
 #include "point.hpp"
+#include "ray.hpp"
 #include "rectangular_hitbox.hpp"
+#include "interactions.hpp"
 #include "maze.hpp"
 
 /*----------------------------------------------------------------------------*/
@@ -40,6 +42,9 @@ void attach_horizontal_wall_cells(maze::Maze& maze, const geometry::RectangularH
         int r, int c);
 void attach_post_cells(maze::Maze& maze, const geometry::RectangularHitbox& post,
         int r, int c);
+
+std::optional<double> compute_ray_distance_in_cell(const maze::Maze& maze, const geometry::Ray& ray,
+        int row, int col);
 
 } /* unnamed namespace */
 
@@ -135,6 +140,28 @@ std::optional<std::pair<int, int>> get_cell_from_point(const Maze& maze, const g
         return std::nullopt;
 
     return std::make_pair(row, col);
+}
+
+std::optional<double> compute_ray_distance_in_vicinity(const Maze& maze, const geometry::Ray& ray,
+        int row, int col)
+{
+    std::optional<double> closest {std::nullopt};
+
+    for (int dr {-1}; dr <= 1; dr++)
+    {
+        for (int dc {-1}; dc <= 1; dc++)
+        {
+            auto d {compute_ray_distance_in_cell(maze, ray, row + dr, col + dc)};
+
+            if (!d)
+                continue;
+
+            if (!closest || (*d < *closest))
+                closest = d;
+        }
+    }
+
+    return closest;
 }
 
 } /* maze namespace */
@@ -235,6 +262,33 @@ void attach_post_cells(maze::Maze& maze, const geometry::RectangularHitbox& post
     attach_to_cell(maze, post, base_r + 1, base_c);
     attach_to_cell(maze, post, base_r,     base_c + 1);
     attach_to_cell(maze, post, base_r + 1, base_c + 1);
+}
+
+std::optional<double> compute_ray_distance_in_cell(const maze::Maze& maze, const geometry::Ray& ray,
+        int row, int col)
+{
+    if ((row < 0) || (row >= maze.rows))
+        return std::nullopt;
+
+    if ((col < 0) || (col >= maze.cols))
+        return std::nullopt;
+
+    const auto& cell {maze.get_cell(row, col)};
+
+    std::optional<double> closest {std::nullopt};
+
+    for (const auto* obstacle : cell.obstacles)
+    {
+        auto d {geometry::compute_ray_hitbox_distance(ray, *obstacle)};
+
+        if (!d)
+            continue;
+
+        if (!closest || (*d < *closest))
+            closest = d;
+    }
+
+    return closest;
 }
 
 } /* unnamed namespace */

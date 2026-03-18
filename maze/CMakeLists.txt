@@ -14,5 +14,7 @@ target_include_directories(maze_lib PUBLIC
 
 target_link_libraries(maze_lib PUBLIC
     point_lib
+    ray_lib
+    interactions_lib
     rectangular_hitbox_lib
 )

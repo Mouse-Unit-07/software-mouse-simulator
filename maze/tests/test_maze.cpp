@@ -14,8 +14,10 @@
 #include <optional>
 #include <utility>
 #include "point.hpp"
+#include "ray.hpp"
 #include "rectangular_hitbox.hpp"
 #include "maze.hpp"
+#include "mouse.hpp"
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
@@ -442,3 +444,147 @@ TEST(MazeTests, NoMazeRowAndColumnFromOutOfBoundsCoordinates)
     CHECK(!test_2.has_value());
 }
 
+TEST(MazeTests, FourRayDistancesComputedInSingleCell)
+{
+    std::vector<std::string> ascii
+    {
+        "+-+",
+        "|S|",
+        "+-+"
+    };
+    maze::Maze maze {maze::build_from_ascii(ascii, 0.0)};
+
+    mouse::Mouse mouse;
+    mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
+
+    for (int i {1}; i < 4; i++) {
+        auto result_1 = compute_ray_distance_in_vicinity(maze, mouse.ir_1_sensor, 0, 0);
+        auto result_2 = compute_ray_distance_in_vicinity(maze, mouse.ir_2_sensor, 0, 0);
+        auto result_3 = compute_ray_distance_in_vicinity(maze, mouse.ir_3_sensor, 0, 0);
+        auto result_4 = compute_ray_distance_in_vicinity(maze, mouse.ir_4_sensor, 0, 0);
+
+        CHECK(result_1.has_value());
+        CHECK(result_2.has_value());
+        CHECK(result_3.has_value());
+        CHECK(result_4.has_value());
+        CHECK(*result_1 > 0.0);
+        CHECK(*result_2 > 0.0);
+        CHECK(*result_3 > 0.0);
+        CHECK(*result_4 > 0.0);
+
+        mouse.rotate((M_PI / 4) * i);
+    }
+}
+
+TEST(MazeTests, FourRayDistancesComputedInClosedThreeByThree)
+{
+    std::vector<std::string> ascii
+    {
+        "+-+-+-+",
+        "|     |",
+        "+     +",
+        "|  S  |",
+        "+     +",
+        "|     |",
+        "+-+-+-+",
+    };
+    maze::Maze maze {maze::build_from_ascii(ascii, 0.0)};
+
+    mouse::Mouse mouse;
+    mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
+
+    auto mouse_row_and_column {maze::get_cell_from_point(maze, maze.mouse_start)};
+    auto [mouse_row, mouse_col] {*mouse_row_and_column};
+
+    for (int i {1}; i < 4; i++) {
+        auto result_1 = compute_ray_distance_in_vicinity(maze, mouse.ir_1_sensor, mouse_row, mouse_col);
+        auto result_2 = compute_ray_distance_in_vicinity(maze, mouse.ir_2_sensor, mouse_row, mouse_col);
+        auto result_3 = compute_ray_distance_in_vicinity(maze, mouse.ir_3_sensor, mouse_row, mouse_col);
+        auto result_4 = compute_ray_distance_in_vicinity(maze, mouse.ir_4_sensor, mouse_row, mouse_col);
+
+        CHECK(result_1.has_value());
+        CHECK(result_2.has_value());
+        CHECK(result_3.has_value());
+        CHECK(result_4.has_value());
+        CHECK(*result_1 > 0.0);
+        CHECK(*result_2 > 0.0);
+        CHECK(*result_3 > 0.0);
+        CHECK(*result_4 > 0.0);
+
+        mouse.rotate((M_PI / 4) * i);
+    }
+}
+
+TEST(MazeTests, AllRayDistancesAreShortestDistance)
+{
+    std::vector<std::string> ascii
+    {
+        "+-+-+-+",
+        "|     |",
+        "+ +-+ +",
+        "| |S| |",
+        "+ +-+ +",
+        "|     |",
+        "+-+-+-+",
+    };
+    maze::Maze maze {maze::build_from_ascii(ascii, 0.0)};
+
+    mouse::Mouse mouse;
+    mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
+
+    auto mouse_row_and_column {maze::get_cell_from_point(maze, maze.mouse_start)};
+    auto [mouse_row, mouse_col] {*mouse_row_and_column};
+
+    for (int i {1}; i < 4; i++) {
+        auto result_1 {compute_ray_distance_in_vicinity(maze, mouse.ir_1_sensor, mouse_row, mouse_col)};
+        auto result_2 {compute_ray_distance_in_vicinity(maze, mouse.ir_2_sensor, mouse_row, mouse_col)};
+        auto result_3 {compute_ray_distance_in_vicinity(maze, mouse.ir_3_sensor, mouse_row, mouse_col)};
+        auto result_4 {compute_ray_distance_in_vicinity(maze, mouse.ir_4_sensor, mouse_row, mouse_col)};
+
+        CHECK(result_1.has_value());
+        CHECK(result_2.has_value());
+        CHECK(result_3.has_value());
+        CHECK(result_4.has_value());
+        CHECK(*result_1 < maze.cell_size);
+        CHECK(*result_2 < maze.cell_size);
+        CHECK(*result_3 < maze.cell_size);
+        CHECK(*result_4 < maze.cell_size);
+
+        mouse.rotate((M_PI / 4) * i);
+    }
+}
+
+TEST(MazeTests, NoRayDistancesComputedInEmptyThreeByThree)
+{
+    std::vector<std::string> ascii
+    {
+        "       ",
+        "       ",
+        "       ",
+        "   S   ",
+        "       ",
+        "       ",
+        "       ",
+    };
+    maze::Maze maze {maze::build_from_ascii(ascii, 0.0)};
+
+    mouse::Mouse mouse;
+    mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
+
+    auto mouse_row_and_column {maze::get_cell_from_point(maze, maze.mouse_start)};
+    auto [mouse_row, mouse_col] {*mouse_row_and_column};
+
+    for (int i {1}; i < 4; i++) {
+        auto result_1 = compute_ray_distance_in_vicinity(maze, mouse.ir_1_sensor, mouse_row, mouse_col);
+        auto result_2 = compute_ray_distance_in_vicinity(maze, mouse.ir_2_sensor, mouse_row, mouse_col);
+        auto result_3 = compute_ray_distance_in_vicinity(maze, mouse.ir_3_sensor, mouse_row, mouse_col);
+        auto result_4 = compute_ray_distance_in_vicinity(maze, mouse.ir_4_sensor, mouse_row, mouse_col);
+
+        CHECK(!(result_1.has_value()));
+        CHECK(!(result_2.has_value()));
+        CHECK(!(result_3.has_value()));
+        CHECK(!(result_4.has_value()));
+
+        mouse.rotate((M_PI / 4) * i);
+    }
+}
