@@ -34,14 +34,10 @@ geometry::RectangularHitbox create_vertical_wall(const geometry::Point& center, 
 geometry::RectangularHitbox create_horizontal_wall(const geometry::Point& center, double size_adjustment);
 
 geometry::Point ascii_to_world(int r, int c, double size_adjustment);
-void attach_to_cell(maze::Maze& maze, const geometry::RectangularHitbox& obstacle,
-        int row, int col);
-void attach_vertical_wall_cells(maze::Maze& maze, const geometry::RectangularHitbox& wall,
-        int r, int c);
-void attach_horizontal_wall_cells(maze::Maze& maze, const geometry::RectangularHitbox& wall,
-        int r, int c);
-void attach_post_cells(maze::Maze& maze, const geometry::RectangularHitbox& post,
-        int r, int c);
+void attach_to_cell(maze::Maze& maze, size_t obstacle_index, int row, int col);
+void attach_vertical_wall_cells(maze::Maze& maze, size_t obstacle_index, int r, int c);
+void attach_horizontal_wall_cells(maze::Maze& maze, size_t obstacle_index, int r, int c);
+void attach_post_cells(maze::Maze& maze, size_t obstacle_index, int r, int c);
 
 std::optional<double> compute_ray_distance_in_cell(const maze::Maze& maze, const geometry::Ray& ray,
         int row, int col);
@@ -91,19 +87,22 @@ Maze build_from_ascii(const std::vector<std::string>& ascii, double obstacle_siz
             if (ch == '+')
             {
                 maze.obstacles.push_back(create_post(center, obstacle_size_adjustment));
-                attach_post_cells(maze, maze.obstacles.back(), r, c);
+                size_t obstacle_index = maze.obstacles.size() - 1;
+                attach_post_cells(maze, obstacle_index, r, c);
             }
 
             else if (ch == '|')
             {
                 maze.obstacles.push_back(create_vertical_wall(center, obstacle_size_adjustment));
-                attach_vertical_wall_cells(maze, maze.obstacles.back(), r, c);
+                size_t obstacle_index = maze.obstacles.size() - 1;
+                attach_vertical_wall_cells(maze, obstacle_index, r, c);
             }
 
             else if (ch == '-')
             {
                 maze.obstacles.push_back(create_horizontal_wall(center, obstacle_size_adjustment));
-                attach_horizontal_wall_cells(maze, maze.obstacles.back(), r, c);
+                size_t obstacle_index = maze.obstacles.size() - 1;
+                attach_horizontal_wall_cells(maze, obstacle_index, r, c);
             }
 
             else if (ch == 'S')
@@ -220,48 +219,44 @@ geometry::Point ascii_to_world(int r, int c, double size_adjustment)
     return {x, y};
 }
 
-void attach_to_cell(maze::Maze& maze, const geometry::RectangularHitbox& obstacle,
-        int row, int col)
+void attach_to_cell(maze::Maze& maze, size_t obstacle_index, int row, int col)
 {
     if (row < 0 || row >= maze.rows) return;
     if (col < 0 || col >= maze.cols) return;
 
     maze.cells[row * maze.cols + col]
-        .obstacles.push_back(&obstacle);
+        .obstacles.push_back(obstacle_index);
 }
 
-void attach_vertical_wall_cells(maze::Maze& maze, const geometry::RectangularHitbox& wall,
-        int r, int c)
+void attach_vertical_wall_cells(maze::Maze& maze, size_t obstacle_index, int r, int c)
 {
     int cell_r {r / 2};
     int left_cell {(c / 2) - 1};
     int right_cell {(c / 2)};
 
-    attach_to_cell(maze, wall, cell_r, left_cell);
-    attach_to_cell(maze, wall, cell_r, right_cell);
+    attach_to_cell(maze, obstacle_index, cell_r, left_cell);
+    attach_to_cell(maze, obstacle_index, cell_r, right_cell);
 }
 
-void attach_horizontal_wall_cells(maze::Maze& maze, const geometry::RectangularHitbox& wall,
-        int r, int c)
+void attach_horizontal_wall_cells(maze::Maze& maze, size_t obstacle_index, int r, int c)
 {
     int cell_c {c / 2};
     int bottom_cell {(r / 2) - 1};
     int top_cell {r / 2};
 
-    attach_to_cell(maze, wall, bottom_cell, cell_c);
-    attach_to_cell(maze, wall, top_cell, cell_c);
+    attach_to_cell(maze, obstacle_index, bottom_cell, cell_c);
+    attach_to_cell(maze, obstacle_index, top_cell, cell_c);
 }
 
-void attach_post_cells(maze::Maze& maze, const geometry::RectangularHitbox& post,
-        int r, int c)
+void attach_post_cells(maze::Maze& maze, size_t obstacle_index, int r, int c)
 {
     int base_r {(r / 2) - 1};
     int base_c {(c / 2) - 1};
 
-    attach_to_cell(maze, post, base_r,     base_c);
-    attach_to_cell(maze, post, base_r + 1, base_c);
-    attach_to_cell(maze, post, base_r,     base_c + 1);
-    attach_to_cell(maze, post, base_r + 1, base_c + 1);
+    attach_to_cell(maze, obstacle_index, base_r,     base_c);
+    attach_to_cell(maze, obstacle_index, base_r + 1, base_c);
+    attach_to_cell(maze, obstacle_index, base_r,     base_c + 1);
+    attach_to_cell(maze, obstacle_index, base_r + 1, base_c + 1);
 }
 
 std::optional<double> compute_ray_distance_in_cell(const maze::Maze& maze, const geometry::Ray& ray,
@@ -277,9 +272,11 @@ std::optional<double> compute_ray_distance_in_cell(const maze::Maze& maze, const
 
     std::optional<double> closest {std::nullopt};
 
-    for (const auto* obstacle : cell.obstacles)
+    for (size_t idx : cell.obstacles)
     {
-        auto d {geometry::compute_ray_hitbox_distance(ray, *obstacle)};
+        const auto& obstacle = maze.obstacles[idx];
+
+        auto d {geometry::compute_ray_hitbox_distance(ray, obstacle)};
 
         if (!d)
             continue;

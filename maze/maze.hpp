@@ -21,7 +21,7 @@ constexpr double CELL_SIZE {OFFICIAL_WALL_LENGTH_SIZE + OFFICIAL_POST_SIZE};
 
 struct Cell
 {
-    std::vector<const geometry::RectangularHitbox*> obstacles;
+    std::vector<size_t> obstacles;
 };
 
 class Maze

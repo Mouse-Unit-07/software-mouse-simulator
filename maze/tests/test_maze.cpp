@@ -235,9 +235,9 @@ TEST(MazeTests, VerticalWallSharedBetweenCells)
     const maze::Cell& right {maze.get_cell(0, 1)};
     bool shared {false};
 
-    for (auto* a : left.obstacles)
+    for (size_t a : left.obstacles)
     {
-        for (auto* b : right.obstacles)
+        for (size_t b : right.obstacles)
         {
             if (a == b)
             {
@@ -264,9 +264,9 @@ TEST(MazeTests, HorizontalWallSharedBetweenCells)
     const maze::Cell& top {maze.get_cell(1, 0)};
     bool shared {false};
 
-    for (auto* a : bottom.obstacles)
+    for (size_t a : bottom.obstacles)
     {
-        for (auto* b : top.obstacles)
+        for (size_t b : top.obstacles)
         {
             if (a == b)
             {
