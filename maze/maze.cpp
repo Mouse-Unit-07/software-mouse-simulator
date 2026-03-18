@@ -76,37 +76,24 @@ Maze build_from_ascii(const std::vector<std::string>& ascii, double obstacle_siz
 
     maze.cell_size = adjusted_cell_size;
 
-    for (int r {0}; r < ascii_rows; r++)
-    {
-        for (int c {0}; c < ascii_cols; c++)
-        {
+    for (int r {0}; r < ascii_rows; r++) {
+        for (int c {0}; c < ascii_cols; c++) {
             char ch {ascii[r][c]};
-
             geometry::Point center {ascii_to_world(r, c, obstacle_size_adjustment)};
 
-            if (ch == '+')
-            {
+            if (ch == '+') {
                 maze.obstacles.push_back(create_post(center, obstacle_size_adjustment));
                 size_t obstacle_index {maze.obstacles.size() - 1};
                 attach_post_cells(maze, obstacle_index, r, c);
-            }
-
-            else if (ch == '|')
-            {
+            } else if (ch == '|') {
                 maze.obstacles.push_back(create_vertical_wall(center, obstacle_size_adjustment));
                 size_t obstacle_index {maze.obstacles.size() - 1};
                 attach_vertical_wall_cells(maze, obstacle_index, r, c);
-            }
-
-            else if (ch == '-')
-            {
+            } else if (ch == '-') {
                 maze.obstacles.push_back(create_horizontal_wall(center, obstacle_size_adjustment));
                 size_t obstacle_index {maze.obstacles.size() - 1};
                 attach_horizontal_wall_cells(maze, obstacle_index, r, c);
-            }
-
-            else if (ch == 'S')
-            {
+            } else if (ch == 'S') {
                 int cell_r {r / 2};
                 int cell_c {c / 2};
 
@@ -126,17 +113,20 @@ std::optional<std::pair<int, int>> get_cell_from_point(const Maze& maze, const g
 {
     const double cell {maze.cell_size};
 
-    if ((cell <= 0.0) || (p.x < 0.0) || (p.y < 0.0))
+    if ((cell <= 0.0) || (p.x < 0.0) || (p.y < 0.0)) {
         return std::nullopt;
+    }
 
     const int col {static_cast<int>(p.x / cell)};
     const int row {static_cast<int>(p.y / cell)};
 
-    if ((row < 0) || (row >= maze.rows))
+    if ((row < 0) || (row >= maze.rows)) {
         return std::nullopt;
+    }
 
-    if ((col < 0) || (col >= maze.cols))
+    if ((col < 0) || (col >= maze.cols)) {
         return std::nullopt;
+    }
 
     return std::make_pair(row, col);
 }
@@ -146,17 +136,17 @@ std::optional<double> compute_ray_distance_in_vicinity(const Maze& maze, const g
 {
     std::optional<double> closest {std::nullopt};
 
-    for (int dr {-1}; dr <= 1; dr++)
-    {
-        for (int dc {-1}; dc <= 1; dc++)
-        {
+    for (int dr {-1}; dr <= 1; dr++) {
+        for (int dc {-1}; dc <= 1; dc++) {
             auto d {compute_ray_distance_in_cell(maze, ray, row + dr, col + dc)};
 
-            if (!d)
+            if (!d) {
                 continue;
+            }
 
-            if (!closest || (*d < *closest))
+            if (!closest || (*d < *closest)) {
                 closest = d;
+            }
         }
     }
 
@@ -166,24 +156,21 @@ std::optional<double> compute_ray_distance_in_vicinity(const Maze& maze, const g
 bool does_hitbox_collide_in_vicinity(const maze::Maze& maze, const geometry::RectangularHitbox& hitbox,
         int row, int col)
 {
-    for (int dr {-1}; dr <= 1; dr++)
-    {
-        for (int dc {-1}; dc <= 1; dc++)
-        {
+    for (int dr {-1}; dr <= 1; dr++) {
+        for (int dc {-1}; dc <= 1; dc++) {
             int r {row + dr};
             int c {col + dc};
 
-            if ((r < 0) || (r >= maze.rows)) continue;
-            if ((c < 0) || (c >= maze.cols)) continue;
+            if (((r < 0) || (r >= maze.rows)) || ((c < 0) || (c >= maze.cols))) {
+                continue;
+            }
 
             const auto& cell {maze.get_cell(r, c)};
 
-            for (size_t idx : cell.obstacles)
-            {
+            for (size_t idx : cell.obstacles) {
                 const auto& obstacle {maze.obstacles[idx]};
 
-                if (geometry::do_hitboxes_overlap(hitbox, obstacle))
-                {
+                if (geometry::do_hitboxes_overlap(hitbox, obstacle)) {
                     return true;
                 }
             }
@@ -251,8 +238,9 @@ geometry::Point ascii_to_world(int r, int c, double size_adjustment)
 
 void attach_to_cell(maze::Maze& maze, size_t obstacle_index, int row, int col)
 {
-    if ((row < 0) || (row >= maze.rows)) return;
-    if ((col < 0) || (col >= maze.cols)) return;
+    if (((row < 0) || (row >= maze.rows)) || ((col < 0) || (col >= maze.cols))) {
+        return;
+    }
 
     maze.cells[row * maze.cols + col]
         .obstacles.push_back(obstacle_index);
@@ -292,27 +280,26 @@ void attach_post_cells(maze::Maze& maze, size_t obstacle_index, int r, int c)
 std::optional<double> compute_ray_distance_in_cell(const maze::Maze& maze, const geometry::Ray& ray,
         int row, int col)
 {
-    if ((row < 0) || (row >= maze.rows))
+    if (((row < 0) || (row >= maze.rows)) || ((col < 0) || (col >= maze.cols))) {
         return std::nullopt;
-
-    if ((col < 0) || (col >= maze.cols))
-        return std::nullopt;
+    }
 
     const auto& cell {maze.get_cell(row, col)};
 
     std::optional<double> closest {std::nullopt};
 
-    for (size_t idx : cell.obstacles)
-    {
+    for (size_t idx : cell.obstacles) {
         const auto& obstacle {maze.obstacles[idx]};
 
         auto d {geometry::compute_ray_hitbox_distance(ray, obstacle)};
 
-        if (!d)
+        if (!d) {
             continue;
+        }
 
-        if (!closest || (*d < *closest))
+        if (!closest || (*d < *closest)) {
             closest = d;
+        }
     }
 
     return closest;

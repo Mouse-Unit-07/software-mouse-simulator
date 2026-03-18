@@ -61,11 +61,13 @@ std::optional<double> compute_ray_hitbox_distance(const Ray& ray,
 
     auto update = [&](std::optional<double> d)
     {
-        if (!d)
+        if (!d) {
             return;
+        }
 
-        if (!closest || (*d < *closest))
+        if (!closest || (*d < *closest)) {
             closest = d;
+        }
     };
 
     update(ray_segment_distance(ray, hitbox.top_right, hitbox.top_left));
@@ -86,10 +88,10 @@ bool do_hitboxes_overlap(const RectangularHitbox& a, const RectangularHitbox& b)
         compute_perpendicular_vector(compute_vector_between_points(b.top_left, b.bottom_left))
     };
 
-    for (const auto& axis : axes)
-    {
-        if (are_hitboxes_separated_on_axis(a, b, axis))
+    for (const auto& axis : axes) {
+        if (are_hitboxes_separated_on_axis(a, b, axis)) {
             return false;
+        }
     }
 
     return true;
@@ -114,8 +116,9 @@ std::optional<double> ray_segment_distance(const geometry::Ray& ray,
 
     double denom {(rdx * sdy) - (rdy * sdx)};
 
-    if (std::abs(denom) < 1e-6)
+    if (std::abs(denom) < 1e-6) {
         return std::nullopt;
+    }
 
     double dx {a.x - ray.origin.x};
     double dy {a.y - ray.origin.y};
@@ -123,8 +126,9 @@ std::optional<double> ray_segment_distance(const geometry::Ray& ray,
     double t {((dx * sdy) - (dy * sdx)) / denom};
     double u {((dx * rdy) - (dy * rdx)) / denom};
 
-    if ((t >= 0.0) && (u >= 0.0) && (u <= 1.0))
+    if ((t >= 0.0) && (u >= 0.0) && (u <= 1.0)) {
         return t;
+    }
 
     return std::nullopt;
 }
@@ -157,8 +161,7 @@ void project_hitbox_onto_axis(const geometry::RectangularHitbox& box,
 
     min = max = compute_dot_product(*pts[0], axis);
 
-    for (int i {1}; i < 4; ++i)
-    {
+    for (int i {1}; i < 4; ++i) {
         double p {compute_dot_product(*pts[i], axis)};
         min = std::min(min, p);
         max = std::max(max, p);

@@ -32,10 +32,8 @@ int count_touching_obstacles(const maze::Maze& maze)
     const auto& obstacles {maze.obstacles};
     int touching_count {0};
 
-    for (size_t i {0}; i < obstacles.size(); i++)
-    {
-        for (size_t j {i + 1}; j < obstacles.size(); j++)
-        {
+    for (size_t i {0}; i < obstacles.size(); i++) {
+        for (size_t j {i + 1}; j < obstacles.size(); j++) {
             const auto& a {obstacles[i]};
             const auto& b {obstacles[j]};
 
@@ -161,14 +159,12 @@ TEST(MazeTests, CorrectNumberOfPostCreated)
     maze::Maze maze {maze::build_from_ascii(ascii, 0)};
     int post_count {0};
 
-    for (const auto& obstacle : maze.obstacles)
-    {
+    for (const auto& obstacle : maze.obstacles) {
         double width {obstacle.horizontal_size};
         double height {obstacle.vertical_size};
 
         if (fabs(width - maze::OFFICIAL_POST_SIZE) < FLOAT_TOLERANCE &&
-            fabs(height - maze::OFFICIAL_POST_SIZE) < FLOAT_TOLERANCE)
-        {
+                fabs(height - maze::OFFICIAL_POST_SIZE) < FLOAT_TOLERANCE) {
             post_count++;
         }
     }
@@ -187,11 +183,8 @@ TEST(MazeTests, CorrectNumberOfVerticalWalls)
     maze::Maze maze {maze::build_from_ascii(ascii, 0)};
     int wall_count {0};
 
-    for (const auto& obstacle : maze.obstacles)
-    {
-        if (obstacle.vertical_size >
-            obstacle.horizontal_size)
-        {
+    for (const auto& obstacle : maze.obstacles) {
+        if (obstacle.vertical_size > obstacle.horizontal_size) {
             wall_count++;
         }
     }
@@ -210,11 +203,8 @@ TEST(MazeTests, CorrectNumberOfHorizontalWalls)
     maze::Maze maze {maze::build_from_ascii(ascii, 0)};
     int wall_count {0};
 
-    for (const auto& obstacle : maze.obstacles)
-    {
-        if (obstacle.vertical_size <
-            obstacle.horizontal_size)
-        {
+    for (const auto& obstacle : maze.obstacles) {
+        if (obstacle.vertical_size < obstacle.horizontal_size) {
             wall_count++;
         }
     }
@@ -235,12 +225,9 @@ TEST(MazeTests, VerticalWallSharedBetweenCells)
     const maze::Cell& right {maze.get_cell(0, 1)};
     bool shared {false};
 
-    for (size_t a : left.obstacles)
-    {
-        for (size_t b : right.obstacles)
-        {
-            if (a == b)
-            {
+    for (size_t a : left.obstacles) {
+        for (size_t b : right.obstacles) {
+            if (a == b) {
                 shared = true;
             }
         }
@@ -264,12 +251,9 @@ TEST(MazeTests, HorizontalWallSharedBetweenCells)
     const maze::Cell& top {maze.get_cell(1, 0)};
     bool shared {false};
 
-    for (size_t a : bottom.obstacles)
-    {
-        for (size_t b : top.obstacles)
-        {
-            if (a == b)
-            {
+    for (size_t a : bottom.obstacles) {
+        for (size_t b : top.obstacles) {
+            if (a == b) {
                 shared = true;
             }
         }
@@ -305,15 +289,13 @@ TEST(MazeTests, WallAdjustmentsModifySizes)
     };
     maze::Maze maze {maze::build_from_ascii(ascii, size_adjustment)};
 
-    for (const auto& o : maze.obstacles)
-    {
+    for (const auto& o : maze.obstacles) {
         if (o.horizontal_size > o.vertical_size) {
             DOUBLES_EQUAL(maze::OFFICIAL_WALL_LENGTH_SIZE + size_adjustment, o.horizontal_size, FLOAT_TOLERANCE);
             DOUBLES_EQUAL(maze::OFFICIAL_WALL_WIDTH_SIZE + size_adjustment, o.vertical_size, FLOAT_TOLERANCE);
         }
 
-        if (o.vertical_size > o.horizontal_size)
-        {
+        if (o.vertical_size > o.horizontal_size) {
             DOUBLES_EQUAL(maze::OFFICIAL_WALL_WIDTH_SIZE + size_adjustment, o.horizontal_size, FLOAT_TOLERANCE);
             DOUBLES_EQUAL(maze::OFFICIAL_WALL_LENGTH_SIZE + size_adjustment, o.vertical_size, FLOAT_TOLERANCE);
         }
@@ -332,10 +314,8 @@ TEST(MazeTests, PostAdjustmentsModifySizes)
     };
     maze::Maze maze {maze::build_from_ascii(ascii, size_adjustment)};
 
-    for (const auto& o : maze.obstacles)
-    {
-        if (fabs(o.horizontal_size - o.vertical_size) < FLOAT_TOLERANCE)
-        {
+    for (const auto& o : maze.obstacles) {
+        if (fabs(o.horizontal_size - o.vertical_size) < FLOAT_TOLERANCE) {
             DOUBLES_EQUAL(maze::OFFICIAL_POST_SIZE + size_adjustment, o.horizontal_size, FLOAT_TOLERANCE);
             DOUBLES_EQUAL(maze::OFFICIAL_POST_SIZE + size_adjustment, o.vertical_size, FLOAT_TOLERANCE);
         }

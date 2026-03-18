@@ -126,10 +126,7 @@ sf::RectangleShape Visualizer::make_rectangle(const geometry::RectangularHitbox&
 
     auto pos {world_to_screen(hitbox.center)};
 
-    rect.setPosition(
-        pos.x - width  / 2.0f,
-        pos.y - height / 2.0f
-    );
+    rect.setPosition(pos.x - width  / 2.0f, pos.y - height / 2.0f);
 
     return rect;
 }
@@ -142,15 +139,9 @@ void Visualizer::draw_cells(const maze::Maze& maze)
     cell.setOutlineColor(sf::Color(60, 60, 60));
     cell.setOutlineThickness(1.0f);
 
-    for (int r {0}; r < maze.rows; ++r)
-    {
-        for (int c {0}; c < maze.cols; ++c)
-        {
-            cell.setPosition(
-                c * cell_size,
-                r * cell_size
-            );
-
+    for (int r {0}; r < maze.rows; ++r) {
+        for (int c {0}; c < maze.cols; ++c) {
+            cell.setPosition(c * cell_size, r * cell_size);
             texture.draw(cell);
         }
     }
@@ -158,8 +149,7 @@ void Visualizer::draw_cells(const maze::Maze& maze)
 
 void Visualizer::draw_obstacles(const maze::Maze& maze)
 {
-    for (const auto& obstacle : maze.obstacles)
-    {
+    for (const auto& obstacle : maze.obstacles) {
         auto rect {make_rectangle(obstacle)};
         rect.setFillColor(sf::Color::White);
         texture.draw(rect);
