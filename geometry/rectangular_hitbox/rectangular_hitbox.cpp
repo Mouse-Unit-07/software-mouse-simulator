@@ -24,6 +24,7 @@ namespace
 {
 
 bool check_hitbox_equality(const geometry::RectangularHitbox& h1, const geometry::RectangularHitbox& h2);
+double normalize_angle(double angle);
 
 } /* unnamed namespace */
 
@@ -45,6 +46,7 @@ RectangularHitbox::RectangularHitbox(const Point& center, double horizontal_size
     top_left = Point{center.x - (horizontal_size / 2), center.y + (vertical_size / 2)};
     bottom_left = Point{center.x - (horizontal_size / 2), center.y - (vertical_size / 2)};
     bottom_right = Point{center.x + (horizontal_size / 2), center.y - (vertical_size / 2)};
+    angle_rad = M_PI / 2; /* 90 degrees to start */
 }
 
 void RectangularHitbox::translate(double dx, double dy) noexcept
@@ -63,6 +65,7 @@ void RectangularHitbox::rotate(const Point& center, double angle_rad) noexcept
     top_left.rotate(center, angle_rad);
     bottom_left.rotate(center, angle_rad);
     bottom_right.rotate(center, angle_rad);
+    this->angle_rad = normalize_angle(this->angle_rad + angle_rad);
 }
 
 bool RectangularHitbox::operator==(const RectangularHitbox& other) const noexcept
@@ -83,15 +86,25 @@ bool RectangularHitbox::operator!=(const RectangularHitbox& other) const noexcep
 namespace
 {
 
+constexpr double FLOAT_TOLERANCE {1e-6};
+
 bool check_hitbox_equality(const geometry::RectangularHitbox& h1, const geometry::RectangularHitbox& h2)
 {
-    constexpr double tolerance {1e-6};
-
-    return (std::abs(h1.horizontal_size - h2.horizontal_size) <= tolerance)
-        && (std::abs(h1.vertical_size - h2.vertical_size) <= tolerance)
+    return (std::abs(h1.horizontal_size - h2.horizontal_size) <= FLOAT_TOLERANCE)
+        && (std::abs(h1.vertical_size - h2.vertical_size) <= FLOAT_TOLERANCE)
         && (h1.center == h2.center) && (h1.top_right == h2.top_right)
         && (h1.top_left == h2.top_left) && (h1.bottom_left == h2.bottom_left) 
         && (h1.bottom_left == h2.bottom_left);
+}
+
+double normalize_angle(double angle)
+{
+    double normalized {std::atan2(std::sin(angle), std::cos(angle))};
+    if (std::abs(std::abs(normalized) - M_PI) < FLOAT_TOLERANCE) {
+        normalized = M_PI;
+    }
+
+    return normalized;
 }
 
 } /* unnamed namespace */

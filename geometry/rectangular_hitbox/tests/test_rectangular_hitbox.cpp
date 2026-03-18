@@ -109,6 +109,26 @@ TEST(RectangularHitboxTests, RotateModifiesPoints)
     CHECK(test_hitbox.top_left == test_top_left);
 }
 
+TEST(RectangularHitboxTests, RotateModifiesAngle)
+{
+    constexpr double FLOAT_TOLERANCE {1e-6};
+
+    test_hitbox.rotate(test_center, M_PI / 2);
+    DOUBLES_EQUAL(M_PI, test_hitbox.angle_rad, FLOAT_TOLERANCE);
+
+    test_hitbox.rotate(test_center, M_PI);
+    DOUBLES_EQUAL(0, test_hitbox.angle_rad, FLOAT_TOLERANCE);
+
+    test_hitbox.rotate(test_center, -M_PI / 2);
+    DOUBLES_EQUAL(-M_PI / 2, test_hitbox.angle_rad, FLOAT_TOLERANCE);
+
+    test_hitbox.rotate(test_center, -M_PI / 2);
+    DOUBLES_EQUAL(M_PI, test_hitbox.angle_rad, FLOAT_TOLERANCE);
+
+    test_hitbox.rotate(test_center, -M_PI / 2);
+    DOUBLES_EQUAL(M_PI / 2, test_hitbox.angle_rad, FLOAT_TOLERANCE);
+}
+
 TEST(RectangularHitboxTests, EqualityOperatorOverloaded)
 {
     geometry::RectangularHitbox test_hitbox_2 {test_center, test_horizontal_size, test_vertical_size};
