@@ -13,7 +13,7 @@ target_include_directories(optimizer_lib PUBLIC
 )
 
 target_link_libraries(optimizer_lib PUBLIC
+    mock_device_drivers_lib
     mouse_lib
     maze_lib
-    interactions_lib
 )

@@ -26,10 +26,25 @@
 /* constant portion of equation to translate distance to IR sensor reading */
 static const double CONSTANT_IR_SCALE = ((2.71272 * (2.2 / 3.2)) / 1.8) * 1024.0;
 
-uint32_t mock_ir_1_sensor_reading = 0u;
-uint32_t mock_ir_2_sensor_reading = 0u;
-uint32_t mock_ir_3_sensor_reading = 0u;
-uint32_t mock_ir_4_sensor_reading = 0u;
+static const double MAX_MOTOR_RPM = 4900.0;
+static const double ENCODER_EVENTS_PER_REVOLUTION = 60.8077;
+static double MAX_ENCODER_TICKS_PER_SECOND = (MAX_MOTOR_RPM / 60.0) * (ENCODER_EVENTS_PER_REVOLUTION / 4);
+
+static const double GEAR_RATIO = 13.0 / 44.0;
+static const double WHEEL_DIAMETER_MM = 32.0;
+static const double WHEEL_BASE_MM = 87.56;
+static double WHEEL_CIRCUMFERENCE_MM = M_PI * WHEEL_DIAMETER_MM;
+
+static double const ENCODER_TICKS_PER_REVOLUTION = (ENCODER_EVENTS_PER_REVOLUTION / 4) * (1 / GEAR_RATIO);
+
+/* these two variables need to be accessible for movement simulation */
+double ENCODER_TICKS_PER_MILLIMETER = ENCODER_TICKS_PER_REVOLUTION / (M_PI * WHEEL_DIAMETER_MM);
+double ENCODER_TICKS_PER_ROTATION_ANGLE_RADIANS = (ENCODER_TICKS_PER_REVOLUTION * WHEEL_BASE_MM) / (M_PI * WHEEL_DIAMETER_MM);
+
+static uint32_t mock_ir_1_sensor_reading = 0u;
+static uint32_t mock_ir_2_sensor_reading = 0u;
+static uint32_t mock_ir_3_sensor_reading = 0u;
+static uint32_t mock_ir_4_sensor_reading = 0u;
 
 enum wheel_motor_direction
 {
@@ -37,29 +52,20 @@ enum wheel_motor_direction
     FORWARD_DIRECTION = 1
 };
 
-uint8_t wheel_motor_1_speed = 0u;
-uint8_t wheel_motor_2_speed = 0u;
-enum wheel_motor_direction wheel_motor_1_direction = FORWARD_DIRECTION;
-enum wheel_motor_direction wheel_motor_2_direction = FORWARD_DIRECTION;
+static uint8_t wheel_motor_1_speed = 0u;
+static uint8_t wheel_motor_2_speed = 0u;
+static enum wheel_motor_direction wheel_motor_1_direction = FORWARD_DIRECTION;
+static enum wheel_motor_direction wheel_motor_2_direction = FORWARD_DIRECTION;
 
-static const double MAX_MOTOR_RPM = 4900.0;
-static const double ENCODER_EVENTS_PER_REVOLUTION = 60.8077;
-static double MAX_ENCODER_TICKS_PER_SECOND = (MAX_MOTOR_RPM / 60.0) * (ENCODER_EVENTS_PER_REVOLUTION / 4);
+static int32_t encoder_1_ticks = 0;
+static int32_t encoder_2_ticks = 0;
 
-int32_t encoder_1_ticks = 0;
-int32_t encoder_2_ticks = 0;
-
-static const double GEAR_RATIO = 13.0 / 44.0;
-static const double WHEEL_DIAMETER_MM = 32.0;
-static const double WHEEL_BASE_MM = 87.56;
-static double WHEEL_CIRCUMFERENCE_MM = M_PI * WHEEL_DIAMETER_MM;
-
-double motor_speed_scale = 1.0;
-double motor_1_variance = 0.0;
-double motor_2_variance = 0.0;
-double motor_slip_factor = 1.0;
-double wheel_circumference_scale = 1.0;
-double wheel_base_scale = 1.0;
+static double motor_speed_scale = 1.0;
+static double motor_1_variance = 0.0;
+static double motor_2_variance = 0.0;
+static double motor_slip_factor = 1.0;
+static double wheel_circumference_scale = 1.0;
+static double wheel_base_scale = 1.0;
 
 /*----------------------------------------------------------------------------*/
 /*                             Public Definitions                             */
