@@ -100,9 +100,7 @@ std::vector<double> SweepCursor::values() const
     for (size_t i {0}; i < params_.size(); i++) {
         const auto& p {params_[i]};
 
-        double t = (p.steps == 1)
-            ? 0.0
-            : (double)indices_[i] / (p.steps - 1);
+        double t {(p.steps == 1) ? 0.0 : static_cast<double>(indices_[i]) / (p.steps - 1)};
 
         vals.push_back(p.min + t * (p.max - p.min));
     }
@@ -227,7 +225,7 @@ std::vector<RotationParamImpact> analyze_rotation_parameter_impact(const std::ve
 {
     std::vector<RotationParamImpact> impacts;
 
-    for (size_t i = 0; i < params.size(); i++) {
+    for (size_t i {0}; i < params.size(); i++) {
         RotationParamImpact impact{};
         impact.name = params[i].name;
 
@@ -287,8 +285,12 @@ MetricStats compute_stats(const std::vector<double>& data)
 
     for (double v : data) {
         sum += v;
-        if (v < s.min) s.min = v;
-        if (v > s.max) s.max = v;
+        if (v < s.min) {
+            s.min = v;
+        }
+        if (v > s.max) {
+            s.max = v;
+        }
     }
 
     s.mean = sum / data.size();
