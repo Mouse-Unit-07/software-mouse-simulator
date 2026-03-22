@@ -34,6 +34,7 @@ extern "C"
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
+using namespace maze;
 using namespace optimizer;
 
 /*============================================================================*/
@@ -73,9 +74,9 @@ TEST(OptimizerTests, SweepGeneratesCorrectNumberOfResults)
         "|S|",
         "+-+"
     };
-    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0.0)};
+    Maze maze {build_maze_from_ascii(ascii, 0.0)};
 
-    std::vector<optimizer::SweepParam> params
+    std::vector<SweepParam> params
     {
         {"motor_speed", 100, 200, 2},
         {"motor_speed_scale", 1.0, 1.0, 1},
@@ -88,12 +89,12 @@ TEST(OptimizerTests, SweepGeneratesCorrectNumberOfResults)
         {"wheel_base_scale", 1.0, 1.0, 1}
     };
 
-    auto sim_fn = [&](const std::vector<double>& vals) -> optimizer::RotationResult {
-        auto cfg {optimizer::build_rotation_config(vals)};
-        return optimizer::run_rotation_simulation(maze, cfg, M_PI / 2);
+    auto sim_fn = [&](const std::vector<double>& vals) -> RotationResult {
+        auto cfg {build_rotation_config(vals)};
+        return run_rotation_simulation(maze, cfg, M_PI / 2);
     };
     
-    auto results {optimizer::run_parameter_sweep<optimizer::RotationResult>(params, sim_fn)};
+    auto results {run_parameter_sweep<RotationResult>(params, sim_fn)};
 
     /* expected = 2 * 1 * 2 * 1 * 1 * 1 * 1 * 1 = 4 */
     CHECK_EQUAL(4, results.size());
@@ -108,9 +109,9 @@ TEST(OptimizerTests, SweepSingleStepProducesSingleResult)
         "|S|",
         "+-+"
     };
-    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0.0)};
+    Maze maze {build_maze_from_ascii(ascii, 0.0)};
 
-    std::vector<optimizer::SweepParam> params
+    std::vector<SweepParam> params
     {
         {"motor_speed", 150, 150, 1},
         {"motor_speed_scale", 1.0, 1.0, 1},
@@ -123,12 +124,12 @@ TEST(OptimizerTests, SweepSingleStepProducesSingleResult)
         {"wheel_base_scale", 1.0, 1.0, 1}
     };
 
-    auto sim_fn = [&](const std::vector<double>& vals) -> optimizer::RotationResult {
-        auto cfg {optimizer::build_rotation_config(vals)};
-        return optimizer::run_rotation_simulation(maze, cfg, M_PI / 2);
+    auto sim_fn = [&](const std::vector<double>& vals) -> RotationResult {
+        auto cfg {build_rotation_config(vals)};
+        return run_rotation_simulation(maze, cfg, M_PI / 2);
     };
     
-    auto results {optimizer::run_parameter_sweep<optimizer::RotationResult>(params, sim_fn)};
+    auto results {run_parameter_sweep<RotationResult>(params, sim_fn)};
 
     CHECK_EQUAL(1, results.size());
 }
@@ -141,9 +142,9 @@ TEST(OptimizerTests, ResultsContainValidValues)
         "|S|",
         "+-+"
     };
-    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0.0)};
+    Maze maze {build_maze_from_ascii(ascii, 0.0)};
 
-    std::vector<optimizer::SweepParam> params
+    std::vector<SweepParam> params
     {
         {"motor_speed", 150, 150, 1},
         {"motor_speed_scale", 1.0, 1.0, 1},
@@ -156,12 +157,12 @@ TEST(OptimizerTests, ResultsContainValidValues)
         {"wheel_base_scale", 1.0, 1.0, 1}
     };
 
-    auto sim_fn = [&](const std::vector<double>& vals) -> optimizer::RotationResult {
-        auto cfg {optimizer::build_rotation_config(vals)};
-        return optimizer::run_rotation_simulation(maze, cfg, M_PI / 2);
+    auto sim_fn = [&](const std::vector<double>& vals) -> RotationResult {
+        auto cfg {build_rotation_config(vals)};
+        return run_rotation_simulation(maze, cfg, M_PI / 2);
     };
     
-    auto results {optimizer::run_parameter_sweep<optimizer::RotationResult>(params, sim_fn)};
+    auto results {run_parameter_sweep<RotationResult>(params, sim_fn)};
 
     const auto& r {results[0].second};
 
@@ -178,9 +179,9 @@ TEST(OptimizerTests, SweepDetectsSimulationFailureWhenDtTooSmall)
         "|S|",
         "+-+"
     };
-    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0.0)};
+    Maze maze {build_maze_from_ascii(ascii, 0.0)};
 
-    std::vector<optimizer::SweepParam> params
+    std::vector<SweepParam> params
     {
         {"motor_speed", 150, 150, 1},
         {"motor_speed_scale", 1.0, 1.0, 1},
@@ -193,12 +194,12 @@ TEST(OptimizerTests, SweepDetectsSimulationFailureWhenDtTooSmall)
         {"wheel_base_scale", 1.0, 1.0, 1}
     };
 
-    auto sim_fn = [&](const std::vector<double>& vals) -> optimizer::RotationResult {
-        auto cfg {optimizer::build_rotation_config(vals)};
-        return optimizer::run_rotation_simulation(maze, cfg, M_PI / 2);
+    auto sim_fn = [&](const std::vector<double>& vals) -> RotationResult {
+        auto cfg {build_rotation_config(vals)};
+        return run_rotation_simulation(maze, cfg, M_PI / 2);
     };
     
-    auto results {optimizer::run_parameter_sweep<optimizer::RotationResult>(params, sim_fn)};
+    auto results {run_parameter_sweep<RotationResult>(params, sim_fn)};
 
     CHECK(results[0].second.simulation_failed);
 }
@@ -211,9 +212,9 @@ TEST(OptimizerTests, SweepProducesDifferentResultsForDifferentMotorSpeeds)
         "|S|",
         "+-+"
     };
-    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0.0)};
+    Maze maze {build_maze_from_ascii(ascii, 0.0)};
 
-    std::vector<optimizer::SweepParam> params
+    std::vector<SweepParam> params
     {
         {"motor_speed", 100, 200, 2},
         {"motor_speed_scale", 1.0, 1.0, 1},
@@ -226,12 +227,12 @@ TEST(OptimizerTests, SweepProducesDifferentResultsForDifferentMotorSpeeds)
         {"wheel_base_scale", 1.0, 1.0, 1}
     };
 
-    auto sim_fn = [&](const std::vector<double>& vals) -> optimizer::RotationResult {
-        auto cfg {optimizer::build_rotation_config(vals)};
-        return optimizer::run_rotation_simulation(maze, cfg, M_PI / 2);
+    auto sim_fn = [&](const std::vector<double>& vals) -> RotationResult {
+        auto cfg {build_rotation_config(vals)};
+        return run_rotation_simulation(maze, cfg, M_PI / 2);
     };
     
-    auto results {optimizer::run_parameter_sweep<optimizer::RotationResult>(params, sim_fn)};
+    auto results {run_parameter_sweep<RotationResult>(params, sim_fn)};
 
     CHECK(results.size() == 2);
 
