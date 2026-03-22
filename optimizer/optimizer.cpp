@@ -119,26 +119,16 @@ RotationConfig build_rotation_config(const std::vector<double>& v)
     return cfg;
 }
 
-RotationResult run_rotation_simulation(const maze::Maze& maze,
-        const RotationConfig& cfg, double target_angle)
+RotationResult run_rotation_simulation(const maze::Maze& maze, const RotationConfig& cfg, double target_angle)
 {
+    /* prepare mouse for rotation */
     reset_mock_device_drivers();
-
     set_motor_speed_scale(cfg.motor_speed_scale);
     set_motor_1_variance(cfg.motor1_variance);
     set_motor_2_variance(cfg.motor2_variance);
     set_motor_slip_factor(cfg.slip_factor);
     set_wheel_circumference_scale(cfg.wheel_circumference_scale);
     set_wheel_base_scale(cfg.wheel_base_scale);
-
-    mouse::Mouse mouse;
-    mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
-
-    double total_translation {0.0};
-    double time {0.0};
-    bool collision {false};
-    bool simulation_failed {false};
-
     set_wheel_motor_1_speed(cfg.motor_speed);
     set_wheel_motor_2_speed(cfg.motor_speed);
     if (target_angle > 0) {
@@ -148,10 +138,22 @@ RotationResult run_rotation_simulation(const maze::Maze& maze,
         set_wheel_motor_1_direction_forward();
         set_wheel_motor_2_direction_backward();
     }
-    int target_encoder_count {static_cast<int>(std::abs(ENCODER_TICKS_PER_ROTATION_ANGLE_RADIANS * target_angle))};
 
-    while ((std::abs(get_encoder_1_ticks()) < target_encoder_count)
-            && (std::abs(get_encoder_2_ticks()) < target_encoder_count)) {
+    mouse::Mouse mouse;
+    mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
+
+    double total_translation {0.0};
+    double time {0.0};
+    bool collision {false};
+    bool simulation_failed {false};
+
+    int target_encoder_count {static_cast<int>(std::abs(ENCODER_TICKS_PER_ROTATION_ANGLE_RADIANS * target_angle))};
+    bool done_rotating {false};
+
+    while (!done_rotating) {
+        done_rotating = (std::abs(get_encoder_1_ticks()) >= target_encoder_count)
+            && (std::abs(get_encoder_2_ticks()) >= target_encoder_count);
+
         /* update virtual mouse */
         auto delta {compute_mouse_delta(mouse.hitbox.angle_rad, cfg.dt)};
         int32_t new_encoder_1_ticks {compute_new_encoder_1_ticks(cfg.dt)};
