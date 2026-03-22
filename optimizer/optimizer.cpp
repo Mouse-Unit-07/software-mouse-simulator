@@ -24,6 +24,7 @@ extern "C"
 #include <vector>
 #include <string>
 #include <optional>
+#include <functional>
 #include "point.hpp"
 #include "ray.hpp"
 #include "rectangular_hitbox.hpp"
@@ -39,10 +40,8 @@ namespace
 
 using namespace optimizer;
 
-SimulationConfig build_config(const std::vector<double>& v);
-
-SimulationResult run_rotation_simulation(const maze::Maze& maze,
-        const SimulationConfig& cfg, double target_angle);
+RotationConfig build_rotation_config(const std::vector<double>& v);
+RotationResult run_rotation_simulation(const maze::Maze& maze, const RotationConfig& cfg, double target_angle);
 
 } /* unnamed namespace */
 
@@ -58,29 +57,13 @@ extern double ENCODER_TICKS_PER_ROTATION_ANGLE_RADIANS;
 }
 
 /*----------------------------------------------------------------------------*/
-/*                          Private Class Definitions                         */
+/*                             Public Definitions                             */
 /*----------------------------------------------------------------------------*/
-namespace
+namespace optimizer
 {
-
-using namespace optimizer;
-
-class SweepCursor
-{
-public:
-    explicit SweepCursor(const std::vector<SweepParam>& params);
-
-    bool next();
-    std::vector<double> values() const;
-
-private:
-    std::vector<SweepParam> params_;
-    std::vector<int> indices_;
-};
 
 SweepCursor::SweepCursor(const std::vector<SweepParam>& params)
-    : params_(params),
-      indices_(params.size(), 0)
+    : params_(params), indices_(params.size(), 0)
 {
     /* no additional logic */
 }
@@ -117,46 +100,9 @@ std::vector<double> SweepCursor::values() const
     return vals;
 }
 
-} /* unnamed namespace */
-
-/*----------------------------------------------------------------------------*/
-/*                             Public Definitions                             */
-/*----------------------------------------------------------------------------*/
-namespace optimizer
+RotationConfig build_rotation_config(const std::vector<double>& v)
 {
-
-std::vector<SimulationResult> run_parameter_sweep(const maze::Maze& maze,
-        const std::vector<SweepParam>& params, double target_angle)
-{
-    SweepCursor cursor(params);
-    std::vector<SimulationResult> results;
-
-    do {
-        auto vals {cursor.values()};
-        auto cfg {build_config(vals)};
-
-        auto result {run_rotation_simulation(maze, cfg, target_angle)};
-        results.push_back(result);
-
-    } while (cursor.next());
-
-    return results;
-}
-
-} /* optimizer namespace */
-
-
-/*----------------------------------------------------------------------------*/
-/*                             Private Definitions                            */
-/*----------------------------------------------------------------------------*/
-namespace
-{
-
-using namespace optimizer;
-
-SimulationConfig build_config(const std::vector<double>& v)
-{
-    SimulationConfig cfg{};
+    RotationConfig cfg{};
 
     int i {0};
 
@@ -173,8 +119,8 @@ SimulationConfig build_config(const std::vector<double>& v)
     return cfg;
 }
 
-SimulationResult run_rotation_simulation(const maze::Maze& maze,
-        const SimulationConfig& cfg, double target_angle)
+RotationResult run_rotation_simulation(const maze::Maze& maze,
+        const RotationConfig& cfg, double target_angle)
 {
     reset_mock_device_drivers();
 
@@ -232,7 +178,7 @@ SimulationResult run_rotation_simulation(const maze::Maze& maze,
         }
     }
 
-    return SimulationResult{
+    return RotationResult{
         time,
         std::abs(target_angle - mouse.hitbox.angle_rad),
         total_translation,
@@ -241,4 +187,10 @@ SimulationResult run_rotation_simulation(const maze::Maze& maze,
     };
 }
 
-} /* unnamed namespace */
+} /* optimizer namespace */
+
+
+/*----------------------------------------------------------------------------*/
+/*                             Private Definitions                            */
+/*----------------------------------------------------------------------------*/
+/* none */

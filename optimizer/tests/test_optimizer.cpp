@@ -23,6 +23,7 @@ extern "C"
 #include <vector>
 #include <string>
 #include <optional>
+#include <functional>
 #include "point.hpp"
 #include "ray.hpp"
 #include "rectangular_hitbox.hpp"
@@ -85,9 +86,12 @@ TEST(OptimizerTests, SweepGeneratesCorrectNumberOfResults)
         {"wheel_base_scale", 1.0, 1.0, 1}
     };
 
-    double target_angle {M_PI / 2};
-
-    auto results {optimizer::run_parameter_sweep(maze, params, target_angle)};
+    auto sim_fn = [&](const std::vector<double>& vals) -> optimizer::RotationResult {
+        auto cfg = optimizer::build_rotation_config(vals);
+        return optimizer::run_rotation_simulation(maze, cfg, M_PI / 2);
+    };
+    
+    auto results = optimizer::run_parameter_sweep<optimizer::RotationResult>(params, sim_fn);
 
     /* expected = 2 * 1 * 2 * 1 * 1 * 1 * 1 * 1 = 4 */
     CHECK_EQUAL(4, results.size());
@@ -117,7 +121,12 @@ TEST(OptimizerTests, SweepSingleStepProducesSingleResult)
         {"wheel_base_scale", 1.0, 1.0, 1}
     };
 
-    auto results {optimizer::run_parameter_sweep(maze, params, M_PI / 2)};
+    auto sim_fn = [&](const std::vector<double>& vals) -> optimizer::RotationResult {
+        auto cfg = optimizer::build_rotation_config(vals);
+        return optimizer::run_rotation_simulation(maze, cfg, M_PI / 2);
+    };
+    
+    auto results = optimizer::run_parameter_sweep<optimizer::RotationResult>(params, sim_fn);
 
     CHECK_EQUAL(1, results.size());
 }
@@ -145,7 +154,12 @@ TEST(OptimizerTests, ResultsContainValidValues)
         {"wheel_base_scale", 1.0, 1.0, 1}
     };
 
-    auto results = optimizer::run_parameter_sweep(maze, params, M_PI / 2);
+    auto sim_fn = [&](const std::vector<double>& vals) -> optimizer::RotationResult {
+        auto cfg = optimizer::build_rotation_config(vals);
+        return optimizer::run_rotation_simulation(maze, cfg, M_PI / 2);
+    };
+    
+    auto results = optimizer::run_parameter_sweep<optimizer::RotationResult>(params, sim_fn);
 
     const auto& r = results[0];
 
@@ -177,7 +191,12 @@ TEST(OptimizerTests, SweepDetectsSimulationFailureWhenDtTooSmall)
         {"wheel_base_scale", 1.0, 1.0, 1}
     };
 
-    auto results = optimizer::run_parameter_sweep(maze, params, M_PI / 2);
+    auto sim_fn = [&](const std::vector<double>& vals) -> optimizer::RotationResult {
+        auto cfg = optimizer::build_rotation_config(vals);
+        return optimizer::run_rotation_simulation(maze, cfg, M_PI / 2);
+    };
+    
+    auto results = optimizer::run_parameter_sweep<optimizer::RotationResult>(params, sim_fn);
 
     CHECK(results[0].simulation_failed);
 }
@@ -205,7 +224,12 @@ TEST(OptimizerTests, SweepProducesDifferentResultsForDifferentMotorSpeeds)
         {"wheel_base_scale", 1.0, 1.0, 1}
     };
 
-    auto results = optimizer::run_parameter_sweep(maze, params, M_PI / 2);
+    auto sim_fn = [&](const std::vector<double>& vals) -> optimizer::RotationResult {
+        auto cfg = optimizer::build_rotation_config(vals);
+        return optimizer::run_rotation_simulation(maze, cfg, M_PI / 2);
+    };
+    
+    auto results = optimizer::run_parameter_sweep<optimizer::RotationResult>(params, sim_fn);
 
     CHECK(results.size() == 2);
 
