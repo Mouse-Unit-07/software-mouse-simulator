@@ -21,6 +21,29 @@ struct SweepParam
     int steps;
 };
 
+struct MetricStats
+{
+    double mean {0.0};
+    double stddev {0.0};
+    double min {0.0};
+    double max {0.0};
+};
+
+class SweepCursor
+{
+public:
+    explicit SweepCursor(const std::vector<SweepParam>& params);
+
+    bool next();
+    std::vector<double> values() const;
+
+private:
+    std::vector<SweepParam> params_;
+    std::vector<int> indices_;
+};
+
+/* -------------------------------------------------------------------------- */
+/* rotation definitions */
 struct RotationConfig
 {
     double motor_speed;
@@ -43,17 +66,33 @@ struct RotationResult
     bool simulation_failed {false};
 };
 
-class SweepCursor
+struct RotationTrial
 {
-public:
-    explicit SweepCursor(const std::vector<SweepParam>& params);
+    std::vector<double> params;
+    RotationResult result;
+};
 
-    bool next();
-    std::vector<double> values() const;
+struct RotationAnalysisSummary
+{
+    double failure_rate {0.0};
+    double collision_rate {0.0};
 
-private:
-    std::vector<SweepParam> params_;
-    std::vector<int> indices_;
+    MetricStats translation_stats;
+    MetricStats angle_error_stats;
+};
+
+struct RotationParamImpact
+{
+    std::string name;
+
+    double correlation_translation {0.0};
+    double correlation_angle_error {0.0};
+
+    double failure_rate_low {0.0};
+    double failure_rate_high {0.0};
+
+    double collision_rate_low {0.0};
+    double collision_rate_high {0.0};
 };
 
 } /* optimizer namespace */
@@ -65,16 +104,16 @@ namespace optimizer
 {
 
 template <typename Result>
-std::vector<Result> run_parameter_sweep(
+std::vector<std::pair<std::vector<double>, Result>> run_parameter_sweep(
         const std::vector<SweepParam>& params,
         const std::function<Result(const std::vector<double>&)>& sim_fn)
 {
     SweepCursor cursor(params);
-    std::vector<Result> results;
+    std::vector<std::pair<std::vector<double>, Result>> results;
 
     do {
         auto vals = cursor.values();
-        results.push_back(sim_fn(vals));
+        results.push_back({vals, sim_fn(vals)});
     } while (cursor.next());
 
     return results;
@@ -82,6 +121,10 @@ std::vector<Result> run_parameter_sweep(
 
 RotationConfig build_rotation_config(const std::vector<double>& v);
 RotationResult run_rotation_simulation(const maze::Maze& maze, const RotationConfig& cfg, double target_angle);
+RotationAnalysisSummary analyze_rotation_results(const std::vector<std::pair<std::vector<double>,
+        RotationResult>>& trials);
+std::vector<RotationParamImpact> analyze_rotation_parameter_impact(const std::vector<SweepParam>& params,
+        const std::vector<std::pair<std::vector<double>, RotationResult>>& trials);
 
 } /* optimizer namespace */
 

@@ -25,6 +25,7 @@ extern "C"
 #include <string>
 #include <optional>
 #include <functional>
+#include <algorithm>
 #include "point.hpp"
 #include "ray.hpp"
 #include "rectangular_hitbox.hpp"
@@ -40,8 +41,8 @@ namespace
 
 using namespace optimizer;
 
-RotationConfig build_rotation_config(const std::vector<double>& v);
-RotationResult run_rotation_simulation(const maze::Maze& maze, const RotationConfig& cfg, double target_angle);
+MetricStats compute_stats(const std::vector<double>& data);
+double compute_correlation(const std::vector<double>& x, const std::vector<double>& y);
 
 } /* unnamed namespace */
 
@@ -189,10 +190,168 @@ RotationResult run_rotation_simulation(const maze::Maze& maze, const RotationCon
     };
 }
 
+RotationAnalysisSummary analyze_rotation_results(const std::vector<std::pair<std::vector<double>,
+        RotationResult>>& trials)
+{
+    RotationAnalysisSummary summary{};
+
+    std::vector<double> translations;
+    std::vector<double> angle_errors;
+
+    int failures {0};
+    int collisions {0};
+
+    for (const auto& [params, r] : trials) {
+        translations.push_back(r.total_translation);
+        angle_errors.push_back(r.final_angle_error);
+
+        if (r.simulation_failed)
+            failures++;
+
+        if (r.collision)
+            collisions++;
+    }
+
+    int total {static_cast<int>(trials.size())};
+
+    summary.failure_rate = (double)failures / total;
+    summary.collision_rate = (double)collisions / total;
+
+    summary.translation_stats = compute_stats(translations);
+    summary.angle_error_stats = compute_stats(angle_errors);
+
+    return summary;
+}
+
+std::vector<RotationParamImpact> analyze_rotation_parameter_impact(const std::vector<SweepParam>& params,
+        const std::vector<std::pair<std::vector<double>, RotationResult>>& trials)
+{
+    std::vector<RotationParamImpact> impacts;
+
+    for (size_t i {0}; i < params.size(); i++) {
+        RotationParamImpact impact{};
+        impact.name = params[i].name;
+
+        std::vector<double> x;
+        std::vector<double> translation;
+        std::vector<double> angle;
+
+        for (const auto& [vals, r] : trials) {
+            x.push_back(vals[i]);
+            translation.push_back(r.total_translation);
+            angle.push_back(r.final_angle_error);
+        }
+
+        impact.correlation_translation = compute_correlation(x, translation);
+        impact.correlation_angle_error = compute_correlation(x, angle);
+
+        /* split low vs high */
+        std::vector<double> x_vals;
+        for (const auto& [vals, _] : trials) {
+            x_vals.push_back(vals[i]);
+        }
+        std::sort(x_vals.begin(), x_vals.end());
+        double mid = x_vals[x_vals.size() / 2];  // median split
+
+        int low_fail {0}, low_total {0};
+        int high_fail {0}, high_total {0};
+
+        int low_coll {0}, high_coll {0};
+
+        for (const auto& [vals, r] : trials) {
+            if (vals[i] < mid) {
+                low_total++;
+                if (r.simulation_failed) low_fail++;
+                if (r.collision) low_coll++;
+            } else {
+                high_total++;
+                if (r.simulation_failed) high_fail++;
+                if (r.collision) high_coll++;
+            }
+        }
+
+        impact.failure_rate_low = (low_total > 0) ? (double)low_fail / low_total : 0.0;
+        impact.failure_rate_high = (high_total > 0) ? (double)high_fail / high_total : 0.0;
+
+        impact.collision_rate_low = (low_total > 0) ? (double)low_coll / low_total : 0.0;
+        impact.collision_rate_high = (high_total > 0) ? (double)high_coll / high_total : 0.0;
+
+        impacts.push_back(impact);
+    }
+
+    return impacts;
+}
+
 } /* optimizer namespace */
 
 
 /*----------------------------------------------------------------------------*/
 /*                             Private Definitions                            */
 /*----------------------------------------------------------------------------*/
-/* none */
+namespace
+{
+
+MetricStats compute_stats(const std::vector<double>& data)
+{
+    MetricStats s{};
+
+    if (data.empty()) {
+        return s;
+    }
+
+    double sum {0.0};
+    s.min = data[0];
+    s.max = data[0];
+
+    for (double v : data) {
+        sum += v;
+        if (v < s.min) s.min = v;
+        if (v > s.max) s.max = v;
+    }
+
+    s.mean = sum / data.size();
+
+    double variance {0.0};
+    for (double v : data) {
+        double d {v - s.mean};
+        variance += d * d;
+    }
+
+    s.stddev = sqrt(variance / data.size());
+    return s;
+}
+
+double compute_correlation(const std::vector<double>& x, const std::vector<double>& y)
+{
+    if ((x.size() != y.size()) || x.empty()) {
+        return 0.0;
+    }
+
+    double mean_x {0.0};
+    double mean_y {0.0};
+
+    for (size_t i = 0; i < x.size(); i++) {
+        mean_x += x[i];
+        mean_y += y[i];
+    }
+
+    mean_x /= x.size();
+    mean_y /= y.size();
+
+    double num {0.0};
+    double den_x {0.0};
+    double den_y {0.0};
+
+    for (size_t i = 0; i < x.size(); i++) {
+        double dx {x[i] - mean_x};
+        double dy {y[i] - mean_y};
+
+        num += dx * dy;
+        den_x += dx * dx;
+        den_y += dy * dy;
+    }
+
+    return num / sqrt(den_x * den_y + 1e-9);
+}
+
+} /* unnamed namespace */
