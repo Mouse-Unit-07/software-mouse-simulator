@@ -187,6 +187,9 @@ RotationResult run_rotation_simulation(const maze::Maze& maze, const RotationCon
                 collision = true;
                 break;
             }
+        } else {
+            collision = true;
+            break;
         }
 
         if (++steps > MAX_STEPS) {
