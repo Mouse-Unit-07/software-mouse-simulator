@@ -69,6 +69,18 @@ struct RotationParamImpact
     double collision_rate_high {0.0};
 };
 
+struct RotationCandidate
+{
+    std::vector<double> params;
+
+    optimizer::MetricStats time_stats;
+    optimizer::MetricStats angle_error_stats;
+    optimizer::MetricStats translation_stats;
+
+    double failure_rate {0.0};
+    double collision_rate {0.0};
+};
+
 } /* rotation namespace */
 
 /*----------------------------------------------------------------------------*/
@@ -83,7 +95,11 @@ RotationAnalysisSummary analyze_rotation_results(const std::vector<std::pair<std
         RotationResult>>& trials);
 std::vector<RotationParamImpact> analyze_rotation_parameter_impact(const std::vector<optimizer::SweepParam>& params,
         const std::vector<std::pair<std::vector<double>, RotationResult>>& trials);
-
+std::vector<RotationCandidate> analyze_pd_candidates(
+        const std::vector<std::pair<std::vector<double>, RotationResult>>& trials);
+void sort_rotation_candidates(std::vector<RotationCandidate>& v);
+std::vector<RotationCandidate>get_ranked_pd_candidates(
+    const std::vector<std::pair<std::vector<double>, RotationResult>>& trials);
 } /* rotation namespace */
 
 #endif /* ROTATION_HPP_ */

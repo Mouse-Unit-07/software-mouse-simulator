@@ -250,3 +250,170 @@ TEST(RotationTests, PidShiftAffectsControlStrength)
     CHECK((r1.total_time != r2.total_time)
        || (r1.final_angle_error != r2.final_angle_error));
 }
+
+TEST(RotationTests, AnalyzePdCandidatesGroupsAndComputesStats)
+{
+    std::vector<std::pair<std::vector<double>, RotationResult>> trials {
+        {{1,2}, {10, 1.0, 100, false, false}},
+        {{1,2}, {20, 2.0, 200, false, false}},
+        {{3,4}, {30, 3.0, 300, true,  true}}
+    };
+
+    auto candidates {analyze_pd_candidates(trials)};
+
+    CHECK_EQUAL(2, candidates.size());
+
+    // Find group {1,2}
+    for (const auto& c : candidates) {
+        if (c.params == std::vector<double>{1,2}) {
+            DOUBLES_EQUAL(15.0, c.time_stats.mean, FLOAT_TOLERANCE);
+            DOUBLES_EQUAL(1.5,  c.angle_error_stats.mean, FLOAT_TOLERANCE);
+            DOUBLES_EQUAL(150.0,c.translation_stats.mean, FLOAT_TOLERANCE);
+            DOUBLES_EQUAL(0.0,  c.failure_rate, FLOAT_TOLERANCE);
+            DOUBLES_EQUAL(0.0,  c.collision_rate, FLOAT_TOLERANCE);
+        }
+    }
+}
+
+TEST(RotationTests, SortCandidatesFailureRatePriority)
+{
+    RotationCandidate a{}, b{};
+
+    a.failure_rate = 0.0;
+    b.failure_rate = 0.5;
+
+    std::vector<RotationCandidate> v {b, a};
+
+    sort_rotation_candidates(v);
+
+    DOUBLES_EQUAL(0.0, v[0].failure_rate, FLOAT_TOLERANCE);
+}
+
+TEST(RotationTests, SortCandidatesCollisionRatePriority)
+{
+    RotationCandidate a{}, b{};
+
+    a.failure_rate = b.failure_rate = 0.0;
+
+    a.collision_rate = 0.0;
+    b.collision_rate = 0.5;
+
+    std::vector<RotationCandidate> v {b, a};
+
+    sort_rotation_candidates(v);
+
+    DOUBLES_EQUAL(0.0, v[0].collision_rate, FLOAT_TOLERANCE);
+}
+
+TEST(RotationTests, SortCandidatesAngleErrorPriority)
+{
+    RotationCandidate a{}, b{};
+
+    a.failure_rate = 0.0;
+    b.failure_rate = 0.0;
+    a.collision_rate = 0.0;
+    b.collision_rate = 0.0;
+
+    a.angle_error_stats.mean = 1.0;
+    b.angle_error_stats.mean = 2.0;
+
+    std::vector<RotationCandidate> v {b, a};
+
+    sort_rotation_candidates(v);
+
+    DOUBLES_EQUAL(1.0, v[0].angle_error_stats.mean, FLOAT_TOLERANCE);
+}
+
+TEST(RotationTests, SortCandidatesTranslationPriority)
+{
+    RotationCandidate a{}, b{};
+
+    a.failure_rate = 0.0;
+    b.failure_rate = 0.0;
+    a.collision_rate = 0.0;
+    b.collision_rate = 0.0;
+    a.angle_error_stats.mean = 1.0;
+    b.angle_error_stats.mean = 1.0;
+
+    a.translation_stats.mean = 100;
+    b.translation_stats.mean = 200;
+
+    std::vector<RotationCandidate> v {b, a};
+
+    sort_rotation_candidates(v);
+
+    DOUBLES_EQUAL(100.0, v[0].translation_stats.mean, FLOAT_TOLERANCE);
+}
+
+TEST(RotationTests, SortCandidatesTimePriority)
+{
+    RotationCandidate a{}, b{};
+
+    a.failure_rate = 0.0;
+    b.failure_rate = 0.0;
+    a.collision_rate = 0.0;
+    b.collision_rate = 0.0;
+    a.angle_error_stats.mean = 1.0;
+    b.angle_error_stats.mean = 1.0;
+    a.translation_stats.mean = 100;
+    b.translation_stats.mean = 100;
+
+    a.time_stats.mean = 5.0;
+    b.time_stats.mean = 10.0;
+
+    std::vector<RotationCandidate> v {b, a};
+
+    sort_rotation_candidates(v);
+
+    DOUBLES_EQUAL(5.0, v[0].time_stats.mean, FLOAT_TOLERANCE);
+}
+
+TEST(RotationTests, SortCandidatesUsesStdDevAsTieBreaker)
+{
+    RotationCandidate a{}, b{};
+
+    a.failure_rate = 0.0;
+    b.failure_rate = 0.0;
+    a.collision_rate = 0.0;
+    b.collision_rate = 0.0;
+    a.angle_error_stats.mean = 1.0;
+    b.angle_error_stats.mean = 1.0;
+    a.translation_stats.mean = 100;
+    b.translation_stats.mean = 100;
+    a.time_stats.mean = 5.0;
+    b.time_stats.mean = 5.0;
+
+    a.time_stats.stddev = 1.0;
+    a.angle_error_stats.stddev = 1.0;
+    a.translation_stats.stddev = 1.0;
+
+    b.time_stats.stddev = 2.0;
+    b.angle_error_stats.stddev = 2.0;
+    b.translation_stats.stddev = 2.0;
+
+    std::vector<RotationCandidate> v {b, a};
+
+    sort_rotation_candidates(v);
+
+    DOUBLES_EQUAL(1.0, v[0].time_stats.stddev, FLOAT_TOLERANCE);
+}
+
+TEST(RotationTests, GetRankedPdCandidatesOrdersCorrectly)
+{
+    std::vector<std::pair<std::vector<double>, RotationResult>> trials {
+        {{1}, {10, 2.0, 200, false, false}},
+        {{1}, {12, 2.0, 210, false, false}},
+
+        {{2}, {8,  1.0, 150, false, false}},
+        {{2}, {9,  1.2, 160, false, false}},
+
+        {{3}, {5,  0.5, 100, true,  false}} /* worse due to collision */
+    };
+
+    auto ranked {get_ranked_pd_candidates(trials)};
+
+    CHECK(ranked.size() >= 2);
+
+    /* Best should be param {2} (better accuracy than {1}, no collision like {3}) */
+    CHECK(ranked[0].params == std::vector<double>{2});
+}

@@ -27,6 +27,7 @@ extern "C"
 #include <optional>
 #include <functional>
 #include <algorithm>
+#include <map>
 #include "point.hpp"
 #include "ray.hpp"
 #include "rectangular_hitbox.hpp"
@@ -270,6 +271,107 @@ std::vector<RotationParamImpact> analyze_rotation_parameter_impact(const std::ve
     }
 
     return impacts;
+}
+
+std::vector<RotationCandidate> analyze_pd_candidates(
+        const std::vector<std::pair<std::vector<double>, RotationResult>>& trials)
+{
+    std::map<std::vector<double>, std::vector<RotationResult>> grouped;
+
+    // Group by param vector
+    for (const auto& t : trials) {
+        grouped[t.first].push_back(t.second);
+    }
+
+    std::vector<RotationCandidate> out;
+
+    for (const auto& [params, results] : grouped) {
+        RotationCandidate c;
+        c.params = params;
+
+        std::vector<double> times;
+        std::vector<double> angles;
+        std::vector<double> translations;
+
+        times.reserve(results.size());
+        angles.reserve(results.size());
+        translations.reserve(results.size());
+
+        int fail_count {0};
+        int coll_count {0};
+
+        for (const auto& r : results) {
+            times.push_back(r.total_time);
+            angles.push_back(r.final_angle_error);
+            translations.push_back(r.total_translation);
+
+            if (r.simulation_failed) fail_count++;
+            if (r.collision) coll_count++;
+        }
+
+        c.time_stats = optimizer::compute_stats(times);
+        c.angle_error_stats = optimizer::compute_stats(angles);
+        c.translation_stats = optimizer::compute_stats(translations);
+
+        double n {static_cast<double>(results.size())};
+        c.failure_rate = (n > 0) ? fail_count / n : 0.0;
+        c.collision_rate = (n > 0) ? coll_count / n : 0.0;
+
+        out.push_back(c);
+    }
+
+    return out;
+}
+
+void sort_rotation_candidates(std::vector<RotationCandidate>& v)
+{
+    constexpr double EPS {1e-6};
+
+    std::sort(v.begin(), v.end(),
+        [](const RotationCandidate& a, const RotationCandidate& b)
+    {
+        /* 1. HARD constraints first */
+        if (std::abs(a.failure_rate - b.failure_rate) > EPS) {
+            return a.failure_rate < b.failure_rate;
+        }
+
+        if (std::abs(a.collision_rate - b.collision_rate) > EPS) {
+            return a.collision_rate < b.collision_rate;
+        }
+
+        /* 2. Accuracy (top priority) */
+        if (std::abs(a.angle_error_stats.mean - b.angle_error_stats.mean) > EPS) {
+            return a.angle_error_stats.mean < b.angle_error_stats.mean;
+        }
+
+        if (std::abs(a.translation_stats.mean - b.translation_stats.mean) > EPS) {
+            return a.translation_stats.mean < b.translation_stats.mean;
+        }
+
+        /* 3. Speed */
+        if (std::abs(a.time_stats.mean - b.time_stats.mean) > EPS) {
+            return a.time_stats.mean < b.time_stats.mean;
+        }
+
+        /* 4. Stability (tie-breaker) */
+        double a_var {a.time_stats.stddev
+            + a.angle_error_stats.stddev
+            + a.translation_stats.stddev};
+
+        double b_var {b.time_stats.stddev
+            + b.angle_error_stats.stddev
+            + b.translation_stats.stddev};
+
+        return a_var < b_var;
+    });
+}
+
+std::vector<RotationCandidate>get_ranked_pd_candidates(
+    const std::vector<std::pair<std::vector<double>, RotationResult>>& trials)
+{
+    auto candidates = analyze_pd_candidates(trials);
+    sort_rotation_candidates(candidates);
+    return candidates;
 }
 
 } /* rotation namespace */
