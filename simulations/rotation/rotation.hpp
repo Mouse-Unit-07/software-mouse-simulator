@@ -25,6 +25,10 @@ struct RotationConfig
     double slip_factor;
     double wheel_circumference_scale;
     double wheel_base_scale;
+
+    int32_t kp;
+    int32_t kd;
+    int32_t pid_shift;
 };
 
 struct RotationResult

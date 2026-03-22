@@ -73,6 +73,10 @@ RotationConfig build_rotation_config(const std::vector<double>& v)
     cfg.wheel_circumference_scale = v[i++];
     cfg.wheel_base_scale = v[i++];
 
+    cfg.kp = static_cast<int32_t>(v[i++]);
+    cfg.kd = static_cast<int32_t>(v[i++]);
+    cfg.pid_shift = static_cast<int32_t>(v[i++]);
+
     return cfg;
 }
 
@@ -86,8 +90,6 @@ RotationResult run_rotation_simulation(const maze::Maze& maze, const RotationCon
     set_motor_slip_factor(cfg.slip_factor);
     set_wheel_circumference_scale(cfg.wheel_circumference_scale);
     set_wheel_base_scale(cfg.wheel_base_scale);
-    set_wheel_motor_1_speed(cfg.motor_speed);
-    set_wheel_motor_2_speed(cfg.motor_speed);
     if (target_angle > 0) {
         set_wheel_motor_1_direction_backward();
         set_wheel_motor_2_direction_forward();
@@ -104,12 +106,63 @@ RotationResult run_rotation_simulation(const maze::Maze& maze, const RotationCon
     bool collision {false};
     bool simulation_failed {false};
 
-    int target_encoder_count {static_cast<int>(std::abs(ENCODER_TICKS_PER_ROTATION_ANGLE_RADIANS * target_angle))};
+    int32_t prev_error1 {0}, prev_error2 {0};
+
+    const int32_t ERROR_EPSILON {5};
+    const int MAX_STEPS {10000};
+
+    int steps {0};
+
+    double raw_target = std::abs(ENCODER_TICKS_PER_ROTATION_ANGLE_RADIANS * target_angle);
+    if (raw_target > static_cast<double>(INT32_MAX)) {
+        raw_target = INT32_MAX;
+    }
+    int32_t target_ticks {static_cast<int32_t>(raw_target)};
     bool done_rotating {false};
 
     while (!done_rotating) {
-        done_rotating = (std::abs(get_encoder_1_ticks()) >= target_encoder_count)
-            && (std::abs(get_encoder_2_ticks()) >= target_encoder_count);
+        int32_t enc1 {get_encoder_1_ticks()};
+        int32_t enc2 {get_encoder_2_ticks()};
+        enc1 = (enc1 == INT32_MIN) ? INT32_MAX : std::abs(enc1);
+        enc2 = (enc2 == INT32_MIN) ? INT32_MAX : std::abs(enc2);
+        
+        int32_t error1 {target_ticks - enc1};
+        int32_t error2 {target_ticks - enc2};
+        done_rotating = (std::abs(error1) <= ERROR_EPSILON) && (std::abs(error2) <= ERROR_EPSILON);
+
+        int32_t derivative1 {error1 - prev_error1};
+        int32_t derivative2 {error2 - prev_error2};
+
+        int64_t p_term1 {static_cast<int64_t>(cfg.kp) * error1};
+        int64_t p_term2 {static_cast<int64_t>(cfg.kp) * error2};
+        int64_t d_term1 {static_cast<int64_t>(cfg.kd) * derivative1};
+        int64_t d_term2 {static_cast<int64_t>(cfg.kd) * derivative2};
+        int64_t control64_1 {p_term1 + d_term1};
+        int64_t control64_2 {p_term2 + d_term2};
+
+        int32_t control_1, control_2;
+        if (control64_1 >= 0) {
+            control_1 = static_cast<int32_t>(control64_1 >> cfg.pid_shift);
+        } else {
+            control_1 = -static_cast<int32_t>((-control64_1) >> cfg.pid_shift);
+        }
+        if (control64_2 >= 0) {
+            control_2 = static_cast<int32_t>(control64_2 >> cfg.pid_shift);
+        } else {
+            control_2 = -static_cast<int32_t>((-control64_2) >> cfg.pid_shift);
+        }
+
+        int32_t base_speed {static_cast<int32_t>(cfg.motor_speed)};
+        int32_t adjusted_speed_1 {base_speed + control_1};
+        int32_t adjusted_speed_2 {base_speed - control_2};
+        adjusted_speed_1 = std::clamp(adjusted_speed_1, 0, 255);
+        adjusted_speed_2 = std::clamp(adjusted_speed_2, 0, 255);
+
+        set_wheel_motor_1_speed(static_cast<uint8_t>(adjusted_speed_1));
+        set_wheel_motor_2_speed(static_cast<uint8_t>(adjusted_speed_2));
+
+        prev_error1 = error1;
+        prev_error2 = error2;
 
         /* update virtual mouse */
         auto delta {compute_mouse_delta(mouse.hitbox.angle_rad, cfg.dt)};
@@ -134,6 +187,11 @@ RotationResult run_rotation_simulation(const maze::Maze& maze, const RotationCon
                 collision = true;
                 break;
             }
+        }
+
+        if (++steps > MAX_STEPS) {
+            simulation_failed = true;
+            break;
         }
     }
 
