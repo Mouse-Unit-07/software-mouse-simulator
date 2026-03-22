@@ -44,6 +44,15 @@ using namespace optimizer;
 MetricStats compute_stats(const std::vector<double>& data);
 double compute_correlation(const std::vector<double>& x, const std::vector<double>& y);
 
+template <typename Trials, typename Fn>
+std::vector<double> extract_metric(const Trials& trials, Fn fn);
+
+template <typename Trials, typename Pred>
+double compute_rate(const Trials& trials, Pred pred);
+
+template <typename Trials, typename ValueFn, typename Pred>
+std::pair<double, double> compute_split_rate(const Trials& trials, ValueFn value_fn, Pred pred);
+
 } /* unnamed namespace */
 
 /*----------------------------------------------------------------------------*/
@@ -195,27 +204,17 @@ RotationAnalysisSummary analyze_rotation_results(const std::vector<std::pair<std
 {
     RotationAnalysisSummary summary{};
 
-    std::vector<double> translations;
-    std::vector<double> angle_errors;
+    auto translations {extract_metric(trials,
+        [](const auto& t) { return t.second.total_translation; })};
 
-    int failures {0};
-    int collisions {0};
+    auto angle_errors {extract_metric(trials,
+        [](const auto& t) { return t.second.final_angle_error; })};
 
-    for (const auto& [params, r] : trials) {
-        translations.push_back(r.total_translation);
-        angle_errors.push_back(r.final_angle_error);
+    summary.failure_rate = compute_rate(trials,
+        [](const auto& t) { return t.second.simulation_failed; });
 
-        if (r.simulation_failed)
-            failures++;
-
-        if (r.collision)
-            collisions++;
-    }
-
-    int total {static_cast<int>(trials.size())};
-
-    summary.failure_rate = (double)failures / total;
-    summary.collision_rate = (double)collisions / total;
+    summary.collision_rate = compute_rate(trials,
+        [](const auto& t) { return t.second.collision; });
 
     summary.translation_stats = compute_stats(translations);
     summary.angle_error_stats = compute_stats(angle_errors);
@@ -228,53 +227,36 @@ std::vector<RotationParamImpact> analyze_rotation_parameter_impact(const std::ve
 {
     std::vector<RotationParamImpact> impacts;
 
-    for (size_t i {0}; i < params.size(); i++) {
+    for (size_t i = 0; i < params.size(); i++) {
         RotationParamImpact impact{};
         impact.name = params[i].name;
 
-        std::vector<double> x;
-        std::vector<double> translation;
-        std::vector<double> angle;
+        auto x {extract_metric(trials,
+            [i](const auto& t) { return t.first[i]; })};
 
-        for (const auto& [vals, r] : trials) {
-            x.push_back(vals[i]);
-            translation.push_back(r.total_translation);
-            angle.push_back(r.final_angle_error);
-        }
+        auto translation {extract_metric(trials,
+            [](const auto& t) { return t.second.total_translation; })};
+
+        auto angle {extract_metric(trials,
+            [](const auto& t) { return t.second.final_angle_error; })};
 
         impact.correlation_translation = compute_correlation(x, translation);
         impact.correlation_angle_error = compute_correlation(x, angle);
 
-        /* split low vs high */
-        std::vector<double> x_vals;
-        for (const auto& [vals, _] : trials) {
-            x_vals.push_back(vals[i]);
-        }
-        std::sort(x_vals.begin(), x_vals.end());
-        double mid = x_vals[x_vals.size() / 2];  // median split
+        auto [fail_low, fail_high] {compute_split_rate(
+            trials,
+            [i](const auto& t) { return t.first[i]; },
+            [](const auto& t) { return t.second.simulation_failed; })};
 
-        int low_fail {0}, low_total {0};
-        int high_fail {0}, high_total {0};
+        auto [coll_low, coll_high] {compute_split_rate(
+            trials,
+            [i](const auto& t) { return t.first[i]; },
+            [](const auto& t) { return t.second.collision; })};
 
-        int low_coll {0}, high_coll {0};
-
-        for (const auto& [vals, r] : trials) {
-            if (vals[i] < mid) {
-                low_total++;
-                if (r.simulation_failed) low_fail++;
-                if (r.collision) low_coll++;
-            } else {
-                high_total++;
-                if (r.simulation_failed) high_fail++;
-                if (r.collision) high_coll++;
-            }
-        }
-
-        impact.failure_rate_low = (low_total > 0) ? (double)low_fail / low_total : 0.0;
-        impact.failure_rate_high = (high_total > 0) ? (double)high_fail / high_total : 0.0;
-
-        impact.collision_rate_low = (low_total > 0) ? (double)low_coll / low_total : 0.0;
-        impact.collision_rate_high = (high_total > 0) ? (double)high_coll / high_total : 0.0;
+        impact.failure_rate_low = fail_low;
+        impact.failure_rate_high = fail_high;
+        impact.collision_rate_low = coll_low;
+        impact.collision_rate_high = coll_high;
 
         impacts.push_back(impact);
     }
@@ -352,6 +334,76 @@ double compute_correlation(const std::vector<double>& x, const std::vector<doubl
     }
 
     return num / sqrt(den_x * den_y + 1e-9);
+}
+
+template <typename Trials, typename Fn>
+std::vector<double> extract_metric(const Trials& trials, Fn fn)
+{
+    std::vector<double> out;
+    out.reserve(trials.size());
+
+    for (const auto& t : trials) {
+        out.push_back(fn(t));
+    }
+
+    return out;
+}
+
+template <typename Trials, typename Pred>
+double compute_rate(const Trials& trials, Pred pred)
+{
+    if (trials.empty()) {
+        return 0.0;
+    }
+
+    int count {0};
+    for (const auto& t : trials) {
+        if (pred(t)) {
+            count++;
+        }
+    }
+
+    return static_cast<double>(count) / trials.size();
+}
+
+template <typename Trials, typename ValueFn, typename Pred>
+std::pair<double, double> compute_split_rate(const Trials& trials, ValueFn value_fn, Pred pred)
+{
+    if (trials.empty()) {
+        return {0.0, 0.0};
+    }
+
+    std::vector<double> values;
+    values.reserve(trials.size());
+
+    for (const auto& t : trials) {
+        values.push_back(value_fn(t));
+    }
+
+    std::sort(values.begin(), values.end());
+    double mid {values[values.size() / 2]};
+
+    int low_total {0}, high_total {0};
+    int low_count {0}, high_count {0};
+
+    for (const auto& t : trials) {
+        if (value_fn(t) < mid) {
+            low_total++;
+            if (pred(t)) {
+                low_count++;
+            }
+        } else {
+            high_total++;
+            if (pred(t)) {
+                high_count++;
+            }
+        }
+    }
+
+    double low_rate {(low_total > 0) ? static_cast<double>(low_count) / low_total : 0.0};
+    double high_rate {(high_total > 0) ? static_cast<double>(high_count) / high_total : 0.0};
+
+    return {low_rate, high_rate};
 }
 
 } /* unnamed namespace */
