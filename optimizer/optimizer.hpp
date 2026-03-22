@@ -1,7 +1,8 @@
 /*-------------------------------- FILE INFO ---------------------------------*/
 /* Filename           : optimizer.hpp                                         */
 /*                                                                            */
-/* Interface to functions to run micromouse simulations                       */
+/* Interface to functions to run micromouse simulation variable sweeper and   */
+/* analysis helpers                                                           */
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
 #ifndef OPTIMIZER_HPP_
@@ -42,67 +43,6 @@ private:
     std::vector<int> indices_;
 };
 
-/* -------------------------------------------------------------------------- */
-/* rotation definitions */
-struct RotationConfig
-{
-    double motor_speed;
-    double motor_speed_scale;
-    double dt;
-
-    double motor1_variance;
-    double motor2_variance;
-    double slip_factor;
-    double wheel_circumference_scale;
-    double wheel_base_scale;
-};
-
-struct RotationResult
-{
-    double total_time {0.0};
-    double final_angle_error {0.0};
-    double total_translation {0.0};
-    bool collision {false};
-    bool simulation_failed {false};
-};
-
-struct RotationTrial
-{
-    std::vector<double> params;
-    RotationResult result;
-};
-
-struct RotationAnalysisSummary
-{
-    double failure_rate {0.0};
-    double collision_rate {0.0};
-
-    MetricStats translation_stats;
-    MetricStats angle_error_stats;
-};
-
-struct RotationParamImpact
-{
-    std::string name;
-
-    double correlation_translation {0.0};
-    double correlation_angle_error {0.0};
-
-    double failure_rate_low {0.0};
-    double failure_rate_high {0.0};
-
-    double collision_rate_low {0.0};
-    double collision_rate_high {0.0};
-};
-
-} /* optimizer namespace */
-
-/*----------------------------------------------------------------------------*/
-/*                             Public Declarations                            */
-/*----------------------------------------------------------------------------*/
-namespace optimizer
-{
-
 template <typename Result>
 std::vector<std::pair<std::vector<double>, Result>> run_parameter_sweep(
         const std::vector<SweepParam>& params,
@@ -119,12 +59,86 @@ std::vector<std::pair<std::vector<double>, Result>> run_parameter_sweep(
     return results;
 }
 
-RotationConfig build_rotation_config(const std::vector<double>& v);
-RotationResult run_rotation_simulation(const maze::Maze& maze, const RotationConfig& cfg, double target_angle);
-RotationAnalysisSummary analyze_rotation_results(const std::vector<std::pair<std::vector<double>,
-        RotationResult>>& trials);
-std::vector<RotationParamImpact> analyze_rotation_parameter_impact(const std::vector<SweepParam>& params,
-        const std::vector<std::pair<std::vector<double>, RotationResult>>& trials);
+template <typename Trials, typename Fn>
+std::vector<double> extract_metric(const Trials& trials, Fn fn)
+{
+    std::vector<double> out;
+    out.reserve(trials.size());
+
+    for (const auto& t : trials) {
+        out.push_back(fn(t));
+    }
+
+    return out;
+}
+
+template <typename Trials, typename Pred>
+double compute_rate(const Trials& trials, Pred pred)
+{
+    if (trials.empty()) {
+        return 0.0;
+    }
+
+    int count {0};
+    for (const auto& t : trials) {
+        if (pred(t)) {
+            count++;
+        }
+    }
+
+    return static_cast<double>(count) / trials.size();
+}
+
+template <typename Trials, typename ValueFn, typename Pred>
+std::pair<double, double> compute_split_rate(const Trials& trials, ValueFn value_fn, Pred pred)
+{
+    if (trials.empty()) {
+        return {0.0, 0.0};
+    }
+
+    std::vector<double> values;
+    values.reserve(trials.size());
+
+    for (const auto& t : trials) {
+        values.push_back(value_fn(t));
+    }
+
+    std::sort(values.begin(), values.end());
+    double mid {values[values.size() / 2]};
+
+    int low_total {0}, high_total {0};
+    int low_count {0}, high_count {0};
+
+    for (const auto& t : trials) {
+        if (value_fn(t) < mid) {
+            low_total++;
+            if (pred(t)) {
+                low_count++;
+            }
+        } else {
+            high_total++;
+            if (pred(t)) {
+                high_count++;
+            }
+        }
+    }
+
+    double low_rate {(low_total > 0) ? static_cast<double>(low_count) / low_total : 0.0};
+    double high_rate {(high_total > 0) ? static_cast<double>(high_count) / high_total : 0.0};
+
+    return {low_rate, high_rate};
+}
+
+} /* optimizer namespace */
+
+/*----------------------------------------------------------------------------*/
+/*                             Public Declarations                            */
+/*----------------------------------------------------------------------------*/
+namespace optimizer
+{
+
+MetricStats compute_stats(const std::vector<double>& data);
+double compute_correlation(const std::vector<double>& x, const std::vector<double>& y);
 
 } /* optimizer namespace */
 

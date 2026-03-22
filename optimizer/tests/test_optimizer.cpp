@@ -8,33 +8,16 @@
 /*============================================================================*/
 /*                               Include Files                                */
 /*============================================================================*/
-extern "C"
-{
-
-#include <stdint.h>
-#include <math.h>
-#include "mock_device_drivers.h"
-#include "wheel_motor.h"
-
-}
-
 #include <cmath>
-#include <cstdint>
 #include <vector>
 #include <string>
-#include <optional>
 #include <functional>
-#include "point.hpp"
-#include "ray.hpp"
-#include "rectangular_hitbox.hpp"
-#include "mouse.hpp"
-#include "maze.hpp"
+#include <algorithm>
 #include "optimizer.hpp"
 
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
-using namespace maze;
 using namespace optimizer;
 
 /*============================================================================*/
@@ -66,347 +49,200 @@ TEST_GROUP(OptimizerTests)
 /*============================================================================*/
 /*                                    Tests                                   */
 /*============================================================================*/
-TEST(OptimizerTests, SweepGeneratesCorrectNumberOfResults)
+TEST(OptimizerTests, SweepGeneratesCorrectNumberOfCombinations)
 {
-    std::vector<std::string> ascii
-    {
-        "+-+",
-        "|S|",
-        "+-+"
-    };
-    Maze maze {build_maze_from_ascii(ascii, 0.0)};
-
     std::vector<SweepParam> params
     {
-        {"motor_speed", 100, 200, 2},
-        {"motor_speed_scale", 1.0, 1.0, 1},
-        {"dt", 0.01, 0.02, 2},
-
-        {"motor1_variance", 0.0, 0.0, 1},
-        {"motor2_variance", 0.0, 0.0, 1},
-        {"slip_factor", 1.0, 1.0, 1},
-        {"wheel_circumference_scale", 1.0, 1.0, 1},
-        {"wheel_base_scale", 1.0, 1.0, 1}
+        {"a", 0, 1, 2},
+        {"b", 0, 1, 3}
     };
 
-    auto sim_fn = [&](const std::vector<double>& vals) -> RotationResult {
-        auto cfg {build_rotation_config(vals)};
-        return run_rotation_simulation(maze, cfg, M_PI / 2);
-    };
-    
-    auto results {run_parameter_sweep<RotationResult>(params, sim_fn)};
+    auto sim_fn {[](const std::vector<double>& vals) {
+        return vals; // identity
+    }};
 
-    /* expected = 2 * 1 * 2 * 1 * 1 * 1 * 1 * 1 = 4 */
-    CHECK_EQUAL(4, results.size());
+    auto results {run_parameter_sweep<std::vector<double>>(params, sim_fn)};
+
+    CHECK_EQUAL(6, results.size()); // 2 * 3
 }
 
-
-TEST(OptimizerTests, SweepSingleStepProducesSingleResult)
+TEST(OptimizerTests, SweepSingleStepProducesSingleCombination)
 {
-    std::vector<std::string> ascii
-    {
-        "+-+",
-        "|S|",
-        "+-+"
-    };
-    Maze maze {build_maze_from_ascii(ascii, 0.0)};
-
     std::vector<SweepParam> params
     {
-        {"motor_speed", 150, 150, 1},
-        {"motor_speed_scale", 1.0, 1.0, 1},
-        {"dt", 0.01, 0.01, 1},
-
-        {"motor1_variance", 0.0, 0.0, 1},
-        {"motor2_variance", 0.0, 0.0, 1},
-        {"slip_factor", 1.0, 1.0, 1},
-        {"wheel_circumference_scale", 1.0, 1.0, 1},
-        {"wheel_base_scale", 1.0, 1.0, 1}
+        {"a", 5, 5, 1},
+        {"b", 10, 10, 1}
     };
 
-    auto sim_fn = [&](const std::vector<double>& vals) -> RotationResult {
-        auto cfg {build_rotation_config(vals)};
-        return run_rotation_simulation(maze, cfg, M_PI / 2);
-    };
-    
-    auto results {run_parameter_sweep<RotationResult>(params, sim_fn)};
+    auto sim_fn {[](const std::vector<double>& vals) {
+        return vals;
+    }};
+
+    auto results {run_parameter_sweep<std::vector<double>>(params, sim_fn)};
 
     CHECK_EQUAL(1, results.size());
 }
 
-TEST(OptimizerTests, ResultsContainValidValues)
+TEST(OptimizerTests, SweepValuesAreInterpolatedCorrectly)
 {
-    std::vector<std::string> ascii
-    {
-        "+-+",
-        "|S|",
-        "+-+"
-    };
-    Maze maze {build_maze_from_ascii(ascii, 0.0)};
-
     std::vector<SweepParam> params
     {
-        {"motor_speed", 150, 150, 1},
-        {"motor_speed_scale", 1.0, 1.0, 1},
-        {"dt", 0.01, 0.01, 1},
-
-        {"motor1_variance", 0.0, 0.0, 1},
-        {"motor2_variance", 0.0, 0.0, 1},
-        {"slip_factor", 1.0, 1.0, 1},
-        {"wheel_circumference_scale", 1.0, 1.0, 1},
-        {"wheel_base_scale", 1.0, 1.0, 1}
+        {"a", 0.0, 10.0, 3}
     };
 
-    auto sim_fn = [&](const std::vector<double>& vals) -> RotationResult {
-        auto cfg {build_rotation_config(vals)};
-        return run_rotation_simulation(maze, cfg, M_PI / 2);
-    };
-    
-    auto results {run_parameter_sweep<RotationResult>(params, sim_fn)};
+    SweepCursor cursor(params);
 
-    const auto& r {results[0].second};
+    auto v0 {cursor.values()};
+    cursor.next();
+    auto v1 {cursor.values()};
+    cursor.next();
+    auto v2 {cursor.values()};
 
-    CHECK(r.total_time >= 0.0);
-    CHECK(r.final_angle_error >= 0.0);
-    CHECK(r.total_translation >= 0.0);
+    DOUBLES_EQUAL(0.0, v0[0], FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(5.0, v1[0], FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(10.0, v2[0], FLOAT_TOLERANCE);
 }
 
-TEST(OptimizerTests, SweepDetectsSimulationFailureWhenDtTooSmall)
+TEST(OptimizerTests, SweepPassesCorrectValuesToSimFn)
 {
-    std::vector<std::string> ascii
-    {
-        "+-+",
-        "|S|",
-        "+-+"
-    };
-    Maze maze {build_maze_from_ascii(ascii, 0.0)};
-
     std::vector<SweepParam> params
     {
-        {"motor_speed", 150, 150, 1},
-        {"motor_speed_scale", 1.0, 1.0, 1},
-        {"dt", 0.0, 0.0, 1},  /* causes encoder not to change */
-
-        {"motor1_variance", 0.0, 0.0, 1},
-        {"motor2_variance", 0.0, 0.0, 1},
-        {"slip_factor", 1.0, 1.0, 1},
-        {"wheel_circumference_scale", 1.0, 1.0, 1},
-        {"wheel_base_scale", 1.0, 1.0, 1}
+        {"a", 1, 2, 2}
     };
 
-    auto sim_fn = [&](const std::vector<double>& vals) -> RotationResult {
-        auto cfg {build_rotation_config(vals)};
-        return run_rotation_simulation(maze, cfg, M_PI / 2);
-    };
-    
-    auto results {run_parameter_sweep<RotationResult>(params, sim_fn)};
+    std::vector<double> captured;
 
-    CHECK(results[0].second.simulation_failed);
+    auto sim_fn {[&](const std::vector<double>& vals) {
+        captured.push_back(vals[0]);
+        return 0;
+    }};
+
+    run_parameter_sweep<int>(params, sim_fn);
+
+    CHECK_EQUAL(2, captured.size());
+    CHECK(captured[0] == 1.0);
+    CHECK(captured[1] == 2.0);
 }
 
-TEST(OptimizerTests, SweepProducesDifferentResultsForDifferentMotorSpeeds)
+TEST(OptimizerTests, ComputeStatsBasic)
 {
-    std::vector<std::string> ascii
-    {
-        "+-+",
-        "|S|",
-        "+-+"
-    };
-    Maze maze {build_maze_from_ascii(ascii, 0.0)};
+    std::vector<double> data {10.0, 20.0, 30.0};
 
-    std::vector<SweepParam> params
-    {
-        {"motor_speed", 100, 200, 2},
-        {"motor_speed_scale", 1.0, 1.0, 1},
-        {"dt", 0.01, 0.01, 1},
+    auto s {compute_stats(data)};
 
-        {"motor1_variance", 0.0, 0.0, 1},
-        {"motor2_variance", 0.0, 0.0, 1},
-        {"slip_factor", 1.0, 1.0, 1},
-        {"wheel_circumference_scale", 1.0, 1.0, 1},
-        {"wheel_base_scale", 1.0, 1.0, 1}
-    };
-
-    auto sim_fn = [&](const std::vector<double>& vals) -> RotationResult {
-        auto cfg {build_rotation_config(vals)};
-        return run_rotation_simulation(maze, cfg, M_PI / 2);
-    };
-    
-    auto results {run_parameter_sweep<RotationResult>(params, sim_fn)};
-
-    CHECK(results.size() == 2);
-
-    /* Expect different time or translation */
-    CHECK((results[0].second.total_time != results[1].second.total_time)
-        || (results[0].second.total_translation != results[1].second.total_translation));
-}
-
-TEST(OptimizerTests, AnalyzeRotationResultsComputesBasicStats)
-{
-    std::vector<std::pair<std::vector<double>, RotationResult>> trials
-    {
-        {{1.0}, {0.0, 1.0, 10.0, false, false}},
-        {{2.0}, {0.0, 2.0, 20.0, false, false}},
-        {{3.0}, {0.0, 3.0, 30.0, false, false}}
-    };
-
-    auto summary {analyze_rotation_results(trials)};
-
-    DOUBLES_EQUAL(20.0, summary.translation_stats.mean, FLOAT_TOLERANCE);
-    CHECK(summary.translation_stats.min == 10.0);
-    CHECK(summary.translation_stats.max == 30.0);
-
-    DOUBLES_EQUAL(2.0, summary.angle_error_stats.mean, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(20.0, s.mean, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(10.0, s.min, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(30.0, s.max, FLOAT_TOLERANCE);
 
     double expected_stddev {std::sqrt(66.6666667)};
-    DOUBLES_EQUAL(expected_stddev, summary.translation_stats.stddev, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(expected_stddev, s.stddev, FLOAT_TOLERANCE);
 }
 
-TEST(OptimizerTests, AnalyzeRotationResultsComputesFailureAndCollisionRates)
+TEST(OptimizerTests, ComputeStatsEmpty)
 {
-    std::vector<std::pair<std::vector<double>, RotationResult>> trials
-    {
-        {{}, {0, 0, 0, false, false}},
-        {{}, {0, 0, 0, true, false}},
-        {{}, {0, 0, 0, false, true}},
-        {{}, {0, 0, 0, true, true}}
-    };
+    std::vector<double> data;
 
-    auto summary {analyze_rotation_results(trials)};
+    auto s {compute_stats(data)};
 
-    DOUBLES_EQUAL(0.5, summary.failure_rate, FLOAT_TOLERANCE);
-    DOUBLES_EQUAL(0.5, summary.collision_rate, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, s.mean, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, s.stddev, FLOAT_TOLERANCE);
 }
 
-TEST(OptimizerTests, ParameterImpactSplitsLowHighCorrectly)
+TEST(OptimizerTests, CorrelationPositive)
 {
-    std::vector<SweepParam> params
-    {
-        {"test_param", 0.0, 10.0, 2}
-    };
+    std::vector<double> x {1, 2, 3};
+    std::vector<double> y {10, 20, 30};
 
-    std::vector<std::pair<std::vector<double>, RotationResult>> trials
-    {
-        {{1.0}, {0, 0, 0, false, false}}, // low
-        {{2.0}, {0, 0, 0, false, true}},  // low (failure)
-        {{8.0}, {0, 0, 0, true, false}},  // high (collision)
-        {{9.0}, {0, 0, 0, false, false}}  // high
-    };
-
-    auto impacts {analyze_rotation_parameter_impact(params, trials)};
-
-    CHECK_EQUAL(1, impacts.size());
-
-    const auto& impact {impacts[0]};
-
-    DOUBLES_EQUAL(0.5, impact.failure_rate_low, FLOAT_TOLERANCE);   /* 1/2 */
-    DOUBLES_EQUAL(0.0, impact.failure_rate_high, FLOAT_TOLERANCE);  /* 0/2 */
-
-    DOUBLES_EQUAL(0.0, impact.collision_rate_low, FLOAT_TOLERANCE); /* 0/2 */
-    DOUBLES_EQUAL(0.5, impact.collision_rate_high, FLOAT_TOLERANCE);/* 1/2 */
+    DOUBLES_EQUAL(1.0, compute_correlation(x, y), FLOAT_TOLERANCE);
 }
 
-TEST(OptimizerTests, ParameterImpactDetectsPositiveCorrelation)
+TEST(OptimizerTests, CorrelationNegative)
 {
-    std::vector<SweepParam> params
-    {
-        {"p", 0, 10, 3}
-    };
+    std::vector<double> x {1, 2, 3};
+    std::vector<double> y {30, 20, 10};
 
-    std::vector<std::pair<std::vector<double>, RotationResult>> trials
-    {
-        {{1.0}, {0, 1.0, 10.0, false, false}},
-        {{2.0}, {0, 2.0, 20.0, false, false}},
-        {{3.0}, {0, 3.0, 30.0, false, false}}
-    };
-
-    auto impacts {analyze_rotation_parameter_impact(params, trials)};
-
-    DOUBLES_EQUAL(1.0, impacts[0].correlation_translation, FLOAT_TOLERANCE);
-    DOUBLES_EQUAL(1.0, impacts[0].correlation_angle_error, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(-1.0, compute_correlation(x, y), FLOAT_TOLERANCE);
 }
 
-TEST(OptimizerTests, ParameterImpactDetectsNegativeCorrelation)
+TEST(OptimizerTests, CorrelationZeroVariance)
 {
-    std::vector<SweepParam> params
-    {
-        {"p", 0, 10, 3}
-    };
+    std::vector<double> x {1, 1, 1};
+    std::vector<double> y {10, 20, 30};
 
-    std::vector<std::pair<std::vector<double>, RotationResult>> trials
-    {
-        {{1.0}, {0, 3.0, 30.0, false, false}},
-        {{2.0}, {0, 2.0, 20.0, false, false}},
-        {{3.0}, {0, 1.0, 10.0, false, false}}
-    };
-
-    auto impacts {analyze_rotation_parameter_impact(params, trials)};
-
-    DOUBLES_EQUAL(-1.0, impacts[0].correlation_translation, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, compute_correlation(x, y), FLOAT_TOLERANCE);
 }
 
-TEST(OptimizerTests, ParameterImpactHandlesZeroVariance)
+TEST(OptimizerTests, ExtractMetricWorks)
 {
-    std::vector<SweepParam> params
+    std::vector<std::pair<int, double>> trials
     {
-        {"p", 0, 10, 3}
+        {1, 10.0},
+        {2, 20.0},
+        {3, 30.0}
     };
 
-    std::vector<std::pair<std::vector<double>, RotationResult>> trials
-    {
-        {{1.0}, {0, 1.0, 10.0, false, false}},
-        {{1.0}, {0, 2.0, 20.0, false, false}},
-        {{1.0}, {0, 3.0, 30.0, false, false}}
-    };
+    auto result {extract_metric(trials,
+        [](const auto& t) { return t.second; })};
 
-    auto impacts {analyze_rotation_parameter_impact(params, trials)};
-
-    /* x variance = 0 -> correlation should safely return ~0 */
-    DOUBLES_EQUAL(0.0, impacts[0].correlation_translation, FLOAT_TOLERANCE);
+    CHECK_EQUAL(3, result.size());
+    DOUBLES_EQUAL(10.0, result[0], FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(30.0, result[2], FLOAT_TOLERANCE);
 }
 
-TEST(OptimizerTests, ParameterImpactHandlesMultipleParameters)
+TEST(OptimizerTests, ComputeRateBasic)
 {
-    std::vector<SweepParam> params
-    {
-        {"p1", 0, 10, 2},
-        {"p2", 0, 5, 2}
-    };
+    std::vector<int> data {0, 1, 0, 1};
 
-    std::vector<std::pair<std::vector<double>, RotationResult>> trials
-    {
-        {{1.0, 1.0}, {0, 1.0, 10.0, false, false}},
-        {{2.0, 1.0}, {0, 2.0, 20.0, false, false}},
-        {{1.0, 5.0}, {0, 3.0, 30.0, false, false}},
-        {{2.0, 5.0}, {0, 4.0, 40.0, false, false}}
-    };
+    auto rate {compute_rate(data,
+        [](int v) { return v == 1; })};
 
-    auto impacts {analyze_rotation_parameter_impact(params, trials)};
-
-    CHECK_EQUAL(2, impacts.size());
-
-    CHECK(impacts[0].name == "p1");
-    CHECK(impacts[1].name == "p2");
+    DOUBLES_EQUAL(0.5, rate, FLOAT_TOLERANCE);
 }
 
-TEST(OptimizerTests, ParameterImpactMedianSplitHandlesEqualValues)
+TEST(OptimizerTests, ComputeRateEmpty)
 {
-    std::vector<SweepParam> params
+    std::vector<int> data;
+
+    auto rate {compute_rate(data,
+        [](int) { return true; })};
+
+    DOUBLES_EQUAL(0.0, rate, FLOAT_TOLERANCE);
+}
+
+TEST(OptimizerTests, SplitRateBasic)
+{
+    std::vector<std::pair<double, bool>> trials
     {
-        {"p", 0, 10, 4}
+        {1.0, false},
+        {2.0, true},
+        {8.0, false},
+        {9.0, true}
     };
 
-    std::vector<std::pair<std::vector<double>, RotationResult>> trials
+    auto [low, high] {compute_split_rate(
+        trials,
+        [](const auto& t) { return t.first; },
+        [](const auto& t) { return t.second; })};
+
+    DOUBLES_EQUAL(0.5, low, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.5, high, FLOAT_TOLERANCE);
+}
+
+TEST(OptimizerTests, SplitRateHandlesEqualValues)
+{
+    std::vector<std::pair<double, bool>> trials
     {
-        {{1.0}, {0, 0, 0, false, false}},
-        {{2.0}, {0, 0, 0, false, true}},   // failure
-        {{2.0}, {0, 0, 0, false, false}},  // equal to mid candidate
-        {{9.0}, {0, 0, 0, true, false}}
+        {2.0, false},
+        {2.0, true},
+        {2.0, false},
+        {2.0, true}
     };
 
-    auto impacts {analyze_rotation_parameter_impact(params, trials)};
+    auto [low, high] {compute_split_rate(
+        trials,
+        [](const auto& t) { return t.first; },
+        [](const auto& t) { return t.second; })};
 
-    /* Not asserting exact rates- just ensuring no crash and valid bounds */
-    CHECK(impacts[0].failure_rate_low >= 0.0);
-    CHECK(impacts[0].failure_rate_high >= 0.0);
+    CHECK(low >= 0.0);
+    CHECK(high >= 0.0);
 }
