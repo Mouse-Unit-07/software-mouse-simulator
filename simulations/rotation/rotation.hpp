@@ -101,23 +101,18 @@ namespace rotation
 
 RotationConfig build_rotation_config(const std::vector<double>& v);
 RotationResult run_rotation_simulation(const maze::Maze& maze, const RotationConfig& cfg, double target_angle);
-RotationAnalysisSummary analyze_rotation_results(const std::vector<std::pair<std::vector<double>,
-        RotationResult>>& trials);
+RotationAnalysisSummary analyze_rotation_results(const std::vector<RotationTrial>& trials);
 std::vector<RotationParamImpact> analyze_rotation_parameter_impact(const std::vector<optimizer::SweepParam>& params,
-        const std::vector<std::pair<std::vector<double>, RotationResult>>& trials);
-std::vector<RotationCandidate> analyze_pd_candidates(
-        const std::vector<std::pair<std::vector<double>, RotationResult>>& trials);
+        const std::vector<RotationTrial>& trials);
+std::vector<RotationCandidate> analyze_pd_candidates(const std::vector<RotationTrial>& trials);
 void sort_rotation_candidates(std::vector<RotationCandidate>& v);
-std::vector<RotationCandidate>get_ranked_pd_candidates(
-    const std::vector<std::pair<std::vector<double>, RotationResult>>& trials);
+std::vector<RotationCandidate>get_ranked_pd_candidates(const std::vector<RotationTrial>& trials);
 
 std::vector<optimizer::SweepParam> default_pd_sweep_params(void);
 
-std::vector<std::pair<std::vector<double>, rotation::RotationResult>> run_pd_sweep(
-        const maze::Maze& maze, double target_angle);
+std::vector<RotationTrial> run_pd_sweep(const maze::Maze& maze, double target_angle);
 
-void print_rotation_simulation_results(
-    const std::vector<std::pair<std::vector<double>, rotation::RotationResult>>& trials);
+void print_rotation_simulation_results(const std::vector<RotationTrial>& trials);
 
 void run_full_rotation_experiment(double target_angle);
 

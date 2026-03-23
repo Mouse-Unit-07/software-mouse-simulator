@@ -191,7 +191,7 @@ TEST(RotationTests, NoTranslationAndAngleErrorForPerfectTestVariables)
 
 TEST(RotationTests, AnalyzeResultsComputesStats)
 {
-    std::vector<std::pair<std::vector<double>, RotationResult>> trials {
+    std::vector<RotationTrial> trials {
         {{}, {0,1, 10, false, false}},
         {{}, {0,2, 20, false, false}},
         {{}, {0,3, 30, false, false}}
@@ -206,7 +206,7 @@ TEST(RotationTests, AnalyzeResultsComputesStats)
 
 TEST(RotationTests, AnalyzeResultsComputesRates)
 {
-    std::vector<std::pair<std::vector<double>, RotationResult>> trials {
+    std::vector<RotationTrial> trials {
         {{}, {0, 0, 0, false, false}},
         {{}, {0, 0, 0, true, false}},
         {{}, {0, 0, 0, false, true}},
@@ -256,7 +256,7 @@ TEST(RotationTests, PidShiftAffectsControlStrength)
 
 TEST(RotationTests, AnalyzePdCandidatesGroupsAndComputesStats)
 {
-    std::vector<std::pair<std::vector<double>, RotationResult>> trials {
+    std::vector<RotationTrial> trials {
         {make_params(1,2,3), {10, 1.0, 100, false, false}},
         {make_params(1,2,3), {20, 2.0, 200, false, false}},
         {make_params(4,5,6), {30, 3.0, 300, true,  true}}
@@ -402,7 +402,7 @@ TEST(RotationTests, SortCandidatesUsesStdDevAsTieBreaker)
 
 TEST(RotationTests, GetRankedPdCandidatesOrdersCorrectly)
 {
-    std::vector<std::pair<std::vector<double>, RotationResult>> trials {
+    std::vector<RotationTrial> trials {
         {make_params(1,0,8), {10, 2.0, 200, false, false}},
         {make_params(1,0,8), {12, 2.0, 210, false, false}},
 

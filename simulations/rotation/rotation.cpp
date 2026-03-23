@@ -187,22 +187,21 @@ RotationResult run_rotation_simulation(const maze::Maze& maze, const RotationCon
     };
 }
 
-RotationAnalysisSummary analyze_rotation_results(const std::vector<std::pair<std::vector<double>,
-        RotationResult>>& trials)
+RotationAnalysisSummary analyze_rotation_results(const std::vector<RotationTrial>& trials)
 {
     RotationAnalysisSummary summary{};
 
     auto translations {optimizer::extract_metric(trials,
-        [](const auto& t) { return t.second.total_translation; })};
+        [](const auto& t) { return t.result.total_translation; })};
 
     auto angle_errors {optimizer::extract_metric(trials,
-        [](const auto& t) { return t.second.final_angle_error; })};
+        [](const auto& t) { return t.result.final_angle_error; })};
 
     summary.failure_rate = optimizer::compute_rate(trials,
-        [](const auto& t) { return t.second.simulation_failed; });
+        [](const auto& t) { return t.result.simulation_failed; });
 
     summary.collision_rate = optimizer::compute_rate(trials,
-        [](const auto& t) { return t.second.collision; });
+        [](const auto& t) { return t.result.collision; });
 
     summary.translation_stats = optimizer::compute_stats(translations);
     summary.angle_error_stats = optimizer::compute_stats(angle_errors);
@@ -211,7 +210,7 @@ RotationAnalysisSummary analyze_rotation_results(const std::vector<std::pair<std
 }
 
 std::vector<RotationParamImpact> analyze_rotation_parameter_impact(const std::vector<optimizer::SweepParam>& params,
-        const std::vector<std::pair<std::vector<double>, RotationResult>>& trials)
+        const std::vector<RotationTrial>& trials)
 {
     std::vector<RotationParamImpact> impacts;
 
@@ -220,26 +219,26 @@ std::vector<RotationParamImpact> analyze_rotation_parameter_impact(const std::ve
         impact.name = params[i].name;
 
         auto x {optimizer::extract_metric(trials,
-            [i](const auto& t) { return t.first[i]; })};
+            [i](const auto& t) { return t.params[i]; })};
 
         auto translation {optimizer::extract_metric(trials,
-            [](const auto& t) { return t.second.total_translation; })};
+            [](const auto& t) { return t.result.total_translation; })};
 
         auto angle {optimizer::extract_metric(trials,
-            [](const auto& t) { return t.second.final_angle_error; })};
+            [](const auto& t) { return t.result.final_angle_error; })};
 
         impact.correlation_translation = optimizer::compute_correlation(x, translation);
         impact.correlation_angle_error = optimizer::compute_correlation(x, angle);
 
         auto [fail_low, fail_high] {optimizer::compute_split_rate(
             trials,
-            [i](const auto& t) { return t.first[i]; },
-            [](const auto& t) { return t.second.simulation_failed; })};
+            [i](const auto& t) { return t.params[i]; },
+            [](const auto& t) { return t.result.simulation_failed; })};
 
         auto [coll_low, coll_high] {optimizer::compute_split_rate(
             trials,
-            [i](const auto& t) { return t.first[i]; },
-            [](const auto& t) { return t.second.collision; })};
+            [i](const auto& t) { return t.params[i]; },
+            [](const auto& t) { return t.result.collision; })};
 
         impact.failure_rate_low = fail_low;
         impact.failure_rate_high = fail_high;
@@ -252,13 +251,12 @@ std::vector<RotationParamImpact> analyze_rotation_parameter_impact(const std::ve
     return impacts;
 }
 
-std::vector<RotationCandidate> analyze_pd_candidates(
-    const std::vector<std::pair<std::vector<double>, RotationResult>>& trials)
+std::vector<RotationCandidate> analyze_pd_candidates(const std::vector<RotationTrial>& trials)
 {
     std::map<PdKey, std::vector<RotationResult>> grouped;
 
     for (const auto& t : trials) {
-        const auto& v = t.first;
+        const auto& v = t.params;
 
         if (v.empty()) continue;
 
@@ -270,7 +268,7 @@ std::vector<RotationCandidate> analyze_pd_candidates(
             cfg.pid_shift
         };
 
-        grouped[key].push_back(t.second);
+        grouped[key].push_back(t.result);
     }
 
     std::vector<RotationCandidate> out;
@@ -358,8 +356,7 @@ void sort_rotation_candidates(std::vector<RotationCandidate>& v)
     });
 }
 
-std::vector<RotationCandidate>get_ranked_pd_candidates(
-    const std::vector<std::pair<std::vector<double>, RotationResult>>& trials)
+std::vector<RotationCandidate>get_ranked_pd_candidates(const std::vector<RotationTrial>& trials)
 {
     auto candidates = analyze_pd_candidates(trials);
     sort_rotation_candidates(candidates);
@@ -385,13 +382,12 @@ std::vector<optimizer::SweepParam> default_pd_sweep_params()
     };
 }
 
-std::vector<std::pair<std::vector<double>, rotation::RotationResult>>
-run_pd_sweep(const maze::Maze& maze, double target_angle)
+std::vector<RotationTrial> run_pd_sweep(const maze::Maze& maze, double target_angle)
 {
     auto params {default_pd_sweep_params()};
 
     optimizer::SweepCursor cursor(params);
-    std::vector<std::pair<std::vector<double>, rotation::RotationResult>> results;
+    std::vector<RotationTrial> results;
 
     do {
         auto vals = cursor.values();
@@ -406,8 +402,7 @@ run_pd_sweep(const maze::Maze& maze, double target_angle)
     return results;
 }
 
-void print_rotation_simulation_results(
-        const std::vector<std::pair<std::vector<double>, rotation::RotationResult>>& trials)
+void print_rotation_simulation_results(const std::vector<RotationTrial>& trials)
 {
     auto summary {rotation::analyze_rotation_results(trials)};
     auto ranked {rotation::get_ranked_pd_candidates(trials)};
