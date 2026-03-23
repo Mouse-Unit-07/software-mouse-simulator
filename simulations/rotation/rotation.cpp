@@ -28,6 +28,8 @@ extern "C"
 #include <functional>
 #include <algorithm>
 #include <map>
+#include <iostream>
+#include <iomanip>
 #include "point.hpp"
 #include "ray.hpp"
 #include "rectangular_hitbox.hpp"
@@ -274,20 +276,33 @@ std::vector<RotationParamImpact> analyze_rotation_parameter_impact(const std::ve
 }
 
 std::vector<RotationCandidate> analyze_pd_candidates(
-        const std::vector<std::pair<std::vector<double>, RotationResult>>& trials)
+    const std::vector<std::pair<std::vector<double>, RotationResult>>& trials)
 {
-    std::map<std::vector<double>, std::vector<RotationResult>> grouped;
+    std::map<PdKey, std::vector<RotationResult>> grouped;
 
-    // Group by param vector
     for (const auto& t : trials) {
-        grouped[t.first].push_back(t.second);
+        const auto& v = t.first;
+
+        if (v.empty()) continue;
+
+        RotationConfig cfg = build_rotation_config(v);
+
+        PdKey key {
+            cfg.kp,
+            cfg.kd,
+            cfg.pid_shift
+        };
+
+        grouped[key].push_back(t.second);
     }
 
     std::vector<RotationCandidate> out;
+    out.reserve(grouped.size());
 
-    for (const auto& [params, results] : grouped) {
+    for (const auto& [key, results] : grouped) {
         RotationCandidate c;
-        c.params = params;
+
+        c.key = key;
 
         std::vector<double> times;
         std::vector<double> angles;
@@ -297,8 +312,8 @@ std::vector<RotationCandidate> analyze_pd_candidates(
         angles.reserve(results.size());
         translations.reserve(results.size());
 
-        int fail_count {0};
-        int coll_count {0};
+        int fail_count = 0;
+        int coll_count = 0;
 
         for (const auto& r : results) {
             times.push_back(r.total_time);
@@ -313,8 +328,8 @@ std::vector<RotationCandidate> analyze_pd_candidates(
         c.angle_error_stats = optimizer::compute_stats(angles);
         c.translation_stats = optimizer::compute_stats(translations);
 
-        double n {static_cast<double>(results.size())};
-        c.failure_rate = (n > 0) ? fail_count / n : 0.0;
+        const double n = static_cast<double>(results.size());
+        c.failure_rate   = (n > 0) ? fail_count / n : 0.0;
         c.collision_rate = (n > 0) ? coll_count / n : 0.0;
 
         out.push_back(c);
@@ -372,6 +387,148 @@ std::vector<RotationCandidate>get_ranked_pd_candidates(
     auto candidates = analyze_pd_candidates(trials);
     sort_rotation_candidates(candidates);
     return candidates;
+}
+
+std::vector<optimizer::SweepParam> default_pd_sweep_params()
+{
+    return {
+        {"motor_speed", 120, 220, 5},
+        {"motor_speed_scale", 0.9, 1.1, 3},
+        {"dt", 0.01, 0.5, 3},
+
+        {"motor1_variance", -0.1, 0.1, 3},
+        {"motor2_variance", -0.1, 0.1, 3},
+        {"slip_factor", 0.9, 1.1, 3},
+        {"wheel_circumference_scale", 0.95, 1.05, 3},
+        {"wheel_base_scale", 0.95, 1.05, 3},
+
+        {"kp", 0, 50, 51},
+        {"kd", 0, 20, 21},
+        {"pid_shift", 6, 10, 5}
+    };
+}
+
+std::vector<std::pair<std::vector<double>, rotation::RotationResult>>
+run_pd_sweep(const maze::Maze& maze, double target_angle)
+{
+    auto params {default_pd_sweep_params()};
+
+    optimizer::SweepCursor cursor(params);
+    std::vector<std::pair<std::vector<double>, rotation::RotationResult>> results;
+
+    /* compute total number of combinations */
+    size_t total {1};
+    for (const auto& p : params) {
+        total *= p.steps;
+    }
+
+    size_t count {0};
+    constexpr size_t progress_increment {1};
+    size_t current_progress {0};
+
+    do {
+        auto vals = cursor.values();
+
+        auto cfg {rotation::build_rotation_config(vals)};
+        auto result {rotation::run_rotation_simulation(maze, cfg, target_angle)};
+
+        results.push_back({vals, result});
+
+        count++;
+
+        /* progress reporting */
+        double percent {(100.0 * count) / total};
+
+        if (percent >= current_progress) {
+            std::cout << "Progress: " << current_progress << "%" << "\n";
+            current_progress += progress_increment;
+        }
+
+    } while (cursor.next());
+
+    return results;
+}
+
+void print_summary(const std::vector<std::pair<std::vector<double>, rotation::RotationResult>>& trials)
+{
+    auto summary {rotation::analyze_rotation_results(trials)};
+
+    std::cout << std::setprecision(3);
+
+    std::cout << "\n=== SUMMARY ===\n";
+    std::cout << "Failure Rate   : " << summary.failure_rate << "\n";
+    std::cout << "Collision Rate : " << summary.collision_rate << "\n";
+
+    std::cout << "\nTranslation:\n";
+    std::cout << "  mean=" << summary.translation_stats.mean
+              << " std=" << summary.translation_stats.stddev
+              << " min=" << summary.translation_stats.min
+              << " max=" << summary.translation_stats.max << "\n";
+
+    std::cout << "\nAngle Error:\n";
+    std::cout << "  mean=" << summary.angle_error_stats.mean
+              << " std=" << summary.angle_error_stats.stddev
+              << " min=" << summary.angle_error_stats.min
+              << " max=" << summary.angle_error_stats.max << "\n";
+}
+
+void print_top_candidates(const std::vector<std::pair<std::vector<double>,
+        rotation::RotationResult>>& trials, int top_n)
+{
+    auto ranked {rotation::get_ranked_pd_candidates(trials)};
+
+    std::cout << std::setprecision(3);
+
+    std::cout << "\n=== TOP " << top_n << " CANDIDATES ===\n";
+
+    std::cout
+        << std::left
+        << std::setw(6)  << "Rank"
+        << std::setw(5)  << "kp"
+        << std::setw(5)  << "kd"
+        << std::setw(5)  << "sh"
+        << std::setw(8)  << "Fail"
+        << std::setw(8)  << "Coll"
+        << std::setw(10) << "Angle"
+        << std::setw(10) << "Trans"
+        << std::setw(8)  << "Time"
+        << "\n";
+
+    for (int i {0}; i < std::min<int>(top_n, ranked.size()); i++) {
+        const auto& c = ranked[i];
+
+        std::cout
+            << std::left
+            << std::setw(6)  << (i + 1)
+            << std::setw(5)  << c.key.kp
+            << std::setw(5)  << c.key.kd
+            << std::setw(5)  << c.key.shift
+            << std::setw(8)  << c.failure_rate
+            << std::setw(8)  << c.collision_rate
+            << std::setw(10) << c.angle_error_stats.mean
+            << std::setw(10) << c.translation_stats.mean
+            << std::setw(8)  << c.time_stats.mean
+            << "\n";
+    }
+}
+
+void run_full_rotation_experiment(double target_angle, int top_n)
+{
+    std::vector<std::string> ascii {
+        "+-+",
+        "|S|",
+        "+-+"
+    };
+    maze::Maze small_maze {maze::build_maze_from_ascii(ascii, 0.0)};
+    
+    std::cout << "Running rotation sweep...\n";
+
+    auto trials {run_pd_sweep(small_maze, target_angle)};
+
+    std::cout << "Trials: " << trials.size() << "\n";
+
+    print_summary(trials);
+    print_top_candidates(trials, top_n);
 }
 
 } /* rotation namespace */

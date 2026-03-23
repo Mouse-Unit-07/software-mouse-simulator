@@ -53,6 +53,17 @@ std::vector<std::string> ascii {
 };
 Maze test_maze {build_maze_from_ascii(ascii, 0.0)};
 
+std::vector<double> make_params(int kp, int kd, int shift, double motor_speed = 0)
+{
+    return {
+        motor_speed, 1.0, 0.01,
+        0, 0, 1, 1, 1,
+        static_cast<double>(kp),
+        static_cast<double>(kd),
+        static_cast<double>(shift)
+    };
+}
+
 /*============================================================================*/
 /*                            Mock Implementations                            */
 /*============================================================================*/
@@ -254,18 +265,17 @@ TEST(RotationTests, PidShiftAffectsControlStrength)
 TEST(RotationTests, AnalyzePdCandidatesGroupsAndComputesStats)
 {
     std::vector<std::pair<std::vector<double>, RotationResult>> trials {
-        {{1,2}, {10, 1.0, 100, false, false}},
-        {{1,2}, {20, 2.0, 200, false, false}},
-        {{3,4}, {30, 3.0, 300, true,  true}}
+        {make_params(1,2,3), {10, 1.0, 100, false, false}},
+        {make_params(1,2,3), {20, 2.0, 200, false, false}},
+        {make_params(4,5,6), {30, 3.0, 300, true,  true}}
     };
 
     auto candidates {analyze_pd_candidates(trials)};
 
     CHECK_EQUAL(2, candidates.size());
 
-    // Find group {1,2}
     for (const auto& c : candidates) {
-        if (c.params == std::vector<double>{1,2}) {
+        if ((c.key.kp == 1) && (c.key.kd == 2) && (c.key.shift == 3)) {
             DOUBLES_EQUAL(15.0, c.time_stats.mean, FLOAT_TOLERANCE);
             DOUBLES_EQUAL(1.5,  c.angle_error_stats.mean, FLOAT_TOLERANCE);
             DOUBLES_EQUAL(150.0,c.translation_stats.mean, FLOAT_TOLERANCE);
@@ -401,19 +411,25 @@ TEST(RotationTests, SortCandidatesUsesStdDevAsTieBreaker)
 TEST(RotationTests, GetRankedPdCandidatesOrdersCorrectly)
 {
     std::vector<std::pair<std::vector<double>, RotationResult>> trials {
-        {{1}, {10, 2.0, 200, false, false}},
-        {{1}, {12, 2.0, 210, false, false}},
+        {make_params(1,0,8), {10, 2.0, 200, false, false}},
+        {make_params(1,0,8), {12, 2.0, 210, false, false}},
 
-        {{2}, {8,  1.0, 150, false, false}},
-        {{2}, {9,  1.2, 160, false, false}},
+        {make_params(2,0,8), {8,  1.0, 150, false, false}},
+        {make_params(2,0,8), {9,  1.2, 160, false, false}},
 
-        {{3}, {5,  0.5, 100, true,  false}} /* worse due to collision */
+        {make_params(3,0,8), {5,  0.5, 100, true,  false}}
     };
 
     auto ranked {get_ranked_pd_candidates(trials)};
 
     CHECK(ranked.size() >= 2);
 
-    /* Best should be param {2} (better accuracy than {1}, no collision like {3}) */
-    CHECK(ranked[0].params == std::vector<double>{2});
+    CHECK(ranked[0].key.kp == 2);
+    CHECK(ranked[0].key.kd == 0);
+    CHECK(ranked[0].key.shift == 8);
+}
+
+TEST(RotationTests, RunDefaultSimulationAndPrintResults)
+{
+    rotation::run_full_rotation_experiment(M_PI / 2, 10);
 }

@@ -69,9 +69,19 @@ struct RotationParamImpact
     double collision_rate_high {0.0};
 };
 
+struct PdKey {
+    int32_t kp;
+    int32_t kd;
+    int32_t shift;
+
+    bool operator<(const PdKey& other) const {
+        return std::tie(kp, kd, shift) < std::tie(other.kp, other.kd, other.shift);
+    }
+};
+
 struct RotationCandidate
 {
-    std::vector<double> params;
+    PdKey key;
 
     optimizer::MetricStats time_stats;
     optimizer::MetricStats angle_error_stats;
@@ -100,6 +110,20 @@ std::vector<RotationCandidate> analyze_pd_candidates(
 void sort_rotation_candidates(std::vector<RotationCandidate>& v);
 std::vector<RotationCandidate>get_ranked_pd_candidates(
     const std::vector<std::pair<std::vector<double>, RotationResult>>& trials);
+
+/* functions to run in main */
+std::vector<optimizer::SweepParam> default_pd_sweep_params(void);
+
+std::vector<std::pair<std::vector<double>, rotation::RotationResult>> run_pd_sweep(
+        const maze::Maze& maze, double target_angle);
+
+void print_summary(const std::vector<std::pair<std::vector<double>, rotation::RotationResult>>& trials);
+
+void print_top_candidates(const std::vector<std::pair<std::vector<double>, 
+        rotation::RotationResult>>& trials, int top_n);
+
+void run_full_rotation_experiment(double target_angle, int top_n);
+
 } /* rotation namespace */
 
 #endif /* ROTATION_HPP_ */
