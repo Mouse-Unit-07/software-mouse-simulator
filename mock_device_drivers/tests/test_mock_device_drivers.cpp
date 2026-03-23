@@ -52,10 +52,10 @@ TEST_GROUP(MockDeviceDriversTests)
 /*============================================================================*/
 TEST(MockDeviceDriversTests, DesiredIrSensorValuesSettableAndGettable)
 {
-    set_ir_1_sensor_reading(compute_ir_sensor_reading_from_distance_mm(0.0));
-    set_ir_2_sensor_reading(compute_ir_sensor_reading_from_distance_mm(500.0));
-    set_ir_3_sensor_reading(compute_ir_sensor_reading_from_distance_mm(1000.0));
-    set_ir_4_sensor_reading(compute_ir_sensor_reading_from_distance_mm(1500.0));
+    update_ir_1_sensor_reading(0.0);
+    update_ir_2_sensor_reading(500.0);
+    update_ir_3_sensor_reading(1000.0);
+    update_ir_4_sensor_reading(1500.0);
     CHECK(read_ir_1_sensor() == 1024);
     CHECK(read_ir_2_sensor() == 495);
     CHECK(read_ir_3_sensor() == 230);
@@ -64,32 +64,27 @@ TEST(MockDeviceDriversTests, DesiredIrSensorValuesSettableAndGettable)
 
 TEST(MockDeviceDriversTests, NewEncoderTicksComputable)
 {
-    uint8_t motor_1_speed = 255;
-    uint8_t motor_2_speed = 127;
     set_wheel_motor_1_direction_forward();
     set_wheel_motor_2_direction_backward();
-    set_wheel_motor_1_speed(motor_1_speed);
-    set_wheel_motor_2_speed(motor_2_speed);
+    set_wheel_motor_1_speed(255);
+    set_wheel_motor_2_speed(127);
 
-    CHECK(compute_new_encoder_1_ticks(1.0) == 1241);
-    CHECK(compute_new_encoder_2_ticks(1.0) == -618);
-}
+    update_encoder_1_ticks(1.0);
+    update_encoder_2_ticks(1.0);
 
-TEST(MockDeviceDriversTests, EncoderTicksSettableAndAccessible)
-{
-    int32_t encoder_1_ticks = 1000;
-    int32_t encoder_2_ticks = -1000;
-    set_encoder_1_ticks(encoder_1_ticks);
-    set_encoder_2_ticks(encoder_2_ticks);
-
-    CHECK(get_encoder_1_ticks() == encoder_1_ticks);
-    CHECK(get_encoder_2_ticks() == encoder_2_ticks);
+    CHECK(get_encoder_1_ticks() == 1241);
+    CHECK(get_encoder_2_ticks() == -618);
 }
 
 TEST(MockDeviceDriversTests, EncoderTicksClearable)
 {
-    set_encoder_1_ticks(1000);
-    set_encoder_2_ticks(-1000);
+    set_wheel_motor_1_direction_forward();
+    set_wheel_motor_2_direction_backward();
+    set_wheel_motor_1_speed(255);
+    set_wheel_motor_2_speed(255);
+    update_encoder_1_ticks(1.0);
+    update_encoder_2_ticks(1.0);
+
     clear_1_encoder_ticks();
     clear_2_encoder_ticks();
 
@@ -184,6 +179,86 @@ TEST(MockDeviceDriversTests, SlipReducesDistance)
     mouse_delta slipping = compute_mouse_delta(0.0, 1.0);
 
     CHECK(slipping.dx < normal.dx);
+}
+
+TEST(MockDeviceDriversTests, SpeedScaleHalvesEncoderCount)
+{
+    set_wheel_motor_1_direction_forward();
+    set_wheel_motor_2_direction_backward();
+    set_wheel_motor_1_speed(200);
+    set_wheel_motor_2_speed(200);
+
+    set_motor_speed_scale(1.0);
+    update_encoder_1_ticks(1.0);
+    update_encoder_2_ticks(1.0);
+    int32_t full_encoder_1_count = get_encoder_1_ticks();
+    int32_t full_encoder_2_count = get_encoder_2_ticks();
+
+    clear_1_encoder_ticks();
+    clear_2_encoder_ticks();
+
+    set_motor_speed_scale(0.5);
+    update_encoder_1_ticks(1.0);
+    update_encoder_2_ticks(1.0);
+    int32_t half_encoder_1_count = get_encoder_1_ticks();
+    int32_t half_encoder_2_count = get_encoder_2_ticks();
+
+    CHECK((full_encoder_1_count / 2) == half_encoder_1_count);
+    CHECK((full_encoder_2_count / 2) == half_encoder_2_count);
+}
+
+TEST(MockDeviceDriversTests, MotorVarianceHalvesEncoderCount)
+{
+    set_wheel_motor_1_direction_forward();
+    set_wheel_motor_2_direction_backward();
+    set_wheel_motor_1_speed(200);
+    set_wheel_motor_2_speed(200);
+
+    set_motor_1_variance(0);
+    set_motor_2_variance(0);
+    update_encoder_1_ticks(1.0);
+    update_encoder_2_ticks(1.0);
+    int32_t full_encoder_1_count = get_encoder_1_ticks();
+    int32_t full_encoder_2_count = get_encoder_2_ticks();
+
+    clear_1_encoder_ticks();
+    clear_2_encoder_ticks();
+
+    set_motor_1_variance(-0.5);
+    set_motor_2_variance(-0.5);
+    update_encoder_1_ticks(1.0);
+    update_encoder_2_ticks(1.0);
+    int32_t half_encoder_1_count = get_encoder_1_ticks();
+    int32_t half_encoder_2_count = get_encoder_2_ticks();
+
+    CHECK((full_encoder_1_count / 2) == half_encoder_1_count);
+    CHECK((full_encoder_2_count / 2) == half_encoder_2_count);
+}
+
+TEST(MockDeviceDriversTests, SlipHalvesEncoderCount)
+{
+    set_wheel_motor_1_direction_forward();
+    set_wheel_motor_2_direction_backward();
+    set_wheel_motor_1_speed(200);
+    set_wheel_motor_2_speed(200);
+
+    set_motor_slip_factor(1.0);
+    update_encoder_1_ticks(1.0);
+    update_encoder_2_ticks(1.0);
+    int32_t full_encoder_1_count = get_encoder_1_ticks();
+    int32_t full_encoder_2_count = get_encoder_2_ticks();
+
+    clear_1_encoder_ticks();
+    clear_2_encoder_ticks();
+
+    set_motor_slip_factor(0.5);
+    update_encoder_1_ticks(1.0);
+    update_encoder_2_ticks(1.0);
+    int32_t half_encoder_1_count = get_encoder_1_ticks();
+    int32_t half_encoder_2_count = get_encoder_2_ticks();
+
+    CHECK((full_encoder_1_count / 2) == half_encoder_1_count);
+    CHECK((full_encoder_2_count / 2) == half_encoder_2_count);
 }
 
 TEST(MockDeviceDriversTests, WheelCircumferenceScaleHalvesDistance)

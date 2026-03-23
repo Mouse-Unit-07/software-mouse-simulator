@@ -18,7 +18,7 @@
 /*----------------------------------------------------------------------------*/
 /*                            Private Declarations                            */
 /*----------------------------------------------------------------------------*/
-/* none */
+uint32_t compute_ir_sensor_reading_from_distance_mm(double distance);
 
 /*----------------------------------------------------------------------------*/
 /*                               Private Globals                              */
@@ -57,8 +57,8 @@ static uint8_t wheel_motor_2_speed = 0u;
 static enum wheel_motor_direction wheel_motor_1_direction = FORWARD_DIRECTION;
 static enum wheel_motor_direction wheel_motor_2_direction = FORWARD_DIRECTION;
 
-static int32_t encoder_1_ticks = 0;
-static int32_t encoder_2_ticks = 0;
+static double encoder_1_ticks = 0.0;
+static double encoder_2_ticks = 0.0;
 
 static double motor_speed_scale = 1.0;
 static double motor_1_variance = 0.0;
@@ -83,8 +83,8 @@ void reset_mock_device_drivers(void)
     wheel_motor_1_direction = FORWARD_DIRECTION;
     wheel_motor_2_direction = FORWARD_DIRECTION;
 
-    encoder_1_ticks = 0;
-    encoder_2_ticks = 0;
+    encoder_1_ticks = 0.0;
+    encoder_2_ticks = 0.0;
 
     motor_speed_scale = 1.0;
     motor_1_variance = 0.0;
@@ -94,65 +94,42 @@ void reset_mock_device_drivers(void)
     wheel_base_scale = 1.0;
 }
 
-uint32_t compute_ir_sensor_reading_from_distance_mm(double distance)
+void update_ir_1_sensor_reading(double distance)
 {
-    double value = CONSTANT_IR_SCALE * pow(0.858585, distance / 100.0);
-
-    if (value < 0.0) {
-        value = 0.0;
-    }
-
-    if (value > 1024.0) {
-        value = 1024.0;
-    }
-
-    return (uint32_t)value;
+    mock_ir_1_sensor_reading = compute_ir_sensor_reading_from_distance_mm(distance);
 }
 
-void set_ir_1_sensor_reading(uint32_t reading)
+void update_ir_2_sensor_reading(double distance)
 {
-    mock_ir_1_sensor_reading = reading;
+    mock_ir_2_sensor_reading = compute_ir_sensor_reading_from_distance_mm(distance);
 }
 
-void set_ir_2_sensor_reading(uint32_t reading)
+void update_ir_3_sensor_reading(double distance)
 {
-    mock_ir_2_sensor_reading = reading;
+    mock_ir_3_sensor_reading = compute_ir_sensor_reading_from_distance_mm(distance);
 }
 
-void set_ir_3_sensor_reading(uint32_t reading)
+void update_ir_4_sensor_reading(double distance)
 {
-    mock_ir_3_sensor_reading = reading;
+    mock_ir_4_sensor_reading = compute_ir_sensor_reading_from_distance_mm(distance);
 }
 
-void set_ir_4_sensor_reading(uint32_t reading)
+void update_encoder_1_ticks(double time_elapsed_sec)
 {
-    mock_ir_4_sensor_reading = reading;
+    double encoder_ticks_per_second = MAX_ENCODER_TICKS_PER_SECOND * (wheel_motor_1_speed / 255.0)
+        * motor_speed_scale * (1.0 + motor_1_variance) * motor_slip_factor;
+    double change_in_ticks = (encoder_ticks_per_second * time_elapsed_sec) * wheel_motor_1_direction;
+
+    encoder_1_ticks += change_in_ticks;
 }
 
-int32_t compute_new_encoder_1_ticks(double time_elapsed_sec)
+void update_encoder_2_ticks(double time_elapsed_sec)
 {
-    double encoder_ticks_per_second = MAX_ENCODER_TICKS_PER_SECOND * (wheel_motor_1_speed / 255.0);
-    int32_t change_in_ticks = (int32_t)((encoder_ticks_per_second * time_elapsed_sec) * wheel_motor_1_direction);
+    double encoder_ticks_per_second = MAX_ENCODER_TICKS_PER_SECOND * (wheel_motor_2_speed / 255.0)
+        * motor_speed_scale * (1.0 + motor_2_variance) * motor_slip_factor;
+    double change_in_ticks = (encoder_ticks_per_second * time_elapsed_sec) * wheel_motor_2_direction;
 
-    return encoder_1_ticks + change_in_ticks;
-}
-
-int32_t compute_new_encoder_2_ticks(double time_elapsed_sec)
-{
-    double encoder_ticks_per_second = MAX_ENCODER_TICKS_PER_SECOND * (wheel_motor_2_speed / 255.0);
-    int32_t change_in_ticks = (int32_t)((encoder_ticks_per_second * time_elapsed_sec) * wheel_motor_2_direction);
-
-    return encoder_2_ticks + change_in_ticks;
-}
-
-void set_encoder_1_ticks(int32_t ticks)
-{
-    encoder_1_ticks = ticks;
-}
-
-void set_encoder_2_ticks(int32_t ticks)
-{
-    encoder_2_ticks = ticks;
+    encoder_2_ticks += change_in_ticks;
 }
 
 void set_motor_speed_scale(double scale)
@@ -252,22 +229,22 @@ uint32_t read_ir_4_sensor(void)
 /* magnetic_encoder mocks */
 int32_t get_encoder_1_ticks(void)
 {
-    return encoder_1_ticks;
+    return (int32_t)encoder_1_ticks;
 }
 
 int32_t get_encoder_2_ticks(void)
 {
-    return encoder_2_ticks;
+    return (int32_t)encoder_2_ticks;
 }
 
 void clear_1_encoder_ticks(void)
 {
-    encoder_1_ticks = 0;
+    encoder_1_ticks = 0.0;
 }
 
 void clear_2_encoder_ticks(void)
 {
-    encoder_2_ticks = 0;
+    encoder_2_ticks = 0.0;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -305,4 +282,17 @@ void set_wheel_motor_2_direction_backward(void)
 /*----------------------------------------------------------------------------*/
 /*                             Private Definitions                            */
 /*----------------------------------------------------------------------------*/
-/* none */
+uint32_t compute_ir_sensor_reading_from_distance_mm(double distance)
+{
+    double value = CONSTANT_IR_SCALE * pow(0.858585, distance / 100.0);
+
+    if (value < 0.0) {
+        value = 0.0;
+    }
+
+    if (value > 1024.0) {
+        value = 1024.0;
+    }
+
+    return (uint32_t)value;
+}
