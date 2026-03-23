@@ -379,8 +379,8 @@ std::vector<optimizer::SweepParam> default_pd_sweep_params()
         {"wheel_circumference_scale", 0.95, 1.05, 3}, // 0.95, 1.05, 3 | 1.0, 1.0, 1
         {"wheel_base_scale", 0.95, 1.05, 3}, // 0.95, 1.05, 3 | 1.0, 1.0, 1
 
-        {"kp", 0, 4000, 20},
-        {"kd", 0, 2000, 20},
+        {"kp", 0, 4000, 21},
+        {"kd", 0, 2000, 21},
         {"pid_shift", 8, 8, 1}
     };
 }
@@ -393,16 +393,6 @@ run_pd_sweep(const maze::Maze& maze, double target_angle)
     optimizer::SweepCursor cursor(params);
     std::vector<std::pair<std::vector<double>, rotation::RotationResult>> results;
 
-    /* compute total number of combinations */
-    size_t total {1};
-    for (const auto& p : params) {
-        total *= p.steps;
-    }
-
-    size_t count {0};
-    constexpr size_t progress_increment {1};
-    size_t current_progress {0};
-
     do {
         auto vals = cursor.values();
 
@@ -411,24 +401,16 @@ run_pd_sweep(const maze::Maze& maze, double target_angle)
 
         results.push_back({vals, result});
 
-        count++;
-
-        /* progress reporting */
-        double percent {(100.0 * count) / total};
-
-        if (percent >= current_progress) {
-            std::cout << "Progress: " << current_progress << "%" << "\n";
-            current_progress += progress_increment;
-        }
-
     } while (cursor.next());
 
     return results;
 }
 
-void print_summary(const std::vector<std::pair<std::vector<double>, rotation::RotationResult>>& trials)
+void print_rotation_simulation_results(
+        const std::vector<std::pair<std::vector<double>, rotation::RotationResult>>& trials)
 {
     auto summary {rotation::analyze_rotation_results(trials)};
+    auto ranked {rotation::get_ranked_pd_candidates(trials)};
 
     std::cout << std::setprecision(3);
 
@@ -447,14 +429,6 @@ void print_summary(const std::vector<std::pair<std::vector<double>, rotation::Ro
               << " std=" << summary.angle_error_stats.stddev
               << " min=" << summary.angle_error_stats.min
               << " max=" << summary.angle_error_stats.max << "\n";
-}
-
-void print_all_candidates(const std::vector<std::pair<std::vector<double>,
-        rotation::RotationResult>>& trials)
-{
-    auto ranked {rotation::get_ranked_pd_candidates(trials)};
-
-    std::cout << std::setprecision(3);
 
     std::cout << "\n=== ALL CANDIDATES ===\n";
 
@@ -504,8 +478,7 @@ void run_full_rotation_experiment(double target_angle)
 
     std::cout << "Trials: " << trials.size() << "\n";
 
-    print_summary(trials);
-    print_all_candidates(trials);
+    print_rotation_simulation_results(trials);
 }
 
 } /* rotation namespace */

@@ -111,16 +111,13 @@ void sort_rotation_candidates(std::vector<RotationCandidate>& v);
 std::vector<RotationCandidate>get_ranked_pd_candidates(
     const std::vector<std::pair<std::vector<double>, RotationResult>>& trials);
 
-/* functions to run in main */
 std::vector<optimizer::SweepParam> default_pd_sweep_params(void);
 
 std::vector<std::pair<std::vector<double>, rotation::RotationResult>> run_pd_sweep(
         const maze::Maze& maze, double target_angle);
 
-void print_summary(const std::vector<std::pair<std::vector<double>, rotation::RotationResult>>& trials);
-
-void print_all_candidates(const std::vector<std::pair<std::vector<double>, 
-        rotation::RotationResult>>& trials);
+void print_rotation_simulation_results(
+    const std::vector<std::pair<std::vector<double>, rotation::RotationResult>>& trials);
 
 void run_full_rotation_experiment(double target_angle);
 
