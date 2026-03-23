@@ -39,7 +39,7 @@ static double const ENCODER_TICKS_PER_REVOLUTION = (ENCODER_EVENTS_PER_REVOLUTIO
 
 /* these two variables need to be accessible for movement simulation */
 double ENCODER_TICKS_PER_MILLIMETER = ENCODER_TICKS_PER_REVOLUTION / (M_PI * WHEEL_DIAMETER_MM);
-double ENCODER_TICKS_PER_ROTATION_ANGLE_RADIANS = (ENCODER_TICKS_PER_REVOLUTION * WHEEL_BASE_MM) / (M_PI * WHEEL_DIAMETER_MM);
+double ENCODER_TICKS_PER_ROTATION_ANGLE_RADIANS = (ENCODER_TICKS_PER_REVOLUTION * WHEEL_BASE_MM) / (2 * M_PI * WHEEL_DIAMETER_MM);
 
 static uint32_t mock_ir_1_sensor_reading = 0u;
 static uint32_t mock_ir_2_sensor_reading = 0u;
