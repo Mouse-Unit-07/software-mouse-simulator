@@ -49,7 +49,6 @@ extern "C"
 extern "C"
 {
 
-extern double ENCODER_TICKS_PER_MILLIMETER;
 extern double ENCODER_TICKS_PER_ROTATION_ANGLE_RADIANS;
 
 }
@@ -105,83 +104,60 @@ RotationResult run_rotation_simulation(const maze::Maze& maze, const RotationCon
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
 
     double total_translation {0.0};
-    double time {0.0};
+    double total_angle_rotation {0.0};
+    double total_time {0.0};
     bool collision {false};
     bool simulation_failed {false};
 
-    int32_t prev_error1 {0}, prev_error2 {0};
-
-    const int32_t ERROR_EPSILON {5};
-    const int MAX_STEPS {10000};
-
+    constexpr int MAX_STEPS {10000};
     int steps {0};
 
-    double raw_target = std::abs(ENCODER_TICKS_PER_ROTATION_ANGLE_RADIANS * target_angle);
-    if (raw_target > static_cast<double>(INT32_MAX)) {
-        raw_target = INT32_MAX;
-    }
+    int32_t prev_error {0};
+
+    double raw_target {std::abs(ENCODER_TICKS_PER_ROTATION_ANGLE_RADIANS * target_angle)};
     int32_t target_ticks {static_cast<int32_t>(raw_target)};
-    bool done_rotating {false};
 
-    while (!done_rotating) {
-        int32_t enc1 {get_encoder_1_ticks()};
-        int32_t enc2 {get_encoder_2_ticks()};
-        enc1 = (enc1 == INT32_MIN) ? INT32_MAX : std::abs(enc1);
-        enc2 = (enc2 == INT32_MIN) ? INT32_MAX : std::abs(enc2);
+    while ((std::abs(get_encoder_1_ticks()) < target_ticks) || (std::abs(get_encoder_2_ticks()) < target_ticks)) {
+        int32_t enc1 = std::abs(get_encoder_1_ticks());
+        int32_t enc2 = std::abs(get_encoder_2_ticks());
         
-        int32_t error1 {target_ticks - enc1};
-        int32_t error2 {target_ticks - enc2};
-        done_rotating = (std::abs(error1) <= ERROR_EPSILON) && (std::abs(error2) <= ERROR_EPSILON);
+        int32_t error {enc2 - enc1};
+        int32_t derivative {error - prev_error};
 
-        int32_t derivative1 {error1 - prev_error1};
-        int32_t derivative2 {error2 - prev_error2};
+        int64_t p_term {static_cast<int64_t>(cfg.kp) * error};
+        int64_t d_term {static_cast<int64_t>(cfg.kd) * derivative};
+        int64_t control64 {p_term + d_term};
 
-        int64_t p_term1 {static_cast<int64_t>(cfg.kp) * error1};
-        int64_t p_term2 {static_cast<int64_t>(cfg.kp) * error2};
-        int64_t d_term1 {static_cast<int64_t>(cfg.kd) * derivative1};
-        int64_t d_term2 {static_cast<int64_t>(cfg.kd) * derivative2};
-        int64_t control64_1 {p_term1 + d_term1};
-        int64_t control64_2 {p_term2 + d_term2};
-
-        int32_t control_1, control_2;
-        if (control64_1 >= 0) {
-            control_1 = static_cast<int32_t>(control64_1 >> cfg.pid_shift);
+        int32_t control;
+        if (control64 >= 0) {
+            control = static_cast<int32_t>(control64 >> cfg.pid_shift);
         } else {
-            control_1 = -static_cast<int32_t>((-control64_1) >> cfg.pid_shift);
-        }
-        if (control64_2 >= 0) {
-            control_2 = static_cast<int32_t>(control64_2 >> cfg.pid_shift);
-        } else {
-            control_2 = -static_cast<int32_t>((-control64_2) >> cfg.pid_shift);
+            control = -static_cast<int32_t>((-control64) >> cfg.pid_shift);
         }
 
         int32_t base_speed {static_cast<int32_t>(cfg.motor_speed)};
-        int32_t adjusted_speed_1 {base_speed + control_1};
-        int32_t adjusted_speed_2 {base_speed - control_2};
+        int32_t adjusted_speed_1 {base_speed + control};
+        int32_t adjusted_speed_2 {base_speed - control};
         adjusted_speed_1 = std::clamp(adjusted_speed_1, 0, 255);
         adjusted_speed_2 = std::clamp(adjusted_speed_2, 0, 255);
 
         set_wheel_motor_1_speed(static_cast<uint8_t>(adjusted_speed_1));
         set_wheel_motor_2_speed(static_cast<uint8_t>(adjusted_speed_2));
 
-        prev_error1 = error1;
-        prev_error2 = error2;
+        prev_error = error;
 
         /* update virtual mouse */
         auto delta {compute_mouse_delta(mouse.hitbox.angle_rad, cfg.dt)};
-        int32_t new_encoder_1_ticks {compute_new_encoder_1_ticks(cfg.dt)};
-        int32_t new_encoder_2_ticks {compute_new_encoder_2_ticks(cfg.dt)};
-        if ((new_encoder_1_ticks == 0) || (new_encoder_2_ticks == 0)) {
-            simulation_failed = true;
-            break;
-        }
-        set_encoder_1_ticks(new_encoder_1_ticks);
-        set_encoder_2_ticks(new_encoder_2_ticks);
+        update_encoder_1_ticks(cfg.dt);
+        update_encoder_2_ticks(cfg.dt);
+        int32_t new_encoder_1_ticks {get_encoder_1_ticks()};
+        int32_t new_encoder_2_ticks {get_encoder_2_ticks()};
         mouse.translate(delta.dx, delta.dy);
         mouse.rotate(delta.dtheta_rad);
 
         total_translation += sqrt(delta.dx * delta.dx + delta.dy * delta.dy);
-        time += cfg.dt;
+        total_angle_rotation += delta.dtheta_rad;
+        total_time += cfg.dt;
 
         auto rc {maze::get_cell_from_point(maze, mouse.hitbox.center)};
         if (rc) {
@@ -195,15 +171,16 @@ RotationResult run_rotation_simulation(const maze::Maze& maze, const RotationCon
             break;
         }
 
-        if (++steps > MAX_STEPS) {
+        steps++;
+        if (steps > MAX_STEPS) {
             simulation_failed = true;
             break;
         }
     }
 
     return RotationResult{
-        time,
-        std::abs(target_angle - mouse.hitbox.angle_rad),
+        total_time,
+        std::abs(target_angle - total_angle_rotation),
         total_translation,
         collision,
         simulation_failed
@@ -392,19 +369,19 @@ std::vector<RotationCandidate>get_ranked_pd_candidates(
 std::vector<optimizer::SweepParam> default_pd_sweep_params()
 {
     return {
-        {"motor_speed", 120, 220, 5},
-        {"motor_speed_scale", 0.9, 1.1, 3},
-        {"dt", 0.01, 0.5, 3},
+        {"motor_speed", 120, 220, 5}, // 120, 220, 5 | 100, 100, 1
+        {"motor_speed_scale", 0.9, 1.1, 3}, // 0.9, 1.1, 3 | 1.0, 1.0, 1
+        {"dt", 0.01, 0.5, 3}, // 0.01, 0.5, 3 | 0.001, 0.001, 1
 
-        {"motor1_variance", -0.1, 0.1, 3},
-        {"motor2_variance", -0.1, 0.1, 3},
-        {"slip_factor", 0.9, 1.1, 3},
-        {"wheel_circumference_scale", 0.95, 1.05, 3},
-        {"wheel_base_scale", 0.95, 1.05, 3},
+        {"motor1_variance", -0.1, 0.1, 3}, // -0.1, 0.1, 3 | 0.0, 0.0, 1
+        {"motor2_variance", -0.1, 0.1, 3}, // -0.1, 0.1, 3 | 0.0, 0.0, 1
+        {"slip_factor", 0.9, 1.1, 3}, // 0.9, 1.1, 3 | 
+        {"wheel_circumference_scale", 0.95, 1.05, 3}, // 0.95, 1.05, 3 | 1.0, 1.0, 1
+        {"wheel_base_scale", 0.95, 1.05, 3}, // 0.95, 1.05, 3 | 1.0, 1.0, 1
 
-        {"kp", 0, 50, 51},
-        {"kd", 0, 20, 21},
-        {"pid_shift", 6, 10, 5}
+        {"kp", 0, 4000, 20},
+        {"kd", 0, 2000, 20},
+        {"pid_shift", 8, 8, 1}
     };
 }
 
@@ -472,14 +449,14 @@ void print_summary(const std::vector<std::pair<std::vector<double>, rotation::Ro
               << " max=" << summary.angle_error_stats.max << "\n";
 }
 
-void print_top_candidates(const std::vector<std::pair<std::vector<double>,
-        rotation::RotationResult>>& trials, int top_n)
+void print_all_candidates(const std::vector<std::pair<std::vector<double>,
+        rotation::RotationResult>>& trials)
 {
     auto ranked {rotation::get_ranked_pd_candidates(trials)};
 
     std::cout << std::setprecision(3);
 
-    std::cout << "\n=== TOP " << top_n << " CANDIDATES ===\n";
+    std::cout << "\n=== ALL CANDIDATES ===\n";
 
     std::cout
         << std::left
@@ -494,7 +471,7 @@ void print_top_candidates(const std::vector<std::pair<std::vector<double>,
         << std::setw(8)  << "Time"
         << "\n";
 
-    for (int i {0}; i < std::min<int>(top_n, ranked.size()); i++) {
+    for (int i {0}; i < ranked.size(); i++) {
         const auto& c = ranked[i];
 
         std::cout
@@ -512,7 +489,7 @@ void print_top_candidates(const std::vector<std::pair<std::vector<double>,
     }
 }
 
-void run_full_rotation_experiment(double target_angle, int top_n)
+void run_full_rotation_experiment(double target_angle)
 {
     std::vector<std::string> ascii {
         "+-+",
@@ -528,7 +505,7 @@ void run_full_rotation_experiment(double target_angle, int top_n)
     std::cout << "Trials: " << trials.size() << "\n";
 
     print_summary(trials);
-    print_top_candidates(trials, top_n);
+    print_all_candidates(trials);
 }
 
 } /* rotation namespace */

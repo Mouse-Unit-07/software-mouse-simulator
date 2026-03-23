@@ -119,10 +119,10 @@ std::vector<std::pair<std::vector<double>, rotation::RotationResult>> run_pd_swe
 
 void print_summary(const std::vector<std::pair<std::vector<double>, rotation::RotationResult>>& trials);
 
-void print_top_candidates(const std::vector<std::pair<std::vector<double>, 
-        rotation::RotationResult>>& trials, int top_n);
+void print_all_candidates(const std::vector<std::pair<std::vector<double>, 
+        rotation::RotationResult>>& trials);
 
-void run_full_rotation_experiment(double target_angle, int top_n);
+void run_full_rotation_experiment(double target_angle);
 
 } /* rotation namespace */
 

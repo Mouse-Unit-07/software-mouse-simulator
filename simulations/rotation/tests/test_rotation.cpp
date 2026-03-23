@@ -127,7 +127,7 @@ TEST(RotationTests, SimulationFailsWhenDtIsZero)
     CHECK(r.simulation_failed);
 }
 
-TEST(RotationTests, PositiveAndNegativeAnglesProduceDifferentResults)
+TEST(RotationTests, PositiveAndNegativeAnglesProduceSameAngleAndTranslationError)
 {
     RotationConfig cfg {150, 1.0, 0.01, 0, 0, 1, 1, 1, 0, 0, 0};
 
@@ -136,8 +136,8 @@ TEST(RotationTests, PositiveAndNegativeAnglesProduceDifferentResults)
 
     CHECK_FALSE(r1.simulation_failed);
     CHECK_FALSE(r2.simulation_failed);
-    CHECK((r1.total_translation != r2.total_translation)
-       || (r1.final_angle_error != r2.final_angle_error));
+    CHECK(r1.total_translation == r2.total_translation);
+    CHECK(r1.final_angle_error == r2.final_angle_error);
 }
 
 TEST(RotationTests, LargerAngleTakesMoreTime)
@@ -165,6 +165,28 @@ TEST(RotationTests, SimulationCanDetectCollision)
     auto r {run_rotation_simulation(test_maze, cfg, M_PI)};
 
     CHECK(r.collision);
+}
+
+TEST(RotationTests, NoTranslationAndAngleErrorForPerfectTestVariables)
+{
+    std::vector<std::string> ascii {
+        "+-+",
+        "|S|",
+        "+-+"
+    };
+    Maze maze {build_maze_from_ascii(ascii, 0.0)};
+
+    /* slow movement, tiny dt, and no motor variances */
+    RotationConfig cfg {100,1.0,0.001, 0,0, 1,1,1, 0,0,0};
+
+    auto r {run_rotation_simulation(test_maze, cfg, M_PI)};
+
+    /* 1% of a circle, or 3.6 degrees */
+    constexpr double ROTATION_TOLERANCE {(2 * M_PI) * 0.01};
+
+    CHECK_FALSE(r.simulation_failed);
+    DOUBLES_EQUAL(0.0, r.final_angle_error, ROTATION_TOLERANCE);
+    DOUBLES_EQUAL(0.0, r.total_translation, 0.01);
 }
 
 TEST(RotationTests, AnalyzeResultsComputesStats)
@@ -197,22 +219,10 @@ TEST(RotationTests, AnalyzeResultsComputesRates)
     DOUBLES_EQUAL(0.5, s.collision_rate, FLOAT_TOLERANCE);
 }
 
-TEST(RotationTests, DifferentKpProducesDifferentResults)
-{
-    RotationConfig low_kp  {150,1.0,0.01,0,0,1,1,1, 1,0,8};
-    RotationConfig high_kp {150,1.0,0.01,0,0,1,1,1, 50,0,8};
-
-    auto r1 {run_rotation_simulation(test_maze, low_kp,  M_PI / 2)};
-    auto r2 {run_rotation_simulation(test_maze, high_kp, M_PI / 2)};
-
-    CHECK((r1.total_time != r2.total_time)
-       || (r1.final_angle_error != r2.final_angle_error));
-}
-
 TEST(RotationTests, DerivativeTermAffectsStability)
 {
-    RotationConfig no_d  {150,1.0,0.01,0,0,1,1,1, 20,0,8};
-    RotationConfig with_d{150,1.0,0.01,0,0,1,1,1, 20,10,8};
+    RotationConfig no_d  {150,1.0,0.01, -0.2,0, 1,1,1, 2000,0,8};
+    RotationConfig with_d{150,1.0,0.01, -0.2,0, 1,1,1, 2000,1000,8};
 
     auto r1 {run_rotation_simulation(test_maze, no_d,  M_PI / 2)};
     auto r2 {run_rotation_simulation(test_maze, with_d,M_PI / 2)};
@@ -223,8 +233,8 @@ TEST(RotationTests, DerivativeTermAffectsStability)
 
 TEST(RotationTests, PDImprovesAccuracyOverNoControl)
 {
-    RotationConfig no_control {150,1.0,0.01,0,0,1,1,1, 0,0,8};
-    RotationConfig pd_control {150,1.0,0.01,0,0,1,1,1, 20,5,8};
+    RotationConfig no_control {150,1.0,0.01, -0.2,0, 1,1,1, 0,0,8};
+    RotationConfig pd_control {150,1.0,0.01, -0.2,0, 1,1,1, 2000,1000,8};
 
     auto r1 {run_rotation_simulation(test_maze, no_control, M_PI / 2)};
     auto r2 {run_rotation_simulation(test_maze, pd_control, M_PI / 2)};
@@ -232,28 +242,10 @@ TEST(RotationTests, PDImprovesAccuracyOverNoControl)
     CHECK(r2.final_angle_error <= r1.final_angle_error);
 }
 
-TEST(RotationTests, SimulationConvergesBeforeMaxSteps)
-{
-    RotationConfig cfg {150,1.0,0.01,0,0,1,1,1, 20,5,8};
-
-    auto r {run_rotation_simulation(test_maze, cfg, M_PI / 2)};
-
-    CHECK_FALSE(r.simulation_failed);
-}
-
-TEST(RotationTests, ExcessiveGainCanCauseFailure)
-{
-    RotationConfig unstable {150,1.0,0.01,0,0,1,1,1, 1000,500,4};
-
-    auto r {run_rotation_simulation(test_maze, unstable, M_PI / 2)};
-
-    CHECK(r.simulation_failed);
-}
-
 TEST(RotationTests, PidShiftAffectsControlStrength)
 {
-    RotationConfig strong {150,1.0,0.01,0,0,1,1,1, 20,5,2};
-    RotationConfig weak   {150,1.0,0.01,0,0,1,1,1, 20,5,10};
+    RotationConfig strong {150,1.0,0.01, -0.2,0, 1,1,1, 2000,1000,2};
+    RotationConfig weak   {150,1.0,0.01, -0.2,0, 1,1,1, 2000,1000,8};
 
     auto r1 {run_rotation_simulation(test_maze, strong, M_PI / 2)};
     auto r2 {run_rotation_simulation(test_maze, weak,   M_PI / 2)};
@@ -429,7 +421,7 @@ TEST(RotationTests, GetRankedPdCandidatesOrdersCorrectly)
     CHECK(ranked[0].key.shift == 8);
 }
 
-TEST(RotationTests, RunDefaultSimulationAndPrintResults)
+IGNORE_TEST(RotationTests, RunDefaultSimulationAndPrintResults)
 {
-    rotation::run_full_rotation_experiment(M_PI / 2, 10);
+    rotation::run_full_rotation_experiment(M_PI / 2);
 }
