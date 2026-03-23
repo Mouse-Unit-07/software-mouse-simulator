@@ -41,7 +41,21 @@ extern "C"
 /*----------------------------------------------------------------------------*/
 /*                            Private Declarations                            */
 /*----------------------------------------------------------------------------*/
-/* none */
+namespace
+{
+
+using namespace rotation;
+
+struct RotationMetrics {
+    std::vector<double> time;
+    std::vector<double> angle;
+    std::vector<double> translation;
+};
+
+RotationMetrics collect_metrics(const std::vector<RotationTrial>& trials);
+RotationMetrics collect_metrics(const std::vector<RotationResult>& results);
+
+} /* unnamed namespace */
 
 /*----------------------------------------------------------------------------*/
 /*                               Private Globals                              */
@@ -191,11 +205,7 @@ RotationAnalysisSummary analyze_rotation_results(const std::vector<RotationTrial
 {
     RotationAnalysisSummary summary{};
 
-    auto translations {optimizer::extract_metric(trials,
-        [](const auto& t) { return t.result.total_translation; })};
-
-    auto angle_errors {optimizer::extract_metric(trials,
-        [](const auto& t) { return t.result.final_angle_error; })};
+    auto m = collect_metrics(trials);
 
     summary.failure_rate = optimizer::compute_rate(trials,
         [](const auto& t) { return t.result.simulation_failed; });
@@ -203,8 +213,8 @@ RotationAnalysisSummary analyze_rotation_results(const std::vector<RotationTrial
     summary.collision_rate = optimizer::compute_rate(trials,
         [](const auto& t) { return t.result.collision; });
 
-    summary.translation_stats = optimizer::compute_stats(translations);
-    summary.angle_error_stats = optimizer::compute_stats(angle_errors);
+    summary.translation_stats = optimizer::compute_stats(m.translation);
+    summary.angle_error_stats = optimizer::compute_stats(m.angle);
 
     return summary;
 }
@@ -256,11 +266,11 @@ std::vector<RotationCandidate> analyze_pd_candidates(const std::vector<RotationT
     std::map<PdKey, std::vector<RotationResult>> grouped;
 
     for (const auto& t : trials) {
-        const auto& v = t.params;
+        if (t.params.empty()) {
+            continue;
+        }
 
-        if (v.empty()) continue;
-
-        RotationConfig cfg = build_rotation_config(v);
+        auto cfg {build_rotation_config(t.params)};
 
         PdKey key {
             cfg.kp,
@@ -276,34 +286,24 @@ std::vector<RotationCandidate> analyze_pd_candidates(const std::vector<RotationT
 
     for (const auto& [key, results] : grouped) {
         RotationCandidate c;
-
         c.key = key;
 
-        std::vector<double> times;
-        std::vector<double> angles;
-        std::vector<double> translations;
+        auto m {collect_metrics(results)};
 
-        times.reserve(results.size());
-        angles.reserve(results.size());
-        translations.reserve(results.size());
+        c.time_stats = optimizer::compute_stats(m.time);
+        c.angle_error_stats = optimizer::compute_stats(m.angle);
+        c.translation_stats = optimizer::compute_stats(m.translation);
 
-        int fail_count = 0;
-        int coll_count = 0;
+        const double n {static_cast<double>(results.size())};
+
+        int fail_count {0};
+        int coll_count {0};
 
         for (const auto& r : results) {
-            times.push_back(r.total_time);
-            angles.push_back(r.final_angle_error);
-            translations.push_back(r.total_translation);
-
             if (r.simulation_failed) fail_count++;
             if (r.collision) coll_count++;
         }
 
-        c.time_stats = optimizer::compute_stats(times);
-        c.angle_error_stats = optimizer::compute_stats(angles);
-        c.translation_stats = optimizer::compute_stats(translations);
-
-        const double n = static_cast<double>(results.size());
         c.failure_rate   = (n > 0) ? fail_count / n : 0.0;
         c.collision_rate = (n > 0) ? coll_count / n : 0.0;
 
@@ -481,4 +481,43 @@ void run_full_rotation_experiment(double target_angle)
 /*----------------------------------------------------------------------------*/
 /*                             Private Definitions                            */
 /*----------------------------------------------------------------------------*/
-/* none */
+namespace
+{
+
+using namespace rotation;
+
+RotationMetrics collect_metrics(const std::vector<RotationTrial>& trials)
+{
+    RotationMetrics m;
+
+    m.time.reserve(trials.size());
+    m.angle.reserve(trials.size());
+    m.translation.reserve(trials.size());
+
+    for (const auto& t : trials) {
+        m.time.push_back(t.result.total_time);
+        m.angle.push_back(t.result.final_angle_error);
+        m.translation.push_back(t.result.total_translation);
+    }
+
+    return m;
+}
+
+RotationMetrics collect_metrics(const std::vector<RotationResult>& results)
+{
+    RotationMetrics m;
+
+    m.time.reserve(results.size());
+    m.angle.reserve(results.size());
+    m.translation.reserve(results.size());
+
+    for (const auto& r : results) {
+        m.time.push_back(r.total_time);
+        m.angle.push_back(r.final_angle_error);
+        m.translation.push_back(r.total_translation);
+    }
+
+    return m;
+}
+
+} /* unnamed namespace */
