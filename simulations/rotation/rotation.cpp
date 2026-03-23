@@ -52,8 +52,19 @@ struct RotationMetrics {
     std::vector<double> translation;
 };
 
+struct AggregateStats {
+    optimizer::MetricStats time;
+    optimizer::MetricStats angle;
+    optimizer::MetricStats translation;
+
+    double failure_rate;
+    double collision_rate;
+};
+
 RotationMetrics collect_metrics(const std::vector<RotationTrial>& trials);
 RotationMetrics collect_metrics(const std::vector<RotationResult>& results);
+AggregateStats compute_aggregate(const std::vector<RotationTrial>& trials);
+AggregateStats compute_aggregate(const std::vector<RotationResult>& results);
 
 } /* unnamed namespace */
 
@@ -203,20 +214,14 @@ RotationResult run_rotation_simulation(const maze::Maze& maze, const RotationCon
 
 RotationAnalysisSummary analyze_rotation_results(const std::vector<RotationTrial>& trials)
 {
-    RotationAnalysisSummary summary{};
+    auto a = compute_aggregate(trials);
 
-    auto m = collect_metrics(trials);
-
-    summary.failure_rate = optimizer::compute_rate(trials,
-        [](const auto& t) { return t.result.simulation_failed; });
-
-    summary.collision_rate = optimizer::compute_rate(trials,
-        [](const auto& t) { return t.result.collision; });
-
-    summary.translation_stats = optimizer::compute_stats(m.translation);
-    summary.angle_error_stats = optimizer::compute_stats(m.angle);
-
-    return summary;
+    return {
+        a.failure_rate,
+        a.collision_rate,
+        a.translation,
+        a.angle
+    };
 }
 
 std::vector<RotationParamImpact> analyze_rotation_parameter_impact(const std::vector<optimizer::SweepParam>& params,
@@ -284,28 +289,17 @@ std::vector<RotationCandidate> analyze_pd_candidates(const std::vector<RotationT
     std::vector<RotationCandidate> out;
     out.reserve(grouped.size());
 
-    for (const auto& [key, results] : grouped) {
+    for (const auto& [key, group_trials] : grouped) {
         RotationCandidate c;
         c.key = key;
 
-        auto m {collect_metrics(results)};
+        auto a {compute_aggregate(group_trials)};
 
-        c.time_stats = optimizer::compute_stats(m.time);
-        c.angle_error_stats = optimizer::compute_stats(m.angle);
-        c.translation_stats = optimizer::compute_stats(m.translation);
-
-        const double n {static_cast<double>(results.size())};
-
-        int fail_count {0};
-        int coll_count {0};
-
-        for (const auto& r : results) {
-            if (r.simulation_failed) fail_count++;
-            if (r.collision) coll_count++;
-        }
-
-        c.failure_rate   = (n > 0) ? fail_count / n : 0.0;
-        c.collision_rate = (n > 0) ? coll_count / n : 0.0;
+        c.time_stats = a.time;
+        c.angle_error_stats = a.angle;
+        c.translation_stats = a.translation;
+        c.failure_rate = a.failure_rate;
+        c.collision_rate = a.collision_rate;
 
         out.push_back(c);
     }
@@ -518,6 +512,51 @@ RotationMetrics collect_metrics(const std::vector<RotationResult>& results)
     }
 
     return m;
+}
+
+AggregateStats compute_aggregate(const std::vector<RotationTrial>& trials)
+{
+    auto m {collect_metrics(trials)};
+
+    AggregateStats a;
+
+    a.time = optimizer::compute_stats(m.time);
+    a.angle = optimizer::compute_stats(m.angle);
+    a.translation = optimizer::compute_stats(m.translation);
+
+    a.failure_rate = optimizer::compute_rate(trials,
+        [](const auto& t) { return t.result.simulation_failed; });
+
+    a.collision_rate = optimizer::compute_rate(trials,
+        [](const auto& t) { return t.result.collision; });
+
+    return a;
+}
+
+AggregateStats compute_aggregate(const std::vector<RotationResult>& results)
+{
+    auto m {collect_metrics(results)};
+
+    AggregateStats a;
+
+    a.time = optimizer::compute_stats(m.time);
+    a.angle       = optimizer::compute_stats(m.angle);
+    a.translation = optimizer::compute_stats(m.translation);
+
+    const double n {static_cast<double>(results.size())};
+
+    int fail_count {0};
+    int coll_count {0};
+
+    for (const auto& r : results) {
+        if (r.simulation_failed) fail_count++;
+        if (r.collision) coll_count++;
+    }
+
+    a.failure_rate = (n > 0) ? fail_count / n : 0.0;
+    a.collision_rate = (n > 0) ? coll_count / n : 0.0;
+
+    return a;
 }
 
 } /* unnamed namespace */
