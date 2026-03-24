@@ -234,7 +234,7 @@ std::vector<RotationParamImpact> analyze_rotation_parameter_impact(const std::ve
         impact.name = params[i].name;
 
         auto x {optimizer::extract_metric(trials,
-            [i](const auto& t) { return t.params[i]; })};
+            [i](const auto& t) { return t.configs[i]; })};
 
         auto translation {optimizer::extract_metric(trials,
             [](const auto& t) { return t.result.total_translation; })};
@@ -247,12 +247,12 @@ std::vector<RotationParamImpact> analyze_rotation_parameter_impact(const std::ve
 
         auto [fail_low, fail_high] {optimizer::compute_split_rate(
             trials,
-            [i](const auto& t) { return t.params[i]; },
+            [i](const auto& t) { return t.configs[i]; },
             [](const auto& t) { return t.result.simulation_failed; })};
 
         auto [coll_low, coll_high] {optimizer::compute_split_rate(
             trials,
-            [i](const auto& t) { return t.params[i]; },
+            [i](const auto& t) { return t.configs[i]; },
             [](const auto& t) { return t.result.collision; })};
 
         impact.failure_rate_low = fail_low;
@@ -271,11 +271,11 @@ std::vector<RotationCandidate> analyze_pd_candidates(const std::vector<RotationT
     std::map<PdKey, std::vector<RotationResult>> grouped;
 
     for (const auto& t : trials) {
-        if (t.params.empty()) {
+        if (t.configs.empty()) {
             continue;
         }
 
-        auto cfg {build_rotation_config(t.params)};
+        auto cfg {build_rotation_config(t.configs)};
 
         PdKey key {
             cfg.kp,
