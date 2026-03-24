@@ -30,6 +30,8 @@ extern "C"
 #include <map>
 #include <iostream>
 #include <iomanip>
+#include <fstream>
+#include <stdexcept>
 #include "point.hpp"
 #include "ray.hpp"
 #include "rectangular_hitbox.hpp"
@@ -297,69 +299,74 @@ void sort_candidates(std::vector<Candidate>& v)
     });
 }
 
-void print_rotation_simulation_results(const std::vector<Candidate>& candidates, ResultsMetrics overall_metrics)
+void write_analysis_to_file(const std::string& filename, const std::vector<Candidate>& candidates,
+        const ResultsMetrics& overall_metrics, size_t total_size)
 {
-    std::cout << std::setprecision(3);
+    std::ofstream out(filename);
+    if (!out.is_open()) {
+        throw std::runtime_error("Failed to open output file: " + filename);
+    }
 
-    std::cout << "\n=== SUMMARY ===\n";
-    std::cout << "Failure Rate   : " << overall_metrics.failure_rate << "\n";
-    std::cout << "Collision Rate : " << overall_metrics.collision_rate << "\n";
+    out << std::setprecision(3);
+    constexpr size_t COLUMN_WIDTH {10};
 
-    std::cout << "\nTime:\n";
-    std::cout << "  mean=" << overall_metrics.time_stats.mean
-              << " std=" << overall_metrics.time_stats.stddev
-              << " min=" << overall_metrics.time_stats.min
-              << " max=" << overall_metrics.time_stats.max << "\n";
+    out << "=== SUMMARY ===\n";
+    out << "Total Size     : " << total_size << "\n";
+    out << "Failure Rate   : " << overall_metrics.failure_rate << "\n";
+    out << "Collision Rate : " << overall_metrics.collision_rate << "\n";
 
-    std::cout << "\nAngle Error:\n";
-    std::cout << "  mean=" << overall_metrics.angle_error_stats.mean
-              << " std=" << overall_metrics.angle_error_stats.stddev
-              << " min=" << overall_metrics.angle_error_stats.min
-              << " max=" << overall_metrics.angle_error_stats.max << "\n";
+    out << "\nTime:\n";
+    out << "  mean=" << overall_metrics.time_stats.mean
+        << " std=" << overall_metrics.time_stats.stddev
+        << " min=" << overall_metrics.time_stats.min
+        << " max=" << overall_metrics.time_stats.max << "\n";
 
-    std::cout << "\nTranslation:\n";
-    std::cout << "  mean=" << overall_metrics.translation_stats.mean
-              << " std=" << overall_metrics.translation_stats.stddev
-              << " min=" << overall_metrics.translation_stats.min
-              << " max=" << overall_metrics.translation_stats.max << "\n";
+    out << "\nAngle Error:\n";
+    out << "  mean=" << overall_metrics.angle_error_stats.mean
+        << " std=" << overall_metrics.angle_error_stats.stddev
+        << " min=" << overall_metrics.angle_error_stats.min
+        << " max=" << overall_metrics.angle_error_stats.max << "\n";
 
-    std::cout << "\n=== ALL CANDIDATES ===\n";
+    out << "\nTranslation:\n";
+    out << "  mean=" << overall_metrics.translation_stats.mean
+        << " std=" << overall_metrics.translation_stats.stddev
+        << " min=" << overall_metrics.translation_stats.min
+        << " max=" << overall_metrics.translation_stats.max << "\n";
 
-    std::cout
-        << std::left
-        << std::setw(6)  << "Rank"
-        << std::setw(5)  << "kp"
-        << std::setw(5)  << "kd"
-        << std::setw(5)  << "sh"
-        << std::setw(8)  << "Fail"
-        << std::setw(8)  << "Coll"
-        << std::setw(10) << "Angle"
-        << std::setw(10) << "Trans"
-        << std::setw(8)  << "Time"
+    out << "\n=== ALL CANDIDATES ===\n";
+
+    out << std::left
+        << std::setw(COLUMN_WIDTH)  << "Rank"
+        << std::setw(COLUMN_WIDTH)  << "kp"
+        << std::setw(COLUMN_WIDTH)  << "kd"
+        << std::setw(COLUMN_WIDTH)  << "sh"
+        << std::setw(COLUMN_WIDTH)  << "Fail"
+        << std::setw(COLUMN_WIDTH)  << "Coll"
+        << std::setw(COLUMN_WIDTH) << "Angle"
+        << std::setw(COLUMN_WIDTH) << "Trans"
+        << std::setw(COLUMN_WIDTH)  << "Time"
         << "\n";
 
-    for (int i {0}; i < candidates.size(); i++) {
+    for (size_t i {0}; i < candidates.size(); i++) {
         const auto& c {candidates[i]};
 
-        std::cout
-            << std::left
-            << std::setw(6)  << (i + 1)
-            << std::setw(5)  << c.key.kp
-            << std::setw(5)  << c.key.kd
-            << std::setw(5)  << c.key.shift
-            << std::setw(8)  << c.results_metrics.failure_rate
-            << std::setw(8)  << c.results_metrics.collision_rate
-            << std::setw(10) << c.results_metrics.angle_error_stats.mean
-            << std::setw(10) << c.results_metrics.translation_stats.mean
-            << std::setw(8)  << c.results_metrics.time_stats.mean
+        out << std::left
+            << std::setw(COLUMN_WIDTH)  << (i + 1)
+            << std::setw(COLUMN_WIDTH)  << c.key.kp
+            << std::setw(COLUMN_WIDTH)  << c.key.kd
+            << std::setw(COLUMN_WIDTH)  << c.key.shift
+            << std::setw(COLUMN_WIDTH)  << c.results_metrics.failure_rate
+            << std::setw(COLUMN_WIDTH)  << c.results_metrics.collision_rate
+            << std::setw(COLUMN_WIDTH) << c.results_metrics.angle_error_stats.mean
+            << std::setw(COLUMN_WIDTH) << c.results_metrics.translation_stats.mean
+            << std::setw(COLUMN_WIDTH)  << c.results_metrics.time_stats.mean
             << "\n";
     }
 }
 
-void run_full_rotation_experiment(double target_angle, std::vector<optimizer::SweepConfig> configs)
+void run_full_rotation_experiment(const std::string& filename, double target_angle,
+        std::vector<optimizer::SweepConfig> configs)
 {
-    std::cout << "Running rotation sweep...\n";
-
     std::vector<std::string> ascii {
         "+-+",
         "|S|",
@@ -380,13 +387,11 @@ void run_full_rotation_experiment(double target_angle, std::vector<optimizer::Sw
 
     } while (cursor.next());
 
-    std::cout << "Trials: " << trials.size() << "\n";
-
     auto overall_metrics {compute_results_metrics(all_results)};
     auto candidates {build_candidates(trials)};
     sort_candidates(candidates);
 
-    print_rotation_simulation_results(candidates, overall_metrics);
+    write_analysis_to_file(filename, candidates, overall_metrics, all_results.size());
 }
 
 } /* rotation namespace */

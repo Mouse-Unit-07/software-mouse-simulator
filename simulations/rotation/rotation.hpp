@@ -86,8 +86,10 @@ ResultsMetrics compute_results_metrics(const std::vector<Result>& results);
 std::vector<Candidate> build_candidates(const std::vector<Trial>& trials);
 void sort_candidates(std::vector<Candidate>& v);
 
-void print_rotation_simulation_results(const std::vector<Candidate>& condidates, ResultsMetrics overall_metrics);
-void run_full_rotation_experiment(double target_angle, std::vector<optimizer::SweepConfig> configs);
+void write_analysis_to_file(const std::string& filename, const std::vector<Candidate>& candidates,
+        const ResultsMetrics& overall_metrics, size_t total_size);
+void run_full_rotation_experiment(const std::string& filename, double target_angle,
+        std::vector<optimizer::SweepConfig> configs);
 
 } /* rotation namespace */
 
