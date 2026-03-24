@@ -491,7 +491,7 @@ TEST(RotationTests, RunMinimalSampleSimulation)
         {"pid_shift", 8, 8, 1}
     };
 
-    const std::string filename {"test_rotation_output.txt"};
+    const std::string filename {"test_minimal_output.txt"};
 
     run_full_rotation_experiment(filename, M_PI / 2, test_configs);
 }
@@ -514,5 +514,5 @@ IGNORE_TEST(RotationTests, RunFullSimulationAndWriteResultsToFile)
         {"pid_shift", 8, 8, 1}
     };
 
-    rotation::run_full_rotation_experiment("test_output.txt", M_PI / 2, test_configs);
+    rotation::run_full_rotation_experiment("test_full_output.txt", M_PI / 2, test_configs);
 }

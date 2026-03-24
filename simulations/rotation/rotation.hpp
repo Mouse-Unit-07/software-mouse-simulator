@@ -59,9 +59,11 @@ struct CandidateKey {
     int32_t kp;
     int32_t kd;
     int32_t shift;
+    double motor_speed;
 
     bool operator<(const CandidateKey& other) const {
-        return std::tie(kp, kd, shift) < std::tie(other.kp, other.kd, other.shift);
+        return std::tie(kp, kd, shift, motor_speed)
+             < std::tie(other.kp, other.kd, other.shift, other.motor_speed);
     }
 };
 

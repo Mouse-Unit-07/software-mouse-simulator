@@ -233,7 +233,8 @@ std::vector<Candidate> build_candidates(const std::vector<Trial>& trials)
         CandidateKey key {
             t.config.kp,
             t.config.kd,
-            t.config.pid_shift
+            t.config.pid_shift,
+            t.config.motor_speed
         };
 
         grouped[key].push_back(t.result);
@@ -340,7 +341,8 @@ void write_analysis_to_file(const std::string& filename, const std::vector<Candi
         << std::setw(COLUMN_WIDTH)  << "kp"
         << std::setw(COLUMN_WIDTH)  << "kd"
         << std::setw(COLUMN_WIDTH)  << "sh"
-        << std::setw(COLUMN_WIDTH)  << "Fail"
+        << std::setw(COLUMN_WIDTH)  << "speed"
+        << std::setw(COLUMN_WIDTH)  << "Timeout"
         << std::setw(COLUMN_WIDTH)  << "Coll"
         << std::setw(COLUMN_WIDTH) << "Angle"
         << std::setw(COLUMN_WIDTH) << "Trans"
@@ -355,6 +357,7 @@ void write_analysis_to_file(const std::string& filename, const std::vector<Candi
             << std::setw(COLUMN_WIDTH)  << c.key.kp
             << std::setw(COLUMN_WIDTH)  << c.key.kd
             << std::setw(COLUMN_WIDTH)  << c.key.shift
+            << std::setw(COLUMN_WIDTH)  << c.key.motor_speed
             << std::setw(COLUMN_WIDTH)  << c.results_metrics.timeout_rate
             << std::setw(COLUMN_WIDTH)  << c.results_metrics.collision_rate
             << std::setw(COLUMN_WIDTH) << c.results_metrics.angle_error_stats.mean
