@@ -225,10 +225,10 @@ RotationResultsMetrics compute_results_metrics(const std::vector<RotationResult>
 
 std::vector<RotationCandidate> build_candidates(const std::vector<RotationTrial>& trials)
 {
-    std::map<PdKey, std::vector<RotationResult>> grouped;
+    std::map<RotationCandidateKey, std::vector<RotationResult>> grouped;
 
     for (const auto& t : trials) {
-        PdKey key {
+        RotationCandidateKey key {
             t.config.kp,
             t.config.kd,
             t.config.pid_shift

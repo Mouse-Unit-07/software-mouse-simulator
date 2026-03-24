@@ -55,19 +55,19 @@ struct RotationResultsMetrics
     double failure_rate {0.0};
 };
 
-struct PdKey {
+struct RotationCandidateKey {
     int32_t kp;
     int32_t kd;
     int32_t shift;
 
-    bool operator<(const PdKey& other) const {
+    bool operator<(const RotationCandidateKey& other) const {
         return std::tie(kp, kd, shift) < std::tie(other.kp, other.kd, other.shift);
     }
 };
 
 struct RotationCandidate
 {
-    PdKey key;
+    RotationCandidateKey key;
     RotationResultsMetrics results_metrics;
 };
 
