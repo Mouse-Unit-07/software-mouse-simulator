@@ -215,16 +215,10 @@ std::vector<RotationCandidate> analyze_pd_candidates(const std::vector<RotationT
     std::map<PdKey, std::vector<RotationResult>> grouped;
 
     for (const auto& t : trials) {
-        if (t.configs.empty()) {
-            continue;
-        }
-
-        auto cfg {build_rotation_config(t.configs)};
-
         PdKey key {
-            cfg.kp,
-            cfg.kd,
-            cfg.pid_shift
+            t.config.kp,
+            t.config.kd,
+            t.config.pid_shift
         };
 
         grouped[key].push_back(t.result);
@@ -377,7 +371,7 @@ void run_full_rotation_experiment(double target_angle, std::vector<optimizer::Sw
         auto cfg {rotation::build_rotation_config(config_values)};
         auto result {rotation::run_rotation_simulation(small_maze, cfg, target_angle)};
 
-        trials.push_back({config_values, result});
+        trials.push_back({cfg, result});
 
     } while (cursor.next());
 

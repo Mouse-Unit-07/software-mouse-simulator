@@ -53,14 +53,12 @@ std::vector<std::string> ascii {
 };
 Maze test_maze {build_maze_from_ascii(ascii, 0.0)};
 
-std::vector<double> make_params(int kp, int kd, int shift, double motor_speed = 0)
+RotationConfig make_params(int kp, int kd, int shift, double motor_speed = 0)
 {
     return {
         motor_speed, 1.0, 0.01,
         0, 0, 1, 1, 1,
-        static_cast<double>(kp),
-        static_cast<double>(kd),
-        static_cast<double>(shift)
+        kp, kd, shift
     };
 }
 

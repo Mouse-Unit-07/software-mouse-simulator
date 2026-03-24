@@ -42,7 +42,7 @@ struct RotationResult
 
 struct RotationTrial
 {
-    std::vector<double> configs;
+    RotationConfig config;
     RotationResult result;
 };
 
