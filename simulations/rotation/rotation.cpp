@@ -31,6 +31,7 @@ extern "C"
 #include <iostream>
 #include <iomanip>
 #include <fstream>
+#include <sstream>
 #include <stdexcept>
 #include "point.hpp"
 #include "ray.hpp"
@@ -43,7 +44,17 @@ extern "C"
 /*----------------------------------------------------------------------------*/
 /*                            Private Declarations                            */
 /*----------------------------------------------------------------------------*/
-/* none */
+namespace
+{
+
+using namespace rotation;
+
+bool dominates(const Candidate& a, const Candidate& b);
+void write_summary(std::ofstream& out, const ResultsMetrics& overall_metrics, size_t total_size);
+void write_candidates_banner(std::ofstream& out);
+void write_candidates(std::ofstream& out, const std::vector<Candidate>& candidates);
+
+} /* unnamed namespace */
 
 /*----------------------------------------------------------------------------*/
 /*                               Private Globals                              */
@@ -257,114 +268,50 @@ std::vector<Candidate> build_candidates(const std::vector<Trial>& trials)
     return out;
 }
 
-void sort_candidates(std::vector<Candidate>& v)
+std::vector<Candidate> compute_pareto_front(const std::vector<Candidate>& candidates)
 {
-    constexpr double EPS {1e-6};
+    std::vector<Candidate> front;
 
-    std::sort(v.begin(), v.end(),
-        [](const Candidate& a, const Candidate& b)
-    {
-        /* 1. HARD constraints first */
-        if (std::abs(a.results_metrics.timeout_rate - b.results_metrics.timeout_rate) > EPS) {
-            return a.results_metrics.timeout_rate < b.results_metrics.timeout_rate;
+    for (size_t i {0}; i < candidates.size(); ++i) {
+        bool dominated = false;
+
+        for (size_t j {0}; j < candidates.size(); ++j) {
+            if (i == j) {
+                continue;
+            }
+
+            if (dominates(candidates[j], candidates[i])) {
+                dominated = true;
+                break;
+            }
         }
 
-        if (std::abs(a.results_metrics.collision_rate - b.results_metrics.collision_rate) > EPS) {
-            return a.results_metrics.collision_rate < b.results_metrics.collision_rate;
+        if (!dominated) {
+            front.push_back(candidates[i]);
         }
+    }
 
-        /* 2. Accuracy (top priority) */
-        if (std::abs(a.results_metrics.angle_error_stats.mean - b.results_metrics.angle_error_stats.mean) > EPS) {
-            return a.results_metrics.angle_error_stats.mean < b.results_metrics.angle_error_stats.mean;
-        }
-
-        if (std::abs(a.results_metrics.translation_stats.mean - b.results_metrics.translation_stats.mean) > EPS) {
-            return a.results_metrics.translation_stats.mean < b.results_metrics.translation_stats.mean;
-        }
-
-        /* 3. Speed */
-        if (std::abs(a.results_metrics.time_stats.mean - b.results_metrics.time_stats.mean) > EPS) {
-            return a.results_metrics.time_stats.mean < b.results_metrics.time_stats.mean;
-        }
-
-        /* 4. Stability (tie-breaker) */
-        double a_var {a.results_metrics.time_stats.stddev
-            + a.results_metrics.angle_error_stats.stddev
-            + a.results_metrics.translation_stats.stddev};
-
-        double b_var {b.results_metrics.time_stats.stddev
-            + b.results_metrics.angle_error_stats.stddev
-            + b.results_metrics.translation_stats.stddev};
-
-        return a_var < b_var;
-    });
+    return front;
 }
 
-void write_analysis_to_file(const std::string& filename, const std::vector<Candidate>& candidates,
-        const ResultsMetrics& overall_metrics, size_t total_size)
+void write_analysis_to_file(const std::string& filename, const std::vector<Candidate>& all_candidates,
+        const std::vector<Candidate>& pareto_front, const ResultsMetrics& overall_metrics, size_t total_size)
 {
     std::ofstream out(filename);
     if (!out.is_open()) {
         throw std::runtime_error("Failed to open output file: " + filename);
     }
+    out << std::fixed << std::setprecision(3);
 
-    out << std::setprecision(3);
-    constexpr size_t COLUMN_WIDTH {10};
-
-    out << "=== SUMMARY ===\n";
-    out << "Total Size     : " << total_size << "\n";
-    out << "Timeout Rate   : " << overall_metrics.timeout_rate << "\n";
-    out << "Collision Rate : " << overall_metrics.collision_rate << "\n";
-
-    out << "\nTime:\n";
-    out << "  mean=" << overall_metrics.time_stats.mean
-        << " std=" << overall_metrics.time_stats.stddev
-        << " min=" << overall_metrics.time_stats.min
-        << " max=" << overall_metrics.time_stats.max << "\n";
-
-    out << "\nAngle Error:\n";
-    out << "  mean=" << overall_metrics.angle_error_stats.mean
-        << " std=" << overall_metrics.angle_error_stats.stddev
-        << " min=" << overall_metrics.angle_error_stats.min
-        << " max=" << overall_metrics.angle_error_stats.max << "\n";
-
-    out << "\nTranslation:\n";
-    out << "  mean=" << overall_metrics.translation_stats.mean
-        << " std=" << overall_metrics.translation_stats.stddev
-        << " min=" << overall_metrics.translation_stats.min
-        << " max=" << overall_metrics.translation_stats.max << "\n";
+    write_summary(out, overall_metrics, total_size);
+    
+    out << "\n=== PARETO FRONT ===\n";
+    write_candidates_banner(out);
+    write_candidates(out, pareto_front);
 
     out << "\n=== ALL CANDIDATES ===\n";
-
-    out << std::left
-        << std::setw(COLUMN_WIDTH)  << "Rank"
-        << std::setw(COLUMN_WIDTH)  << "kp"
-        << std::setw(COLUMN_WIDTH)  << "kd"
-        << std::setw(COLUMN_WIDTH)  << "sh"
-        << std::setw(COLUMN_WIDTH)  << "speed"
-        << std::setw(COLUMN_WIDTH)  << "Timeout"
-        << std::setw(COLUMN_WIDTH)  << "Coll"
-        << std::setw(COLUMN_WIDTH) << "Angle"
-        << std::setw(COLUMN_WIDTH) << "Trans"
-        << std::setw(COLUMN_WIDTH)  << "Time"
-        << "\n";
-
-    for (size_t i {0}; i < candidates.size(); i++) {
-        const auto& c {candidates[i]};
-
-        out << std::left
-            << std::setw(COLUMN_WIDTH)  << (i + 1)
-            << std::setw(COLUMN_WIDTH)  << c.key.kp
-            << std::setw(COLUMN_WIDTH)  << c.key.kd
-            << std::setw(COLUMN_WIDTH)  << c.key.shift
-            << std::setw(COLUMN_WIDTH)  << static_cast<int>(c.key.motor_speed)
-            << std::setw(COLUMN_WIDTH)  << c.results_metrics.timeout_rate
-            << std::setw(COLUMN_WIDTH)  << c.results_metrics.collision_rate
-            << std::setw(COLUMN_WIDTH) << c.results_metrics.angle_error_stats.mean
-            << std::setw(COLUMN_WIDTH) << c.results_metrics.translation_stats.mean
-            << std::setw(COLUMN_WIDTH)  << c.results_metrics.time_stats.mean
-            << "\n";
-    }
+    write_candidates_banner(out);
+    write_candidates(out, all_candidates);
 }
 
 void run_full_rotation_experiment(const std::string& filename, double target_angle,
@@ -392,9 +339,9 @@ void run_full_rotation_experiment(const std::string& filename, double target_ang
 
     auto overall_metrics {compute_results_metrics(all_results)};
     auto candidates {build_candidates(trials)};
-    sort_candidates(candidates);
+    auto pareto_front {compute_pareto_front(candidates)};
 
-    write_analysis_to_file(filename, candidates, overall_metrics, all_results.size());
+    write_analysis_to_file(filename, candidates, pareto_front, overall_metrics, all_results.size());
 }
 
 } /* rotation namespace */
@@ -402,4 +349,120 @@ void run_full_rotation_experiment(const std::string& filename, double target_ang
 /*----------------------------------------------------------------------------*/
 /*                             Private Definitions                            */
 /*----------------------------------------------------------------------------*/
-/* none */
+namespace
+{
+
+using namespace rotation;
+
+bool dominates(const Candidate& a, const Candidate& b)
+{
+    const auto& A {a.results_metrics};
+    const auto& B {b.results_metrics};
+
+    bool strictly_better {false};
+
+    constexpr double EPS {1e-4};
+    constexpr double k {1.0};
+
+    auto le = [&](double x, double y) {
+        return x <= y;
+    };
+
+    auto lt = [&](double x, double y) {
+        if (x < y) strictly_better = true;
+        return x <= y;
+    };
+
+    auto score = [&](double mean, double stddev) {
+        return mean + k * stddev;
+    };
+
+    /* hard constraints */
+    if (!lt(A.timeout_rate,   B.timeout_rate))   return false;
+    if (!lt(A.collision_rate, B.collision_rate)) return false;
+
+    /* collapsed metrics */
+    if (!lt(score(A.angle_error_stats.mean,   A.angle_error_stats.stddev),
+            score(B.angle_error_stats.mean,   B.angle_error_stats.stddev))) return false;
+
+    if (!lt(score(A.translation_stats.mean,   A.translation_stats.stddev),
+            score(B.translation_stats.mean,   B.translation_stats.stddev))) return false;
+
+    if (!lt(score(A.time_stats.mean,          A.time_stats.stddev),
+            score(B.time_stats.mean,          B.time_stats.stddev))) return false;
+
+    return strictly_better;
+}
+
+void write_summary(std::ofstream& out, const ResultsMetrics& overall_metrics, size_t total_size)
+{
+    out << "=== SUMMARY ===\n";
+    out << "Total Size     : " << total_size << "\n";
+    out << "Timeout Rate   : " << overall_metrics.timeout_rate << "\n";
+    out << "Collision Rate : " << overall_metrics.collision_rate << "\n";
+
+    out << "\nTime:\n";
+    out << "  mean=" << overall_metrics.time_stats.mean
+        << " std=" << overall_metrics.time_stats.stddev
+        << " min=" << overall_metrics.time_stats.min
+        << " max=" << overall_metrics.time_stats.max << "\n";
+
+    out << "\nAngle Error:\n";
+    out << "  mean=" << overall_metrics.angle_error_stats.mean
+        << " std=" << overall_metrics.angle_error_stats.stddev
+        << " min=" << overall_metrics.angle_error_stats.min
+        << " max=" << overall_metrics.angle_error_stats.max << "\n";
+
+    out << "\nTranslation:\n";
+    out << "  mean=" << overall_metrics.translation_stats.mean
+        << " std=" << overall_metrics.translation_stats.stddev
+        << " min=" << overall_metrics.translation_stats.min
+        << " max=" << overall_metrics.translation_stats.max << "\n";
+}
+
+void write_candidates_banner(std::ofstream& out)
+{
+    out << std::left
+        << std::setw(6)  << "Rank"
+        << std::setw(6)  << "kp"
+        << std::setw(6)  << "kd"
+        << std::setw(6)  << "sh"
+        << std::setw(8)  << "speed"
+        << std::setw(10) << "Timeout"
+        << std::setw(10) << "Coll"
+        << std::setw(38) << "Angle(m/sd/min/max)"
+        << std::setw(28) << "Trans(m/sd/min/max)"
+        << std::setw(28) << "Time(m/sd/min/max)"
+        << "\n";
+}
+
+void write_candidates(std::ofstream& out, const std::vector<Candidate>& candidates)
+{
+    auto fmt_stats = [](const optimizer::MetricStats& s) {
+        std::ostringstream oss;
+        oss << s.mean
+            << "|" << s.stddev
+            << "|" << s.min
+            << "|" << s.max;
+        return oss.str();
+    };
+
+    for (size_t i {0}; i < candidates.size(); ++i) {
+        const auto& c {candidates[i]};
+
+        out << std::left
+            << std::setw(6)  << (i + 1)
+            << std::setw(6)  << c.key.kp
+            << std::setw(6)  << c.key.kd
+            << std::setw(6)  << c.key.shift
+            << std::setw(8)  << static_cast<int>(c.key.motor_speed)
+            << std::setw(10) << c.results_metrics.timeout_rate
+            << std::setw(10) << c.results_metrics.collision_rate
+            << std::setw(38) << fmt_stats(c.results_metrics.angle_error_stats)
+            << std::setw(28) << fmt_stats(c.results_metrics.translation_stats)
+            << std::setw(28) << fmt_stats(c.results_metrics.time_stats)
+            << "\n";
+    }
+}
+
+} /* unnamed namespace */

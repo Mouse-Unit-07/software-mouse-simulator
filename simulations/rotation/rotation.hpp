@@ -87,10 +87,10 @@ Result run_simulation(const maze::Maze& maze, const Config& cfg, double target_a
 
 ResultsMetrics compute_results_metrics(const std::vector<Result>& results);
 std::vector<Candidate> build_candidates(const std::vector<Trial>& trials);
-void sort_candidates(std::vector<Candidate>& v);
+std::vector<Candidate> compute_pareto_front(const std::vector<Candidate>& candidates);
 
-void write_analysis_to_file(const std::string& filename, const std::vector<Candidate>& candidates,
-        const ResultsMetrics& overall_metrics, size_t total_size);
+void write_analysis_to_file(const std::string& filename, const std::vector<Candidate>& all_candidates,
+        const std::vector<Candidate>& pareto_front, const ResultsMetrics& overall_metrics, size_t total_size);
 void run_full_rotation_experiment(const std::string& filename, double target_angle,
         std::vector<optimizer::SweepConfig> configs);
 

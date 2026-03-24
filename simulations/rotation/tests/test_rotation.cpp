@@ -27,6 +27,8 @@ extern "C"
 #include <functional>
 #include <algorithm>
 #include <map>
+#include <fstream>
+#include <sstream>
 #include "point.hpp"
 #include "ray.hpp"
 #include "rectangular_hitbox.hpp"
@@ -294,186 +296,6 @@ TEST(RotationTests, BuildCandidatesGroupsAndComputesStats)
     }
 }
 
-TEST(RotationTests, BuildCandidatesHandlesEmptyInput)
-{
-    std::vector<Trial> trials {};
-
-    auto candidates {build_candidates(trials)};
-
-    CHECK(candidates.empty());
-}
-
-TEST(RotationTests, SortCandidatesTimeoutRatePriority)
-{
-    Candidate a{}, b{};
-
-    a.results_metrics.timeout_rate = 0.0;
-    b.results_metrics.timeout_rate = 0.5;
-
-    std::vector<Candidate> v {b, a};
-
-    sort_candidates(v);
-
-    DOUBLES_EQUAL(0.0, v[0].results_metrics.timeout_rate, FLOAT_TOLERANCE);
-}
-
-TEST(RotationTests, SortCandidatesCollisionRatePriority)
-{
-    Candidate a{}, b{};
-
-    a.results_metrics.timeout_rate = 0.0;
-    b.results_metrics.timeout_rate = 0.0;
-
-    a.results_metrics.collision_rate = 0.0;
-    b.results_metrics.collision_rate = 0.5;
-
-    std::vector<Candidate> v {b, a};
-
-    sort_candidates(v);
-
-    DOUBLES_EQUAL(0.0, v[0].results_metrics.collision_rate, FLOAT_TOLERANCE);
-}
-
-TEST(RotationTests, SortCandidatesAngleErrorPriority)
-{
-    Candidate a{}, b{};
-
-    a.results_metrics.timeout_rate = 0.0;
-    b.results_metrics.timeout_rate = 0.0;
-    a.results_metrics.collision_rate = 0.0;
-    b.results_metrics.collision_rate = 0.0;
-
-    a.results_metrics.angle_error_stats.mean = 1.0;
-    b.results_metrics.angle_error_stats.mean = 2.0;
-
-    std::vector<Candidate> v {b, a};
-
-    sort_candidates(v);
-
-    DOUBLES_EQUAL(1.0, v[0].results_metrics.angle_error_stats.mean, FLOAT_TOLERANCE);
-}
-
-TEST(RotationTests, SortCandidatesTranslationPriority)
-{
-    Candidate a{}, b{};
-
-    a.results_metrics.timeout_rate = 0.0;
-    b.results_metrics.timeout_rate = 0.0;
-    a.results_metrics.collision_rate = 0.0;
-    b.results_metrics.collision_rate = 0.0;
-    a.results_metrics.angle_error_stats.mean = 1.0;
-    b.results_metrics.angle_error_stats.mean = 1.0;
-
-    a.results_metrics.translation_stats.mean = 100;
-    b.results_metrics.translation_stats.mean = 200;
-
-    std::vector<Candidate> v {b, a};
-
-    sort_candidates(v);
-
-    DOUBLES_EQUAL(100.0, v[0].results_metrics.translation_stats.mean, FLOAT_TOLERANCE);
-}
-
-TEST(RotationTests, SortCandidatesTimePriority)
-{
-    Candidate a{}, b{};
-
-    a.results_metrics.timeout_rate = 0.0;
-    b.results_metrics.timeout_rate = 0.0;
-    a.results_metrics.collision_rate = 0.0;
-    b.results_metrics.collision_rate = 0.0;
-    a.results_metrics.angle_error_stats.mean = 1.0;
-    b.results_metrics.angle_error_stats.mean = 1.0;
-    a.results_metrics.translation_stats.mean = 100;
-    b.results_metrics.translation_stats.mean = 100;
-
-    a.results_metrics.time_stats.mean = 5.0;
-    b.results_metrics.time_stats.mean = 10.0;
-
-    std::vector<Candidate> v {b, a};
-
-    sort_candidates(v);
-
-    DOUBLES_EQUAL(5.0, v[0].results_metrics.time_stats.mean, FLOAT_TOLERANCE);
-}
-
-TEST(RotationTests, SortCandidatesUsesStdDevAsTieBreaker)
-{
-    Candidate a{}, b{};
-
-    a.results_metrics.timeout_rate = 0.0;
-    b.results_metrics.timeout_rate = 0.0;
-    a.results_metrics.collision_rate = 0.0;
-    b.results_metrics.collision_rate = 0.0;
-    a.results_metrics.angle_error_stats.mean = 1.0;
-    b.results_metrics.angle_error_stats.mean = 1.0;
-    a.results_metrics.translation_stats.mean = 100;
-    b.results_metrics.translation_stats.mean = 100;
-    a.results_metrics.time_stats.mean = 5.0;
-    b.results_metrics.time_stats.mean = 5.0;
-
-    a.results_metrics.time_stats.stddev = 1.0;
-    a.results_metrics.angle_error_stats.stddev = 1.0;
-    a.results_metrics.translation_stats.stddev = 1.0;
-
-    b.results_metrics.time_stats.stddev = 2.0;
-    b.results_metrics.angle_error_stats.stddev = 2.0;
-    b.results_metrics.translation_stats.stddev = 2.0;
-
-    std::vector<Candidate> v {b, a};
-
-    sort_candidates(v);
-
-    DOUBLES_EQUAL(1.0, v[0].results_metrics.time_stats.stddev, FLOAT_TOLERANCE);
-}
-
-TEST(RotationTests, SortCandidatesRespectsFullPriorityOrder)
-{
-    Candidate best{}, mid{}, worst{};
-
-    // worst: fails hard constraints
-    worst.results_metrics.timeout_rate = 0.5;
-
-    // mid: passes constraints but worse accuracy
-    mid.results_metrics.timeout_rate = 0.0;
-    mid.results_metrics.collision_rate = 0.0;
-    mid.results_metrics.angle_error_stats.mean = 5.0;
-
-    // best: better accuracy
-    best.results_metrics.timeout_rate = 0.0;
-    best.results_metrics.collision_rate = 0.0;
-    best.results_metrics.angle_error_stats.mean = 1.0;
-
-    std::vector<Candidate> v {mid, worst, best};
-
-    sort_candidates(v);
-
-    CHECK(v[0].results_metrics.angle_error_stats.mean == 1.0);
-    CHECK(v[2].results_metrics.timeout_rate == 0.5);
-}
-
-TEST(RotationTests, BuildCandidatesAndSortWorkTogether)
-{
-    std::vector<Trial> trials {
-        {make_params(1,0,8), {10, 2.0, 200, false, false}},
-        {make_params(1,0,8), {12, 2.0, 210, false, false}},
-
-        {make_params(2,0,8), {8,  1.0, 150, false, false}},
-        {make_params(2,0,8), {9,  1.2, 160, false, false}},
-
-        {make_params(3,0,8), {5,  0.5, 100, true,  false}}
-    };
-
-    auto ranked {build_candidates(trials)};
-    sort_candidates(ranked);
-
-    CHECK(ranked.size() >= 2);
-
-    CHECK(ranked[0].key.kp == 2);
-    CHECK(ranked[0].key.kd == 0);
-    CHECK(ranked[0].key.shift == 8);
-}
-
 TEST(RotationTests, RunMinimalSampleSimulation)
 {
     std::vector<optimizer::SweepConfig> test_configs {
@@ -540,6 +362,109 @@ TEST(RotationTests, BuildCandidatesSeparatesMotorSpeed)
     auto candidates {build_candidates(trials)};
 
     CHECK_EQUAL(2, candidates.size());
+}
+
+TEST(RotationTests, ParetoFrontRemovesDominatedCandidate)
+{
+    Candidate a{
+        {1,2,3,100},
+        {{1,0,1,1}, {1,0,1,1}, {1,0,1,1}, 0.0, 0.0}
+    };
+
+    Candidate b{
+        {1,2,3,100},
+        {{2,0,2,2}, {2,0,2,2}, {2,0,2,2}, 0.5, 0.5}
+    };
+
+    std::vector<Candidate> v{a, b};
+
+    auto front {compute_pareto_front(v)};
+
+    CHECK_EQUAL(1, front.size());
+    CHECK(front[0].results_metrics.time_stats.mean == a.results_metrics.time_stats.mean);
+}
+
+TEST(RotationTests, ParetoFrontKeepsNonDominatingCandidates)
+{
+    Candidate a{
+        {1,2,3,100},
+        {{1,0,1,1}, {10,0,10,10}, {1,0,1,1}, 0.0, 0.0}
+    };
+
+    Candidate b{
+        {1,2,3,100},
+        {{10,0,10,10}, {1,0,1,1}, {1,0,1,1}, 0.0, 0.0}
+    };
+
+    std::vector<Candidate> v{a, b};
+
+    auto front {compute_pareto_front(v)};
+
+    CHECK_EQUAL(2, front.size());
+}
+
+TEST(RotationTests, ParetoFrontKeepsIdenticalCandidates)
+{
+    Candidate a{
+        {1,2,3,100},
+        {{1,0,1,1}, {1,0,1,1}, {1,0,1,1}, 0.0, 0.0}
+    };
+
+    std::vector<Candidate> v{a, a};
+
+    auto front {compute_pareto_front(v)};
+
+    CHECK_EQUAL(2, front.size());
+}
+
+TEST(RotationTests, WriteAnalysisOutputsParetoAndAllSections)
+{
+    std::vector<Candidate> candidates(1);
+    std::vector<Candidate> pareto(1);
+    ResultsMetrics m{};
+
+    const std::string filename{"test_output_sections.txt"};
+
+    write_analysis_to_file(filename, candidates, pareto, m, 1);
+
+    std::ifstream in(filename);
+    std::stringstream buffer;
+    buffer << in.rdbuf();
+
+    auto content {buffer.str()};
+
+    CHECK(content.find("=== PARETO FRONT ===") != std::string::npos);
+    CHECK(content.find("=== ALL CANDIDATES ===") != std::string::npos);
+}
+
+TEST(RotationTests, WriteCandidatesFormatsStatsCorrectly)
+{
+    Candidate c{
+        {1,2,3,100},
+        {
+            {1.0,2.0,0.5,3.0},  // time
+            {4.0,5.0,1.0,6.0},  // angle
+            {7.0,8.0,2.0,9.0},  // translation
+            0.0, 0.0
+        }
+    };
+
+    std::vector<Candidate> v{c};
+    ResultsMetrics m{};
+
+    const std::string filename{"test_output_format.txt"};
+
+    write_analysis_to_file(filename, v, v, m, 1);
+
+    std::ifstream in(filename);
+    std::stringstream buffer;
+    buffer << in.rdbuf();
+
+    auto content {buffer.str()};
+
+    CHECK(content.find("4|5|1|6") != std::string::npos); // angle
+    CHECK(content.find("7|8|2|9") != std::string::npos); // translation
+    CHECK(content.find("1|2|0.5|3") != std::string::npos); // time
 }
 
 IGNORE_TEST(RotationTests, RunFullSimulationAndWriteResultsToFile)
