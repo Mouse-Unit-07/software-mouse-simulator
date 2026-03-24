@@ -26,6 +26,7 @@ extern "C"
 #include <optional>
 #include <functional>
 #include <algorithm>
+#include <map>
 #include "point.hpp"
 #include "ray.hpp"
 #include "rectangular_hitbox.hpp"
@@ -494,6 +495,51 @@ TEST(RotationTests, RunMinimalSampleSimulation)
     const std::string filename {"test_minimal_output.txt"};
 
     run_full_rotation_experiment(filename, M_PI / 2, test_configs);
+}
+
+TEST(RotationTests, CandidateKeyOrderingUsesMotorSpeed)
+{
+    CandidateKey a{1, 2, 3, 100};
+    CandidateKey b{1, 2, 3, 200};
+
+    CHECK(a < b);
+    CHECK_FALSE(b < a);
+}
+
+TEST(RotationTests, CandidateKeyDifferentMotorSpeedNotEquivalent)
+{
+    CandidateKey a{1, 2, 3, 100};
+    CandidateKey b{1, 2, 3, 200};
+
+    /* Equivalent in std::map means !(a < b) && !(b < a) */
+    bool equivalent {!(a < b) && !(b < a)};
+
+    CHECK_FALSE(equivalent);
+}
+
+TEST(RotationTests, CandidateKeyMapSeparatesDifferentSpeeds)
+{
+    std::map<CandidateKey, int> m;
+
+    CandidateKey k1{1, 2, 3, 100};
+    CandidateKey k2{1, 2, 3, 200};
+
+    m[k1] = 1;
+    m[k2] = 2;
+
+    CHECK_EQUAL(2, m.size());
+}
+
+TEST(RotationTests, BuildCandidatesSeparatesMotorSpeed)
+{
+    std::vector<Trial> trials {
+        {make_params(1,2,3,100), {10,1,100,false,false}},
+        {make_params(1,2,3,200), {20,2,200,false,false}}
+    };
+
+    auto candidates {build_candidates(trials)};
+
+    CHECK_EQUAL(2, candidates.size());
 }
 
 IGNORE_TEST(RotationTests, RunFullSimulationAndWriteResultsToFile)
