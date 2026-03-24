@@ -52,19 +52,10 @@ struct RotationMetrics {
     std::vector<double> translation;
 };
 
-struct AggregateStats {
-    optimizer::MetricStats time;
-    optimizer::MetricStats angle;
-    optimizer::MetricStats translation;
-
-    double failure_rate;
-    double collision_rate;
-};
-
 RotationMetrics collect_metrics(const std::vector<RotationTrial>& trials);
 RotationMetrics collect_metrics(const std::vector<RotationResult>& results);
-AggregateStats compute_aggregate(const std::vector<RotationTrial>& trials);
-AggregateStats compute_aggregate(const std::vector<RotationResult>& results);
+RotationResultsMetrics compute_aggregate(const std::vector<RotationTrial>& trials);
+RotationResultsMetrics compute_aggregate(const std::vector<RotationResult>& results);
 
 } /* unnamed namespace */
 
@@ -216,13 +207,7 @@ RotationResultsMetrics analyze_rotation_results(const std::vector<RotationTrial>
 {
     auto a = compute_aggregate(trials);
 
-    return {
-        a.time,
-        a.angle,
-        a.translation,
-        a.collision_rate,
-        a.failure_rate
-    };
+    return a;
 }
 
 std::vector<RotationParamImpact> analyze_rotation_parameter_impact(const std::vector<optimizer::SweepParam>& params,
@@ -296,11 +281,7 @@ std::vector<RotationCandidate> analyze_pd_candidates(const std::vector<RotationT
 
         auto a {compute_aggregate(group_trials)};
 
-        c.time_stats = a.time;
-        c.angle_error_stats = a.angle;
-        c.translation_stats = a.translation;
-        c.failure_rate = a.failure_rate;
-        c.collision_rate = a.collision_rate;
+        c.results_metrics = a;
 
         out.push_back(c);
     }
@@ -316,36 +297,36 @@ void sort_rotation_candidates(std::vector<RotationCandidate>& v)
         [](const RotationCandidate& a, const RotationCandidate& b)
     {
         /* 1. HARD constraints first */
-        if (std::abs(a.failure_rate - b.failure_rate) > EPS) {
-            return a.failure_rate < b.failure_rate;
+        if (std::abs(a.results_metrics.failure_rate - b.results_metrics.failure_rate) > EPS) {
+            return a.results_metrics.failure_rate < b.results_metrics.failure_rate;
         }
 
-        if (std::abs(a.collision_rate - b.collision_rate) > EPS) {
-            return a.collision_rate < b.collision_rate;
+        if (std::abs(a.results_metrics.collision_rate - b.results_metrics.collision_rate) > EPS) {
+            return a.results_metrics.collision_rate < b.results_metrics.collision_rate;
         }
 
         /* 2. Accuracy (top priority) */
-        if (std::abs(a.angle_error_stats.mean - b.angle_error_stats.mean) > EPS) {
-            return a.angle_error_stats.mean < b.angle_error_stats.mean;
+        if (std::abs(a.results_metrics.angle_error_stats.mean - b.results_metrics.angle_error_stats.mean) > EPS) {
+            return a.results_metrics.angle_error_stats.mean < b.results_metrics.angle_error_stats.mean;
         }
 
-        if (std::abs(a.translation_stats.mean - b.translation_stats.mean) > EPS) {
-            return a.translation_stats.mean < b.translation_stats.mean;
+        if (std::abs(a.results_metrics.translation_stats.mean - b.results_metrics.translation_stats.mean) > EPS) {
+            return a.results_metrics.translation_stats.mean < b.results_metrics.translation_stats.mean;
         }
 
         /* 3. Speed */
-        if (std::abs(a.time_stats.mean - b.time_stats.mean) > EPS) {
-            return a.time_stats.mean < b.time_stats.mean;
+        if (std::abs(a.results_metrics.time_stats.mean - b.results_metrics.time_stats.mean) > EPS) {
+            return a.results_metrics.time_stats.mean < b.results_metrics.time_stats.mean;
         }
 
         /* 4. Stability (tie-breaker) */
-        double a_var {a.time_stats.stddev
-            + a.angle_error_stats.stddev
-            + a.translation_stats.stddev};
+        double a_var {a.results_metrics.time_stats.stddev
+            + a.results_metrics.angle_error_stats.stddev
+            + a.results_metrics.translation_stats.stddev};
 
-        double b_var {b.time_stats.stddev
-            + b.angle_error_stats.stddev
-            + b.translation_stats.stddev};
+        double b_var {b.results_metrics.time_stats.stddev
+            + b.results_metrics.angle_error_stats.stddev
+            + b.results_metrics.translation_stats.stddev};
 
         return a_var < b_var;
     });
@@ -450,11 +431,11 @@ void print_rotation_simulation_results(const std::vector<RotationTrial>& trials)
             << std::setw(5)  << c.key.kp
             << std::setw(5)  << c.key.kd
             << std::setw(5)  << c.key.shift
-            << std::setw(8)  << c.failure_rate
-            << std::setw(8)  << c.collision_rate
-            << std::setw(10) << c.angle_error_stats.mean
-            << std::setw(10) << c.translation_stats.mean
-            << std::setw(8)  << c.time_stats.mean
+            << std::setw(8)  << c.results_metrics.failure_rate
+            << std::setw(8)  << c.results_metrics.collision_rate
+            << std::setw(10) << c.results_metrics.angle_error_stats.mean
+            << std::setw(10) << c.results_metrics.translation_stats.mean
+            << std::setw(8)  << c.results_metrics.time_stats.mean
             << "\n";
     }
 }
@@ -521,15 +502,15 @@ RotationMetrics collect_metrics(const std::vector<RotationResult>& results)
     return m;
 }
 
-AggregateStats compute_aggregate(const std::vector<RotationTrial>& trials)
+RotationResultsMetrics compute_aggregate(const std::vector<RotationTrial>& trials)
 {
     auto m {collect_metrics(trials)};
 
-    AggregateStats a;
+    RotationResultsMetrics a;
 
-    a.time = optimizer::compute_stats(m.time);
-    a.angle = optimizer::compute_stats(m.angle);
-    a.translation = optimizer::compute_stats(m.translation);
+    a.time_stats = optimizer::compute_stats(m.time);
+    a.angle_error_stats = optimizer::compute_stats(m.angle);
+    a.translation_stats = optimizer::compute_stats(m.translation);
 
     a.failure_rate = optimizer::compute_rate(trials,
         [](const auto& t) { return t.result.simulation_failed; });
@@ -540,15 +521,15 @@ AggregateStats compute_aggregate(const std::vector<RotationTrial>& trials)
     return a;
 }
 
-AggregateStats compute_aggregate(const std::vector<RotationResult>& results)
+RotationResultsMetrics compute_aggregate(const std::vector<RotationResult>& results)
 {
     auto m {collect_metrics(results)};
 
-    AggregateStats a;
+    RotationResultsMetrics a;
 
-    a.time = optimizer::compute_stats(m.time);
-    a.angle       = optimizer::compute_stats(m.angle);
-    a.translation = optimizer::compute_stats(m.translation);
+    a.time_stats = optimizer::compute_stats(m.time);
+    a.angle_error_stats = optimizer::compute_stats(m.angle);
+    a.translation_stats = optimizer::compute_stats(m.translation);
 
     const double n {static_cast<double>(results.size())};
 

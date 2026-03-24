@@ -268,11 +268,11 @@ TEST(RotationTests, AnalyzePdCandidatesGroupsAndComputesStats)
 
     for (const auto& c : candidates) {
         if ((c.key.kp == 1) && (c.key.kd == 2) && (c.key.shift == 3)) {
-            DOUBLES_EQUAL(15.0, c.time_stats.mean, FLOAT_TOLERANCE);
-            DOUBLES_EQUAL(1.5,  c.angle_error_stats.mean, FLOAT_TOLERANCE);
-            DOUBLES_EQUAL(150.0,c.translation_stats.mean, FLOAT_TOLERANCE);
-            DOUBLES_EQUAL(0.0,  c.failure_rate, FLOAT_TOLERANCE);
-            DOUBLES_EQUAL(0.0,  c.collision_rate, FLOAT_TOLERANCE);
+            DOUBLES_EQUAL(15.0, c.results_metrics.time_stats.mean, FLOAT_TOLERANCE);
+            DOUBLES_EQUAL(1.5,  c.results_metrics.angle_error_stats.mean, FLOAT_TOLERANCE);
+            DOUBLES_EQUAL(150.0,c.results_metrics.translation_stats.mean, FLOAT_TOLERANCE);
+            DOUBLES_EQUAL(0.0,  c.results_metrics.failure_rate, FLOAT_TOLERANCE);
+            DOUBLES_EQUAL(0.0,  c.results_metrics.collision_rate, FLOAT_TOLERANCE);
         }
     }
 }
@@ -281,123 +281,124 @@ TEST(RotationTests, SortCandidatesFailureRatePriority)
 {
     RotationCandidate a{}, b{};
 
-    a.failure_rate = 0.0;
-    b.failure_rate = 0.5;
+    a.results_metrics.failure_rate = 0.0;
+    b.results_metrics.failure_rate = 0.5;
 
     std::vector<RotationCandidate> v {b, a};
 
     sort_rotation_candidates(v);
 
-    DOUBLES_EQUAL(0.0, v[0].failure_rate, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, v[0].results_metrics.failure_rate, FLOAT_TOLERANCE);
 }
 
 TEST(RotationTests, SortCandidatesCollisionRatePriority)
 {
     RotationCandidate a{}, b{};
 
-    a.failure_rate = b.failure_rate = 0.0;
+    a.results_metrics.failure_rate = 0.0;
+    b.results_metrics.failure_rate = 0.0;
 
-    a.collision_rate = 0.0;
-    b.collision_rate = 0.5;
+    a.results_metrics.collision_rate = 0.0;
+    b.results_metrics.collision_rate = 0.5;
 
     std::vector<RotationCandidate> v {b, a};
 
     sort_rotation_candidates(v);
 
-    DOUBLES_EQUAL(0.0, v[0].collision_rate, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, v[0].results_metrics.collision_rate, FLOAT_TOLERANCE);
 }
 
 TEST(RotationTests, SortCandidatesAngleErrorPriority)
 {
     RotationCandidate a{}, b{};
 
-    a.failure_rate = 0.0;
-    b.failure_rate = 0.0;
-    a.collision_rate = 0.0;
-    b.collision_rate = 0.0;
+    a.results_metrics.failure_rate = 0.0;
+    b.results_metrics.failure_rate = 0.0;
+    a.results_metrics.collision_rate = 0.0;
+    b.results_metrics.collision_rate = 0.0;
 
-    a.angle_error_stats.mean = 1.0;
-    b.angle_error_stats.mean = 2.0;
+    a.results_metrics.angle_error_stats.mean = 1.0;
+    b.results_metrics.angle_error_stats.mean = 2.0;
 
     std::vector<RotationCandidate> v {b, a};
 
     sort_rotation_candidates(v);
 
-    DOUBLES_EQUAL(1.0, v[0].angle_error_stats.mean, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(1.0, v[0].results_metrics.angle_error_stats.mean, FLOAT_TOLERANCE);
 }
 
 TEST(RotationTests, SortCandidatesTranslationPriority)
 {
     RotationCandidate a{}, b{};
 
-    a.failure_rate = 0.0;
-    b.failure_rate = 0.0;
-    a.collision_rate = 0.0;
-    b.collision_rate = 0.0;
-    a.angle_error_stats.mean = 1.0;
-    b.angle_error_stats.mean = 1.0;
+    a.results_metrics.failure_rate = 0.0;
+    b.results_metrics.failure_rate = 0.0;
+    a.results_metrics.collision_rate = 0.0;
+    b.results_metrics.collision_rate = 0.0;
+    a.results_metrics.angle_error_stats.mean = 1.0;
+    b.results_metrics.angle_error_stats.mean = 1.0;
 
-    a.translation_stats.mean = 100;
-    b.translation_stats.mean = 200;
+    a.results_metrics.translation_stats.mean = 100;
+    b.results_metrics.translation_stats.mean = 200;
 
     std::vector<RotationCandidate> v {b, a};
 
     sort_rotation_candidates(v);
 
-    DOUBLES_EQUAL(100.0, v[0].translation_stats.mean, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(100.0, v[0].results_metrics.translation_stats.mean, FLOAT_TOLERANCE);
 }
 
 TEST(RotationTests, SortCandidatesTimePriority)
 {
     RotationCandidate a{}, b{};
 
-    a.failure_rate = 0.0;
-    b.failure_rate = 0.0;
-    a.collision_rate = 0.0;
-    b.collision_rate = 0.0;
-    a.angle_error_stats.mean = 1.0;
-    b.angle_error_stats.mean = 1.0;
-    a.translation_stats.mean = 100;
-    b.translation_stats.mean = 100;
+    a.results_metrics.failure_rate = 0.0;
+    b.results_metrics.failure_rate = 0.0;
+    a.results_metrics.collision_rate = 0.0;
+    b.results_metrics.collision_rate = 0.0;
+    a.results_metrics.angle_error_stats.mean = 1.0;
+    b.results_metrics.angle_error_stats.mean = 1.0;
+    a.results_metrics.translation_stats.mean = 100;
+    b.results_metrics.translation_stats.mean = 100;
 
-    a.time_stats.mean = 5.0;
-    b.time_stats.mean = 10.0;
+    a.results_metrics.time_stats.mean = 5.0;
+    b.results_metrics.time_stats.mean = 10.0;
 
     std::vector<RotationCandidate> v {b, a};
 
     sort_rotation_candidates(v);
 
-    DOUBLES_EQUAL(5.0, v[0].time_stats.mean, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(5.0, v[0].results_metrics.time_stats.mean, FLOAT_TOLERANCE);
 }
 
 TEST(RotationTests, SortCandidatesUsesStdDevAsTieBreaker)
 {
     RotationCandidate a{}, b{};
 
-    a.failure_rate = 0.0;
-    b.failure_rate = 0.0;
-    a.collision_rate = 0.0;
-    b.collision_rate = 0.0;
-    a.angle_error_stats.mean = 1.0;
-    b.angle_error_stats.mean = 1.0;
-    a.translation_stats.mean = 100;
-    b.translation_stats.mean = 100;
-    a.time_stats.mean = 5.0;
-    b.time_stats.mean = 5.0;
+    a.results_metrics.failure_rate = 0.0;
+    b.results_metrics.failure_rate = 0.0;
+    a.results_metrics.collision_rate = 0.0;
+    b.results_metrics.collision_rate = 0.0;
+    a.results_metrics.angle_error_stats.mean = 1.0;
+    b.results_metrics.angle_error_stats.mean = 1.0;
+    a.results_metrics.translation_stats.mean = 100;
+    b.results_metrics.translation_stats.mean = 100;
+    a.results_metrics.time_stats.mean = 5.0;
+    b.results_metrics.time_stats.mean = 5.0;
 
-    a.time_stats.stddev = 1.0;
-    a.angle_error_stats.stddev = 1.0;
-    a.translation_stats.stddev = 1.0;
+    a.results_metrics.time_stats.stddev = 1.0;
+    a.results_metrics.angle_error_stats.stddev = 1.0;
+    a.results_metrics.translation_stats.stddev = 1.0;
 
-    b.time_stats.stddev = 2.0;
-    b.angle_error_stats.stddev = 2.0;
-    b.translation_stats.stddev = 2.0;
+    b.results_metrics.time_stats.stddev = 2.0;
+    b.results_metrics.angle_error_stats.stddev = 2.0;
+    b.results_metrics.translation_stats.stddev = 2.0;
 
     std::vector<RotationCandidate> v {b, a};
 
     sort_rotation_candidates(v);
 
-    DOUBLES_EQUAL(1.0, v[0].time_stats.stddev, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(1.0, v[0].results_metrics.time_stats.stddev, FLOAT_TOLERANCE);
 }
 
 TEST(RotationTests, GetRankedPdCandidatesOrdersCorrectly)

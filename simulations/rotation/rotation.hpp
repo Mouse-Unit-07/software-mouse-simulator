@@ -82,13 +82,7 @@ struct PdKey {
 struct RotationCandidate
 {
     PdKey key;
-
-    optimizer::MetricStats time_stats;
-    optimizer::MetricStats angle_error_stats;
-    optimizer::MetricStats translation_stats;
-
-    double failure_rate {0.0};
-    double collision_rate {0.0};
+    RotationResultsMetrics results_metrics;
 };
 
 } /* rotation namespace */
