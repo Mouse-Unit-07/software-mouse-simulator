@@ -219,7 +219,7 @@ ResultsMetrics compute_results_metrics(const std::vector<Result>& results)
     a.time_stats = optimizer::compute_stats(time);
     a.angle_error_stats = optimizer::compute_stats(angle);
     a.translation_stats = optimizer::compute_stats(translation);
-    a.failure_rate = (n > 0) ? fail_count / n : 0.0;
+    a.timeout_rate = (n > 0) ? fail_count / n : 0.0;
     a.collision_rate = (n > 0) ? coll_count / n : 0.0;
 
     return a;
@@ -264,8 +264,8 @@ void sort_candidates(std::vector<Candidate>& v)
         [](const Candidate& a, const Candidate& b)
     {
         /* 1. HARD constraints first */
-        if (std::abs(a.results_metrics.failure_rate - b.results_metrics.failure_rate) > EPS) {
-            return a.results_metrics.failure_rate < b.results_metrics.failure_rate;
+        if (std::abs(a.results_metrics.timeout_rate - b.results_metrics.timeout_rate) > EPS) {
+            return a.results_metrics.timeout_rate < b.results_metrics.timeout_rate;
         }
 
         if (std::abs(a.results_metrics.collision_rate - b.results_metrics.collision_rate) > EPS) {
@@ -312,7 +312,7 @@ void write_analysis_to_file(const std::string& filename, const std::vector<Candi
 
     out << "=== SUMMARY ===\n";
     out << "Total Size     : " << total_size << "\n";
-    out << "Failure Rate   : " << overall_metrics.failure_rate << "\n";
+    out << "Timeout Rate   : " << overall_metrics.timeout_rate << "\n";
     out << "Collision Rate : " << overall_metrics.collision_rate << "\n";
 
     out << "\nTime:\n";
@@ -355,7 +355,7 @@ void write_analysis_to_file(const std::string& filename, const std::vector<Candi
             << std::setw(COLUMN_WIDTH)  << c.key.kp
             << std::setw(COLUMN_WIDTH)  << c.key.kd
             << std::setw(COLUMN_WIDTH)  << c.key.shift
-            << std::setw(COLUMN_WIDTH)  << c.results_metrics.failure_rate
+            << std::setw(COLUMN_WIDTH)  << c.results_metrics.timeout_rate
             << std::setw(COLUMN_WIDTH)  << c.results_metrics.collision_rate
             << std::setw(COLUMN_WIDTH) << c.results_metrics.angle_error_stats.mean
             << std::setw(COLUMN_WIDTH) << c.results_metrics.translation_stats.mean

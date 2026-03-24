@@ -213,7 +213,7 @@ TEST(RotationTests, AnalyzeResultsComputesRates)
 
     auto s {compute_results_metrics(results)};
 
-    DOUBLES_EQUAL(0.5, s.failure_rate, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.5, s.timeout_rate, FLOAT_TOLERANCE);
     DOUBLES_EQUAL(0.5, s.collision_rate, FLOAT_TOLERANCE);
 }
 
@@ -269,32 +269,32 @@ TEST(RotationTests, AnalyzePdCandidatesGroupsAndComputesStats)
             DOUBLES_EQUAL(15.0, c.results_metrics.time_stats.mean, FLOAT_TOLERANCE);
             DOUBLES_EQUAL(1.5,  c.results_metrics.angle_error_stats.mean, FLOAT_TOLERANCE);
             DOUBLES_EQUAL(150.0,c.results_metrics.translation_stats.mean, FLOAT_TOLERANCE);
-            DOUBLES_EQUAL(0.0,  c.results_metrics.failure_rate, FLOAT_TOLERANCE);
+            DOUBLES_EQUAL(0.0,  c.results_metrics.timeout_rate, FLOAT_TOLERANCE);
             DOUBLES_EQUAL(0.0,  c.results_metrics.collision_rate, FLOAT_TOLERANCE);
         }
     }
 }
 
-TEST(RotationTests, SortCandidatesFailureRatePriority)
+TEST(RotationTests, SortCandidatesTimeoutRatePriority)
 {
     Candidate a{}, b{};
 
-    a.results_metrics.failure_rate = 0.0;
-    b.results_metrics.failure_rate = 0.5;
+    a.results_metrics.timeout_rate = 0.0;
+    b.results_metrics.timeout_rate = 0.5;
 
     std::vector<Candidate> v {b, a};
 
     sort_candidates(v);
 
-    DOUBLES_EQUAL(0.0, v[0].results_metrics.failure_rate, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, v[0].results_metrics.timeout_rate, FLOAT_TOLERANCE);
 }
 
 TEST(RotationTests, SortCandidatesCollisionRatePriority)
 {
     Candidate a{}, b{};
 
-    a.results_metrics.failure_rate = 0.0;
-    b.results_metrics.failure_rate = 0.0;
+    a.results_metrics.timeout_rate = 0.0;
+    b.results_metrics.timeout_rate = 0.0;
 
     a.results_metrics.collision_rate = 0.0;
     b.results_metrics.collision_rate = 0.5;
@@ -310,8 +310,8 @@ TEST(RotationTests, SortCandidatesAngleErrorPriority)
 {
     Candidate a{}, b{};
 
-    a.results_metrics.failure_rate = 0.0;
-    b.results_metrics.failure_rate = 0.0;
+    a.results_metrics.timeout_rate = 0.0;
+    b.results_metrics.timeout_rate = 0.0;
     a.results_metrics.collision_rate = 0.0;
     b.results_metrics.collision_rate = 0.0;
 
@@ -329,8 +329,8 @@ TEST(RotationTests, SortCandidatesTranslationPriority)
 {
     Candidate a{}, b{};
 
-    a.results_metrics.failure_rate = 0.0;
-    b.results_metrics.failure_rate = 0.0;
+    a.results_metrics.timeout_rate = 0.0;
+    b.results_metrics.timeout_rate = 0.0;
     a.results_metrics.collision_rate = 0.0;
     b.results_metrics.collision_rate = 0.0;
     a.results_metrics.angle_error_stats.mean = 1.0;
@@ -350,8 +350,8 @@ TEST(RotationTests, SortCandidatesTimePriority)
 {
     Candidate a{}, b{};
 
-    a.results_metrics.failure_rate = 0.0;
-    b.results_metrics.failure_rate = 0.0;
+    a.results_metrics.timeout_rate = 0.0;
+    b.results_metrics.timeout_rate = 0.0;
     a.results_metrics.collision_rate = 0.0;
     b.results_metrics.collision_rate = 0.0;
     a.results_metrics.angle_error_stats.mean = 1.0;
@@ -373,8 +373,8 @@ TEST(RotationTests, SortCandidatesUsesStdDevAsTieBreaker)
 {
     Candidate a{}, b{};
 
-    a.results_metrics.failure_rate = 0.0;
-    b.results_metrics.failure_rate = 0.0;
+    a.results_metrics.timeout_rate = 0.0;
+    b.results_metrics.timeout_rate = 0.0;
     a.results_metrics.collision_rate = 0.0;
     b.results_metrics.collision_rate = 0.0;
     a.results_metrics.angle_error_stats.mean = 1.0;

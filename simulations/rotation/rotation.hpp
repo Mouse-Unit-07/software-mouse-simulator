@@ -52,7 +52,7 @@ struct ResultsMetrics
     optimizer::MetricStats angle_error_stats;
     optimizer::MetricStats translation_stats;
     double collision_rate {0.0};
-    double failure_rate {0.0};
+    double timeout_rate {0.0};
 };
 
 struct CandidateKey {
