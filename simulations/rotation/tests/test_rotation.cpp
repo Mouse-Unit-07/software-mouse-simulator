@@ -189,13 +189,13 @@ TEST(RotationTests, NoTranslationAndAngleErrorForPerfectTestVariables)
 
 TEST(RotationTests, AnalyzeResultsComputesStats)
 {
-    std::vector<RotationTrial> trials {
-        {{}, {0,1, 10, false, false}},
-        {{}, {0,2, 20, false, false}},
-        {{}, {0,3, 30, false, false}}
+    std::vector<RotationResult> results {
+        {0,1, 10, false, false},
+        {0,2, 20, false, false},
+        {0,3, 30, false, false}
     };
 
-    auto s {analyze_rotation_results(trials)};
+    auto s {compute_results_metrics(results)};
 
     DOUBLES_EQUAL(20.0, s.translation_stats.mean, FLOAT_TOLERANCE);
     CHECK_EQUAL(10.0, s.translation_stats.min);
@@ -204,14 +204,14 @@ TEST(RotationTests, AnalyzeResultsComputesStats)
 
 TEST(RotationTests, AnalyzeResultsComputesRates)
 {
-    std::vector<RotationTrial> trials {
-        {{}, {0, 0, 0, false, false}},
-        {{}, {0, 0, 0, true, false}},
-        {{}, {0, 0, 0, false, true}},
-        {{}, {0, 0, 0, true, true}}
+    std::vector<RotationResult> results {
+        {0, 0, 0, false, false},
+        {0, 0, 0, true, false},
+        {0, 0, 0, false, true},
+        {0, 0, 0, true, true}
     };
 
-    auto s {analyze_rotation_results(trials)};
+    auto s {compute_results_metrics(results)};
 
     DOUBLES_EQUAL(0.5, s.failure_rate, FLOAT_TOLERANCE);
     DOUBLES_EQUAL(0.5, s.collision_rate, FLOAT_TOLERANCE);

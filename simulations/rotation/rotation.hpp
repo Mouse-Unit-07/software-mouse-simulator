@@ -81,12 +81,13 @@ namespace rotation
 
 RotationConfig build_rotation_config(const std::vector<double>& v);
 RotationResult run_rotation_simulation(const maze::Maze& maze, const RotationConfig& cfg, double target_angle);
-RotationResultsMetrics analyze_rotation_results(const std::vector<RotationTrial>& trials);
+
+RotationResultsMetrics compute_results_metrics(const std::vector<RotationResult>& results);
 std::vector<RotationCandidate> analyze_pd_candidates(const std::vector<RotationTrial>& trials);
 void sort_rotation_candidates(std::vector<RotationCandidate>& v);
 std::vector<RotationCandidate>get_ranked_pd_candidates(const std::vector<RotationTrial>& trials);
 
-void print_rotation_simulation_results(const std::vector<RotationTrial>& trials);
+void print_rotation_simulation_results(const std::vector<RotationTrial>& trials, RotationResultsMetrics overall_metrics);
 void run_full_rotation_experiment(double target_angle, std::vector<optimizer::SweepConfig> configs);
 
 } /* rotation namespace */
