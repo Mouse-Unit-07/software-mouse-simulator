@@ -16,7 +16,8 @@ namespace rotation
 
 struct Config
 {
-    double motor_speed;
+    uint8_t motor_speed;
+
     double motor_speed_scale;
     double dt;
 
@@ -59,7 +60,7 @@ struct CandidateKey {
     int32_t kp;
     int32_t kd;
     int32_t shift;
-    double motor_speed;
+    uint8_t motor_speed;
 
     bool operator<(const CandidateKey& other) const {
         return std::tie(kp, kd, shift, motor_speed)

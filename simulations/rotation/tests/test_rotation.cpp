@@ -54,7 +54,7 @@ std::vector<std::string> ascii {
 };
 Maze test_maze {build_maze_from_ascii(ascii, 0.0)};
 
-Config make_params(int kp, int kd, int shift, double motor_speed = 0)
+Config make_params(int kp, int kd, int shift, uint8_t motor_speed = 0)
 {
     return {
         motor_speed, 1.0, 0.01,

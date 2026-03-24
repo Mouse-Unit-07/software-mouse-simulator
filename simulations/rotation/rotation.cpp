@@ -357,7 +357,7 @@ void write_analysis_to_file(const std::string& filename, const std::vector<Candi
             << std::setw(COLUMN_WIDTH)  << c.key.kp
             << std::setw(COLUMN_WIDTH)  << c.key.kd
             << std::setw(COLUMN_WIDTH)  << c.key.shift
-            << std::setw(COLUMN_WIDTH)  << c.key.motor_speed
+            << std::setw(COLUMN_WIDTH)  << static_cast<int>(c.key.motor_speed)
             << std::setw(COLUMN_WIDTH)  << c.results_metrics.timeout_rate
             << std::setw(COLUMN_WIDTH)  << c.results_metrics.collision_rate
             << std::setw(COLUMN_WIDTH) << c.results_metrics.angle_error_stats.mean
