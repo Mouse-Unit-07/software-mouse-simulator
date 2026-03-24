@@ -210,48 +210,6 @@ RotationResultsMetrics analyze_rotation_results(const std::vector<RotationTrial>
     return a;
 }
 
-std::vector<RotationParamImpact> analyze_rotation_parameter_impact(const std::vector<optimizer::SweepParam>& params,
-        const std::vector<RotationTrial>& trials)
-{
-    std::vector<RotationParamImpact> impacts;
-
-    for (size_t i {0}; i < params.size(); i++) {
-        RotationParamImpact impact{};
-        impact.name = params[i].name;
-
-        auto x {optimizer::extract_metric(trials,
-            [i](const auto& t) { return t.configs[i]; })};
-
-        auto translation {optimizer::extract_metric(trials,
-            [](const auto& t) { return t.result.total_translation; })};
-
-        auto angle {optimizer::extract_metric(trials,
-            [](const auto& t) { return t.result.final_angle_error; })};
-
-        impact.correlation_translation = optimizer::compute_correlation(x, translation);
-        impact.correlation_angle_error = optimizer::compute_correlation(x, angle);
-
-        auto [fail_low, fail_high] {optimizer::compute_split_rate(
-            trials,
-            [i](const auto& t) { return t.configs[i]; },
-            [](const auto& t) { return t.result.simulation_failed; })};
-
-        auto [coll_low, coll_high] {optimizer::compute_split_rate(
-            trials,
-            [i](const auto& t) { return t.configs[i]; },
-            [](const auto& t) { return t.result.collision; })};
-
-        impact.failure_rate_low = fail_low;
-        impact.failure_rate_high = fail_high;
-        impact.collision_rate_low = coll_low;
-        impact.collision_rate_high = coll_high;
-
-        impacts.push_back(impact);
-    }
-
-    return impacts;
-}
-
 std::vector<RotationCandidate> analyze_pd_candidates(const std::vector<RotationTrial>& trials)
 {
     std::map<PdKey, std::vector<RotationResult>> grouped;
