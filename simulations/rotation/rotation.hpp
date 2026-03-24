@@ -14,7 +14,7 @@
 namespace rotation
 {
 
-struct RotationConfig
+struct Config
 {
     double motor_speed;
     double motor_speed_scale;
@@ -31,7 +31,7 @@ struct RotationConfig
     int32_t pid_shift;
 };
 
-struct RotationResult
+struct Result
 {
     double total_time {0.0};
     double final_angle_error {0.0};
@@ -40,13 +40,13 @@ struct RotationResult
     bool timeout {false};
 };
 
-struct RotationTrial
+struct Trial
 {
-    RotationConfig config;
-    RotationResult result;
+    Config config;
+    Result result;
 };
 
-struct RotationResultsMetrics
+struct ResultsMetrics
 {
     optimizer::MetricStats time_stats;
     optimizer::MetricStats angle_error_stats;
@@ -55,20 +55,20 @@ struct RotationResultsMetrics
     double failure_rate {0.0};
 };
 
-struct RotationCandidateKey {
+struct CandidateKey {
     int32_t kp;
     int32_t kd;
     int32_t shift;
 
-    bool operator<(const RotationCandidateKey& other) const {
+    bool operator<(const CandidateKey& other) const {
         return std::tie(kp, kd, shift) < std::tie(other.kp, other.kd, other.shift);
     }
 };
 
-struct RotationCandidate
+struct Candidate
 {
-    RotationCandidateKey key;
-    RotationResultsMetrics results_metrics;
+    CandidateKey key;
+    ResultsMetrics results_metrics;
 };
 
 } /* rotation namespace */
@@ -79,14 +79,14 @@ struct RotationCandidate
 namespace rotation
 {
 
-RotationConfig build_rotation_config(const std::vector<double>& v);
-RotationResult run_rotation_simulation(const maze::Maze& maze, const RotationConfig& cfg, double target_angle);
+Config build_config(const std::vector<double>& v);
+Result run_simulation(const maze::Maze& maze, const Config& cfg, double target_angle);
 
-RotationResultsMetrics compute_results_metrics(const std::vector<RotationResult>& results);
-std::vector<RotationCandidate> build_candidates(const std::vector<RotationTrial>& trials);
-void sort_candidates(std::vector<RotationCandidate>& v);
+ResultsMetrics compute_results_metrics(const std::vector<Result>& results);
+std::vector<Candidate> build_candidates(const std::vector<Trial>& trials);
+void sort_candidates(std::vector<Candidate>& v);
 
-void print_rotation_simulation_results(const std::vector<RotationCandidate>& condidates, RotationResultsMetrics overall_metrics);
+void print_rotation_simulation_results(const std::vector<Candidate>& condidates, ResultsMetrics overall_metrics);
 void run_full_rotation_experiment(double target_angle, std::vector<optimizer::SweepConfig> configs);
 
 } /* rotation namespace */

@@ -53,7 +53,7 @@ std::vector<std::string> ascii {
 };
 Maze test_maze {build_maze_from_ascii(ascii, 0.0)};
 
-RotationConfig make_params(int kp, int kd, int shift, double motor_speed = 0)
+Config make_params(int kp, int kd, int shift, double motor_speed = 0)
 {
     return {
         motor_speed, 1.0, 0.01,
@@ -90,7 +90,7 @@ TEST(RotationTests, BuildRotationConfigMapsValuesCorrectly)
 {
     std::vector<double> v {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
 
-    auto cfg {build_rotation_config(v)};
+    auto cfg {build_config(v)};
 
     CHECK_EQUAL(1, cfg.motor_speed);
     CHECK_EQUAL(2, cfg.motor_speed_scale);
@@ -107,9 +107,9 @@ TEST(RotationTests, BuildRotationConfigMapsValuesCorrectly)
 
 TEST(RotationTests, SimulationProducesValidResult)
 {
-    RotationConfig cfg {150, 1.0, 0.01, 0, 0, 1, 1, 1, 0, 0, 0};
+    Config cfg {150, 1.0, 0.01, 0, 0, 1, 1, 1, 0, 0, 0};
 
-    auto r {run_rotation_simulation(test_maze, cfg, M_PI / 2)};
+    auto r {run_simulation(test_maze, cfg, M_PI / 2)};
 
     CHECK(r.total_time >= 0.0);
     CHECK(r.final_angle_error >= 0.0);
@@ -118,19 +118,19 @@ TEST(RotationTests, SimulationProducesValidResult)
 
 TEST(RotationTests, SimulationFailsWhenDtIsZero)
 {
-    RotationConfig cfg {150, 1.0, 0.0, 0, 0, 1, 1, 1, 0, 0, 0};
+    Config cfg {150, 1.0, 0.0, 0, 0, 1, 1, 1, 0, 0, 0};
 
-    auto r {run_rotation_simulation(test_maze, cfg, M_PI / 2)};
+    auto r {run_simulation(test_maze, cfg, M_PI / 2)};
 
     CHECK(r.timeout);
 }
 
 TEST(RotationTests, PositiveAndNegativeAnglesProduceSameAngleAndTranslationError)
 {
-    RotationConfig cfg {150, 1.0, 0.01, 0, 0, 1, 1, 1, 0, 0, 0};
+    Config cfg {150, 1.0, 0.01, 0, 0, 1, 1, 1, 0, 0, 0};
 
-    auto r1 {run_rotation_simulation(test_maze, cfg,  M_PI / 2)};
-    auto r2 {run_rotation_simulation(test_maze, cfg, -M_PI / 2)};
+    auto r1 {run_simulation(test_maze, cfg,  M_PI / 2)};
+    auto r2 {run_simulation(test_maze, cfg, -M_PI / 2)};
 
     CHECK_FALSE(r1.timeout);
     CHECK_FALSE(r2.timeout);
@@ -140,10 +140,10 @@ TEST(RotationTests, PositiveAndNegativeAnglesProduceSameAngleAndTranslationError
 
 TEST(RotationTests, LargerAngleTakesMoreTime)
 {
-    RotationConfig cfg {150, 1.0, 0.01, 0, 0, 1, 1, 1, 0, 0, 0};
+    Config cfg {150, 1.0, 0.01, 0, 0, 1, 1, 1, 0, 0, 0};
 
-    auto small {run_rotation_simulation(test_maze, cfg, M_PI / 4)};
-    auto large {run_rotation_simulation(test_maze, cfg, M_PI / 2)};
+    auto small {run_simulation(test_maze, cfg, M_PI / 4)};
+    auto large {run_simulation(test_maze, cfg, M_PI / 2)};
 
     CHECK(large.total_time >= small.total_time);
 }
@@ -158,9 +158,9 @@ TEST(RotationTests, SimulationCanDetectCollision)
 
     Maze maze {build_maze_from_ascii(ascii, 0.0)};
 
-    RotationConfig cfg {255, 1.0, 0.01, -1, 0, 1, 1, 1, 0, 0, 0};
+    Config cfg {255, 1.0, 0.01, -1, 0, 1, 1, 1, 0, 0, 0};
 
-    auto r {run_rotation_simulation(test_maze, cfg, M_PI)};
+    auto r {run_simulation(test_maze, cfg, M_PI)};
 
     CHECK(r.collision);
 }
@@ -175,9 +175,9 @@ TEST(RotationTests, NoTranslationAndAngleErrorForPerfectTestVariables)
     Maze maze {build_maze_from_ascii(ascii, 0.0)};
 
     /* slow movement, tiny dt, and no motor variances */
-    RotationConfig cfg {100,1.0,0.001, 0,0, 1,1,1, 0,0,0};
+    Config cfg {100,1.0,0.001, 0,0, 1,1,1, 0,0,0};
 
-    auto r {run_rotation_simulation(test_maze, cfg, M_PI)};
+    auto r {run_simulation(test_maze, cfg, M_PI)};
 
     /* 1% of a circle, or 3.6 degrees */
     constexpr double ROTATION_TOLERANCE {(2 * M_PI) * 0.01};
@@ -189,7 +189,7 @@ TEST(RotationTests, NoTranslationAndAngleErrorForPerfectTestVariables)
 
 TEST(RotationTests, AnalyzeResultsComputesStats)
 {
-    std::vector<RotationResult> results {
+    std::vector<Result> results {
         {0,1, 10, false, false},
         {0,2, 20, false, false},
         {0,3, 30, false, false}
@@ -204,7 +204,7 @@ TEST(RotationTests, AnalyzeResultsComputesStats)
 
 TEST(RotationTests, AnalyzeResultsComputesRates)
 {
-    std::vector<RotationResult> results {
+    std::vector<Result> results {
         {0, 0, 0, false, false},
         {0, 0, 0, true, false},
         {0, 0, 0, false, true},
@@ -219,11 +219,11 @@ TEST(RotationTests, AnalyzeResultsComputesRates)
 
 TEST(RotationTests, DerivativeTermAffectsStability)
 {
-    RotationConfig no_d  {150,1.0,0.01, -0.2,0, 1,1,1, 2000,0,8};
-    RotationConfig with_d{150,1.0,0.01, -0.2,0, 1,1,1, 2000,1000,8};
+    Config no_d  {150,1.0,0.01, -0.2,0, 1,1,1, 2000,0,8};
+    Config with_d{150,1.0,0.01, -0.2,0, 1,1,1, 2000,1000,8};
 
-    auto r1 {run_rotation_simulation(test_maze, no_d,  M_PI / 2)};
-    auto r2 {run_rotation_simulation(test_maze, with_d,M_PI / 2)};
+    auto r1 {run_simulation(test_maze, no_d,  M_PI / 2)};
+    auto r2 {run_simulation(test_maze, with_d,M_PI / 2)};
 
     CHECK((r1.final_angle_error != r2.final_angle_error)
        || (r1.total_translation != r2.total_translation));
@@ -231,22 +231,22 @@ TEST(RotationTests, DerivativeTermAffectsStability)
 
 TEST(RotationTests, PDImprovesAccuracyOverNoControl)
 {
-    RotationConfig no_control {150,1.0,0.01, -0.2,0, 1,1,1, 0,0,8};
-    RotationConfig pd_control {150,1.0,0.01, -0.2,0, 1,1,1, 2000,1000,8};
+    Config no_control {150,1.0,0.01, -0.2,0, 1,1,1, 0,0,8};
+    Config pd_control {150,1.0,0.01, -0.2,0, 1,1,1, 2000,1000,8};
 
-    auto r1 {run_rotation_simulation(test_maze, no_control, M_PI / 2)};
-    auto r2 {run_rotation_simulation(test_maze, pd_control, M_PI / 2)};
+    auto r1 {run_simulation(test_maze, no_control, M_PI / 2)};
+    auto r2 {run_simulation(test_maze, pd_control, M_PI / 2)};
 
     CHECK(r2.final_angle_error <= r1.final_angle_error);
 }
 
 TEST(RotationTests, PidShiftAffectsControlStrength)
 {
-    RotationConfig strong {150,1.0,0.01, -0.2,0, 1,1,1, 2000,1000,2};
-    RotationConfig weak   {150,1.0,0.01, -0.2,0, 1,1,1, 2000,1000,8};
+    Config strong {150,1.0,0.01, -0.2,0, 1,1,1, 2000,1000,2};
+    Config weak   {150,1.0,0.01, -0.2,0, 1,1,1, 2000,1000,8};
 
-    auto r1 {run_rotation_simulation(test_maze, strong, M_PI / 2)};
-    auto r2 {run_rotation_simulation(test_maze, weak,   M_PI / 2)};
+    auto r1 {run_simulation(test_maze, strong, M_PI / 2)};
+    auto r2 {run_simulation(test_maze, weak,   M_PI / 2)};
 
     CHECK((r1.total_time != r2.total_time)
        || (r1.final_angle_error != r2.final_angle_error));
@@ -254,7 +254,7 @@ TEST(RotationTests, PidShiftAffectsControlStrength)
 
 TEST(RotationTests, AnalyzePdCandidatesGroupsAndComputesStats)
 {
-    std::vector<RotationTrial> trials {
+    std::vector<Trial> trials {
         {make_params(1,2,3), {10, 1.0, 100, false, false}},
         {make_params(1,2,3), {20, 2.0, 200, false, false}},
         {make_params(4,5,6), {30, 3.0, 300, true,  true}}
@@ -277,12 +277,12 @@ TEST(RotationTests, AnalyzePdCandidatesGroupsAndComputesStats)
 
 TEST(RotationTests, SortCandidatesFailureRatePriority)
 {
-    RotationCandidate a{}, b{};
+    Candidate a{}, b{};
 
     a.results_metrics.failure_rate = 0.0;
     b.results_metrics.failure_rate = 0.5;
 
-    std::vector<RotationCandidate> v {b, a};
+    std::vector<Candidate> v {b, a};
 
     sort_candidates(v);
 
@@ -291,7 +291,7 @@ TEST(RotationTests, SortCandidatesFailureRatePriority)
 
 TEST(RotationTests, SortCandidatesCollisionRatePriority)
 {
-    RotationCandidate a{}, b{};
+    Candidate a{}, b{};
 
     a.results_metrics.failure_rate = 0.0;
     b.results_metrics.failure_rate = 0.0;
@@ -299,7 +299,7 @@ TEST(RotationTests, SortCandidatesCollisionRatePriority)
     a.results_metrics.collision_rate = 0.0;
     b.results_metrics.collision_rate = 0.5;
 
-    std::vector<RotationCandidate> v {b, a};
+    std::vector<Candidate> v {b, a};
 
     sort_candidates(v);
 
@@ -308,7 +308,7 @@ TEST(RotationTests, SortCandidatesCollisionRatePriority)
 
 TEST(RotationTests, SortCandidatesAngleErrorPriority)
 {
-    RotationCandidate a{}, b{};
+    Candidate a{}, b{};
 
     a.results_metrics.failure_rate = 0.0;
     b.results_metrics.failure_rate = 0.0;
@@ -318,7 +318,7 @@ TEST(RotationTests, SortCandidatesAngleErrorPriority)
     a.results_metrics.angle_error_stats.mean = 1.0;
     b.results_metrics.angle_error_stats.mean = 2.0;
 
-    std::vector<RotationCandidate> v {b, a};
+    std::vector<Candidate> v {b, a};
 
     sort_candidates(v);
 
@@ -327,7 +327,7 @@ TEST(RotationTests, SortCandidatesAngleErrorPriority)
 
 TEST(RotationTests, SortCandidatesTranslationPriority)
 {
-    RotationCandidate a{}, b{};
+    Candidate a{}, b{};
 
     a.results_metrics.failure_rate = 0.0;
     b.results_metrics.failure_rate = 0.0;
@@ -339,7 +339,7 @@ TEST(RotationTests, SortCandidatesTranslationPriority)
     a.results_metrics.translation_stats.mean = 100;
     b.results_metrics.translation_stats.mean = 200;
 
-    std::vector<RotationCandidate> v {b, a};
+    std::vector<Candidate> v {b, a};
 
     sort_candidates(v);
 
@@ -348,7 +348,7 @@ TEST(RotationTests, SortCandidatesTranslationPriority)
 
 TEST(RotationTests, SortCandidatesTimePriority)
 {
-    RotationCandidate a{}, b{};
+    Candidate a{}, b{};
 
     a.results_metrics.failure_rate = 0.0;
     b.results_metrics.failure_rate = 0.0;
@@ -362,7 +362,7 @@ TEST(RotationTests, SortCandidatesTimePriority)
     a.results_metrics.time_stats.mean = 5.0;
     b.results_metrics.time_stats.mean = 10.0;
 
-    std::vector<RotationCandidate> v {b, a};
+    std::vector<Candidate> v {b, a};
 
     sort_candidates(v);
 
@@ -371,7 +371,7 @@ TEST(RotationTests, SortCandidatesTimePriority)
 
 TEST(RotationTests, SortCandidatesUsesStdDevAsTieBreaker)
 {
-    RotationCandidate a{}, b{};
+    Candidate a{}, b{};
 
     a.results_metrics.failure_rate = 0.0;
     b.results_metrics.failure_rate = 0.0;
@@ -392,7 +392,7 @@ TEST(RotationTests, SortCandidatesUsesStdDevAsTieBreaker)
     b.results_metrics.angle_error_stats.stddev = 2.0;
     b.results_metrics.translation_stats.stddev = 2.0;
 
-    std::vector<RotationCandidate> v {b, a};
+    std::vector<Candidate> v {b, a};
 
     sort_candidates(v);
 
@@ -401,7 +401,7 @@ TEST(RotationTests, SortCandidatesUsesStdDevAsTieBreaker)
 
 TEST(RotationTests, GetRankedPdCandidatesOrdersCorrectly)
 {
-    std::vector<RotationTrial> trials {
+    std::vector<Trial> trials {
         {make_params(1,0,8), {10, 2.0, 200, false, false}},
         {make_params(1,0,8), {12, 2.0, 210, false, false}},
 

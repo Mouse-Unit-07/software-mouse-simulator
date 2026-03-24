@@ -59,9 +59,9 @@ extern double ENCODER_TICKS_PER_ROTATION_ANGLE_RADIANS;
 namespace rotation
 {
 
-RotationConfig build_rotation_config(const std::vector<double>& v)
+Config build_config(const std::vector<double>& v)
 {
-    RotationConfig cfg{};
+    Config cfg{};
 
     int i {0};
 
@@ -82,7 +82,7 @@ RotationConfig build_rotation_config(const std::vector<double>& v)
     return cfg;
 }
 
-RotationResult run_rotation_simulation(const maze::Maze& maze, const RotationConfig& cfg, double target_angle)
+Result run_simulation(const maze::Maze& maze, const Config& cfg, double target_angle)
 {
     /* prepare mouse for rotation */
     reset_mock_device_drivers();
@@ -178,7 +178,7 @@ RotationResult run_rotation_simulation(const maze::Maze& maze, const RotationCon
         }
     }
 
-    return RotationResult{
+    return Result{
         total_time,
         std::abs(target_angle - total_angle_rotation),
         total_translation,
@@ -187,7 +187,7 @@ RotationResult run_rotation_simulation(const maze::Maze& maze, const RotationCon
     };
 }
 
-RotationResultsMetrics compute_results_metrics(const std::vector<RotationResult>& results)
+ResultsMetrics compute_results_metrics(const std::vector<Result>& results)
 {
     std::vector<double> time;
     std::vector<double> angle;
@@ -212,7 +212,7 @@ RotationResultsMetrics compute_results_metrics(const std::vector<RotationResult>
     }
 
     const double n {static_cast<double>(results.size())};
-    RotationResultsMetrics a;
+    ResultsMetrics a;
 
     a.time_stats = optimizer::compute_stats(time);
     a.angle_error_stats = optimizer::compute_stats(angle);
@@ -223,12 +223,12 @@ RotationResultsMetrics compute_results_metrics(const std::vector<RotationResult>
     return a;
 }
 
-std::vector<RotationCandidate> build_candidates(const std::vector<RotationTrial>& trials)
+std::vector<Candidate> build_candidates(const std::vector<Trial>& trials)
 {
-    std::map<RotationCandidateKey, std::vector<RotationResult>> grouped;
+    std::map<CandidateKey, std::vector<Result>> grouped;
 
     for (const auto& t : trials) {
-        RotationCandidateKey key {
+        CandidateKey key {
             t.config.kp,
             t.config.kd,
             t.config.pid_shift
@@ -237,11 +237,11 @@ std::vector<RotationCandidate> build_candidates(const std::vector<RotationTrial>
         grouped[key].push_back(t.result);
     }
 
-    std::vector<RotationCandidate> out;
+    std::vector<Candidate> out;
     out.reserve(grouped.size());
 
     for (const auto& [key, group_results] : grouped) {
-        RotationCandidate c;
+        Candidate c;
         c.key = key;
 
         auto a {compute_results_metrics(group_results)};
@@ -254,12 +254,12 @@ std::vector<RotationCandidate> build_candidates(const std::vector<RotationTrial>
     return out;
 }
 
-void sort_candidates(std::vector<RotationCandidate>& v)
+void sort_candidates(std::vector<Candidate>& v)
 {
     constexpr double EPS {1e-6};
 
     std::sort(v.begin(), v.end(),
-        [](const RotationCandidate& a, const RotationCandidate& b)
+        [](const Candidate& a, const Candidate& b)
     {
         /* 1. HARD constraints first */
         if (std::abs(a.results_metrics.failure_rate - b.results_metrics.failure_rate) > EPS) {
@@ -297,7 +297,7 @@ void sort_candidates(std::vector<RotationCandidate>& v)
     });
 }
 
-void print_rotation_simulation_results(const std::vector<RotationCandidate>& candidates, RotationResultsMetrics overall_metrics)
+void print_rotation_simulation_results(const std::vector<Candidate>& candidates, ResultsMetrics overall_metrics)
 {
     std::cout << std::setprecision(3);
 
@@ -367,13 +367,13 @@ void run_full_rotation_experiment(double target_angle, std::vector<optimizer::Sw
     };
     maze::Maze small_maze {maze::build_maze_from_ascii(ascii, 0.0)};
     optimizer::SweepCursor cursor(configs);
-    std::vector<RotationTrial> trials;
-    std::vector<RotationResult> all_results;
+    std::vector<Trial> trials;
+    std::vector<Result> all_results;
 
     do {
         auto config_values = cursor.values();
-        auto cfg {rotation::build_rotation_config(config_values)};
-        auto result {rotation::run_rotation_simulation(small_maze, cfg, target_angle)};
+        auto cfg {rotation::build_config(config_values)};
+        auto result {rotation::run_simulation(small_maze, cfg, target_angle)};
 
         trials.push_back({cfg, result});
         all_results.push_back(result);
