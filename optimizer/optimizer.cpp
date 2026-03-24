@@ -102,39 +102,6 @@ MetricStats compute_stats(const std::vector<double>& data)
     return s;
 }
 
-double compute_correlation(const std::vector<double>& x, const std::vector<double>& y)
-{
-    if ((x.size() != y.size()) || x.empty()) {
-        return 0.0;
-    }
-
-    double mean_x {0.0};
-    double mean_y {0.0};
-
-    for (size_t i = 0; i < x.size(); i++) {
-        mean_x += x[i];
-        mean_y += y[i];
-    }
-
-    mean_x /= x.size();
-    mean_y /= y.size();
-
-    double num {0.0};
-    double den_x {0.0};
-    double den_y {0.0};
-
-    for (size_t i = 0; i < x.size(); i++) {
-        double dx {x[i] - mean_x};
-        double dy {y[i] - mean_y};
-
-        num += dx * dy;
-        den_x += dx * dx;
-        den_y += dy * dy;
-    }
-
-    return num / sqrt(den_x * den_y + 1e-9);
-}
-
 } /* optimizer namespace */
 
 /*----------------------------------------------------------------------------*/

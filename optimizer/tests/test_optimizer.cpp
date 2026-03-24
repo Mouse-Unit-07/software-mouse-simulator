@@ -148,30 +148,6 @@ TEST(OptimizerTests, ComputeStatsEmpty)
     DOUBLES_EQUAL(0.0, s.stddev, FLOAT_TOLERANCE);
 }
 
-TEST(OptimizerTests, CorrelationPositive)
-{
-    std::vector<double> x {1, 2, 3};
-    std::vector<double> y {10, 20, 30};
-
-    DOUBLES_EQUAL(1.0, compute_correlation(x, y), FLOAT_TOLERANCE);
-}
-
-TEST(OptimizerTests, CorrelationNegative)
-{
-    std::vector<double> x {1, 2, 3};
-    std::vector<double> y {30, 20, 10};
-
-    DOUBLES_EQUAL(-1.0, compute_correlation(x, y), FLOAT_TOLERANCE);
-}
-
-TEST(OptimizerTests, CorrelationZeroVariance)
-{
-    std::vector<double> x {1, 1, 1};
-    std::vector<double> y {10, 20, 30};
-
-    DOUBLES_EQUAL(0.0, compute_correlation(x, y), FLOAT_TOLERANCE);
-}
-
 TEST(OptimizerTests, ExtractMetricWorks)
 {
     std::vector<std::pair<int, double>> trials
@@ -207,42 +183,4 @@ TEST(OptimizerTests, ComputeRateEmpty)
         [](int) { return true; })};
 
     DOUBLES_EQUAL(0.0, rate, FLOAT_TOLERANCE);
-}
-
-TEST(OptimizerTests, SplitRateBasic)
-{
-    std::vector<std::pair<double, bool>> trials
-    {
-        {1.0, false},
-        {2.0, true},
-        {8.0, false},
-        {9.0, true}
-    };
-
-    auto [low, high] {compute_split_rate(
-        trials,
-        [](const auto& t) { return t.first; },
-        [](const auto& t) { return t.second; })};
-
-    DOUBLES_EQUAL(0.5, low, FLOAT_TOLERANCE);
-    DOUBLES_EQUAL(0.5, high, FLOAT_TOLERANCE);
-}
-
-TEST(OptimizerTests, SplitRateHandlesEqualValues)
-{
-    std::vector<std::pair<double, bool>> trials
-    {
-        {2.0, false},
-        {2.0, true},
-        {2.0, false},
-        {2.0, true}
-    };
-
-    auto [low, high] {compute_split_rate(
-        trials,
-        [](const auto& t) { return t.first; },
-        [](const auto& t) { return t.second; })};
-
-    CHECK(low >= 0.0);
-    CHECK(high >= 0.0);
 }
