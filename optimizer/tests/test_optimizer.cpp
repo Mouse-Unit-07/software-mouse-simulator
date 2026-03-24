@@ -51,7 +51,7 @@ TEST_GROUP(OptimizerTests)
 /*============================================================================*/
 TEST(OptimizerTests, SweepGeneratesCorrectNumberOfCombinations)
 {
-    std::vector<SweepParam> params
+    std::vector<SweepConfig> configs
     {
         {"a", 0, 1, 2},
         {"b", 0, 1, 3}
@@ -61,14 +61,14 @@ TEST(OptimizerTests, SweepGeneratesCorrectNumberOfCombinations)
         return vals; // identity
     }};
 
-    auto results {run_parameter_sweep<std::vector<double>>(params, sim_fn)};
+    auto results {run_config_sweep<std::vector<double>>(configs, sim_fn)};
 
     CHECK_EQUAL(6, results.size()); // 2 * 3
 }
 
 TEST(OptimizerTests, SweepSingleStepProducesSingleCombination)
 {
-    std::vector<SweepParam> params
+    std::vector<SweepConfig> configs
     {
         {"a", 5, 5, 1},
         {"b", 10, 10, 1}
@@ -78,19 +78,19 @@ TEST(OptimizerTests, SweepSingleStepProducesSingleCombination)
         return vals;
     }};
 
-    auto results {run_parameter_sweep<std::vector<double>>(params, sim_fn)};
+    auto results {run_config_sweep<std::vector<double>>(configs, sim_fn)};
 
     CHECK_EQUAL(1, results.size());
 }
 
 TEST(OptimizerTests, SweepValuesAreInterpolatedCorrectly)
 {
-    std::vector<SweepParam> params
+    std::vector<SweepConfig> configs
     {
         {"a", 0.0, 10.0, 3}
     };
 
-    SweepCursor cursor(params);
+    SweepCursor cursor(configs);
 
     auto v0 {cursor.values()};
     cursor.next();
@@ -105,7 +105,7 @@ TEST(OptimizerTests, SweepValuesAreInterpolatedCorrectly)
 
 TEST(OptimizerTests, SweepPassesCorrectValuesToSimFn)
 {
-    std::vector<SweepParam> params
+    std::vector<SweepConfig> configs
     {
         {"a", 1, 2, 2}
     };
@@ -117,7 +117,7 @@ TEST(OptimizerTests, SweepPassesCorrectValuesToSimFn)
         return 0;
     }};
 
-    run_parameter_sweep<int>(params, sim_fn);
+    run_config_sweep<int>(configs, sim_fn);
 
     CHECK_EQUAL(2, captured.size());
     CHECK(captured[0] == 1.0);

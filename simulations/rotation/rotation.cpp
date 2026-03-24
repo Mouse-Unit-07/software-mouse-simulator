@@ -297,7 +297,7 @@ std::vector<RotationCandidate>get_ranked_pd_candidates(const std::vector<Rotatio
     return candidates;
 }
 
-std::vector<optimizer::SweepParam> default_pd_sweep_params()
+std::vector<optimizer::SweepConfig> default_pd_sweep_configs()
 {
     return {
         {"motor_speed", 120, 220, 5}, // 120, 220, 5 | 100, 100, 1
@@ -318,9 +318,9 @@ std::vector<optimizer::SweepParam> default_pd_sweep_params()
 
 std::vector<RotationTrial> run_pd_sweep(const maze::Maze& maze, double target_angle)
 {
-    auto params {default_pd_sweep_params()};
+    auto configs {default_pd_sweep_configs()};
 
-    optimizer::SweepCursor cursor(params);
+    optimizer::SweepCursor cursor(configs);
     std::vector<RotationTrial> results;
 
     do {

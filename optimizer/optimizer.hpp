@@ -14,7 +14,7 @@
 namespace optimizer
 {
 
-struct SweepParam
+struct SweepConfig
 {
     std::string name;
     double min;
@@ -22,33 +22,25 @@ struct SweepParam
     int steps;
 };
 
-struct MetricStats
-{
-    double mean {0.0};
-    double stddev {0.0};
-    double min {0.0};
-    double max {0.0};
-};
-
 class SweepCursor
 {
 public:
-    explicit SweepCursor(const std::vector<SweepParam>& params);
+    explicit SweepCursor(const std::vector<SweepConfig>& configs);
 
     bool next();
     std::vector<double> values() const;
 
 private:
-    std::vector<SweepParam> params_;
-    std::vector<int> indices_;
+    std::vector<SweepConfig> configs_;
+    std::vector<int> progress_counter_;
 };
 
 template <typename Result>
-std::vector<std::pair<std::vector<double>, Result>> run_parameter_sweep(
-        const std::vector<SweepParam>& params,
+std::vector<std::pair<std::vector<double>, Result>> run_config_sweep(
+        const std::vector<SweepConfig>& configs,
         const std::function<Result(const std::vector<double>&)>& sim_fn)
 {
-    SweepCursor cursor(params);
+    SweepCursor cursor(configs);
     std::vector<std::pair<std::vector<double>, Result>> results;
 
     do {
@@ -58,6 +50,14 @@ std::vector<std::pair<std::vector<double>, Result>> run_parameter_sweep(
 
     return results;
 }
+
+struct MetricStats
+{
+    double mean {0.0};
+    double stddev {0.0};
+    double min {0.0};
+    double max {0.0};
+};
 
 template <typename Trials, typename Fn>
 std::vector<double> extract_metric(const Trials& trials, Fn fn)

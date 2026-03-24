@@ -32,21 +32,26 @@
 namespace optimizer
 {
 
-SweepCursor::SweepCursor(const std::vector<SweepParam>& params)
-    : params_(params), indices_(params.size(), 0)
+SweepCursor::SweepCursor(const std::vector<SweepConfig>& configs)
+    : configs_(configs), progress_counter_(configs.size(), 0)
 {
     /* no additional logic */
 }
 
 bool SweepCursor::next()
 {
-    for (int i {(int)indices_.size() - 1}; i >= 0; i--) {
-        indices_[i]++;
+    for (int i {static_cast<int>(progress_counter_.size()) - 1}; i >= 0; --i) {
+        int current_index {progress_counter_[i]};
+        int max_steps {configs_[i].steps};
 
-        if (indices_[i] < params_[i].steps)
+        current_index++;
+
+        if (current_index < max_steps) {
+            progress_counter_[i] = current_index;
             return true;
+        }
 
-        indices_[i] = 0;
+        progress_counter_[i] = 0;
     }
 
     return false;
@@ -55,14 +60,22 @@ bool SweepCursor::next()
 std::vector<double> SweepCursor::values() const
 {
     std::vector<double> vals;
-    vals.reserve(params_.size());
+    vals.reserve(configs_.size());
 
-    for (size_t i {0}; i < params_.size(); i++) {
-        const auto& p {params_[i]};
+    for (size_t i = 0; i < configs_.size(); ++i) {
+        const SweepConfig& c = configs_[i];
+        int index = progress_counter_[i];
 
-        double t {(p.steps == 1) ? 0.0 : static_cast<double>(indices_[i]) / (p.steps - 1)};
+        double value;
 
-        vals.push_back(p.min + t * (p.max - p.min));
+        if (c.steps <= 1) {
+            value = c.min;
+        } else {
+            double fraction = static_cast<double>(index) / (c.steps - 1);
+            value = c.min + fraction * (c.max - c.min);
+        }
+
+        vals.push_back(value);
     }
 
     return vals;
