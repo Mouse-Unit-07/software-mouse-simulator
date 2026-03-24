@@ -212,15 +212,16 @@ RotationResult run_rotation_simulation(const maze::Maze& maze, const RotationCon
     };
 }
 
-RotationAnalysisSummary analyze_rotation_results(const std::vector<RotationTrial>& trials)
+RotationResultsMetrics analyze_rotation_results(const std::vector<RotationTrial>& trials)
 {
     auto a = compute_aggregate(trials);
 
     return {
-        a.failure_rate,
-        a.collision_rate,
+        a.time,
+        a.angle,
         a.translation,
-        a.angle
+        a.collision_rate,
+        a.failure_rate
     };
 }
 
@@ -407,17 +408,23 @@ void print_rotation_simulation_results(const std::vector<RotationTrial>& trials)
     std::cout << "Failure Rate   : " << summary.failure_rate << "\n";
     std::cout << "Collision Rate : " << summary.collision_rate << "\n";
 
-    std::cout << "\nTranslation:\n";
-    std::cout << "  mean=" << summary.translation_stats.mean
-              << " std=" << summary.translation_stats.stddev
-              << " min=" << summary.translation_stats.min
-              << " max=" << summary.translation_stats.max << "\n";
+    std::cout << "\nTime:\n";
+    std::cout << "  mean=" << summary.time_stats.mean
+              << " std=" << summary.time_stats.stddev
+              << " min=" << summary.time_stats.min
+              << " max=" << summary.time_stats.max << "\n";
 
     std::cout << "\nAngle Error:\n";
     std::cout << "  mean=" << summary.angle_error_stats.mean
               << " std=" << summary.angle_error_stats.stddev
               << " min=" << summary.angle_error_stats.min
               << " max=" << summary.angle_error_stats.max << "\n";
+
+    std::cout << "\nTranslation:\n";
+    std::cout << "  mean=" << summary.translation_stats.mean
+              << " std=" << summary.translation_stats.stddev
+              << " min=" << summary.translation_stats.min
+              << " max=" << summary.translation_stats.max << "\n";
 
     std::cout << "\n=== ALL CANDIDATES ===\n";
 

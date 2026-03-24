@@ -46,13 +46,13 @@ struct RotationTrial
     RotationResult result;
 };
 
-struct RotationAnalysisSummary
+struct RotationResultsMetrics
 {
-    double failure_rate {0.0};
-    double collision_rate {0.0};
-
-    optimizer::MetricStats translation_stats;
+    optimizer::MetricStats time_stats;
     optimizer::MetricStats angle_error_stats;
+    optimizer::MetricStats translation_stats;
+    double collision_rate {0.0};
+    double failure_rate {0.0};
 };
 
 struct RotationParamImpact
@@ -101,7 +101,7 @@ namespace rotation
 
 RotationConfig build_rotation_config(const std::vector<double>& v);
 RotationResult run_rotation_simulation(const maze::Maze& maze, const RotationConfig& cfg, double target_angle);
-RotationAnalysisSummary analyze_rotation_results(const std::vector<RotationTrial>& trials);
+RotationResultsMetrics analyze_rotation_results(const std::vector<RotationTrial>& trials);
 std::vector<RotationParamImpact> analyze_rotation_parameter_impact(const std::vector<optimizer::SweepParam>& params,
         const std::vector<RotationTrial>& trials);
 std::vector<RotationCandidate> analyze_pd_candidates(const std::vector<RotationTrial>& trials);
