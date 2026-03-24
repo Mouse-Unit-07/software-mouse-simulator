@@ -223,7 +223,7 @@ RotationResultsMetrics compute_results_metrics(const std::vector<RotationResult>
     return a;
 }
 
-std::vector<RotationCandidate> analyze_pd_candidates(const std::vector<RotationTrial>& trials)
+std::vector<RotationCandidate> build_candidates(const std::vector<RotationTrial>& trials)
 {
     std::map<PdKey, std::vector<RotationResult>> grouped;
 
@@ -254,7 +254,7 @@ std::vector<RotationCandidate> analyze_pd_candidates(const std::vector<RotationT
     return out;
 }
 
-void sort_rotation_candidates(std::vector<RotationCandidate>& v)
+void sort_candidates(std::vector<RotationCandidate>& v)
 {
     constexpr double EPS {1e-6};
 
@@ -297,17 +297,8 @@ void sort_rotation_candidates(std::vector<RotationCandidate>& v)
     });
 }
 
-std::vector<RotationCandidate>get_ranked_pd_candidates(const std::vector<RotationTrial>& trials)
+void print_rotation_simulation_results(const std::vector<RotationCandidate>& candidates, RotationResultsMetrics overall_metrics)
 {
-    auto candidates = analyze_pd_candidates(trials);
-    sort_rotation_candidates(candidates);
-    return candidates;
-}
-
-void print_rotation_simulation_results(const std::vector<RotationTrial>& trials, RotationResultsMetrics overall_metrics)
-{
-    auto ranked {rotation::get_ranked_pd_candidates(trials)};
-
     std::cout << std::setprecision(3);
 
     std::cout << "\n=== SUMMARY ===\n";
@@ -347,8 +338,8 @@ void print_rotation_simulation_results(const std::vector<RotationTrial>& trials,
         << std::setw(8)  << "Time"
         << "\n";
 
-    for (int i {0}; i < ranked.size(); i++) {
-        const auto& c = ranked[i];
+    for (int i {0}; i < candidates.size(); i++) {
+        const auto& c {candidates[i]};
 
         std::cout
             << std::left
@@ -392,8 +383,10 @@ void run_full_rotation_experiment(double target_angle, std::vector<optimizer::Sw
     std::cout << "Trials: " << trials.size() << "\n";
 
     auto overall_metrics {compute_results_metrics(all_results)};
+    auto candidates {build_candidates(trials)};
+    sort_candidates(candidates);
 
-    print_rotation_simulation_results(trials, overall_metrics);
+    print_rotation_simulation_results(candidates, overall_metrics);
 }
 
 } /* rotation namespace */

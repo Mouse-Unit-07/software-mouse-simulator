@@ -260,7 +260,7 @@ TEST(RotationTests, AnalyzePdCandidatesGroupsAndComputesStats)
         {make_params(4,5,6), {30, 3.0, 300, true,  true}}
     };
 
-    auto candidates {analyze_pd_candidates(trials)};
+    auto candidates {build_candidates(trials)};
 
     CHECK_EQUAL(2, candidates.size());
 
@@ -284,7 +284,7 @@ TEST(RotationTests, SortCandidatesFailureRatePriority)
 
     std::vector<RotationCandidate> v {b, a};
 
-    sort_rotation_candidates(v);
+    sort_candidates(v);
 
     DOUBLES_EQUAL(0.0, v[0].results_metrics.failure_rate, FLOAT_TOLERANCE);
 }
@@ -301,7 +301,7 @@ TEST(RotationTests, SortCandidatesCollisionRatePriority)
 
     std::vector<RotationCandidate> v {b, a};
 
-    sort_rotation_candidates(v);
+    sort_candidates(v);
 
     DOUBLES_EQUAL(0.0, v[0].results_metrics.collision_rate, FLOAT_TOLERANCE);
 }
@@ -320,7 +320,7 @@ TEST(RotationTests, SortCandidatesAngleErrorPriority)
 
     std::vector<RotationCandidate> v {b, a};
 
-    sort_rotation_candidates(v);
+    sort_candidates(v);
 
     DOUBLES_EQUAL(1.0, v[0].results_metrics.angle_error_stats.mean, FLOAT_TOLERANCE);
 }
@@ -341,7 +341,7 @@ TEST(RotationTests, SortCandidatesTranslationPriority)
 
     std::vector<RotationCandidate> v {b, a};
 
-    sort_rotation_candidates(v);
+    sort_candidates(v);
 
     DOUBLES_EQUAL(100.0, v[0].results_metrics.translation_stats.mean, FLOAT_TOLERANCE);
 }
@@ -364,7 +364,7 @@ TEST(RotationTests, SortCandidatesTimePriority)
 
     std::vector<RotationCandidate> v {b, a};
 
-    sort_rotation_candidates(v);
+    sort_candidates(v);
 
     DOUBLES_EQUAL(5.0, v[0].results_metrics.time_stats.mean, FLOAT_TOLERANCE);
 }
@@ -394,7 +394,7 @@ TEST(RotationTests, SortCandidatesUsesStdDevAsTieBreaker)
 
     std::vector<RotationCandidate> v {b, a};
 
-    sort_rotation_candidates(v);
+    sort_candidates(v);
 
     DOUBLES_EQUAL(1.0, v[0].results_metrics.time_stats.stddev, FLOAT_TOLERANCE);
 }
@@ -411,7 +411,8 @@ TEST(RotationTests, GetRankedPdCandidatesOrdersCorrectly)
         {make_params(3,0,8), {5,  0.5, 100, true,  false}}
     };
 
-    auto ranked {get_ranked_pd_candidates(trials)};
+    auto ranked {build_candidates(trials)};
+    sort_candidates(ranked);
 
     CHECK(ranked.size() >= 2);
 
