@@ -37,7 +37,7 @@ struct RotationResult
     double final_angle_error {0.0};
     double total_translation {0.0};
     bool collision {false};
-    bool simulation_failed {false};
+    bool timeout {false};
 };
 
 struct RotationTrial

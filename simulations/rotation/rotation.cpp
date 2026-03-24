@@ -107,7 +107,7 @@ RotationResult run_rotation_simulation(const maze::Maze& maze, const RotationCon
     double total_angle_rotation {0.0};
     double total_time {0.0};
     bool collision {false};
-    bool simulation_failed {false};
+    bool timeout {false};
 
     constexpr int MAX_STEPS {10000};
     int steps {0};
@@ -173,7 +173,7 @@ RotationResult run_rotation_simulation(const maze::Maze& maze, const RotationCon
 
         steps++;
         if (steps > MAX_STEPS) {
-            simulation_failed = true;
+            timeout = true;
             break;
         }
     }
@@ -183,7 +183,7 @@ RotationResult run_rotation_simulation(const maze::Maze& maze, const RotationCon
         std::abs(target_angle - total_angle_rotation),
         total_translation,
         collision,
-        simulation_failed
+        timeout
     };
 }
 
@@ -206,7 +206,7 @@ RotationResultsMetrics compute_results_metrics(const std::vector<RotationResult>
         if (r.collision) {
             coll_count++;
         }
-        if (r.simulation_failed) {
+        if (r.timeout) {
             fail_count++;
         }
     }

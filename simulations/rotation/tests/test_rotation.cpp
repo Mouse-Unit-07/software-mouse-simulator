@@ -122,7 +122,7 @@ TEST(RotationTests, SimulationFailsWhenDtIsZero)
 
     auto r {run_rotation_simulation(test_maze, cfg, M_PI / 2)};
 
-    CHECK(r.simulation_failed);
+    CHECK(r.timeout);
 }
 
 TEST(RotationTests, PositiveAndNegativeAnglesProduceSameAngleAndTranslationError)
@@ -132,8 +132,8 @@ TEST(RotationTests, PositiveAndNegativeAnglesProduceSameAngleAndTranslationError
     auto r1 {run_rotation_simulation(test_maze, cfg,  M_PI / 2)};
     auto r2 {run_rotation_simulation(test_maze, cfg, -M_PI / 2)};
 
-    CHECK_FALSE(r1.simulation_failed);
-    CHECK_FALSE(r2.simulation_failed);
+    CHECK_FALSE(r1.timeout);
+    CHECK_FALSE(r2.timeout);
     CHECK(r1.total_translation == r2.total_translation);
     CHECK(r1.final_angle_error == r2.final_angle_error);
 }
@@ -182,7 +182,7 @@ TEST(RotationTests, NoTranslationAndAngleErrorForPerfectTestVariables)
     /* 1% of a circle, or 3.6 degrees */
     constexpr double ROTATION_TOLERANCE {(2 * M_PI) * 0.01};
 
-    CHECK_FALSE(r.simulation_failed);
+    CHECK_FALSE(r.timeout);
     DOUBLES_EQUAL(0.0, r.final_angle_error, ROTATION_TOLERANCE);
     DOUBLES_EQUAL(0.0, r.total_translation, 0.01);
 }
