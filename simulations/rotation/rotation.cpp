@@ -297,45 +297,6 @@ std::vector<RotationCandidate>get_ranked_pd_candidates(const std::vector<Rotatio
     return candidates;
 }
 
-std::vector<optimizer::SweepConfig> default_pd_sweep_configs()
-{
-    return {
-        {"motor_speed", 120, 220, 5}, // 120, 220, 5 | 100, 100, 1
-        {"motor_speed_scale", 0.9, 1.1, 3}, // 0.9, 1.1, 3 | 1.0, 1.0, 1
-        {"dt", 0.01, 0.5, 3}, // 0.01, 0.5, 3 | 0.001, 0.001, 1
-
-        {"motor1_variance", -0.1, 0.1, 3}, // -0.1, 0.1, 3 | 0.0, 0.0, 1
-        {"motor2_variance", -0.1, 0.1, 3}, // -0.1, 0.1, 3 | 0.0, 0.0, 1
-        {"slip_factor", 0.9, 1.1, 3}, // 0.9, 1.1, 3 | 
-        {"wheel_circumference_scale", 0.95, 1.05, 3}, // 0.95, 1.05, 3 | 1.0, 1.0, 1
-        {"wheel_base_scale", 0.95, 1.05, 3}, // 0.95, 1.05, 3 | 1.0, 1.0, 1
-
-        {"kp", 0, 4000, 21},
-        {"kd", 0, 2000, 21},
-        {"pid_shift", 8, 8, 1}
-    };
-}
-
-std::vector<RotationTrial> run_pd_sweep(const maze::Maze& maze, double target_angle)
-{
-    auto configs {default_pd_sweep_configs()};
-
-    optimizer::SweepCursor cursor(configs);
-    std::vector<RotationTrial> results;
-
-    do {
-        auto vals = cursor.values();
-
-        auto cfg {rotation::build_rotation_config(vals)};
-        auto result {rotation::run_rotation_simulation(maze, cfg, target_angle)};
-
-        results.push_back({vals, result});
-
-    } while (cursor.next());
-
-    return results;
-}
-
 void print_rotation_simulation_results(const std::vector<RotationTrial>& trials)
 {
     auto summary {rotation::analyze_rotation_results(trials)};
@@ -398,18 +359,27 @@ void print_rotation_simulation_results(const std::vector<RotationTrial>& trials)
     }
 }
 
-void run_full_rotation_experiment(double target_angle)
+void run_full_rotation_experiment(double target_angle, std::vector<optimizer::SweepConfig> configs)
 {
+    std::cout << "Running rotation sweep...\n";
+
     std::vector<std::string> ascii {
         "+-+",
         "|S|",
         "+-+"
     };
     maze::Maze small_maze {maze::build_maze_from_ascii(ascii, 0.0)};
-    
-    std::cout << "Running rotation sweep...\n";
+    optimizer::SweepCursor cursor(configs);
+    std::vector<RotationTrial> trials;
 
-    auto trials {run_pd_sweep(small_maze, target_angle)};
+    do {
+        auto config_values = cursor.values();
+        auto cfg {rotation::build_rotation_config(config_values)};
+        auto result {rotation::run_rotation_simulation(small_maze, cfg, target_angle)};
+
+        trials.push_back({config_values, result});
+
+    } while (cursor.next());
 
     std::cout << "Trials: " << trials.size() << "\n";
 

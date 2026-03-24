@@ -86,13 +86,8 @@ std::vector<RotationCandidate> analyze_pd_candidates(const std::vector<RotationT
 void sort_rotation_candidates(std::vector<RotationCandidate>& v);
 std::vector<RotationCandidate>get_ranked_pd_candidates(const std::vector<RotationTrial>& trials);
 
-std::vector<optimizer::SweepConfig> default_pd_sweep_configs(void);
-
-std::vector<RotationTrial> run_pd_sweep(const maze::Maze& maze, double target_angle);
-
 void print_rotation_simulation_results(const std::vector<RotationTrial>& trials);
-
-void run_full_rotation_experiment(double target_angle);
+void run_full_rotation_experiment(double target_angle, std::vector<optimizer::SweepConfig> configs);
 
 } /* rotation namespace */
 

@@ -424,5 +424,21 @@ TEST(RotationTests, GetRankedPdCandidatesOrdersCorrectly)
 
 IGNORE_TEST(RotationTests, RunDefaultSimulationAndPrintResults)
 {
-    rotation::run_full_rotation_experiment(M_PI / 2);
+    std::vector<optimizer::SweepConfig> test_configs {
+        {"motor_speed", 120, 220, 5}, // 120, 220, 5 | 100, 100, 1
+        {"motor_speed_scale", 0.9, 1.1, 3}, // 0.9, 1.1, 3 | 1.0, 1.0, 1
+        {"dt", 0.01, 0.5, 3}, // 0.01, 0.5, 3 | 0.001, 0.001, 1
+
+        {"motor1_variance", -0.1, 0.1, 3}, // -0.1, 0.1, 3 | 0.0, 0.0, 1
+        {"motor2_variance", -0.1, 0.1, 3}, // -0.1, 0.1, 3 | 0.0, 0.0, 1
+        {"slip_factor", 0.9, 1.1, 3}, // 0.9, 1.1, 3 | 
+        {"wheel_circumference_scale", 0.95, 1.05, 3}, // 0.95, 1.05, 3 | 1.0, 1.0, 1
+        {"wheel_base_scale", 0.95, 1.05, 3}, // 0.95, 1.05, 3 | 1.0, 1.0, 1
+
+        {"kp", 0, 4000, 21},
+        {"kd", 0, 2000, 21},
+        {"pid_shift", 8, 8, 1}
+    };
+
+    rotation::run_full_rotation_experiment(M_PI / 2, test_configs);
 }
