@@ -17,6 +17,8 @@
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
+using namespace geometry;
+
 /*============================================================================*/
 /*                             Public Definitions                             */
 /*============================================================================*/
@@ -48,12 +50,12 @@ TEST_GROUP(InteractionsTests)
 /*============================================================================*/
 TEST(InteractionsTests, RayAndHitboxIntersectionDetectable)
 {
-    geometry::Point test_point_a {0.0, 0.0};
-    geometry::Ray test_ray {test_point_a, 0.0};
-    geometry::RectangularHitbox test_hitbox{geometry::Point{5.0, 2.0}, 2.0, 4.0};
+    Point test_point_a {0.0, 0.0};
+    Ray test_ray {test_point_a, 0.0};
+    RectangularHitbox test_hitbox{Point{5.0, 2.0}, 2.0, 4.0};
 
     for (int i = 0; i < 360; i++) {
-        auto distance = geometry::compute_ray_hitbox_distance(test_ray, test_hitbox);
+        auto distance = compute_ray_hitbox_distance(test_ray, test_hitbox);
 
         if (i <= 45) {
             CHECK(distance.has_value());
@@ -67,11 +69,11 @@ TEST(InteractionsTests, RayAndHitboxIntersectionDetectable)
 
 TEST(InteractionsTests, RayAndHitboxDistanceComputable)
 {
-    geometry::Point test_point_a {0.0, 0.0};
-    geometry::Ray test_ray {test_point_a, 0.0};
-    geometry::RectangularHitbox test_hitbox{geometry::Point{5.0, 2.0}, 2.0, 4.0};
+    Point test_point_a {0.0, 0.0};
+    Ray test_ray {test_point_a, 0.0};
+    RectangularHitbox test_hitbox{Point{5.0, 2.0}, 2.0, 4.0};
 
-    auto distance = geometry::compute_ray_hitbox_distance(test_ray, test_hitbox);
+    auto distance = compute_ray_hitbox_distance(test_ray, test_hitbox);
     CHECK(distance.has_value());
     
     double d = *distance;
@@ -80,12 +82,12 @@ TEST(InteractionsTests, RayAndHitboxDistanceComputable)
 
 TEST(InteractionsTests, RayAndHitboxDistanceComputableAfterTranslation)
 {
-    geometry::Point test_point_a {0.0, 0.0};
-    geometry::Ray test_ray {test_point_a, 0.0};
-    geometry::RectangularHitbox test_hitbox{geometry::Point{5.0, 2.0}, 2.0, 4.0};
+    Point test_point_a {0.0, 0.0};
+    Ray test_ray {test_point_a, 0.0};
+    RectangularHitbox test_hitbox{Point{5.0, 2.0}, 2.0, 4.0};
 
     test_ray.translate(1.0, 2.0);
-    auto distance = geometry::compute_ray_hitbox_distance(test_ray, test_hitbox);
+    auto distance = compute_ray_hitbox_distance(test_ray, test_hitbox);
     
     
     double d = *distance;
@@ -94,12 +96,12 @@ TEST(InteractionsTests, RayAndHitboxDistanceComputableAfterTranslation)
 
 TEST(InteractionsTests, RayAndHitboxDistanceComputableAfterRotation)
 {
-    geometry::Point test_point_a {1.0, 0.0};
-    geometry::Ray test_ray {test_point_a, 0.0};
-    geometry::RectangularHitbox test_hitbox{geometry::Point{-5.0, 2.0}, 2.0, 4.0};
+    Point test_point_a {1.0, 0.0};
+    Ray test_ray {test_point_a, 0.0};
+    RectangularHitbox test_hitbox{Point{-5.0, 2.0}, 2.0, 4.0};
 
     test_ray.rotate(test_point_a, M_PI);
-    auto distance = geometry::compute_ray_hitbox_distance(test_ray, test_hitbox);
+    auto distance = compute_ray_hitbox_distance(test_ray, test_hitbox);
     
     
     double d = *distance;
@@ -108,9 +110,9 @@ TEST(InteractionsTests, RayAndHitboxDistanceComputableAfterRotation)
 
 TEST(InteractionsTests, HitboxCollisionDetectable)
 {
-    geometry::RectangularHitbox test_hitbox_1 {geometry::Point{0.0, 0.0}, 1.0, 1.0};
-    geometry::RectangularHitbox test_hitbox_2 {geometry::Point{0.0, 0.0}, 1.0, 1.0};
-    geometry::RectangularHitbox test_hitbox_3 {geometry::Point{0.0, 0.0}, 1.0, 1.0};
+    RectangularHitbox test_hitbox_1 {Point{0.0, 0.0}, 1.0, 1.0};
+    RectangularHitbox test_hitbox_2 {Point{0.0, 0.0}, 1.0, 1.0};
+    RectangularHitbox test_hitbox_3 {Point{0.0, 0.0}, 1.0, 1.0};
 
     test_hitbox_2.translate(1.0, 1.0);
     test_hitbox_3.rotate(test_hitbox_3.center, M_PI / 4);

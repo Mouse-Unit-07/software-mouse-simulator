@@ -52,7 +52,7 @@ std::optional<std::pair<int, int>> get_cell_from_point(const Maze& maze, const g
 std::optional<double> compute_ray_distance_in_vicinity(const Maze& maze, const geometry::Ray& ray,
         int row, int col);
 
-bool does_hitbox_collide_in_vicinity(const maze::Maze& maze, const geometry::RectangularHitbox& hitbox,
+bool does_hitbox_collide_in_vicinity(const Maze& maze, const geometry::RectangularHitbox& hitbox,
         int row, int col);
 
 } /* maze namespace */

@@ -22,7 +22,9 @@ extern "C"
 namespace
 {
 
-bool check_point_equality(const geometry::Point& p1, const geometry::Point& p2);
+using namespace geometry;
+
+bool check_point_equality(const Point& p1, const Point& p2);
 
 } /* unnamed namespace */
 
@@ -89,7 +91,9 @@ bool Point::operator!=(const Point& other) const noexcept
 namespace
 {
 
-bool check_point_equality(const geometry::Point& p1, const geometry::Point& p2)
+using namespace geometry;
+
+bool check_point_equality(const Point& p1, const Point& p2)
 {
     constexpr double tolerance {1e-6};
 

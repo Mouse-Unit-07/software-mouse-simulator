@@ -14,19 +14,21 @@
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
+using namespace geometry;
+
 /*============================================================================*/
 /*                             Public Definitions                             */
 /*============================================================================*/
-geometry::Point test_origin {0.0, 0.0}; /* arbitrary coordinates */
+Point test_origin {0.0, 0.0}; /* arbitrary coordinates */
 double test_angle {M_PI / 4}; /* arbitrary angle */
-geometry::Point test_direction {std::cos(test_angle), std::sin(test_angle)};
-geometry::Ray test_ray {test_origin, test_angle};
+Point test_direction {std::cos(test_angle), std::sin(test_angle)};
+Ray test_ray {test_origin, test_angle};
 
 void initialize_test_variables(void)
 {
-    test_origin = geometry::Point{0.0, 0.0}; /* arbitrary coordinates */
-    test_direction = geometry::Point{std::cos(test_angle), std::sin(test_angle)};
-    test_ray = geometry::Ray{test_origin, test_angle};
+    test_origin = Point{0.0, 0.0}; /* arbitrary coordinates */
+    test_direction = Point{std::cos(test_angle), std::sin(test_angle)};
+    test_ray = Ray{test_origin, test_angle};
 }
 
 /*============================================================================*/
@@ -71,7 +73,7 @@ TEST(RayTests, TranslateModifiesOrigin)
 
 TEST(RayTests, RotateModifiesOrigin)
 {
-    geometry::Point center {5.0, 6.0};
+    Point center {5.0, 6.0};
     double angle {M_PI / 2}; /* 90 deg counter clockwise */
     test_ray.rotate(center, angle);
     test_origin.rotate(center, angle);
@@ -91,10 +93,10 @@ TEST(RayTests, TranslateDoesNotModifyDirection)
 
 TEST(RayTests, RotateModifiesDirectionAboutOrigin)
 {
-    geometry::Point center {5.0, 6.0};
+    Point center {5.0, 6.0};
     double angle {M_PI / 2}; /* 90 deg counter clockwise */
     test_ray.rotate(center, angle);
-    test_direction.rotate(geometry::Point{0.0, 0.0}, angle);
+    test_direction.rotate(Point{0.0, 0.0}, angle);
 
     CHECK(test_ray.direction == test_direction);
 }
@@ -102,14 +104,14 @@ TEST(RayTests, RotateModifiesDirectionAboutOrigin)
 
 TEST(RayTests, EqualityOperatorOverloaded)
 {
-    geometry::Ray test_ray_2{test_origin, test_angle};
+    Ray test_ray_2{test_origin, test_angle};
 
     CHECK(test_ray == test_ray_2);
 }
 
 TEST(RayTests, InequalityOperatorOverloaded)
 {
-    geometry::Ray test_ray_2{geometry::Point{1.0, 1.0}, test_angle};
+    Ray test_ray_2{Point{1.0, 1.0}, test_angle};
 
     CHECK(test_ray != test_ray_2);
 }

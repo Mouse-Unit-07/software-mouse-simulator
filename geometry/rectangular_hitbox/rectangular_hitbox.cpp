@@ -23,7 +23,9 @@ extern "C"
 namespace
 {
 
-bool check_hitbox_equality(const geometry::RectangularHitbox& h1, const geometry::RectangularHitbox& h2);
+using namespace geometry;
+
+bool check_hitbox_equality(const RectangularHitbox& h1, const RectangularHitbox& h2);
 double normalize_angle(double angle);
 
 } /* unnamed namespace */
@@ -86,9 +88,11 @@ bool RectangularHitbox::operator!=(const RectangularHitbox& other) const noexcep
 namespace
 {
 
+using namespace geometry;
+
 constexpr double FLOAT_TOLERANCE {1e-6};
 
-bool check_hitbox_equality(const geometry::RectangularHitbox& h1, const geometry::RectangularHitbox& h2)
+bool check_hitbox_equality(const RectangularHitbox& h1, const RectangularHitbox& h2)
 {
     return (std::abs(h1.horizontal_size - h2.horizontal_size) <= FLOAT_TOLERANCE)
         && (std::abs(h1.vertical_size - h2.vertical_size) <= FLOAT_TOLERANCE)

@@ -14,28 +14,30 @@
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
+using namespace geometry;
+
 /*============================================================================*/
 /*                             Public Definitions                             */
 /*============================================================================*/
-geometry::Point test_center {0.0, 0.0}; /* arbitrary center */
+Point test_center {0.0, 0.0}; /* arbitrary center */
 double test_horizontal_size {10.0}; /* arbitrary size */
 double test_vertical_size {10.0}; /* arbitrary size */
-geometry::RectangularHitbox test_hitbox {test_center, test_horizontal_size, test_vertical_size};
-geometry::Point test_top_right {test_center.x + (test_horizontal_size / 2), test_center.y + (test_vertical_size / 2)};
-geometry::Point test_top_left {test_center.x - (test_horizontal_size / 2), test_center.y + (test_vertical_size / 2)};
-geometry::Point test_bottom_left {test_center.x - (test_horizontal_size / 2), test_center.y - (test_vertical_size / 2)};
-geometry::Point test_bottom_right {test_center.x + (test_horizontal_size / 2), test_center.y - (test_vertical_size / 2)};
+RectangularHitbox test_hitbox {test_center, test_horizontal_size, test_vertical_size};
+Point test_top_right {test_center.x + (test_horizontal_size / 2), test_center.y + (test_vertical_size / 2)};
+Point test_top_left {test_center.x - (test_horizontal_size / 2), test_center.y + (test_vertical_size / 2)};
+Point test_bottom_left {test_center.x - (test_horizontal_size / 2), test_center.y - (test_vertical_size / 2)};
+Point test_bottom_right {test_center.x + (test_horizontal_size / 2), test_center.y - (test_vertical_size / 2)};
 
 void initialize_test_variables(void)
 {
-    test_center = geometry::Point{0.0, 0.0};
+    test_center = Point{0.0, 0.0};
     test_horizontal_size = 10.0;
     test_vertical_size = 10.0;
-    test_hitbox = geometry::RectangularHitbox{test_center, test_horizontal_size, test_vertical_size};
-    test_top_right = geometry::Point{test_center.x + (test_horizontal_size / 2), test_center.y + (test_vertical_size / 2)};
-    test_top_left = geometry::Point{test_center.x - (test_horizontal_size / 2), test_center.y + (test_vertical_size / 2)};
-    test_bottom_left = geometry::Point{test_center.x - (test_horizontal_size / 2), test_center.y - (test_vertical_size / 2)};
-    test_bottom_right = geometry::Point{test_center.x + (test_horizontal_size / 2), test_center.y - (test_vertical_size / 2)};
+    test_hitbox = RectangularHitbox{test_center, test_horizontal_size, test_vertical_size};
+    test_top_right = Point{test_center.x + (test_horizontal_size / 2), test_center.y + (test_vertical_size / 2)};
+    test_top_left = Point{test_center.x - (test_horizontal_size / 2), test_center.y + (test_vertical_size / 2)};
+    test_bottom_left = Point{test_center.x - (test_horizontal_size / 2), test_center.y - (test_vertical_size / 2)};
+    test_bottom_right = Point{test_center.x + (test_horizontal_size / 2), test_center.y - (test_vertical_size / 2)};
 }
 
 /*============================================================================*/
@@ -93,7 +95,7 @@ TEST(RectangularHitboxTests, TranslateModifiesPoints)
 
 TEST(RectangularHitboxTests, RotateModifiesPoints)
 {
-    geometry::Point test_rotation_center {10.0, 10.0}; /* arbitrary center */
+    Point test_rotation_center {10.0, 10.0}; /* arbitrary center */
     double test_angle {M_PI / 2}; /* arbitrary rotation (90 deg counter clockwise) */
     test_center.rotate(test_rotation_center, test_angle);
     test_top_right.rotate(test_rotation_center, test_angle);
@@ -131,14 +133,14 @@ TEST(RectangularHitboxTests, RotateModifiesAngle)
 
 TEST(RectangularHitboxTests, EqualityOperatorOverloaded)
 {
-    geometry::RectangularHitbox test_hitbox_2 {test_center, test_horizontal_size, test_vertical_size};
+    RectangularHitbox test_hitbox_2 {test_center, test_horizontal_size, test_vertical_size};
 
     CHECK(test_hitbox_2 == test_hitbox);
 }
 
 TEST(RectangularHitboxTests, InequalityOperatorOverloaded)
 {
-    geometry::RectangularHitbox test_hitbox_2 {geometry::Point{1.0, 1.0}, test_horizontal_size, test_vertical_size};
+    RectangularHitbox test_hitbox_2 {Point{1.0, 1.0}, test_horizontal_size, test_vertical_size};
 
     CHECK(test_hitbox_2 != test_hitbox);
 }

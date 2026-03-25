@@ -26,20 +26,22 @@ extern "C"
 namespace
 {
 
-std::optional<double> ray_segment_distance(const geometry::Ray& ray, 
-        const geometry::Point& a, const geometry::Point& b);
+using namespace geometry;
 
-double compute_dot_product(const geometry::Point& a, const geometry::Point& b);
+std::optional<double> ray_segment_distance(const Ray& ray, 
+        const Point& a, const Point& b);
 
-geometry::Point compute_vector_between_points(const geometry::Point& a, const geometry::Point& b);
+double compute_dot_product(const Point& a, const Point& b);
 
-geometry::Point compute_perpendicular_vector(const geometry::Point& e);
+Point compute_vector_between_points(const Point& a, const Point& b);
 
-void project_hitbox_onto_axis(const geometry::RectangularHitbox& box,
-        const geometry::Point& axis, double& min, double& max);
+Point compute_perpendicular_vector(const Point& e);
 
-bool are_hitboxes_separated_on_axis(const geometry::RectangularHitbox& a,
-        const geometry::RectangularHitbox& b, const geometry::Point& axis);
+void project_hitbox_onto_axis(const RectangularHitbox& box,
+        const Point& axis, double& min, double& max);
+
+bool are_hitboxes_separated_on_axis(const RectangularHitbox& a,
+        const RectangularHitbox& b, const Point& axis);
 
 } /* unnamed namespace */
 
@@ -105,8 +107,10 @@ bool do_hitboxes_overlap(const RectangularHitbox& a, const RectangularHitbox& b)
 namespace
 {
 
-std::optional<double> ray_segment_distance(const geometry::Ray& ray, 
-        const geometry::Point& a, const geometry::Point& b)
+using namespace geometry;
+
+std::optional<double> ray_segment_distance(const Ray& ray, 
+        const Point& a, const Point& b)
 {
     double rdx {ray.direction.x};
     double rdy {ray.direction.y};
@@ -133,25 +137,25 @@ std::optional<double> ray_segment_distance(const geometry::Ray& ray,
     return std::nullopt;
 }
 
-double compute_dot_product(const geometry::Point& a, const geometry::Point& b)
+double compute_dot_product(const Point& a, const Point& b)
 {
     return (a.x * b.x) + (a.y * b.y);
 }
 
-geometry::Point compute_vector_between_points(const geometry::Point& a, const geometry::Point& b)
+Point compute_vector_between_points(const Point& a, const Point& b)
 {
     return {b.x - a.x, b.y - a.y};
 }
 
-geometry::Point compute_perpendicular_vector(const geometry::Point& e)
+Point compute_perpendicular_vector(const Point& e)
 {
     return {-e.y, e.x};
 }
 
-void project_hitbox_onto_axis(const geometry::RectangularHitbox& box,
-        const geometry::Point& axis, double& min, double& max)
+void project_hitbox_onto_axis(const RectangularHitbox& box,
+        const Point& axis, double& min, double& max)
 {
-    const geometry::Point* pts[4]
+    const Point* pts[4]
     {
         &box.top_right,
         &box.top_left,
@@ -168,8 +172,8 @@ void project_hitbox_onto_axis(const geometry::RectangularHitbox& box,
     }
 }
 
-bool are_hitboxes_separated_on_axis(const geometry::RectangularHitbox& a,
-        const geometry::RectangularHitbox& b, const geometry::Point& axis)
+bool are_hitboxes_separated_on_axis(const RectangularHitbox& a,
+        const RectangularHitbox& b, const Point& axis)
 {
     double minA, maxA;
     double minB, maxB;

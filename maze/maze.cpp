@@ -29,17 +29,19 @@ extern "C"
 namespace
 {
 
+using namespace maze;
+
 geometry::RectangularHitbox create_post(const geometry::Point& center, double size_adjustment);
 geometry::RectangularHitbox create_vertical_wall(const geometry::Point& center, double size_adjustment);
 geometry::RectangularHitbox create_horizontal_wall(const geometry::Point& center, double size_adjustment);
 
 geometry::Point ascii_to_world(int r, int c, double size_adjustment);
-void attach_to_cell(maze::Maze& maze, size_t obstacle_index, int row, int col);
-void attach_vertical_wall_cells(maze::Maze& maze, size_t obstacle_index, int r, int c);
-void attach_horizontal_wall_cells(maze::Maze& maze, size_t obstacle_index, int r, int c);
-void attach_post_cells(maze::Maze& maze, size_t obstacle_index, int r, int c);
+void attach_to_cell(Maze& maze, size_t obstacle_index, int row, int col);
+void attach_vertical_wall_cells(Maze& maze, size_t obstacle_index, int r, int c);
+void attach_horizontal_wall_cells(Maze& maze, size_t obstacle_index, int r, int c);
+void attach_post_cells(Maze& maze, size_t obstacle_index, int r, int c);
 
-std::optional<double> compute_ray_distance_in_cell(const maze::Maze& maze, const geometry::Ray& ray,
+std::optional<double> compute_ray_distance_in_cell(const Maze& maze, const geometry::Ray& ray,
         int row, int col);
 
 } /* unnamed namespace */
@@ -153,7 +155,7 @@ std::optional<double> compute_ray_distance_in_vicinity(const Maze& maze, const g
     return closest;
 }
 
-bool does_hitbox_collide_in_vicinity(const maze::Maze& maze, const geometry::RectangularHitbox& hitbox,
+bool does_hitbox_collide_in_vicinity(const Maze& maze, const geometry::RectangularHitbox& hitbox,
         int row, int col)
 {
     for (int dr {-1}; dr <= 1; dr++) {
@@ -192,8 +194,8 @@ geometry::RectangularHitbox create_post(const geometry::Point& center, double si
 {
     return geometry::RectangularHitbox{
         center,
-        maze::OFFICIAL_POST_SIZE + size_adjustment,
-        maze::OFFICIAL_POST_SIZE + size_adjustment
+        OFFICIAL_POST_SIZE + size_adjustment,
+        OFFICIAL_POST_SIZE + size_adjustment
     };
 }
 
@@ -201,8 +203,8 @@ geometry::RectangularHitbox create_vertical_wall(const geometry::Point& center, 
 {
     return geometry::RectangularHitbox{
         center,
-        maze::OFFICIAL_WALL_WIDTH_SIZE + size_adjustment,
-        maze::OFFICIAL_WALL_LENGTH_SIZE + size_adjustment
+        OFFICIAL_WALL_WIDTH_SIZE + size_adjustment,
+        OFFICIAL_WALL_LENGTH_SIZE + size_adjustment
     };
 }
 
@@ -210,15 +212,15 @@ geometry::RectangularHitbox create_horizontal_wall(const geometry::Point& center
 {
     return geometry::RectangularHitbox{
         center,
-        maze::OFFICIAL_WALL_LENGTH_SIZE + size_adjustment,
-        maze::OFFICIAL_WALL_WIDTH_SIZE + size_adjustment
+        OFFICIAL_WALL_LENGTH_SIZE + size_adjustment,
+        OFFICIAL_WALL_WIDTH_SIZE + size_adjustment
     };
 }
 
 geometry::Point ascii_to_world(int r, int c, double size_adjustment)
 {
-    double post {maze::OFFICIAL_POST_SIZE + size_adjustment};
-    double wall {maze::OFFICIAL_WALL_LENGTH_SIZE + size_adjustment};
+    double post {OFFICIAL_POST_SIZE + size_adjustment};
+    double wall {OFFICIAL_WALL_LENGTH_SIZE + size_adjustment};
 
     double pitch {post + wall};
 
@@ -236,7 +238,7 @@ geometry::Point ascii_to_world(int r, int c, double size_adjustment)
     return {x, y};
 }
 
-void attach_to_cell(maze::Maze& maze, size_t obstacle_index, int row, int col)
+void attach_to_cell(Maze& maze, size_t obstacle_index, int row, int col)
 {
     if (((row < 0) || (row >= maze.rows)) || ((col < 0) || (col >= maze.cols))) {
         return;
@@ -246,7 +248,7 @@ void attach_to_cell(maze::Maze& maze, size_t obstacle_index, int row, int col)
         .obstacles.push_back(obstacle_index);
 }
 
-void attach_vertical_wall_cells(maze::Maze& maze, size_t obstacle_index, int r, int c)
+void attach_vertical_wall_cells(Maze& maze, size_t obstacle_index, int r, int c)
 {
     int cell_r {r / 2};
     int left_cell {(c / 2) - 1};
@@ -256,7 +258,7 @@ void attach_vertical_wall_cells(maze::Maze& maze, size_t obstacle_index, int r, 
     attach_to_cell(maze, obstacle_index, cell_r, right_cell);
 }
 
-void attach_horizontal_wall_cells(maze::Maze& maze, size_t obstacle_index, int r, int c)
+void attach_horizontal_wall_cells(Maze& maze, size_t obstacle_index, int r, int c)
 {
     int cell_c {c / 2};
     int bottom_cell {(r / 2) - 1};
@@ -266,7 +268,7 @@ void attach_horizontal_wall_cells(maze::Maze& maze, size_t obstacle_index, int r
     attach_to_cell(maze, obstacle_index, top_cell, cell_c);
 }
 
-void attach_post_cells(maze::Maze& maze, size_t obstacle_index, int r, int c)
+void attach_post_cells(Maze& maze, size_t obstacle_index, int r, int c)
 {
     int base_r {(r / 2) - 1};
     int base_c {(c / 2) - 1};
@@ -277,7 +279,7 @@ void attach_post_cells(maze::Maze& maze, size_t obstacle_index, int r, int c)
     attach_to_cell(maze, obstacle_index, base_r + 1, base_c + 1);
 }
 
-std::optional<double> compute_ray_distance_in_cell(const maze::Maze& maze, const geometry::Ray& ray,
+std::optional<double> compute_ray_distance_in_cell(const Maze& maze, const geometry::Ray& ray,
         int row, int col)
 {
     if (((row < 0) || (row >= maze.rows)) || ((col < 0) || (col >= maze.cols))) {

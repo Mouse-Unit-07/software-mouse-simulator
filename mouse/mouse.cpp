@@ -25,7 +25,9 @@ extern "C"
 namespace
 {
 
-bool check_mouse_equality(const mouse::Mouse& m1, const mouse::Mouse& m2);
+using namespace mouse;
+
+bool check_mouse_equality(const Mouse& m1, const Mouse& m2);
 
 } /* unnamed namespace */
 
@@ -102,7 +104,9 @@ bool Mouse::operator!=(const Mouse& other) const noexcept
 namespace
 {
 
-bool check_mouse_equality(const mouse::Mouse& m1, const mouse::Mouse& m2)
+using namespace mouse;
+
+bool check_mouse_equality(const Mouse& m1, const Mouse& m2)
 {
     return (m1.hitbox == m2.hitbox)
         && (m1.ir_1_sensor == m2.ir_1_sensor)

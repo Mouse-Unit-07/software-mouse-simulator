@@ -23,7 +23,9 @@ extern "C"
 namespace
 {
 
-bool check_ray_inequality(const geometry::Ray& r1, const geometry::Ray& r2);
+using namespace geometry;
+
+bool check_ray_inequality(const Ray& r1, const Ray& r2);
 
 } /* unnamed namespace */
 
@@ -76,7 +78,9 @@ bool Ray::operator!=(const Ray& other) const noexcept
 namespace
 {
 
-bool check_ray_inequality(const geometry::Ray& r1, const geometry::Ray& r2)
+using namespace geometry;
+
+bool check_ray_inequality(const Ray& r1, const Ray& r2)
 {
     return (r1.origin == r2.origin) && (r1.direction == r2.direction);
 }
