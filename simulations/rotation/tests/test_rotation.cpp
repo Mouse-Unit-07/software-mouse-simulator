@@ -34,14 +34,12 @@ extern "C"
 #include "rectangular_hitbox.hpp"
 #include "mouse.hpp"
 #include "maze.hpp"
-#include "optimizer.hpp"
+#include "simulation_common.hpp"
 #include "rotation.hpp"
 
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
-using namespace maze;
-using namespace optimizer;
 using namespace rotation;
 
 /*============================================================================*/
@@ -54,7 +52,7 @@ std::vector<std::string> ascii {
     "|S|",
     "+-+"
 };
-Maze test_maze {build_maze_from_ascii(ascii, 0.0)};
+maze::Maze test_maze {maze::build_maze_from_ascii(ascii, 0.0)};
 
 Config make_params(int kp, int kd, int shift, uint8_t motor_speed = 0)
 {
@@ -159,7 +157,7 @@ TEST(RotationTests, SimulationCanDetectCollision)
         "+-+-+"
     };
 
-    Maze maze {build_maze_from_ascii(ascii, 0.0)};
+    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0.0)};
 
     Config cfg {255, 1.0, 0.01, -1, 0, 1, 1, 1, 0, 0, 0};
 
@@ -175,7 +173,7 @@ TEST(RotationTests, NoTranslationAndAngleErrorForPerfectTestVariables)
         "|S|",
         "+-+"
     };
-    Maze maze {build_maze_from_ascii(ascii, 0.0)};
+    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0.0)};
 
     /* slow movement, tiny dt, and no motor variances */
     Config cfg {100,1.0,0.001, 0,0, 1,1,1, 0,0,0};
@@ -298,7 +296,7 @@ TEST(RotationTests, BuildCandidatesGroupsAndComputesStats)
 
 TEST(RotationTests, RunMinimalSampleSimulation)
 {
-    std::vector<optimizer::SweepConfig> test_configs {
+    std::vector<simulation_common::SweepConfig> test_configs {
         {"motor_speed", 100, 100, 1},
         {"motor_speed_scale", 1.0, 1.0, 1},
         {"dt", 0.001, 0.001, 1},
@@ -469,7 +467,7 @@ TEST(RotationTests, WriteCandidatesFormatsStatsCorrectly)
 
 IGNORE_TEST(RotationTests, RunFullSimulationAndWriteResultsToFile)
 {
-    std::vector<optimizer::SweepConfig> test_configs {
+    std::vector<simulation_common::SweepConfig> test_configs {
         {"motor_speed", 120, 220, 5},
         {"motor_speed_scale", 0.9, 1.1, 3},
         {"dt", 0.01, 0.5, 3},
@@ -485,5 +483,5 @@ IGNORE_TEST(RotationTests, RunFullSimulationAndWriteResultsToFile)
         {"pid_shift", 8, 8, 1}
     };
 
-    rotation::run_full_rotation_experiment("test_full_output.txt", M_PI / 2, test_configs);
+    run_full_rotation_experiment("test_full_output.txt", M_PI / 2, test_configs);
 }

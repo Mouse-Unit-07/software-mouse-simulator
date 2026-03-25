@@ -25,6 +25,8 @@
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
+using namespace visualizer;
+
 /*============================================================================*/
 /*                             Public Definitions                             */
 /*============================================================================*/
@@ -61,7 +63,7 @@ TEST_GROUP(VisualizerTests)
 /*============================================================================*/
 IGNORE_TEST(VisualizerTests, DrawEmptyMaze)
 {
-    visualizer::Visualizer visualizer;
+    Visualizer visualizer;
     maze::Maze maze;
     maze.rows = 4;
     maze.cols = 4;
@@ -72,7 +74,7 @@ IGNORE_TEST(VisualizerTests, DrawEmptyMaze)
 
 IGNORE_TEST(VisualizerTests, DrawMazeWithObstacles)
 {
-    visualizer::Visualizer visualizer;
+    Visualizer visualizer;
     std::vector<std::string> ascii
     {
         "+-+ +",
@@ -89,7 +91,7 @@ IGNORE_TEST(VisualizerTests, DrawMazeWithObstacles)
 
 IGNORE_TEST(VisualizerTests, DrawFullMaze)
 {
-    visualizer::Visualizer visualizer;
+    Visualizer visualizer;
     std::vector<std::string> ascii
     {
         "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+",
@@ -132,7 +134,7 @@ IGNORE_TEST(VisualizerTests, DrawFullMaze)
 
 IGNORE_TEST(VisualizerTests, DrawMouseOnMaze)
 {
-    visualizer::Visualizer visualizer;
+    Visualizer visualizer;
     std::vector<std::string> ascii
     {
         "+-+ +",
@@ -152,7 +154,7 @@ IGNORE_TEST(VisualizerTests, DrawMouseOnMaze)
 
 IGNORE_TEST(VisualizerTests, DrawMouseSensorBeams)
 {
-    visualizer::Visualizer visualizer;
+    Visualizer visualizer;
     std::vector<std::string> ascii
     {
         "+-+ +",
