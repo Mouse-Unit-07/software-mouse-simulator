@@ -1,17 +1,16 @@
 /*-------------------------------- FILE INFO ---------------------------------*/
-/* Filename           : optimizer.hpp                                         */
+/* Filename           : simulation_common.hpp                                 */
 /*                                                                            */
-/* Interface to functions to run micromouse simulation variable sweeper and   */
-/* analysis helpers                                                           */
+/* Interface to common micromouse simulation utilities                        */
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
-#ifndef OPTIMIZER_HPP_
-#define OPTIMIZER_HPP_
+#ifndef SIMULATION_COMMON_HPP_
+#define SIMULATION_COMMON_HPP_
 
 /*----------------------------------------------------------------------------*/
 /*                             Public Definitions                             */
 /*----------------------------------------------------------------------------*/
-namespace optimizer
+namespace simulation_common
 {
 
 struct SweepConfig
@@ -89,16 +88,16 @@ double compute_rate(const Trials& trials, Pred pred)
     return static_cast<double>(count) / trials.size();
 }
 
-} /* optimizer namespace */
+} /* simulation_common namespace */
 
 /*----------------------------------------------------------------------------*/
 /*                             Public Declarations                            */
 /*----------------------------------------------------------------------------*/
-namespace optimizer
+namespace simulation_common
 {
 
 MetricStats compute_stats(const std::vector<double>& data);
 
-} /* optimizer namespace */
+} /* simulation_common namespace */
 
-#endif /* OPTIMIZER_HPP_ */
+#endif /* SIMULATION_COMMON_HPP_ */

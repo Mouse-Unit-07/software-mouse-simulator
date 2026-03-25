@@ -49,9 +49,9 @@ struct Trial
 
 struct ResultsMetrics
 {
-    optimizer::MetricStats time_stats;
-    optimizer::MetricStats angle_error_stats;
-    optimizer::MetricStats translation_stats;
+    simulation_common::MetricStats time_stats;
+    simulation_common::MetricStats angle_error_stats;
+    simulation_common::MetricStats translation_stats;
     double collision_rate {0.0};
     double timeout_rate {0.0};
 };
@@ -92,7 +92,7 @@ std::vector<Candidate> compute_pareto_front(const std::vector<Candidate>& candid
 void write_analysis_to_file(const std::string& filename, const std::vector<Candidate>& all_candidates,
         const std::vector<Candidate>& pareto_front, const ResultsMetrics& overall_metrics, size_t total_size);
 void run_full_rotation_experiment(const std::string& filename, double target_angle,
-        std::vector<optimizer::SweepConfig> configs);
+        std::vector<simulation_common::SweepConfig> configs);
 
 } /* rotation namespace */
 

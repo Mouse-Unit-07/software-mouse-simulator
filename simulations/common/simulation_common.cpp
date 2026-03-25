@@ -1,8 +1,7 @@
 /*-------------------------------- FILE INFO ---------------------------------*/
-/* Filename           : optimizer.cpp                                         */
+/* Filename           : simulation_common.cpp                                 */
 /*                                                                            */
-/* Implementation for micromouse simulation variable sweeper and analysis     */
-/* helpers                                                                    */
+/* Implementation for common micromouse simulation utilities                  */
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
 
@@ -14,7 +13,7 @@
 #include <string>
 #include <functional>
 #include <algorithm>
-#include "optimizer.hpp"
+#include "simulation_common.hpp"
 
 /*----------------------------------------------------------------------------*/
 /*                            Private Declarations                            */
@@ -29,7 +28,7 @@
 /*----------------------------------------------------------------------------*/
 /*                             Public Definitions                             */
 /*----------------------------------------------------------------------------*/
-namespace optimizer
+namespace simulation_common
 {
 
 SweepCursor::SweepCursor(const std::vector<SweepConfig>& configs)
@@ -115,7 +114,7 @@ MetricStats compute_stats(const std::vector<double>& data)
     return s;
 }
 
-} /* optimizer namespace */
+} /* simulation_common namespace */
 
 /*----------------------------------------------------------------------------*/
 /*                             Private Definitions                            */

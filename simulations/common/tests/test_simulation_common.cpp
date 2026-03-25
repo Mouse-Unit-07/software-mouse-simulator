@@ -1,7 +1,7 @@
 /*================================ FILE INFO =================================*/
-/* Filename           : test_optimizer.cpp                                    */
+/* Filename           : test_simulation_common.cpp                            */
 /*                                                                            */
-/* Test implementation for optimizer.cpp                                      */
+/* Test implementation for simulation_common.cpp                              */
 /*                                                                            */
 /*============================================================================*/
 
@@ -13,12 +13,12 @@
 #include <string>
 #include <functional>
 #include <algorithm>
-#include "optimizer.hpp"
+#include "simulation_common.hpp"
 
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
-using namespace optimizer;
+using namespace simulation_common;
 
 /*============================================================================*/
 /*                             Public Definitions                             */
@@ -33,7 +33,7 @@ constexpr double FLOAT_TOLERANCE {1e-6};
 /*============================================================================*/
 /*                                 Test Group                                 */
 /*============================================================================*/
-TEST_GROUP(OptimizerTests)
+TEST_GROUP(CommonTests)
 {
     void setup() override
     {
@@ -49,7 +49,7 @@ TEST_GROUP(OptimizerTests)
 /*============================================================================*/
 /*                                    Tests                                   */
 /*============================================================================*/
-TEST(OptimizerTests, SweepGeneratesCorrectNumberOfCombinations)
+TEST(CommonTests, SweepGeneratesCorrectNumberOfCombinations)
 {
     std::vector<SweepConfig> configs
     {
@@ -66,7 +66,7 @@ TEST(OptimizerTests, SweepGeneratesCorrectNumberOfCombinations)
     CHECK_EQUAL(6, results.size()); // 2 * 3
 }
 
-TEST(OptimizerTests, SweepSingleStepProducesSingleCombination)
+TEST(CommonTests, SweepSingleStepProducesSingleCombination)
 {
     std::vector<SweepConfig> configs
     {
@@ -83,7 +83,7 @@ TEST(OptimizerTests, SweepSingleStepProducesSingleCombination)
     CHECK_EQUAL(1, results.size());
 }
 
-TEST(OptimizerTests, SweepValuesAreInterpolatedCorrectly)
+TEST(CommonTests, SweepValuesAreInterpolatedCorrectly)
 {
     std::vector<SweepConfig> configs
     {
@@ -103,7 +103,7 @@ TEST(OptimizerTests, SweepValuesAreInterpolatedCorrectly)
     DOUBLES_EQUAL(10.0, v2[0], FLOAT_TOLERANCE);
 }
 
-TEST(OptimizerTests, SweepPassesCorrectValuesToSimFn)
+TEST(CommonTests, SweepPassesCorrectValuesToSimFn)
 {
     std::vector<SweepConfig> configs
     {
@@ -124,7 +124,7 @@ TEST(OptimizerTests, SweepPassesCorrectValuesToSimFn)
     CHECK(captured[1] == 2.0);
 }
 
-TEST(OptimizerTests, ComputeStatsBasic)
+TEST(CommonTests, ComputeStatsBasic)
 {
     std::vector<double> data {10.0, 20.0, 30.0};
 
@@ -138,7 +138,7 @@ TEST(OptimizerTests, ComputeStatsBasic)
     DOUBLES_EQUAL(expected_stddev, s.stddev, FLOAT_TOLERANCE);
 }
 
-TEST(OptimizerTests, ComputeStatsEmpty)
+TEST(CommonTests, ComputeStatsEmpty)
 {
     std::vector<double> data;
 
@@ -148,7 +148,7 @@ TEST(OptimizerTests, ComputeStatsEmpty)
     DOUBLES_EQUAL(0.0, s.stddev, FLOAT_TOLERANCE);
 }
 
-TEST(OptimizerTests, ExtractMetricWorks)
+TEST(CommonTests, ExtractMetricWorks)
 {
     std::vector<std::pair<int, double>> trials
     {
@@ -165,7 +165,7 @@ TEST(OptimizerTests, ExtractMetricWorks)
     DOUBLES_EQUAL(30.0, result[2], FLOAT_TOLERANCE);
 }
 
-TEST(OptimizerTests, ComputeRateBasic)
+TEST(CommonTests, ComputeRateBasic)
 {
     std::vector<int> data {0, 1, 0, 1};
 
@@ -175,7 +175,7 @@ TEST(OptimizerTests, ComputeRateBasic)
     DOUBLES_EQUAL(0.5, rate, FLOAT_TOLERANCE);
 }
 
-TEST(OptimizerTests, ComputeRateEmpty)
+TEST(CommonTests, ComputeRateEmpty)
 {
     std::vector<int> data;
 

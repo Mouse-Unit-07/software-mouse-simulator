@@ -34,7 +34,7 @@ extern "C"
 #include "rectangular_hitbox.hpp"
 #include "mouse.hpp"
 #include "maze.hpp"
-#include "optimizer.hpp"
+#include "simulation_common.hpp"
 #include "rotation.hpp"
 
 #include <CppUTest/TestHarness.h>
@@ -296,7 +296,7 @@ TEST(RotationTests, BuildCandidatesGroupsAndComputesStats)
 
 TEST(RotationTests, RunMinimalSampleSimulation)
 {
-    std::vector<optimizer::SweepConfig> test_configs {
+    std::vector<simulation_common::SweepConfig> test_configs {
         {"motor_speed", 100, 100, 1},
         {"motor_speed_scale", 1.0, 1.0, 1},
         {"dt", 0.001, 0.001, 1},
@@ -467,7 +467,7 @@ TEST(RotationTests, WriteCandidatesFormatsStatsCorrectly)
 
 IGNORE_TEST(RotationTests, RunFullSimulationAndWriteResultsToFile)
 {
-    std::vector<optimizer::SweepConfig> test_configs {
+    std::vector<simulation_common::SweepConfig> test_configs {
         {"motor_speed", 120, 220, 5},
         {"motor_speed_scale", 0.9, 1.1, 3},
         {"dt", 0.01, 0.5, 3},

@@ -16,5 +16,5 @@ target_link_libraries(rotation_lib PUBLIC
     mock_device_drivers_lib
     mouse_lib
     maze_lib
-    optimizer_lib
+    simulation_common_lib
 )

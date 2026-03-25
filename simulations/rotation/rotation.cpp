@@ -38,7 +38,7 @@ extern "C"
 #include "rectangular_hitbox.hpp"
 #include "mouse.hpp"
 #include "maze.hpp"
-#include "optimizer.hpp"
+#include "simulation_common.hpp"
 #include "rotation.hpp"
 
 /*----------------------------------------------------------------------------*/
@@ -227,9 +227,9 @@ ResultsMetrics compute_results_metrics(const std::vector<Result>& results)
     const double n {static_cast<double>(results.size())};
     ResultsMetrics a;
 
-    a.time_stats = optimizer::compute_stats(time);
-    a.angle_error_stats = optimizer::compute_stats(angle);
-    a.translation_stats = optimizer::compute_stats(translation);
+    a.time_stats = simulation_common::compute_stats(time);
+    a.angle_error_stats = simulation_common::compute_stats(angle);
+    a.translation_stats = simulation_common::compute_stats(translation);
     a.timeout_rate = (n > 0) ? fail_count / n : 0.0;
     a.collision_rate = (n > 0) ? coll_count / n : 0.0;
 
@@ -315,7 +315,7 @@ void write_analysis_to_file(const std::string& filename, const std::vector<Candi
 }
 
 void run_full_rotation_experiment(const std::string& filename, double target_angle,
-        std::vector<optimizer::SweepConfig> configs)
+        std::vector<simulation_common::SweepConfig> configs)
 {
     std::vector<std::string> ascii {
         "+-+",
@@ -323,7 +323,7 @@ void run_full_rotation_experiment(const std::string& filename, double target_ang
         "+-+"
     };
     maze::Maze small_maze {maze::build_maze_from_ascii(ascii, 0.0)};
-    optimizer::SweepCursor cursor(configs);
+    simulation_common::SweepCursor cursor(configs);
     std::vector<Trial> trials;
     std::vector<Result> all_results;
 
@@ -438,7 +438,7 @@ void write_candidates_banner(std::ofstream& out)
 
 void write_candidates(std::ofstream& out, const std::vector<Candidate>& candidates)
 {
-    auto fmt_stats = [](const optimizer::MetricStats& s) {
+    auto fmt_stats = [](const simulation_common::MetricStats& s) {
         std::ostringstream oss;
         oss << s.mean
             << "|" << s.stddev
