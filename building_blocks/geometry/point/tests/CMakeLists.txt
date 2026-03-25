@@ -8,8 +8,8 @@
 set(ALL_TEST_SOURCES
     ${ALL_TEST_SOURCES}
     ${CMAKE_CURRENT_SOURCE_DIR}/test_point.cpp
-    ${CMAKE_SOURCE_DIR}/src/geometry/point/point.cpp
-    ${CMAKE_SOURCE_DIR}/src/geometry/point/point.hpp
+    ${CMAKE_SOURCE_DIR}/src/building_blocks/geometry/point/point.cpp
+    ${CMAKE_SOURCE_DIR}/src/building_blocks/geometry/point/point.hpp
     PARENT_SCOPE
 )
 

@@ -7,8 +7,8 @@
 set(ALL_TEST_SOURCES
     ${ALL_TEST_SOURCES}
     ${CMAKE_CURRENT_SOURCE_DIR}/test_rectangular_hitbox.cpp
-    ${CMAKE_SOURCE_DIR}/src/geometry/rectangular_hitbox/rectangular_hitbox.cpp
-    ${CMAKE_SOURCE_DIR}/src/geometry/rectangular_hitbox/rectangular_hitbox.hpp
+    ${CMAKE_SOURCE_DIR}/src/building_blocks/geometry/rectangular_hitbox/rectangular_hitbox.cpp
+    ${CMAKE_SOURCE_DIR}/src/building_blocks/geometry/rectangular_hitbox/rectangular_hitbox.hpp
     PARENT_SCOPE
 )
 
