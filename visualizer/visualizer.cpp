@@ -58,10 +58,7 @@ void Visualizer::draw_maze(float cell_size_pixels, const maze::Maze& maze)
 
 void Visualizer::draw_mouse_on_maze(const mouse::Mouse& mouse)
 {
-    auto rect {make_rectangle(mouse.hitbox)};
-    rect.setFillColor(sf::Color::Transparent);
-    rect.setOutlineColor(sf::Color::Red);
-    rect.setOutlineThickness(2.0f);
+    auto rect {make_rectangle(mouse.hitbox, sf::Color::Red)};
     texture.draw(rect);
 
     draw_ray(mouse.ir_1_sensor);
@@ -115,20 +112,21 @@ sf::Vector2f Visualizer::world_to_screen(const geometry::Point& p) const
     };
 }
 
-sf::RectangleShape Visualizer::make_rectangle(const geometry::RectangularHitbox& hitbox) const
+sf::VertexArray Visualizer::make_rectangle(const geometry::RectangularHitbox& hitbox, sf::Color color) const
 {
-    float scale {static_cast<float>(cell_size / maze::CELL_SIZE)};
+    sf::VertexArray outline(sf::LineStrip, 5);
 
-    float width  {static_cast<float>(hitbox.horizontal_size * scale)};
-    float height {static_cast<float>(hitbox.vertical_size * scale)};
+    outline[0].position = world_to_screen(hitbox.top_right);
+    outline[1].position = world_to_screen(hitbox.top_left);
+    outline[2].position = world_to_screen(hitbox.bottom_left);
+    outline[3].position = world_to_screen(hitbox.bottom_right);
+    outline[4].position = world_to_screen(hitbox.top_right);
 
-    sf::RectangleShape rect({width, height});
+    for (int i {0}; i < 5; ++i) {
+        outline[i].color = color;
+    }
 
-    auto pos {world_to_screen(hitbox.center)};
-
-    rect.setPosition(pos.x - width  / 2.0f, pos.y - height / 2.0f);
-
-    return rect;
+    return outline;
 }
 
 void Visualizer::draw_cells(const maze::Maze& maze)
@@ -150,8 +148,7 @@ void Visualizer::draw_cells(const maze::Maze& maze)
 void Visualizer::draw_obstacles(const maze::Maze& maze)
 {
     for (const auto& obstacle : maze.obstacles) {
-        auto rect {make_rectangle(obstacle)};
-        rect.setFillColor(sf::Color::White);
+        auto rect {make_rectangle(obstacle, sf::Color::White)};
         texture.draw(rect);
     }
 }

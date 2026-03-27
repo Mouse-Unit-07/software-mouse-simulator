@@ -31,7 +31,7 @@ private:
     sf::RenderTexture texture;
 
     sf::Vector2f world_to_screen(const geometry::Point& p) const;
-    sf::RectangleShape make_rectangle(const geometry::RectangularHitbox& hitbox) const;
+    sf::VertexArray make_rectangle(const geometry::RectangularHitbox& hitbox, sf::Color color) const;
     
     void draw_cells(const maze::Maze& maze);
     void draw_obstacles(const maze::Maze& maze);
