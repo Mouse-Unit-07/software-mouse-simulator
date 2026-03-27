@@ -20,9 +20,9 @@ struct Config
     double ir_reading_scale;
     double mouse_angle;
     double horizontal_position_variance;
-    double total_steps;
+    int total_steps;
 
-    double reading_threshold;
+    uint32_t reading_threshold;
 };
 
 struct Result
@@ -38,7 +38,12 @@ struct Result
 namespace wall_detection
 {
 
+void enable_visualization(void);
+void disable_visualization(void);
+
 Config build_config(const std::vector<double>& v);
+std::string config_to_string(const Config& cfg);
+Result run_simulation(const Config& cfg);
 
 } /* wall_detection namespace */
 
