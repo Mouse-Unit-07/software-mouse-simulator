@@ -47,7 +47,7 @@ namespace
 using namespace wall_detection;
 
 std::optional<uint32_t> compute_ir_sensor_3_reading(const maze::Maze& maze,
-        const mouse::Mouse& mouse);
+        const mouse::Mouse& mouse, visualizer::Visualizer& visualizer);
 void write_summary(std::ofstream& out, const std::vector<Candidate>& candidates, size_t total_size);
 void write_candidates(std::ofstream& out, const std::vector<Candidate>& candidates);
 
@@ -61,7 +61,8 @@ namespace
 
 const std::string TEST_OUTPUT_DIRECTORY {"wall-detection-visualizer"};
 bool visualizer_enabled {false};
-visualizer::Visualizer local_visualizer;
+visualizer::Visualizer wall_absent_visualizer;
+visualizer::Visualizer wall_present_visualizer;
 
 } /* unnamed namespace */
 
@@ -133,20 +134,27 @@ std::string config_to_string(const Config& cfg)
 
 Result run_simulation(const Config& cfg)
 {
-    
     if (visualizer_enabled) {
         std::filesystem::create_directories(TEST_OUTPUT_DIRECTORY);
     }
 
     /* create maze */
-    std::vector<std::string> ascii {
+    std::vector<std::string> ascii_open {
         "  +-+",
         "  |S|",
         "+-+ +",
         "|   |",
         "+-+-+"
+    };maze::Maze open_maze {maze::build_maze_from_ascii(ascii_open, maze::OFFICIAL_POST_SIZE * (cfg.maze_size_scale - 1))};
+
+    std::vector<std::string> ascii_closed {
+        "  +-+",
+        "  |S|",
+        "  + +",
+        "  | |",
+        "  +-+"
     };
-    maze::Maze test_maze {maze::build_maze_from_ascii(ascii, maze::OFFICIAL_POST_SIZE * (cfg.maze_size_scale - 1))};
+    maze::Maze closed_maze {maze::build_maze_from_ascii(ascii_closed, maze::OFFICIAL_POST_SIZE * (cfg.maze_size_scale - 1))};
 
     /* prepare mouse for wall detection */
     reset_mock_device_drivers();
@@ -155,38 +163,54 @@ Result run_simulation(const Config& cfg)
     double MAX_VERTICAL_OFFSET {(maze::OFFICIAL_WALL_LENGTH_SIZE - mouse.hitbox.vertical_size) / 2};
     mouse.rotate(cfg.mouse_angle);
     mouse.translate(
-        test_maze.mouse_start.x + (MAX_HORIZONTAL_OFFSET * cfg.horizontal_position_variance),
-        test_maze.mouse_start.y + (MAX_VERTICAL_OFFSET * cfg.vertical_position_variance)
+        open_maze.mouse_start.x + (MAX_HORIZONTAL_OFFSET * cfg.horizontal_position_variance),
+        open_maze.mouse_start.y + (MAX_VERTICAL_OFFSET * cfg.vertical_position_variance)
     );
 
     if (visualizer_enabled) {
-        local_visualizer.draw_maze(100.0f, test_maze);
-        local_visualizer.draw_mouse_on_maze(mouse);
+        wall_absent_visualizer.draw_maze(100.0f, open_maze);
+        wall_present_visualizer.draw_maze(100.0f, closed_maze);
+        wall_absent_visualizer.draw_mouse_on_maze(mouse);
+        wall_present_visualizer.draw_mouse_on_maze(mouse);
     }
 
-    std::vector<bool> correct_detection_at_step;
-    correct_detection_at_step.resize(cfg.total_steps);
+    std::vector<bool> wall_absent_at_step;
+    std::vector<bool> wall_present_at_step;
+    wall_absent_at_step.resize(cfg.total_steps);
+    wall_present_at_step.resize(cfg.total_steps);
 
     for (int i {0}; i < cfg.total_steps; i++) {
-        auto potential_reading {compute_ir_sensor_3_reading(test_maze, mouse)};
-        if (potential_reading.has_value()) {
-            uint32_t reading {*potential_reading};
+        auto potential_reading_1 {compute_ir_sensor_3_reading(open_maze, mouse, wall_absent_visualizer)};
+        if (potential_reading_1.has_value()) {
+            uint32_t reading {*potential_reading_1};
             long rounded_reading {std::lround(static_cast<double>(reading) * cfg.ir_reading_scale)};
             reading = static_cast<uint32_t>(std::clamp(rounded_reading, 0L, 1024L));
-            correct_detection_at_step.at(i) = (reading < cfg.reading_threshold) ? true : false;
+            wall_absent_at_step.at(i) = (reading < cfg.reading_threshold) ? true : false;
         } else {
-            correct_detection_at_step.at(i) = false;
+            wall_absent_at_step.at(i) = false;
         }
 
-        mouse.translate(0.0, test_maze.cell_size / cfg.total_steps);
+        auto potential_reading_2 {compute_ir_sensor_3_reading(closed_maze, mouse, wall_present_visualizer)};
+        if (potential_reading_2.has_value()) {
+            uint32_t reading {*potential_reading_2};
+            long rounded_reading {std::lround(static_cast<double>(reading) * cfg.ir_reading_scale)};
+            reading = static_cast<uint32_t>(std::clamp(rounded_reading, 0L, 1024L));
+            wall_present_at_step.at(i) = (reading >= cfg.reading_threshold) ? true : false;
+        } else {
+            wall_present_at_step.at(i) = false;
+        }
+
+        mouse.translate(0.0, open_maze.cell_size / cfg.total_steps);
     }
 
     if (visualizer_enabled) {
-        local_visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/" + config_to_string(cfg) + ".png");
+        wall_absent_visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/" + config_to_string(cfg) + "-wa.png");
+        wall_present_visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/" + config_to_string(cfg) + "-wp.png");
     }
 
     return Result{
-        std::move(correct_detection_at_step)
+        std::move(wall_absent_at_step),
+        std::move(wall_present_at_step),
     };
 }
 
@@ -198,14 +222,14 @@ ResultsMetrics compute_results_metrics(const std::vector<Result>& results)
         return m;
     }
 
-    const size_t steps {results.front().correct_detection_at_step.size()};
+    const size_t steps {results.front().wall_absent_at_step.size()};
 
     // Build consensus signal
     std::vector<bool> consensus(steps, true);
 
     for (size_t t {0}; t < steps; ++t) {
         for (const auto& r : results) {
-            if (!r.correct_detection_at_step[t]) {
+            if (!r.wall_absent_at_step[t] || !r.wall_present_at_step[t]) {
                 consensus[t] = false;
                 break;
             }
@@ -319,7 +343,7 @@ namespace
 using namespace wall_detection;
 
 std::optional<uint32_t> compute_ir_sensor_3_reading(const maze::Maze& maze,
-        const mouse::Mouse& mouse)
+        const mouse::Mouse& mouse, visualizer::Visualizer& visualizer)
 {
     std::optional<uint32_t> reading{std::nullopt};
 
@@ -333,7 +357,7 @@ std::optional<uint32_t> compute_ir_sensor_3_reading(const maze::Maze& maze,
             reading = read_ir_3_sensor();
 
             if (visualizer_enabled) {
-                local_visualizer.draw_ir_3_sensor_beam(mouse, distance);
+                visualizer.draw_ir_3_sensor_beam(mouse, distance);
             }
         }
     }

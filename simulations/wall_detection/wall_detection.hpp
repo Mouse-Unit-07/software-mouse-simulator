@@ -28,7 +28,8 @@ struct Config
 
 struct Result
 {
-    std::vector<bool> correct_detection_at_step;
+    std::vector<bool> wall_absent_at_step;
+    std::vector<bool> wall_present_at_step;
 };
 
 struct Trial
