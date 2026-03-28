@@ -21,11 +21,13 @@ extern "C"
 #include <vector>
 #include <string>
 #include <optional>
+#include <functional>
 #include "point.hpp"
 #include "ray.hpp"
 #include "rectangular_hitbox.hpp"
 #include "mouse.hpp"
 #include "maze.hpp"
+#include "simulation_common.hpp"
 #include "wall_detection.hpp"
 
 #include <CppUTest/TestHarness.h>
@@ -430,4 +432,20 @@ TEST(WallDetectionTests, SortCandidatesByThresholdAscending)
     CHECK_EQUAL(100, v[0].key.threshold);
     CHECK_EQUAL(200, v[1].key.threshold);
     CHECK_EQUAL(300, v[2].key.threshold);
+}
+
+IGNORE_TEST(WallDetectionTests, RunFullSimulationAndWriteResultsToFile)
+{
+    std::vector<simulation_common::SweepConfig> test_configs {
+        {"maze_size_scale", 0.95, 1.05, 3},
+        {"ir_reading_scale", 0.95, 1.05, 3},
+        {"mouse_angle", -M_PI / 16, M_PI / 16, 3},
+        {"horizontal_position_variance", -0.9, 0.9, 3},
+        {"vertical_position_variance", -0.9, 0.9, 3},
+        {"total_steps", 100, 100, 1},
+
+        {"reading_threshold", 800, 1024, 225},
+    };
+
+    run_full_wall_detection_experiment("test_full_output.txt", test_configs);
 }

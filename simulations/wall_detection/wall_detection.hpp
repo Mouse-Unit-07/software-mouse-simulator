@@ -77,6 +77,11 @@ ResultsMetrics compute_results_metrics(const std::vector<Result>& results);
 std::vector<Candidate> build_candidates(const std::vector<Trial>& trials);
 void sort_candidates_by_lowest_threshold(std::vector<Candidate>& candidates);
 
+void write_analysis_to_file(const std::string& filename,
+        const std::vector<Candidate>& sorted_candidates, size_t total_size);
+void run_full_wall_detection_experiment(const std::string& filename,
+        std::vector<simulation_common::SweepConfig> configs);
+
 } /* wall_detection namespace */
 
 #endif /* WALL_DETECTION_HPP_ */

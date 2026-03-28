@@ -22,9 +22,11 @@ extern "C"
 #include <vector>
 #include <string>
 #include <optional>
+#include <functional>
 #include <algorithm>
 #include <sstream>
 #include <iomanip>
+#include <fstream>
 #include <SFML/Graphics.hpp>
 #include <filesystem>
 #include "point.hpp"
@@ -33,6 +35,7 @@ extern "C"
 #include "mouse.hpp"
 #include "maze.hpp"
 #include "visualizer.hpp"
+#include "simulation_common.hpp"
 #include "wall_detection.hpp"
 
 /*----------------------------------------------------------------------------*/
@@ -41,8 +44,12 @@ extern "C"
 namespace
 {
 
+using namespace wall_detection;
+
 std::optional<uint32_t> compute_ir_sensor_3_reading(const maze::Maze& maze,
         const mouse::Mouse& mouse);
+void write_summary(std::ofstream& out, const std::vector<Candidate>& candidates, size_t total_size);
+void write_candidates(std::ofstream& out, const std::vector<Candidate>& candidates);
 
 } /* unnamed namespace */
 
@@ -264,6 +271,43 @@ void sort_candidates_by_lowest_threshold(std::vector<Candidate>& candidates)
         });
 }
 
+void write_analysis_to_file(const std::string& filename,
+        const std::vector<Candidate>& sorted_candidates, size_t total_size)
+{
+    std::ofstream out(filename);
+    if (!out.is_open()) {
+        throw std::runtime_error("Failed to open file: " + filename);
+    }
+
+    write_summary(out, sorted_candidates, total_size);
+    write_candidates(out, sorted_candidates);
+}
+
+void run_full_wall_detection_experiment(const std::string& filename,
+        std::vector<simulation_common::SweepConfig> configs)
+{
+    simulation_common::SweepCursor cursor(configs);
+
+    std::vector<Trial> trials;
+    std::vector<Result> all_results;
+
+    do {
+        auto values {cursor.values()};
+
+        auto cfg {build_config(values)};
+        auto result {run_simulation(cfg)};
+
+        trials.push_back({cfg, result});
+        all_results.push_back(result);
+
+    } while (cursor.next());
+
+    auto candidates {build_candidates(trials)};
+    sort_candidates_by_lowest_threshold(candidates);
+
+    write_analysis_to_file(filename, candidates, all_results.size());
+}
+
 } /* wall_detection namespace */
 
 /*----------------------------------------------------------------------------*/
@@ -271,6 +315,8 @@ void sort_candidates_by_lowest_threshold(std::vector<Candidate>& candidates)
 /*----------------------------------------------------------------------------*/
 namespace
 {
+
+using namespace wall_detection;
 
 std::optional<uint32_t> compute_ir_sensor_3_reading(const maze::Maze& maze,
         const mouse::Mouse& mouse)
@@ -293,6 +339,44 @@ std::optional<uint32_t> compute_ir_sensor_3_reading(const maze::Maze& maze,
     }
 
     return reading;
+}
+
+void write_summary(std::ofstream& out, const std::vector<Candidate>& candidates, size_t total_size)
+{
+    out << "=== SUMMARY ===\n";
+    out << "Total Trials : " << total_size << "\n";
+    out << "Candidates   : " << candidates.size() << "\n\n";
+
+    // find best candidate (first valid window)
+    for (const auto& c : candidates) {
+        if (c.results_metrics.window_size > 0) {
+            out << "Best Threshold : " << c.key.threshold << "\n";
+            out << "Window Start   : " << c.results_metrics.window_start << "\n";
+            out << "Window Size    : " << c.results_metrics.window_size << "\n\n";
+            return;
+        }
+    }
+
+    out << "No valid detection window found.\n\n";
+}
+
+void write_candidates(std::ofstream& out, const std::vector<Candidate>& candidates)
+{
+    out << "=== CANDIDATES ===\n";
+
+    out << std::left
+        << std::setw(12) << "Threshold"
+        << std::setw(14) << "WindowStart"
+        << std::setw(12) << "WindowSize"
+        << "\n";
+
+    for (const auto& c : candidates) {
+        out << std::left
+            << std::setw(12) << c.key.threshold
+            << std::setw(14) << c.results_metrics.window_start
+            << std::setw(12) << c.results_metrics.window_size
+            << "\n";
+    }
 }
 
 } /* unnamed namespace */
