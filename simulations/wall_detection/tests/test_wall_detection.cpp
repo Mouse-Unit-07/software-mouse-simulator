@@ -316,3 +316,118 @@ IGNORE_TEST(WallDetectionTests, VisualizationDoesNotAffectResults)
                     r2.correct_detection_at_step[i]);
     }
 }
+
+TEST(WallDetectionTests, ComputeResultsMetricsEmpty)
+{
+    std::vector<Result> results;
+
+    auto m {compute_results_metrics(results)};
+
+    CHECK_EQUAL(-1, m.window_start);
+    CHECK_EQUAL(0,  m.window_size);
+}
+
+TEST(WallDetectionTests, ComputeResultsMetricsNoConsensus)
+{
+    Result r1{{true, false, true}};
+    Result r2{{false, true, false}};
+
+    std::vector<Result> results{r1, r2};
+
+    auto m {compute_results_metrics(results)};
+
+    CHECK_EQUAL(-1, m.window_start);
+    CHECK_EQUAL(0,  m.window_size);
+}
+
+TEST(WallDetectionTests, ComputeResultsMetricsSingleWindow)
+{
+    Result r1{{false, true, true, false}};
+    Result r2{{false, true, true, false}};
+
+    std::vector<Result> results{r1, r2};
+
+    auto m {compute_results_metrics(results)};
+
+    CHECK_EQUAL(1, m.window_start);
+    CHECK_EQUAL(2, m.window_size);
+}
+
+TEST(WallDetectionTests, ComputeResultsMetricsPicksLongestWindow)
+{
+    Result r1{{true, true, false, true, true, true}};
+    Result r2{{true, true, false, true, true, true}};
+
+    std::vector<Result> results{r1, r2};
+
+    auto m {compute_results_metrics(results)};
+
+    CHECK_EQUAL(3, m.window_start);
+    CHECK_EQUAL(3, m.window_size);
+}
+
+TEST(WallDetectionTests, ComputeResultsMetricsRequiresAllTrue)
+{
+    Result r1{{true, true, true}};
+    Result r2{{true, false, true}};
+
+    std::vector<Result> results{r1, r2};
+
+    auto m {compute_results_metrics(results)};
+
+    CHECK_EQUAL(0, m.window_start);
+    CHECK_EQUAL(1, m.window_size); // only index 0 is shared true
+}
+
+TEST(WallDetectionTests, BuildCandidatesGroupsByThreshold)
+{
+    Trial t1{{}, {{true, true}}};
+    t1.config.reading_threshold = 100;
+
+    Trial t2{{}, {{true, true}}};
+    t2.config.reading_threshold = 100;
+
+    Trial t3{{}, {{false, false}}};
+    t3.config.reading_threshold = 200;
+
+    std::vector<Trial> trials{t1, t2, t3};
+
+    auto candidates {build_candidates(trials)};
+
+    CHECK_EQUAL(2, candidates.size());
+}
+
+TEST(WallDetectionTests, BuildCandidatesComputesMetricsPerGroup)
+{
+    Trial t1{{}, {{true, true, false}}};
+    t1.config.reading_threshold = 100;
+
+    Trial t2{{}, {{true, true, false}}};
+    t2.config.reading_threshold = 100;
+
+    std::vector<Trial> trials{t1, t2};
+
+    auto candidates {build_candidates(trials)};
+
+    CHECK_EQUAL(1, candidates.size());
+
+    const auto& m = candidates[0].results_metrics;
+
+    CHECK_EQUAL(0, m.window_start);
+    CHECK_EQUAL(2, m.window_size);
+}
+
+TEST(WallDetectionTests, SortCandidatesByThresholdAscending)
+{
+    Candidate c1{{300}, {}};
+    Candidate c2{{100}, {}};
+    Candidate c3{{200}, {}};
+
+    std::vector<Candidate> v{c1, c2, c3};
+
+    sort_candidates_by_lowest_threshold(v);
+
+    CHECK_EQUAL(100, v[0].key.threshold);
+    CHECK_EQUAL(200, v[1].key.threshold);
+    CHECK_EQUAL(300, v[2].key.threshold);
+}

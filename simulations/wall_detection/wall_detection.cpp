@@ -183,6 +183,87 @@ Result run_simulation(const Config& cfg)
     };
 }
 
+ResultsMetrics compute_results_metrics(const std::vector<Result>& results)
+{
+    ResultsMetrics m;
+
+    if (results.empty()) {
+        return m;
+    }
+
+    const size_t steps {results.front().correct_detection_at_step.size()};
+
+    // Build consensus signal
+    std::vector<bool> consensus(steps, true);
+
+    for (size_t t {0}; t < steps; ++t) {
+        for (const auto& r : results) {
+            if (!r.correct_detection_at_step[t]) {
+                consensus[t] = false;
+                break;
+            }
+        }
+    }
+
+    // Find longest contiguous true segment
+    int best_start {-1};
+    int best_size {0};
+
+    int current_start {-1};
+    int current_size {0};
+
+    for (size_t t {0}; t < steps; ++t) {
+        if (consensus[t]) {
+            if (current_size == 0) {
+                current_start = static_cast<int>(t);
+            }
+            current_size++;
+
+            if (current_size > best_size) {
+                best_size = current_size;
+                best_start = current_start;
+            }
+        } else {
+            current_size = 0;
+        }
+    }
+
+    m.window_start = best_start;
+    m.window_size = best_size;
+
+    return m;
+}
+
+std::vector<Candidate> build_candidates(const std::vector<Trial>& trials)
+{
+    std::map<CandidateKey, std::vector<Result>> grouped;
+
+    for (const auto& t : trials) {
+        CandidateKey key {t.config.reading_threshold};
+        grouped[key].push_back(t.result);
+    }
+
+    std::vector<Candidate> out;
+    out.reserve(grouped.size());
+
+    for (const auto& [key, group_results] : grouped) {
+        Candidate c;
+        c.key = key;
+        c.results_metrics = compute_results_metrics(group_results);
+        out.push_back(c);
+    }
+
+    return out;
+}
+
+void sort_candidates_by_lowest_threshold(std::vector<Candidate>& candidates)
+{
+    std::sort(candidates.begin(), candidates.end(),
+        [](const Candidate& a, const Candidate& b) {
+            return a.key.threshold < b.key.threshold;
+        });
+}
+
 } /* wall_detection namespace */
 
 /*----------------------------------------------------------------------------*/
