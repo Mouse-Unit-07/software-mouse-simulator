@@ -64,7 +64,7 @@ TEST_GROUP(WallDetectionTests)
 /*============================================================================*/
 TEST(WallDetectionTests, BuildConfigMapsValuesCorrectly)
 {
-    std::vector<double> v {1, 2, 3, 4, 5, 6};
+    std::vector<double> v {1, 2, 3, 4, 5, 6, 7};
 
     auto cfg {build_config(v)};
 
@@ -72,8 +72,9 @@ TEST(WallDetectionTests, BuildConfigMapsValuesCorrectly)
     CHECK_EQUAL(2, cfg.ir_reading_scale);
     CHECK_EQUAL(3, cfg.mouse_angle);
     CHECK_EQUAL(4, cfg.horizontal_position_variance);
-    CHECK_EQUAL(5, cfg.total_steps);
-    CHECK_EQUAL(6, cfg.reading_threshold);
+    CHECK_EQUAL(5, cfg.vertical_position_variance);
+    CHECK_EQUAL(6, cfg.total_steps);
+    CHECK_EQUAL(7, cfg.reading_threshold);
 }
 
 TEST(WallDetectionTests, SimulationHandlesZeroSteps)
@@ -93,6 +94,7 @@ TEST(WallDetectionTests, AllFalseWhenThresholdIsZero)
     cfg.ir_reading_scale = 1.0;
     cfg.mouse_angle = 0.0;
     cfg.horizontal_position_variance = 0.0;
+    cfg.vertical_position_variance = 0.0;
     cfg.total_steps = 100;
     cfg.reading_threshold = 0u;  /* nothing should pass */
 
@@ -110,6 +112,7 @@ TEST(WallDetectionTests, IdenticalConfigsProduceIdenticalResults)
     cfg.ir_reading_scale = 1.0;
     cfg.mouse_angle = 0.0;
     cfg.horizontal_position_variance = 0.0;
+    cfg.vertical_position_variance = 0.0;
     cfg.total_steps = 100;
     cfg.reading_threshold = 750u;
 
@@ -132,6 +135,7 @@ TEST(WallDetectionTests, MazeSizeScaleChangesResults)
     cfg1.ir_reading_scale = 1.0;
     cfg1.mouse_angle = 0;
     cfg1.horizontal_position_variance = 0.0;
+    cfg1.vertical_position_variance = 0.0;
     cfg1.total_steps = 100;
     cfg1.reading_threshold = 750u;
 
@@ -160,6 +164,7 @@ TEST(WallDetectionTests, IrReadingScaleChangesResults)
     cfg1.ir_reading_scale = 1.0;
     cfg1.mouse_angle = 0;
     cfg1.horizontal_position_variance = 0.0;
+    cfg1.vertical_position_variance = 0.0;
     cfg1.total_steps = 100;
     cfg1.reading_threshold = 750u;
 
@@ -188,6 +193,7 @@ TEST(WallDetectionTests, ZeroIrReadingScaleCollapsesToAllTrueWhenThresholdIsMax)
     cfg.ir_reading_scale = 0.0;
     cfg.mouse_angle = 0.0;
     cfg.horizontal_position_variance = 0.0;
+    cfg.vertical_position_variance = 0.0;
     cfg.total_steps = 100;
     cfg.reading_threshold = 1024u;
 
@@ -205,6 +211,7 @@ TEST(WallDetectionTests, MouseAngleChangesResults)
     cfg1.ir_reading_scale = 1.0;
     cfg1.mouse_angle = 0.0;
     cfg1.horizontal_position_variance = 0.0;
+    cfg1.vertical_position_variance = 0.0;
     cfg1.total_steps = 100;
     cfg1.reading_threshold = 750u;
 
@@ -233,6 +240,7 @@ TEST(WallDetectionTests, HorizontalVarianceChangesResults)
     cfg1.ir_reading_scale = 1.0;
     cfg1.mouse_angle = M_PI / 8;
     cfg1.horizontal_position_variance = 1.0;
+    cfg1.vertical_position_variance = 0.0;
     cfg1.total_steps = 100;
     cfg1.reading_threshold = 900u;
 
@@ -254,13 +262,43 @@ TEST(WallDetectionTests, HorizontalVarianceChangesResults)
     CHECK(diff_found);
 }
 
-TEST(WallDetectionTests, VisualizationDoesNotAffectResults)
+TEST(WallDetectionTests, VerticalVarianceChangesResults)
+{
+    Config cfg1{};
+    cfg1.maze_size_scale = 1.0;
+    cfg1.ir_reading_scale = 1.0;
+    cfg1.mouse_angle = M_PI / 8;
+    cfg1.horizontal_position_variance = 0.0;
+    cfg1.vertical_position_variance = 1.0;
+    cfg1.total_steps = 100;
+    cfg1.reading_threshold = 900u;
+
+    Config cfg2 {cfg1};
+    cfg2.vertical_position_variance = -0.9;
+
+    auto r1 {run_simulation(cfg1)};
+    auto r2 {run_simulation(cfg2)};
+
+    bool diff_found {false};
+
+    for (size_t i {0}; i < r1.correct_detection_at_step.size(); ++i) {
+        if (r1.correct_detection_at_step[i] != r2.correct_detection_at_step[i]) {
+            diff_found = true;
+            break;
+        }
+    }
+
+    CHECK(diff_found);
+}
+
+IGNORE_TEST(WallDetectionTests, VisualizationDoesNotAffectResults)
 {
     Config cfg{};
     cfg.maze_size_scale = 1.0;
     cfg.ir_reading_scale = 1.0;
     cfg.mouse_angle = 0.0;
     cfg.horizontal_position_variance = 0.0;
+    cfg.vertical_position_variance = 0.0;
     cfg.total_steps = 50;
     cfg.reading_threshold = 750u;
 

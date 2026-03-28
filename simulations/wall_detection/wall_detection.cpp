@@ -84,6 +84,7 @@ Config build_config(const std::vector<double>& v)
     cfg.ir_reading_scale = v[i++];
     cfg.mouse_angle = v[i++];
     cfg.horizontal_position_variance = v[i++];
+    cfg.vertical_position_variance = v[i++];
     cfg.total_steps = v[i++];
     cfg.reading_threshold = v[i++];
 
@@ -116,6 +117,7 @@ std::string config_to_string(const Config& cfg)
         << encode(cfg.ir_reading_scale) << "-"
         << encode(cfg.mouse_angle) << "-"
         << encode(cfg.horizontal_position_variance) << "-"
+        << encode(cfg.vertical_position_variance) << "-"
         << cfg.total_steps << "-"
         << encode(cfg.reading_threshold);
 
@@ -143,8 +145,12 @@ Result run_simulation(const Config& cfg)
     reset_mock_device_drivers();
     mouse::Mouse mouse;
     double MAX_HORIZONTAL_OFFSET {(maze::OFFICIAL_WALL_LENGTH_SIZE - mouse.hitbox.horizontal_size) / 2};
+    double MAX_VERTICAL_OFFSET {(maze::OFFICIAL_WALL_LENGTH_SIZE - mouse.hitbox.vertical_size) / 2};
     mouse.rotate(cfg.mouse_angle);
-    mouse.translate(test_maze.mouse_start.x + (MAX_HORIZONTAL_OFFSET * cfg.horizontal_position_variance), test_maze.mouse_start.y);
+    mouse.translate(
+        test_maze.mouse_start.x + (MAX_HORIZONTAL_OFFSET * cfg.horizontal_position_variance),
+        test_maze.mouse_start.y + (MAX_VERTICAL_OFFSET * cfg.vertical_position_variance)
+    );
 
     if (visualizer_enabled) {
         local_visualizer.draw_maze(100.0f, test_maze);

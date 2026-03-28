@@ -20,6 +20,7 @@ struct Config
     double ir_reading_scale;
     double mouse_angle;
     double horizontal_position_variance;
+    double vertical_position_variance;
     int total_steps;
 
     uint32_t reading_threshold;
