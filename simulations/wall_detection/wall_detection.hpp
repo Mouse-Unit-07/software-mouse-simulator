@@ -32,6 +32,27 @@ struct Config
     uint32_t reading_threshold;
 };
 
+class ConfigSweeper
+{
+public:
+    std::vector<double> maze_size_scale;
+    std::vector<double> ir_reading_scale;
+    std::vector<double> mouse_angle;
+    std::vector<double> horizontal_position_variance;
+    std::vector<double> vertical_position_variance;
+    std::vector<int> total_steps;
+
+    std::vector<uint32_t> reading_threshold;
+
+    std::vector<size_t> indices;
+    bool first {true};
+
+    ConfigSweeper();
+
+    bool next();
+    Config value() const;
+};
+
 struct Result
 {
     std::vector<bool> wall_absent_at_step;
@@ -77,7 +98,6 @@ namespace wall_detection
 void enable_visualization(void);
 void disable_visualization(void);
 
-Config build_config(const std::vector<double>& v);
 std::string config_to_string(const Config& cfg);
 Result run_simulation(const Config& cfg);
 
@@ -89,7 +109,7 @@ std::vector<Candidate> filter_candidates_by_rate(const std::vector<Candidate>& c
 void write_analysis_to_file(const std::string& filename, const std::vector<Candidate>& candidates,
         size_t total_size, double min_correct_rate);
 void run_full_wall_detection_experiment(const std::string& filename,
-        std::vector<simulation_common::SweepConfig> configs, double min_correct_rate);
+        ConfigSweeper& sweeper, double min_correct_rate);
 
 } /* wall_detection namespace */
 

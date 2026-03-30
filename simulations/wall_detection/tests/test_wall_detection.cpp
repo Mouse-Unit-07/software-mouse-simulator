@@ -52,6 +52,22 @@ Config create_no_variance_config(void)
     return cfg;
 }
 
+ConfigSweeper create_no_variance_sweeper(void)
+{
+    ConfigSweeper sweeper;
+
+    sweeper.maze_size_scale = {1.0};
+    sweeper.ir_reading_scale = {1.0};
+    sweeper.mouse_angle = {0.0};
+    sweeper.horizontal_position_variance = {0.0};
+    sweeper.vertical_position_variance = {0.0};
+    sweeper.total_steps = {100};
+
+    sweeper.reading_threshold = {750u};
+
+    return sweeper;
+}
+
 bool are_results_equivalent(const Result& r1, const Result& r2)
 {
     if (r1.wall_absent_at_step.size() != r2.wall_absent_at_step.size()) {
@@ -97,19 +113,62 @@ TEST_GROUP(WallDetectionTests)
 /*============================================================================*/
 /*                                    Tests                                   */
 /*============================================================================*/
-TEST(WallDetectionTests, BuildConfigMapsValuesCorrectly)
+TEST(WallDetectionTests, ConfigSweeperProducesFirstValue)
 {
-    std::vector<double> v {1, 2, 3, 4, 5, 6, 7};
+    ConfigSweeper sweeper{create_no_variance_sweeper()};
 
-    auto cfg {build_config(v)};
+    CHECK(sweeper.next());
 
-    CHECK_EQUAL(1, cfg.maze_size_scale);
-    CHECK_EQUAL(2, cfg.ir_reading_scale);
-    CHECK_EQUAL(3, cfg.mouse_angle);
-    CHECK_EQUAL(4, cfg.horizontal_position_variance);
-    CHECK_EQUAL(5, cfg.vertical_position_variance);
-    CHECK_EQUAL(6, cfg.total_steps);
-    CHECK_EQUAL(7, cfg.reading_threshold);
+    auto cfg {sweeper.value()};
+
+    CHECK_EQUAL(1.0, cfg.maze_size_scale);
+    CHECK_EQUAL(750u, cfg.reading_threshold);
+}
+
+TEST(WallDetectionTests, ConfigSweeperIteratesAllCombinations)
+{
+    ConfigSweeper sweeper{create_no_variance_sweeper()};
+    sweeper.maze_size_scale = {1.0, 1.05};
+    sweeper.reading_threshold = {100u, 200u};
+
+    int count {0};
+
+    while (sweeper.next()) {
+        sweeper.value();
+        count++;
+    }
+
+    CHECK_EQUAL(4, count); /* 2 maze_size_scale * 2 reading_threshold */
+}
+
+TEST(WallDetectionTests, ConfigSweeperStopsAtEnd)
+{
+    ConfigSweeper sweeper{create_no_variance_sweeper()};
+
+    CHECK(sweeper.next());
+    CHECK_FALSE(sweeper.next());
+}
+
+TEST(WallDetectionTests, ConfigSweeperOrderIsStable)
+{
+    ConfigSweeper sweeper{create_no_variance_sweeper()};
+    sweeper.maze_size_scale = {1.0, 1.05};
+    sweeper.reading_threshold = {100u, 200u};
+
+    std::vector<std::pair<double, uint32_t>> seen;
+
+    while (sweeper.next()) {
+        auto cfg {sweeper.value()};
+        seen.emplace_back(cfg.maze_size_scale, cfg.reading_threshold);
+    }
+
+    CHECK_EQUAL(4, seen.size());
+
+    /* Expected order: maze_size_scale outer, reading_threshold inner */
+    CHECK(seen[0] == std::make_pair(1.0, 100u));
+    CHECK(seen[1] == std::make_pair(1.0, 200u));
+    CHECK(seen[2] == std::make_pair(1.05, 100u));
+    CHECK(seen[3] == std::make_pair(1.05, 200u));
 }
 
 TEST(WallDetectionTests, SimulationHandlesZeroSteps)
@@ -361,16 +420,15 @@ TEST(WallDetectionTests, FilterCandidatesNoValidWindow)
 
 IGNORE_TEST(WallDetectionTests, RunFullSimulationAndWriteResultsToFile)
 {
-    std::vector<simulation_common::SweepConfig> test_configs {
-        {"maze_size_scale", 0.95, 1.05, 3},
-        {"ir_reading_scale", 0.95, 1.05, 3},
-        {"mouse_angle", -M_PI / 8, M_PI / 8, 3},
-        {"horizontal_position_variance", -0.5, 0.5, 3},
-        {"vertical_position_variance", -0.5, 0.5, 3},
-        {"total_steps", 100, 100, 1},
+    ConfigSweeper sweeper;
 
-        {"reading_threshold", 700, 1024, 225},
-    };
+    sweeper.maze_size_scale = simulation_common::generate_sweep_values(0.95, 1.05, 3);
+    sweeper.ir_reading_scale = simulation_common::generate_sweep_values(0.95, 1.05, 3);
+    sweeper.mouse_angle = simulation_common::generate_sweep_values(-M_PI / 8, M_PI / 8, 3);
+    sweeper.horizontal_position_variance = simulation_common::generate_sweep_values(-0.5, 0.5, 3);
+    sweeper.vertical_position_variance = simulation_common::generate_sweep_values(-0.5, 0.5, 3);
+    sweeper.total_steps = {100};
+    sweeper.reading_threshold = simulation_common::generate_sweep_values<uint32_t>(700, 1024, 225);
 
-    run_full_wall_detection_experiment("test_full_output.txt", test_configs, 0.5);
+    run_full_wall_detection_experiment("test_full_output.txt", sweeper, 0.5);
 }

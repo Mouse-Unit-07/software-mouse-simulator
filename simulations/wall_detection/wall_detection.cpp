@@ -73,6 +73,60 @@ visualizer::Visualizer wall_present_visualizer;
 namespace wall_detection
 {
 
+ConfigSweeper::ConfigSweeper()
+{
+    indices = std::vector<size_t>(7, 0);
+}
+
+bool ConfigSweeper::next()
+{
+    if (first) {
+        first = false;
+        return true;
+    }
+
+    std::vector<size_t> sizes {
+        maze_size_scale.size(),
+        ir_reading_scale.size(),
+        mouse_angle.size(),
+        horizontal_position_variance.size(),
+        vertical_position_variance.size(),
+        total_steps.size(),
+        reading_threshold.size()
+    };
+
+    for (int i {static_cast<int>(indices.size()) - 1}; i >= 0; --i) {
+        indices[i]++;
+
+        if (indices[i] < sizes[i]) {
+            return true;
+        }
+
+        indices[i] = 0;
+    }
+
+    return false;
+}
+
+Config ConfigSweeper::value() const
+{
+    Config cfg{};
+
+    int i {0};
+
+    cfg.maze_size_scale = maze_size_scale[indices[i++]];
+    cfg.ir_reading_scale = ir_reading_scale[indices[i++]];
+    cfg.mouse_angle = mouse_angle[indices[i++]];
+    cfg.horizontal_position_variance = horizontal_position_variance[indices[i++]];
+    cfg.vertical_position_variance = vertical_position_variance[indices[i++]];
+    cfg.total_steps = total_steps[indices[i++]];
+
+    cfg.reading_threshold = reading_threshold[indices[i++]];
+
+    return cfg;
+}
+
+
 void enable_visualization(void)
 {
     visualizer_enabled = true;
@@ -81,23 +135,6 @@ void enable_visualization(void)
 void disable_visualization(void)
 {
     visualizer_enabled = false;
-}
-
-Config build_config(const std::vector<double>& v)
-{
-    Config cfg{};
-
-    int i {0};
-
-    cfg.maze_size_scale = v[i++];
-    cfg.ir_reading_scale = v[i++];
-    cfg.mouse_angle = v[i++];
-    cfg.horizontal_position_variance = v[i++];
-    cfg.vertical_position_variance = v[i++];
-    cfg.total_steps = v[i++];
-    cfg.reading_threshold = v[i++];
-
-    return cfg;
 }
 
 std::string config_to_string(const Config& cfg)
@@ -302,23 +339,19 @@ void write_analysis_to_file(const std::string& filename, const std::vector<Candi
 }
 
 void run_full_wall_detection_experiment(const std::string& filename,
-        std::vector<simulation_common::SweepConfig> configs, double min_correct_rate)
+        ConfigSweeper& sweeper, double min_correct_rate)
 {
-    simulation_common::SweepCursor cursor(configs);
-
     std::vector<Trial> trials;
     std::vector<Result> all_results;
 
-    do {
-        auto values {cursor.values()};
+    while (sweeper.next()) {
+        Config cfg {sweeper.value()};
 
-        auto cfg {build_config(values)};
         auto result {run_simulation(cfg)};
 
         trials.push_back({cfg, result});
         all_results.push_back(result);
-
-    } while (cursor.next());
+    }
 
     auto candidates {build_candidates(trials)};
 
