@@ -175,3 +175,34 @@ IGNORE_TEST(VisualizerTests, DrawMouseSensorBeams)
     visualizer.draw_ir_4_sensor_beam(mouse, 180.0);
     visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/draw-mouse-sensor-beams.png");
 }
+
+IGNORE_TEST(VisualizerTests, DrawMouseSensorBeamsToNearestWalls)
+{
+    Visualizer visualizer;
+    std::vector<std::string> ascii
+    {
+        "+-+-+-+",
+        "| | | |",
+        "+-+-+-+",
+        "| |S  |",
+        "+-+ +-+",
+        "| | | |",
+        "+-+-+-+"
+    };
+    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0)};
+    mouse::Mouse mouse;
+    mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
+    mouse.rotate(-M_PI / 4);
+    
+    visualizer.draw_maze(100.0f, maze);
+    visualizer.draw_mouse_on_maze(mouse);
+    auto ir_1_distance {maze::compute_ray_distance_in_vicinity(maze, mouse.ir_1_sensor, 1, 1)};
+    auto ir_2_distance {maze::compute_ray_distance_in_vicinity(maze, mouse.ir_2_sensor, 1, 1)};
+    auto ir_3_distance {maze::compute_ray_distance_in_vicinity(maze, mouse.ir_3_sensor, 1, 1)};
+    auto ir_4_distance {maze::compute_ray_distance_in_vicinity(maze, mouse.ir_4_sensor, 1, 1)};
+    visualizer.draw_ir_1_sensor_beam(mouse, *ir_1_distance);
+    visualizer.draw_ir_2_sensor_beam(mouse, *ir_2_distance);
+    visualizer.draw_ir_3_sensor_beam(mouse, *ir_3_distance);
+    visualizer.draw_ir_4_sensor_beam(mouse, *ir_4_distance);
+    visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/draw-mouse-sensor-beams-to-nearest-walls.png");
+}

@@ -45,10 +45,12 @@ struct Displacement
 
 constexpr double MOUSE_HITBOX_HORIZONTAL_MM {94.16};
 constexpr double MOUSE_HITBOX_VERTICAL_MM {88.90};
-constexpr Displacement IR_1_OFFSET_FROM_MOUSE_CENTER {-27.29, 25.24};
-constexpr Displacement IR_2_OFFSET_FROM_MOUSE_CENTER {-17.45, 38.76};
-constexpr Displacement IR_3_OFFSET_FROM_MOUSE_CENTER {17.45, 38.76};
-constexpr Displacement IR_4_OFFSET_FROM_MOUSE_CENTER {27.29, 25.24};
+
+/* IR sensor coordinates assume mouse facing down */
+constexpr Displacement IR_1_OFFSET_FROM_MOUSE_CENTER {27.29, 25.24};
+constexpr Displacement IR_2_OFFSET_FROM_MOUSE_CENTER {17.45, 38.76};
+constexpr Displacement IR_3_OFFSET_FROM_MOUSE_CENTER {-17.45, 38.76};
+constexpr Displacement IR_4_OFFSET_FROM_MOUSE_CENTER {-27.29, 25.24};
 
 } /* mouse namespace */
 
@@ -61,8 +63,8 @@ namespace mouse
 Mouse::Mouse()
     : hitbox{geometry::Point{0.0, 0.0}, MOUSE_HITBOX_HORIZONTAL_MM, MOUSE_HITBOX_VERTICAL_MM},
     ir_1_sensor{geometry::Point{IR_1_OFFSET_FROM_MOUSE_CENTER.dx, IR_1_OFFSET_FROM_MOUSE_CENTER.dy}, M_PI / 2.0},
-    ir_2_sensor{geometry::Point{IR_2_OFFSET_FROM_MOUSE_CENTER.dx, IR_2_OFFSET_FROM_MOUSE_CENTER.dy}, M_PI * (3.0 / 4.0)},
-    ir_3_sensor{geometry::Point{IR_3_OFFSET_FROM_MOUSE_CENTER.dx, IR_3_OFFSET_FROM_MOUSE_CENTER.dy}, M_PI / 4.0},
+    ir_2_sensor{geometry::Point{IR_2_OFFSET_FROM_MOUSE_CENTER.dx, IR_2_OFFSET_FROM_MOUSE_CENTER.dy}, M_PI / 4.0},
+    ir_3_sensor{geometry::Point{IR_3_OFFSET_FROM_MOUSE_CENTER.dx, IR_3_OFFSET_FROM_MOUSE_CENTER.dy}, M_PI * (3.0 / 4.0)},
     ir_4_sensor{geometry::Point{IR_4_OFFSET_FROM_MOUSE_CENTER.dx, IR_4_OFFSET_FROM_MOUSE_CENTER.dy}, M_PI / 2.0}
 {
     /* no additional logic */
