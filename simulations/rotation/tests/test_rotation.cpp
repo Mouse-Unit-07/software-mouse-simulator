@@ -61,8 +61,8 @@ Config create_no_variance_config(void)
     cfg.motor_speed = 150u;
     cfg.motor_speed_scale = 1.0;
     cfg.dt = 0.01;
-    cfg.motor1_variance = 0;
-    cfg.motor2_variance = 0;
+    cfg.motor1_variance = 0.0;
+    cfg.motor2_variance = 0.0;
     cfg.slip_factor = 1.0;
     cfg.wheel_circumference_scale = 1.0;
     cfg.wheel_base_scale = 1.0;
@@ -83,6 +83,26 @@ Config create_config_custom_pid_and_speed(int kp, int kd, int shift, uint8_t mot
     cfg.motor_speed = motor_speed;
     
     return cfg;
+}
+
+
+ConfigSweeper create_no_variance_sweeper(void)
+{
+    ConfigSweeper sweeper;
+
+    sweeper.motor_speed = {150u};
+    sweeper.motor_speed_scale = {1.0};
+    sweeper.dt = {0.01};
+    sweeper.motor1_variance = {0.0};
+    sweeper.motor2_variance = {0.0};
+    sweeper.slip_factor = {1.0};
+    sweeper.wheel_circumference_scale = {1.0};
+    sweeper.wheel_base_scale = {1.0};
+    sweeper.kp = {0};
+    sweeper.kd = {0};
+    sweeper.pid_shift = {0};
+
+    return sweeper;
 }
 
 /*============================================================================*/
@@ -109,23 +129,64 @@ TEST_GROUP(RotationTests)
 /*============================================================================*/
 /*                                    Tests                                   */
 /*============================================================================*/
-TEST(RotationTests, BuildConfigMapsValuesCorrectly)
+TEST(RotationTests, ConfigSweeperProducesFirstValue)
 {
-    std::vector<double> v {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+    ConfigSweeper sweeper{create_no_variance_sweeper()};
 
-    auto cfg {build_config(v)};
+    CHECK(sweeper.next());
 
-    CHECK_EQUAL(1, cfg.motor_speed);
-    CHECK_EQUAL(2, cfg.motor_speed_scale);
-    CHECK_EQUAL(3, cfg.dt);
-    CHECK_EQUAL(4, cfg.motor1_variance);
-    CHECK_EQUAL(5, cfg.motor2_variance);
-    CHECK_EQUAL(6, cfg.slip_factor);
-    CHECK_EQUAL(7, cfg.wheel_circumference_scale);
-    CHECK_EQUAL(8, cfg.wheel_base_scale);
-    CHECK_EQUAL(9, cfg.kp);
-    CHECK_EQUAL(10, cfg.kd);
-    CHECK_EQUAL(11, cfg.pid_shift);
+    auto cfg {sweeper.value()};
+
+    CHECK_EQUAL(150, cfg.motor_speed);
+    CHECK_EQUAL(0, cfg.kp);
+    CHECK_EQUAL(0, cfg.kd);
+    CHECK_EQUAL(0, cfg.pid_shift);
+}
+
+TEST(RotationTests, ConfigSweeperIteratesAllCombinations)
+{
+    ConfigSweeper sweeper{create_no_variance_sweeper()};
+    sweeper.motor_speed = {100, 200};
+    sweeper.kp = {1, 2};
+
+    int count {0};
+
+    while (sweeper.next()) {
+        sweeper.value();
+        count++;
+    }
+
+    CHECK_EQUAL(4, count); /* 2 motor_speed * 2 kp */
+}
+
+TEST(RotationTests, ConfigSweeperStopsAtEnd)
+{
+    ConfigSweeper sweeper{create_no_variance_sweeper()};
+
+    CHECK(sweeper.next());
+    CHECK_FALSE(sweeper.next());
+}
+
+TEST(RotationTests, ConfigSweeperOrderIsStable)
+{
+    ConfigSweeper sweeper{create_no_variance_sweeper()};
+    sweeper.kp = {1, 2};
+    sweeper.kd = {10, 20};
+
+    std::vector<std::pair<int,int>> seen;
+
+    while (sweeper.next()) {
+        auto cfg {sweeper.value()};
+        seen.emplace_back(cfg.kp, cfg.kd);
+    }
+
+    CHECK_EQUAL(4, seen.size());
+
+    /* Expected order: kp outer, kd inner */
+    CHECK(seen[0] == std::make_pair(1,10));
+    CHECK(seen[1] == std::make_pair(1,20));
+    CHECK(seen[2] == std::make_pair(2,10));
+    CHECK(seen[3] == std::make_pair(2,20));
 }
 
 TEST(RotationTests, SimulationProducesValidResult)
@@ -341,25 +402,24 @@ TEST(RotationTests, BuildCandidatesGroupsAndComputesStats)
 
 TEST(RotationTests, RunMinimalSampleSimulation)
 {
-    std::vector<simulation_common::SweepConfig> test_configs {
-        {"motor_speed", 100, 100, 1},
-        {"motor_speed_scale", 1.0, 1.0, 1},
-        {"dt", 0.001, 0.001, 1},
+    ConfigSweeper sweeper;
 
-        {"motor1_variance", 0.0, 0.0, 1},
-        {"motor2_variance", 0.0, 0.0, 1},
-        {"slip_factor", 1.0, 1.0, 1},
-        {"wheel_circumference_scale", 1.0, 1.0, 1},
-        {"wheel_base_scale", 1.0, 1.0, 1},
-
-        {"kp", 0, 0, 1},
-        {"kd", 0, 0, 1},
-        {"pid_shift", 8, 8, 1}
-    };
+    sweeper.motor_speed_scale = {1.0};
+    sweeper.dt = {0.001};
+    sweeper.motor1_variance = {0.0};
+    sweeper.motor2_variance = {0.0};
+    sweeper.slip_factor = {1.0};
+    sweeper.wheel_circumference_scale = {1.0};
+    sweeper.wheel_base_scale = {1.0};
+    
+    sweeper.motor_speed = {100};
+    sweeper.kp = {0};
+    sweeper.kd = {0};
+    sweeper.pid_shift = {8};
 
     const std::string filename {"test_minimal_output.txt"};
 
-    run_full_rotation_experiment(filename, M_PI / 2, test_configs);
+    run_full_rotation_experiment(filename, M_PI / 2, sweeper);
 }
 
 TEST(RotationTests, CandidateKeyOrderingUsesMotorSpeed)
@@ -462,21 +522,20 @@ TEST(RotationTests, ParetoFrontKeepsIdenticalCandidates)
 
 IGNORE_TEST(RotationTests, RunFullSimulationAndWriteResultsToFile)
 {
-    std::vector<simulation_common::SweepConfig> test_configs {
-        {"motor_speed", 120, 220, 5},
-        {"motor_speed_scale", 0.9, 1.1, 3},
-        {"dt", 0.01, 0.5, 3},
+    ConfigSweeper sweeper;
 
-        {"motor1_variance", -0.1, 0.1, 3},
-        {"motor2_variance", -0.1, 0.1, 3},
-        {"slip_factor", 0.9, 1.1, 3},
-        {"wheel_circumference_scale", 0.95, 1.05, 3},
-        {"wheel_base_scale", 0.95, 1.05, 3},
+    sweeper.motor_speed_scale = simulation_common::generate_sweep_values(0.9, 1.1, 3);
+    sweeper.dt = simulation_common::generate_sweep_values(0.01, 0.5, 3);
+    sweeper.motor1_variance = simulation_common::generate_sweep_values(-0.1, 0.1, 3);
+    sweeper.motor2_variance = simulation_common::generate_sweep_values(-0.1, 0.1, 3);
+    sweeper.slip_factor = simulation_common::generate_sweep_values(0.9, 1.1, 3);
+    sweeper.wheel_circumference_scale = simulation_common::generate_sweep_values(0.95, 1.05, 3);
+    sweeper.wheel_base_scale = simulation_common::generate_sweep_values(0.95, 1.05, 3);
+    
+    sweeper.motor_speed = simulation_common::generate_sweep_values<uint8_t>(120, 220, 6);
+    sweeper.kp = simulation_common::generate_sweep_values(0, 4000, 21);
+    sweeper.kd = simulation_common::generate_sweep_values(0, 2000, 21);
+    sweeper.pid_shift = {8};
 
-        {"kp", 0, 4000, 21},
-        {"kd", 0, 2000, 21},
-        {"pid_shift", 8, 8, 1}
-    };
-
-    run_full_rotation_experiment("test_full_output.txt", M_PI / 2, test_configs);
+    run_full_rotation_experiment("test_full_output.txt", M_PI / 2, sweeper);
 }

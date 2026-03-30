@@ -50,6 +50,34 @@ std::vector<std::pair<std::vector<double>, Result>> run_config_sweep(
     return results;
 }
 
+template <typename T>
+std::vector<T> generate_sweep_values(T min, T max, int steps)
+{
+    std::vector<T> values;
+
+    if (steps <= 0) return values;
+
+    if (steps == 1) {
+        values.push_back(min);
+        return values;
+    }
+
+    if (steps == 2) {
+        values.push_back(min);
+        values.push_back(max);
+        return values;
+    }
+
+    values.reserve(steps);
+
+    for (int i = 0; i < steps; ++i) {
+        double t = static_cast<double>(i) / (steps - 1);
+        values.push_back(static_cast<T>(min + t * (max - min)));
+    }
+
+    return values;
+}
+
 struct MetricStats
 {
     double mean {0.0};

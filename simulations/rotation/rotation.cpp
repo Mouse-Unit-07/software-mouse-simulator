@@ -72,25 +72,64 @@ extern double ENCODER_TICKS_PER_ROTATION_ANGLE_RADIANS;
 namespace rotation
 {
 
-Config build_config(const std::vector<double>& v)
+ConfigSweeper::ConfigSweeper()
+{
+    indices = std::vector<size_t>(11, 0);
+}
+
+bool ConfigSweeper::next()
+{
+    if (first) {
+        first = false;
+        return true;
+    }
+
+    std::vector<size_t> sizes {
+        motor_speed.size(),
+        motor_speed_scale.size(),
+        dt.size(),
+        motor1_variance.size(),
+        motor2_variance.size(),
+        slip_factor.size(),
+        wheel_circumference_scale.size(),
+        wheel_base_scale.size(),
+        kp.size(),
+        kd.size(),
+        pid_shift.size()
+    };
+
+    for (int i {static_cast<int>(indices.size()) - 1}; i >= 0; --i) {
+        indices[i]++;
+
+        if (indices[i] < sizes[i]) {
+            return true;
+        }
+
+        indices[i] = 0;
+    }
+
+    return false;
+}
+
+Config ConfigSweeper::value() const
 {
     Config cfg{};
 
     int i {0};
 
-    cfg.motor_speed = v[i++];
-    cfg.motor_speed_scale = v[i++];
-    cfg.dt = v[i++];
+    cfg.motor_speed = motor_speed[indices[i++]];
+    cfg.motor_speed_scale = motor_speed_scale[indices[i++]];
+    cfg.dt = dt[indices[i++]];
 
-    cfg.motor1_variance = v[i++];
-    cfg.motor2_variance = v[i++];
-    cfg.slip_factor = v[i++];
-    cfg.wheel_circumference_scale = v[i++];
-    cfg.wheel_base_scale = v[i++];
+    cfg.motor1_variance = motor1_variance[indices[i++]];
+    cfg.motor2_variance = motor2_variance[indices[i++]];
+    cfg.slip_factor = slip_factor[indices[i++]];
+    cfg.wheel_circumference_scale = wheel_circumference_scale[indices[i++]];
+    cfg.wheel_base_scale = wheel_base_scale[indices[i++]];
 
-    cfg.kp = static_cast<int32_t>(v[i++]);
-    cfg.kd = static_cast<int32_t>(v[i++]);
-    cfg.pid_shift = static_cast<int32_t>(v[i++]);
+    cfg.kp = kp[indices[i++]];
+    cfg.kd = kd[indices[i++]];
+    cfg.pid_shift = pid_shift[indices[i++]];
 
     return cfg;
 }
@@ -315,7 +354,7 @@ void write_analysis_to_file(const std::string& filename, const std::vector<Candi
 }
 
 void run_full_rotation_experiment(const std::string& filename, double target_angle,
-        std::vector<simulation_common::SweepConfig> configs)
+        ConfigSweeper& sweeper)
 {
     std::vector<std::string> ascii {
         "+-+",
@@ -323,19 +362,17 @@ void run_full_rotation_experiment(const std::string& filename, double target_ang
         "+-+"
     };
     maze::Maze small_maze {maze::build_maze_from_ascii(ascii, 0.0)};
-    simulation_common::SweepCursor cursor(configs);
     std::vector<Trial> trials;
     std::vector<Result> all_results;
 
-    do {
-        auto config_values = cursor.values();
-        auto cfg {rotation::build_config(config_values)};
+    while (sweeper.next()) {
+        Config cfg {sweeper.value()};
+
         auto result {rotation::run_simulation(small_maze, cfg, target_angle)};
 
         trials.push_back({cfg, result});
         all_results.push_back(result);
-
-    } while (cursor.next());
+    }
 
     auto overall_metrics {compute_results_metrics(all_results)};
     auto candidates {build_candidates(trials)};

@@ -32,6 +32,32 @@ struct Config
     int32_t pid_shift;
 };
 
+class ConfigSweeper
+{
+public:
+    std::vector<uint8_t> motor_speed;
+    std::vector<double> motor_speed_scale;
+    std::vector<double> dt;
+
+    std::vector<double> motor1_variance;
+    std::vector<double> motor2_variance;
+    std::vector<double> slip_factor;
+    std::vector<double> wheel_circumference_scale;
+    std::vector<double> wheel_base_scale;
+
+    std::vector<int32_t> kp;
+    std::vector<int32_t> kd;
+    std::vector<int32_t> pid_shift;
+
+    std::vector<size_t> indices;
+    bool first {true};
+
+    ConfigSweeper();
+
+    bool next();
+    Config value() const;
+};
+
 struct Result
 {
     double total_time {0.0};
@@ -82,7 +108,6 @@ struct Candidate
 namespace rotation
 {
 
-Config build_config(const std::vector<double>& v);
 Result run_simulation(const maze::Maze& maze, const Config& cfg, double target_angle);
 
 ResultsMetrics compute_results_metrics(const std::vector<Result>& results);
@@ -92,7 +117,7 @@ std::vector<Candidate> compute_pareto_front(const std::vector<Candidate>& candid
 void write_analysis_to_file(const std::string& filename, const std::vector<Candidate>& all_candidates,
         const std::vector<Candidate>& pareto_front, const ResultsMetrics& overall_metrics, size_t total_size);
 void run_full_rotation_experiment(const std::string& filename, double target_angle,
-        std::vector<simulation_common::SweepConfig> configs);
+        ConfigSweeper& sweeper);
 
 } /* rotation namespace */
 
