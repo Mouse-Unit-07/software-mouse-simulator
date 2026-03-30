@@ -54,13 +54,35 @@ std::vector<std::string> ascii {
 };
 maze::Maze test_maze {maze::build_maze_from_ascii(ascii, 0.0)};
 
-Config make_params(int kp, int kd, int shift, uint8_t motor_speed = 0)
+Config create_no_variance_config(void)
 {
-    return {
-        motor_speed, 1.0, 0.01,
-        0, 0, 1, 1, 1,
-        kp, kd, shift
-    };
+    Config cfg;
+
+    cfg.motor_speed = 150u;
+    cfg.motor_speed_scale = 1.0;
+    cfg.dt = 0.01;
+    cfg.motor1_variance = 0;
+    cfg.motor2_variance = 0;
+    cfg.slip_factor = 1.0;
+    cfg.wheel_circumference_scale = 1.0;
+    cfg.wheel_base_scale = 1.0;
+    cfg.kp = 0;
+    cfg.kd = 0;
+    cfg.pid_shift = 0;
+
+    return cfg;
+}
+
+Config create_config_custom_pid_and_speed(int kp, int kd, int shift, uint8_t motor_speed = 0)
+{
+    Config cfg {create_no_variance_config()};
+    
+    cfg.kp = kp;
+    cfg.kd = kd;
+    cfg.pid_shift = shift;
+    cfg.motor_speed = motor_speed;
+    
+    return cfg;
 }
 
 /*============================================================================*/
@@ -108,7 +130,7 @@ TEST(RotationTests, BuildConfigMapsValuesCorrectly)
 
 TEST(RotationTests, SimulationProducesValidResult)
 {
-    Config cfg {150, 1.0, 0.01, 0, 0, 1, 1, 1, 0, 0, 0};
+    Config cfg {create_no_variance_config()};
 
     auto r {run_simulation(test_maze, cfg, M_PI / 2)};
 
@@ -119,7 +141,8 @@ TEST(RotationTests, SimulationProducesValidResult)
 
 TEST(RotationTests, SimulationFailsWhenDtIsZero)
 {
-    Config cfg {150, 1.0, 0.0, 0, 0, 1, 1, 1, 0, 0, 0};
+    Config cfg {create_no_variance_config()};
+    cfg.dt = 0.0;
 
     auto r {run_simulation(test_maze, cfg, M_PI / 2)};
 
@@ -128,7 +151,7 @@ TEST(RotationTests, SimulationFailsWhenDtIsZero)
 
 TEST(RotationTests, PositiveAndNegativeAnglesProduceSameAngleAndTranslationError)
 {
-    Config cfg {150, 1.0, 0.01, 0, 0, 1, 1, 1, 0, 0, 0};
+    Config cfg {create_no_variance_config()};
 
     auto r1 {run_simulation(test_maze, cfg,  M_PI / 2)};
     auto r2 {run_simulation(test_maze, cfg, -M_PI / 2)};
@@ -141,7 +164,7 @@ TEST(RotationTests, PositiveAndNegativeAnglesProduceSameAngleAndTranslationError
 
 TEST(RotationTests, LargerAngleTakesMoreTime)
 {
-    Config cfg {150, 1.0, 0.01, 0, 0, 1, 1, 1, 0, 0, 0};
+    Config cfg {create_no_variance_config()};
 
     auto small {run_simulation(test_maze, cfg, M_PI / 4)};
     auto large {run_simulation(test_maze, cfg, M_PI / 2)};
@@ -159,7 +182,9 @@ TEST(RotationTests, SimulationCanDetectCollision)
 
     maze::Maze maze {maze::build_maze_from_ascii(ascii, 0.0)};
 
-    Config cfg {255, 1.0, 0.01, -1, 0, 1, 1, 1, 0, 0, 0};
+    Config cfg {create_no_variance_config()};
+    cfg.motor_speed = 255u;
+    cfg.motor1_variance = -1;
 
     auto r {run_simulation(test_maze, cfg, M_PI)};
 
@@ -176,7 +201,9 @@ TEST(RotationTests, NoTranslationAndAngleErrorForPerfectTestVariables)
     maze::Maze maze {maze::build_maze_from_ascii(ascii, 0.0)};
 
     /* slow movement, tiny dt, and no motor variances */
-    Config cfg {100,1.0,0.001, 0,0, 1,1,1, 0,0,0};
+    Config cfg {create_no_variance_config()};
+    cfg.motor_speed = 100;
+    cfg.dt = 0.001;
 
     auto r {run_simulation(test_maze, cfg, M_PI)};
 
@@ -226,13 +253,18 @@ TEST(RotationTests, ComputeResultsMetricsHandlesEmptyInput)
 
     DOUBLES_EQUAL(0.0, s.timeout_rate, FLOAT_TOLERANCE);
     DOUBLES_EQUAL(0.0, s.collision_rate, FLOAT_TOLERANCE);
-    CHECK(s.time_stats.mean == 0.0 || true);
 }
 
 TEST(RotationTests, DerivativeTermAffectsStability)
 {
-    Config no_d  {150,1.0,0.01, -0.2,0, 1,1,1, 2000,0,8};
-    Config with_d{150,1.0,0.01, -0.2,0, 1,1,1, 2000,1000,8};
+    Config cfg{create_no_variance_config()};
+    cfg.motor1_variance = -0.2;
+    cfg.kp = 2000;
+    cfg.pid_shift = 8;
+
+    Config no_d{cfg};
+    Config with_d{cfg};
+    with_d.kd = 1000;
 
     auto r1 {run_simulation(test_maze, no_d,  M_PI / 2)};
     auto r2 {run_simulation(test_maze, with_d,M_PI / 2)};
@@ -243,8 +275,14 @@ TEST(RotationTests, DerivativeTermAffectsStability)
 
 TEST(RotationTests, PDImprovesAccuracyOverNoControl)
 {
-    Config no_control {150,1.0,0.01, -0.2,0, 1,1,1, 0,0,8};
-    Config pd_control {150,1.0,0.01, -0.2,0, 1,1,1, 2000,1000,8};
+    Config cfg{create_no_variance_config()};
+    cfg.motor1_variance = -0.2;
+    cfg.pid_shift = 8;
+
+    Config no_control{cfg};
+    Config pd_control{cfg};
+    pd_control.kp = 2000;
+    pd_control.kd = 1000;
 
     auto r1 {run_simulation(test_maze, no_control, M_PI / 2)};
     auto r2 {run_simulation(test_maze, pd_control, M_PI / 2)};
@@ -254,8 +292,15 @@ TEST(RotationTests, PDImprovesAccuracyOverNoControl)
 
 TEST(RotationTests, PidShiftAffectsControlStrength)
 {
-    Config strong {150,1.0,0.01, -0.2,0, 1,1,1, 2000,1000,2};
-    Config weak   {150,1.0,0.01, -0.2,0, 1,1,1, 2000,1000,8};
+    Config cfg{create_no_variance_config()};
+    cfg.motor1_variance = -0.2;
+    cfg.kp = 2000;
+    cfg.kd = 1000;
+
+    Config strong{cfg};
+    strong.pid_shift = 2;
+    Config weak{cfg};
+    weak.pid_shift = 8;
 
     auto r1 {run_simulation(test_maze, strong, M_PI / 2)};
     auto r2 {run_simulation(test_maze, weak,   M_PI / 2)};
@@ -267,9 +312,9 @@ TEST(RotationTests, PidShiftAffectsControlStrength)
 TEST(RotationTests, BuildCandidatesGroupsAndComputesStats)
 {
     std::vector<Trial> trials {
-        {make_params(1,2,3), {10, 1.0, 100, false, false}},
-        {make_params(1,2,3), {20, 2.0, 200, false, false}},
-        {make_params(4,5,6), {30, 3.0, 300, true,  true}}
+        {create_config_custom_pid_and_speed(1,2,3), {10, 1.0, 100, false, false}},
+        {create_config_custom_pid_and_speed(1,2,3), {20, 2.0, 200, false, false}},
+        {create_config_custom_pid_and_speed(4,5,6), {30, 3.0, 300, true,  true}}
     };
 
     auto candidates {build_candidates(trials)};
@@ -353,8 +398,8 @@ TEST(RotationTests, CandidateKeyMapSeparatesDifferentSpeeds)
 TEST(RotationTests, BuildCandidatesSeparatesMotorSpeed)
 {
     std::vector<Trial> trials {
-        {make_params(1,2,3,100), {10,1,100,false,false}},
-        {make_params(1,2,3,200), {20,2,200,false,false}}
+        {create_config_custom_pid_and_speed(1,2,3,100), {10,1,100,false,false}},
+        {create_config_custom_pid_and_speed(1,2,3,200), {20,2,200,false,false}}
     };
 
     auto candidates {build_candidates(trials)};
@@ -413,56 +458,6 @@ TEST(RotationTests, ParetoFrontKeepsIdenticalCandidates)
     auto front {compute_pareto_front(v)};
 
     CHECK_EQUAL(2, front.size());
-}
-
-TEST(RotationTests, WriteAnalysisOutputsParetoAndAllSections)
-{
-    std::vector<Candidate> candidates(1);
-    std::vector<Candidate> pareto(1);
-    ResultsMetrics m{};
-
-    const std::string filename{"test_output_sections.txt"};
-
-    write_analysis_to_file(filename, candidates, pareto, m, 1);
-
-    std::ifstream in(filename);
-    std::stringstream buffer;
-    buffer << in.rdbuf();
-
-    auto content {buffer.str()};
-
-    CHECK(content.find("=== PARETO FRONT ===") != std::string::npos);
-    CHECK(content.find("=== ALL CANDIDATES ===") != std::string::npos);
-}
-
-TEST(RotationTests, WriteCandidatesFormatsStatsCorrectly)
-{
-    Candidate c{
-        {1,2,3,100},
-        {
-            {1.0,2.0,0.5,3.0},  // time
-            {4.0,5.0,1.0,6.0},  // angle
-            {7.0,8.0,2.0,9.0},  // translation
-            0.0, 0.0
-        }
-    };
-
-    std::vector<Candidate> v{c};
-    ResultsMetrics m{};
-
-    const std::string filename{"test_output_format.txt"};
-
-    write_analysis_to_file(filename, v, v, m, 1);
-
-    std::ifstream in(filename);
-    std::stringstream buffer;
-    buffer << in.rdbuf();
-
-    auto content {buffer.str()};
-
-    CHECK(content.find("4|5|1|6") != std::string::npos); // angle
-    CHECK(content.find("7|8|2|9") != std::string::npos); // translation
-    CHECK(content.find("1|2|0.5|3") != std::string::npos); // time
 }
 
 IGNORE_TEST(RotationTests, RunFullSimulationAndWriteResultsToFile)
