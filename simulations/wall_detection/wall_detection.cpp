@@ -48,6 +48,7 @@ using namespace wall_detection;
 
 std::optional<uint32_t> compute_ir_sensor_3_reading(const maze::Maze& maze,
         const mouse::Mouse& mouse, visualizer::Visualizer& visualizer);
+DetectionWindow find_window_with_rate(const ResultsMetrics& m, double required_rate);
 void write_summary(std::ofstream& out, const std::vector<Candidate>& candidates, size_t total_size);
 void write_candidates(std::ofstream& out, const std::vector<Candidate>& candidates);
 
@@ -224,43 +225,18 @@ ResultsMetrics compute_results_metrics(const std::vector<Result>& results)
 
     const size_t steps {results.front().wall_absent_at_step.size()};
 
-    // Build consensus signal
-    std::vector<bool> consensus(steps, true);
+    std::vector<int> agreements(steps, 0);
 
     for (size_t t {0}; t < steps; ++t) {
         for (const auto& r : results) {
-            if (!r.wall_absent_at_step[t] || !r.wall_present_at_step[t]) {
-                consensus[t] = false;
-                break;
+            if (r.wall_absent_at_step[t] && r.wall_present_at_step[t]) {
+                agreements[t]++;
             }
         }
     }
 
-    // Find longest contiguous true segment
-    int best_start {-1};
-    int best_size {0};
-
-    int current_start {-1};
-    int current_size {0};
-
-    for (size_t t {0}; t < steps; ++t) {
-        if (consensus[t]) {
-            if (current_size == 0) {
-                current_start = static_cast<int>(t);
-            }
-            current_size++;
-
-            if (current_size > best_size) {
-                best_size = current_size;
-                best_start = current_start;
-            }
-        } else {
-            current_size = 0;
-        }
-    }
-
-    m.window_start = best_start;
-    m.window_size = best_size;
+    m.correct_detection_count_at_step = std::move(agreements);
+    m.total_detection_counts_per_step = results.size();
 
     return m;
 }
@@ -287,28 +263,46 @@ std::vector<Candidate> build_candidates(const std::vector<Trial>& trials)
     return out;
 }
 
-void sort_candidates_by_lowest_threshold(std::vector<Candidate>& candidates)
+std::vector<Candidate> filter_candidates_by_rate(const std::vector<Candidate>& candidates,
+        double required_rate)
 {
-    std::sort(candidates.begin(), candidates.end(),
-        [](const Candidate& a, const Candidate& b) {
-            return a.key.threshold < b.key.threshold;
-        });
+    std::vector<Candidate> out;
+
+    for (const auto& c : candidates) {
+        auto [start, size] = find_window_with_rate(c.results_metrics, required_rate);
+        if (size > 0) {
+            Candidate copy = c;
+            copy.results_metrics.detection_window.window_start = start;
+            copy.results_metrics.detection_window.window_size = size;
+            out.push_back(copy);
+        }
+    }
+
+    return out;
 }
 
-void write_analysis_to_file(const std::string& filename,
-        const std::vector<Candidate>& sorted_candidates, size_t total_size)
+void write_analysis_to_file(const std::string& filename, const std::vector<Candidate>& candidates,
+        size_t total_size, double min_correct_rate)
 {
     std::ofstream out(filename);
     if (!out.is_open()) {
         throw std::runtime_error("Failed to open file: " + filename);
     }
 
-    write_summary(out, sorted_candidates, total_size);
-    write_candidates(out, sorted_candidates);
+    write_summary(out, candidates, total_size);
+
+    /* sweep agreement rates: 100%, 95%, ..., down to cutoff */
+    for (double rate {1.0}; rate >= min_correct_rate; rate -= 0.05) {
+        out << "\n=== CORRECT DETECTION RATE >= " << (rate * 100.0) << "% ===\n";
+
+        auto filtered {filter_candidates_by_rate(candidates, rate)};
+
+        write_candidates(out, filtered);
+    }
 }
 
 void run_full_wall_detection_experiment(const std::string& filename,
-        std::vector<simulation_common::SweepConfig> configs)
+        std::vector<simulation_common::SweepConfig> configs, double min_correct_rate)
 {
     simulation_common::SweepCursor cursor(configs);
 
@@ -327,9 +321,8 @@ void run_full_wall_detection_experiment(const std::string& filename,
     } while (cursor.next());
 
     auto candidates {build_candidates(trials)};
-    sort_candidates_by_lowest_threshold(candidates);
 
-    write_analysis_to_file(filename, candidates, all_results.size());
+    write_analysis_to_file(filename, candidates, all_results.size(), min_correct_rate);
 }
 
 } /* wall_detection namespace */
@@ -365,29 +358,46 @@ std::optional<uint32_t> compute_ir_sensor_3_reading(const maze::Maze& maze,
     return reading;
 }
 
+DetectionWindow find_window_with_rate(const ResultsMetrics& m, double required_rate)
+{
+    int best_start {-1};
+    int best_size {0};
+
+    int current_start {-1};
+    int current_size {0};
+
+    const size_t steps {m.correct_detection_count_at_step.size()};
+
+    for (size_t t {0}; t < steps; ++t) {
+        double rate {static_cast<double>(m.correct_detection_count_at_step[t]) / m.total_detection_counts_per_step};
+
+        if (rate >= required_rate) {
+            if (current_size == 0) {
+                current_start = static_cast<int>(t);
+            }
+            current_size++;
+
+            if (current_size > best_size) {
+                best_size = current_size;
+                best_start = current_start;
+            }
+        } else {
+            current_size = 0;
+        }
+    }
+
+    return {best_start, best_size};
+}
+
 void write_summary(std::ofstream& out, const std::vector<Candidate>& candidates, size_t total_size)
 {
     out << "=== SUMMARY ===\n";
     out << "Total Trials : " << total_size << "\n";
     out << "Candidates   : " << candidates.size() << "\n\n";
-
-    // find best candidate (first valid window)
-    for (const auto& c : candidates) {
-        if (c.results_metrics.window_size > 0) {
-            out << "Best Threshold : " << c.key.threshold << "\n";
-            out << "Window Start   : " << c.results_metrics.window_start << "\n";
-            out << "Window Size    : " << c.results_metrics.window_size << "\n\n";
-            return;
-        }
-    }
-
-    out << "No valid detection window found.\n\n";
 }
 
 void write_candidates(std::ofstream& out, const std::vector<Candidate>& candidates)
 {
-    out << "=== CANDIDATES ===\n";
-
     out << std::left
         << std::setw(12) << "Threshold"
         << std::setw(14) << "WindowStart"
@@ -397,8 +407,8 @@ void write_candidates(std::ofstream& out, const std::vector<Candidate>& candidat
     for (const auto& c : candidates) {
         out << std::left
             << std::setw(12) << c.key.threshold
-            << std::setw(14) << c.results_metrics.window_start
-            << std::setw(12) << c.results_metrics.window_size
+            << std::setw(14) << c.results_metrics.detection_window.window_start
+            << std::setw(12) << c.results_metrics.detection_window.window_size
             << "\n";
     }
 }

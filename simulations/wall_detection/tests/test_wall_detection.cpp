@@ -343,45 +343,11 @@ TEST(WallDetectionTests, ComputeResultsMetricsEmpty)
 
     auto m {compute_results_metrics(results)};
 
-    CHECK_EQUAL(-1, m.window_start);
-    CHECK_EQUAL(0,  m.window_size);
+    CHECK_EQUAL(-1, m.detection_window.window_start);
+    CHECK_EQUAL(0,  m.detection_window.window_size);
 }
 
-TEST(WallDetectionTests, ComputeResultsMetricsNoConsensus)
-{
-    Result r1;
-    r1.wall_absent_at_step  = {true, false, true};
-    r1.wall_present_at_step = {true, true, true};
-
-    Result r2;
-    r2.wall_absent_at_step  = {false, true, false};
-    r2.wall_present_at_step = {true, true, true};
-
-    std::vector<Result> results{r1, r2};
-
-    auto m {compute_results_metrics(results)};
-
-    CHECK_EQUAL(-1, m.window_start);
-    CHECK_EQUAL(0,  m.window_size);
-}
-
-TEST(WallDetectionTests, ComputeResultsMetricsSingleWindow)
-{
-    Result r1;
-    r1.wall_absent_at_step  = {false, true, true, false};
-    r1.wall_present_at_step = {true, true, true, true};
-
-    Result r2 = r1;
-
-    std::vector<Result> results{r1, r2};
-
-    auto m {compute_results_metrics(results)};
-
-    CHECK_EQUAL(1, m.window_start);
-    CHECK_EQUAL(2, m.window_size);
-}
-
-TEST(WallDetectionTests, ComputeResultsMetricsPicksLongestWindow)
+TEST(WallDetectionTests, ComputeResultsMetricsCountsConsensusCorrectly)
 {
     Result r1;
     r1.wall_absent_at_step  = {true, true, false, true, true, true};
@@ -393,54 +359,11 @@ TEST(WallDetectionTests, ComputeResultsMetricsPicksLongestWindow)
 
     auto m {compute_results_metrics(results)};
 
-    CHECK_EQUAL(3, m.window_start);
-    CHECK_EQUAL(3, m.window_size);
-}
+    std::vector<int> expected {2, 2, 0, 2, 2, 2};
 
-TEST(WallDetectionTests, ComputeResultsMetricsRequiresAllTrue)
-{
-    Result r1;
-    r1.wall_absent_at_step  = {true, true, true};
-    r1.wall_present_at_step = {true, true, true};
-
-    Result r2;
-    r2.wall_absent_at_step  = {true, false, true};
-    r2.wall_present_at_step = {true, true, true};
-
-    std::vector<Result> results{r1, r2};
-
-    auto m {compute_results_metrics(results)};
-
-    CHECK_EQUAL(0, m.window_start);
-    CHECK_EQUAL(1, m.window_size);
-}
-
-TEST(WallDetectionTests, ComputeResultsMetricsFailsIfWallPresentIsFalse)
-{
-    Result r1;
-    r1.wall_absent_at_step  = {true, true, true};
-    r1.wall_present_at_step = {false, false, false};
-
-    std::vector<Result> results{r1};
-
-    auto m {compute_results_metrics(results)};
-
-    CHECK_EQUAL(-1, m.window_start);
-    CHECK_EQUAL(0,  m.window_size);
-}
-
-TEST(WallDetectionTests, ComputeResultsMetricsRequiresBothSignalsTrue)
-{
-    Result r1;
-    r1.wall_absent_at_step  = {true, true, false};
-    r1.wall_present_at_step = {true, true, true};
-
-    std::vector<Result> results{r1};
-
-    auto m {compute_results_metrics(results)};
-
-    CHECK_EQUAL(0, m.window_start);
-    CHECK_EQUAL(2, m.window_size);
+    for (size_t i = 0; i < expected.size(); ++i) {
+        CHECK_EQUAL(expected[i], m.correct_detection_count_at_step[i]);
+    }
 }
 
 TEST(WallDetectionTests, BuildCandidatesGroupsByThreshold)
@@ -464,7 +387,7 @@ TEST(WallDetectionTests, BuildCandidatesGroupsByThreshold)
     CHECK_EQUAL(2, candidates.size());
 }
 
-TEST(WallDetectionTests, BuildCandidatesComputesMetricsPerGroup)
+TEST(WallDetectionTests, BuildCandidatesDoesNotComputeMetricsPerGroup)
 {
     Trial t1;
     t1.result.wall_absent_at_step  = {true, true, false};
@@ -481,37 +404,68 @@ TEST(WallDetectionTests, BuildCandidatesComputesMetricsPerGroup)
 
     const auto& m = candidates[0].results_metrics;
 
-    CHECK_EQUAL(0, m.window_start);
-    CHECK_EQUAL(2, m.window_size);
+    CHECK_EQUAL(-1, m.detection_window.window_start);
+    CHECK_EQUAL(0, m.detection_window.window_size);
 }
 
-TEST(WallDetectionTests, SortCandidatesByThresholdAscending)
+TEST(WallDetectionTests, FilterCandidatesPerfectDetection)
 {
-    Candidate c1{{300}, {}};
-    Candidate c2{{100}, {}};
-    Candidate c3{{200}, {}};
+    Candidate c;
+    c.key.threshold = 100;
+    c.results_metrics.correct_detection_count_at_step = {2, 2, 0, 2};
+    c.results_metrics.total_detection_counts_per_step = 2;
 
-    std::vector<Candidate> v{c1, c2, c3};
+    std::vector<Candidate> candidates {c};
 
-    sort_candidates_by_lowest_threshold(v);
+    auto filtered {filter_candidates_by_rate(candidates, 1.0)};
 
-    CHECK_EQUAL(100, v[0].key.threshold);
-    CHECK_EQUAL(200, v[1].key.threshold);
-    CHECK_EQUAL(300, v[2].key.threshold);
+    CHECK_EQUAL(1, filtered.size());
+    CHECK_EQUAL(0, filtered[0].results_metrics.detection_window.window_start);
+    CHECK_EQUAL(2, filtered[0].results_metrics.detection_window.window_size);
+}
+
+TEST(WallDetectionTests, FilterCandidatesPartialCorrectDetection)
+{
+    Candidate c;
+    c.key.threshold = 100;
+    c.results_metrics.correct_detection_count_at_step = {2, 1, 1, 2};
+    c.results_metrics.total_detection_counts_per_step = 2;
+
+    std::vector<Candidate> candidates {c};
+
+    auto filtered {filter_candidates_by_rate(candidates, 0.5)};
+
+    CHECK_EQUAL(1, filtered.size());
+    CHECK_EQUAL(0, filtered[0].results_metrics.detection_window.window_start);
+    CHECK_EQUAL(4, filtered[0].results_metrics.detection_window.window_size);
+}
+
+TEST(WallDetectionTests, FilterCandidatesNoValidWindow)
+{
+    Candidate c;
+    c.key.threshold = 100;
+    c.results_metrics.correct_detection_count_at_step = {0, 0, 1};
+    c.results_metrics.total_detection_counts_per_step = 2;
+
+    std::vector<Candidate> candidates {c};
+
+    auto filtered {filter_candidates_by_rate(candidates, 0.75)};
+
+    CHECK_EQUAL(0, filtered.size());
 }
 
 IGNORE_TEST(WallDetectionTests, RunFullSimulationAndWriteResultsToFile)
 {
     std::vector<simulation_common::SweepConfig> test_configs {
-        {"maze_size_scale", 1.0, 1.0, 1}, // 0.95, 1.05, 3
-        {"ir_reading_scale", 1.0, 1.0, 1}, // 0.95, 1.05, 3
-        {"mouse_angle", -M_PI / 64, M_PI / 64, 3},
-        {"horizontal_position_variance", -0.9, 0.9, 3},
-        {"vertical_position_variance", -0.9, 0.9, 3},
+        {"maze_size_scale", 0.95, 1.05, 3},
+        {"ir_reading_scale", 0.95, 1.05, 3},
+        {"mouse_angle", -M_PI / 8, M_PI / 8, 3},
+        {"horizontal_position_variance", -0.5, 0.5, 3},
+        {"vertical_position_variance", -0.5, 0.5, 3},
         {"total_steps", 100, 100, 1},
 
-        {"reading_threshold", 800, 1024, 225},
+        {"reading_threshold", 700, 1024, 225},
     };
 
-    run_full_wall_detection_experiment("test_full_output.txt", test_configs);
+    run_full_wall_detection_experiment("test_full_output.txt", test_configs, 0.5);
 }

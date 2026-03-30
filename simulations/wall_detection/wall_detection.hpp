@@ -14,6 +14,12 @@
 namespace wall_detection
 {
 
+struct DetectionWindow
+{
+    int window_start {-1};
+    int window_size {0};
+};
+
 struct Config
 {
     double maze_size_scale;
@@ -40,8 +46,9 @@ struct Trial
 
 struct ResultsMetrics
 {
-    int window_start {-1};
-    int window_size {0};
+    DetectionWindow detection_window;
+    std::vector<int> correct_detection_count_at_step;
+    int total_detection_counts_per_step;
 };
 
 struct CandidateKey
@@ -76,12 +83,13 @@ Result run_simulation(const Config& cfg);
 
 ResultsMetrics compute_results_metrics(const std::vector<Result>& results);
 std::vector<Candidate> build_candidates(const std::vector<Trial>& trials);
-void sort_candidates_by_lowest_threshold(std::vector<Candidate>& candidates);
+std::vector<Candidate> filter_candidates_by_rate(const std::vector<Candidate>& candidates,
+        double required_rate);
 
-void write_analysis_to_file(const std::string& filename,
-        const std::vector<Candidate>& sorted_candidates, size_t total_size);
+void write_analysis_to_file(const std::string& filename, const std::vector<Candidate>& candidates,
+        size_t total_size, double min_correct_rate);
 void run_full_wall_detection_experiment(const std::string& filename,
-        std::vector<simulation_common::SweepConfig> configs);
+        std::vector<simulation_common::SweepConfig> configs, double min_correct_rate);
 
 } /* wall_detection namespace */
 
