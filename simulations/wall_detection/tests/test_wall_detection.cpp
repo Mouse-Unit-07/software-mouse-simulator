@@ -38,7 +38,40 @@ using namespace wall_detection;
 /*============================================================================*/
 /*                             Public Definitions                             */
 /*============================================================================*/
-/* none */
+Config create_no_variance_config(void)
+{
+    Config cfg{};
+    cfg.maze_size_scale = 1.0;
+    cfg.ir_reading_scale = 1.0;
+    cfg.mouse_angle = 0.0;
+    cfg.horizontal_position_variance = 0.0;
+    cfg.vertical_position_variance = 0.0;
+    cfg.total_steps = 100;
+    cfg.reading_threshold = 750u; /* arbitrary threshold */
+
+    return cfg;
+}
+
+bool are_results_equivalent(const Result& r1, const Result& r2)
+{
+    if (r1.wall_absent_at_step.size() != r2.wall_absent_at_step.size()) {
+        return false;
+    }
+    if (r1.wall_present_at_step.size() != r2.wall_present_at_step.size()) {
+        return false;
+    }
+
+    for (size_t i {0}; i < r1.wall_absent_at_step.size(); ++i) {
+        if (r1.wall_absent_at_step.at(i) != r2.wall_absent_at_step.at(i)) {
+            return false;
+        }
+        if (r1.wall_present_at_step.at(i) != r2.wall_present_at_step.at(i)) {
+            return false;
+        }
+    }
+
+    return true;
+}
 
 /*============================================================================*/
 /*                            Mock Implementations                            */
@@ -81,7 +114,7 @@ TEST(WallDetectionTests, BuildConfigMapsValuesCorrectly)
 
 TEST(WallDetectionTests, SimulationHandlesZeroSteps)
 {
-    Config cfg{};
+    Config cfg{create_no_variance_config()};
     cfg.total_steps = 0;
 
     auto result {run_simulation(cfg)};
@@ -92,13 +125,7 @@ TEST(WallDetectionTests, SimulationHandlesZeroSteps)
 
 TEST(WallDetectionTests, WallAbsentAllFalseWhenThresholdIsZero)
 {
-    Config cfg{};
-    cfg.maze_size_scale = 1.0;
-    cfg.ir_reading_scale = 1.0;
-    cfg.mouse_angle = 0.0;
-    cfg.horizontal_position_variance = 0.0;
-    cfg.vertical_position_variance = 0.0;
-    cfg.total_steps = 100;
+    Config cfg{create_no_variance_config()};
     cfg.reading_threshold = 0u;  /* nothing should pass */
 
     auto result {run_simulation(cfg)};
@@ -110,13 +137,7 @@ TEST(WallDetectionTests, WallAbsentAllFalseWhenThresholdIsZero)
 
 TEST(WallDetectionTests, WallPresentAllTrueWhenThresholdIsZero)
 {
-    Config cfg{};
-    cfg.maze_size_scale = 1.0;
-    cfg.ir_reading_scale = 1.0;
-    cfg.mouse_angle = 0.0;
-    cfg.horizontal_position_variance = 0.0;
-    cfg.vertical_position_variance = 0.0;
-    cfg.total_steps = 100;
+    Config cfg{create_no_variance_config()};
     cfg.reading_threshold = 0u;  /* everything should pass */
 
     auto result {run_simulation(cfg)};
@@ -128,94 +149,41 @@ TEST(WallDetectionTests, WallPresentAllTrueWhenThresholdIsZero)
 
 TEST(WallDetectionTests, IdenticalConfigsProduceIdenticalResults)
 {
-    Config cfg{};
-    cfg.maze_size_scale = 1.0;
-    cfg.ir_reading_scale = 1.0;
-    cfg.mouse_angle = 0.0;
-    cfg.horizontal_position_variance = 0.0;
-    cfg.vertical_position_variance = 0.0;
-    cfg.total_steps = 100;
-    cfg.reading_threshold = 750u;
+    Config cfg{create_no_variance_config()};
 
     auto r1 {run_simulation(cfg)};
     auto r2 {run_simulation(cfg)};
 
-    CHECK_EQUAL(r1.wall_absent_at_step.size(), r2.wall_absent_at_step.size());
-    CHECK_EQUAL(r1.wall_present_at_step.size(), r2.wall_present_at_step.size());
-
-    for (size_t i {0}; i < r1.wall_absent_at_step.size(); ++i) {
-        CHECK_EQUAL(r1.wall_absent_at_step[i], r2.wall_absent_at_step[i]);
-        CHECK_EQUAL(r1.wall_present_at_step[i], r2.wall_present_at_step[i]);
-    }
+    CHECK(are_results_equivalent(r1, r2));
 }
 
 TEST(WallDetectionTests, MazeSizeScaleChangesResults)
 {
-    Config cfg1{};
-    cfg1.maze_size_scale = 1.0;
-    cfg1.ir_reading_scale = 1.0;
-    cfg1.mouse_angle = 0;
-    cfg1.horizontal_position_variance = 0.0;
-    cfg1.vertical_position_variance = 0.0;
-    cfg1.total_steps = 100;
-    cfg1.reading_threshold = 750u;
-
+    Config cfg1{create_no_variance_config()};
     Config cfg2 {cfg1};
     cfg2.maze_size_scale = 10.0;
 
     auto r1 {run_simulation(cfg1)};
     auto r2 {run_simulation(cfg2)};
 
-    bool diff_found {false};
-
-    for (size_t i {0}; i < r1.wall_absent_at_step.size(); ++i) {
-        if (r1.wall_absent_at_step[i] != r2.wall_absent_at_step[i]) {
-            diff_found = true;
-            break;
-        }
-    }
-
-    CHECK(diff_found);
+    CHECK(!are_results_equivalent(r1, r2));
 }
 
 TEST(WallDetectionTests, IrReadingScaleChangesResults)
 {
-    Config cfg1{};
-    cfg1.maze_size_scale = 1.0;
-    cfg1.ir_reading_scale = 1.0;
-    cfg1.mouse_angle = 0;
-    cfg1.horizontal_position_variance = 0.0;
-    cfg1.vertical_position_variance = 0.0;
-    cfg1.total_steps = 100;
-    cfg1.reading_threshold = 750u;
-
+    Config cfg1{create_no_variance_config()};
     Config cfg2 {cfg1};
     cfg2.ir_reading_scale = 0.5;
 
     auto r1 {run_simulation(cfg1)};
     auto r2 {run_simulation(cfg2)};
 
-    bool diff_found {false};
-
-    for (size_t i {0}; i < r1.wall_absent_at_step.size(); ++i) {
-        if (r1.wall_absent_at_step[i] != r2.wall_absent_at_step[i]) {
-            diff_found = true;
-            break;
-        }
-    }
-
-    CHECK(diff_found);
+    CHECK(!are_results_equivalent(r1, r2));
 }
 
 TEST(WallDetectionTests, ZeroIrReadingScaleCollapsesToAllTrueWhenThresholdIsMax)
 {
-    Config cfg{};
-    cfg.maze_size_scale = 1.0;
-    cfg.ir_reading_scale = 0.0;
-    cfg.mouse_angle = 0.0;
-    cfg.horizontal_position_variance = 0.0;
-    cfg.vertical_position_variance = 0.0;
-    cfg.total_steps = 100;
+    Config cfg{create_no_variance_config()};
     cfg.reading_threshold = 1024u;
 
     auto result {run_simulation(cfg)};
@@ -227,101 +195,43 @@ TEST(WallDetectionTests, ZeroIrReadingScaleCollapsesToAllTrueWhenThresholdIsMax)
 
 TEST(WallDetectionTests, MouseAngleChangesResults)
 {
-    Config cfg1{};
-    cfg1.maze_size_scale = 1.0;
-    cfg1.ir_reading_scale = 1.0;
-    cfg1.mouse_angle = 0.0;
-    cfg1.horizontal_position_variance = 0.0;
-    cfg1.vertical_position_variance = 0.0;
-    cfg1.total_steps = 100;
-    cfg1.reading_threshold = 750u;
-
+    Config cfg1{create_no_variance_config()};
     Config cfg2 {cfg1};
     cfg2.mouse_angle = M_PI / 2;
 
     auto r1 {run_simulation(cfg1)};
     auto r2 {run_simulation(cfg2)};
 
-    bool diff_found {false};
-
-    for (size_t i {0}; i < r1.wall_absent_at_step.size(); ++i) {
-        if (r1.wall_absent_at_step[i] != r2.wall_absent_at_step[i]) {
-            diff_found = true;
-            break;
-        }
-    }
-
-    CHECK(diff_found);
+    CHECK(!are_results_equivalent(r1, r2));
 }
 
 TEST(WallDetectionTests, HorizontalVarianceChangesResults)
 {
-    Config cfg1{};
-    cfg1.maze_size_scale = 1.0;
-    cfg1.ir_reading_scale = 1.0;
-    cfg1.mouse_angle = M_PI / 8;
-    cfg1.horizontal_position_variance = 1.0;
-    cfg1.vertical_position_variance = 0.0;
-    cfg1.total_steps = 100;
-    cfg1.reading_threshold = 900u;
-
+    Config cfg1{create_no_variance_config()};
     Config cfg2 {cfg1};
     cfg2.horizontal_position_variance = -0.9;
 
     auto r1 {run_simulation(cfg1)};
     auto r2 {run_simulation(cfg2)};
 
-    bool diff_found {false};
-
-    for (size_t i {0}; i < r1.wall_absent_at_step.size(); ++i) {
-        if (r1.wall_absent_at_step[i] != r2.wall_absent_at_step[i]) {
-            diff_found = true;
-            break;
-        }
-    }
-
-    CHECK(diff_found);
+    CHECK(!are_results_equivalent(r1, r2));
 }
 
 TEST(WallDetectionTests, VerticalVarianceChangesResults)
 {
-    Config cfg1{};
-    cfg1.maze_size_scale = 1.0;
-    cfg1.ir_reading_scale = 1.0;
-    cfg1.mouse_angle = M_PI / 8;
-    cfg1.horizontal_position_variance = 0.0;
-    cfg1.vertical_position_variance = 1.0;
-    cfg1.total_steps = 100;
-    cfg1.reading_threshold = 900u;
-
+    Config cfg1{create_no_variance_config()};
     Config cfg2 {cfg1};
     cfg2.vertical_position_variance = -0.9;
 
     auto r1 {run_simulation(cfg1)};
     auto r2 {run_simulation(cfg2)};
 
-    bool diff_found {false};
-
-    for (size_t i {0}; i < r1.wall_absent_at_step.size(); ++i) {
-        if (r1.wall_absent_at_step[i] != r2.wall_absent_at_step[i]) {
-            diff_found = true;
-            break;
-        }
-    }
-
-    CHECK(diff_found);
+    CHECK(!are_results_equivalent(r1, r2));
 }
 
-IGNORE_TEST(WallDetectionTests, VisualizationDoesNotAffectResults)
+TEST(WallDetectionTests, VisualizationDoesNotAffectResults)
 {
-    Config cfg{};
-    cfg.maze_size_scale = 1.0;
-    cfg.ir_reading_scale = 1.0;
-    cfg.mouse_angle = 0.0;
-    cfg.horizontal_position_variance = 0.0;
-    cfg.vertical_position_variance = 0.0;
-    cfg.total_steps = 50;
-    cfg.reading_threshold = 750u;
+    Config cfg{create_no_variance_config()};
 
     disable_visualization();
     auto r1 {run_simulation(cfg)};
@@ -329,12 +239,7 @@ IGNORE_TEST(WallDetectionTests, VisualizationDoesNotAffectResults)
     enable_visualization();
     auto r2 {run_simulation(cfg)};
 
-    CHECK_EQUAL(r1.wall_absent_at_step.size(), r2.wall_absent_at_step.size());
-
-    for (size_t i = 0; i < r1.wall_absent_at_step.size(); ++i) {
-        CHECK_EQUAL(r1.wall_absent_at_step[i], r2.wall_absent_at_step[i]);
-        CHECK_EQUAL(r1.wall_present_at_step[i], r2.wall_present_at_step[i]);
-    }
+    CHECK(are_results_equivalent(r1, r2));
 }
 
 TEST(WallDetectionTests, ComputeResultsMetricsEmpty)
@@ -353,7 +258,7 @@ TEST(WallDetectionTests, ComputeResultsMetricsCountsConsensusCorrectly)
     r1.wall_absent_at_step  = {true, true, false, true, true, true};
     r1.wall_present_at_step = {true, true, true, true, true, true};
 
-    Result r2 = r1;
+    Result r2 {r1};
 
     std::vector<Result> results{r1, r2};
 
@@ -373,7 +278,7 @@ TEST(WallDetectionTests, BuildCandidatesGroupsByThreshold)
     t1.result.wall_present_at_step = {true, true};
     t1.config.reading_threshold = 100;
 
-    Trial t2 = t1;
+    Trial t2 {t1};
 
     Trial t3;
     t3.result.wall_absent_at_step  = {false, false};
@@ -394,7 +299,7 @@ TEST(WallDetectionTests, BuildCandidatesDoesNotComputeMetricsPerGroup)
     t1.result.wall_present_at_step = {true, true, true};
     t1.config.reading_threshold = 100;
 
-    Trial t2 = t1;
+    Trial t2 {t1};
 
     std::vector<Trial> trials{t1, t2};
 
@@ -402,7 +307,7 @@ TEST(WallDetectionTests, BuildCandidatesDoesNotComputeMetricsPerGroup)
 
     CHECK_EQUAL(1, candidates.size());
 
-    const auto& m = candidates[0].results_metrics;
+    const auto& m {candidates[0].results_metrics};
 
     CHECK_EQUAL(-1, m.detection_window.window_start);
     CHECK_EQUAL(0, m.detection_window.window_size);
