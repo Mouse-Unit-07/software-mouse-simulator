@@ -47,6 +47,7 @@ namespace
 
 using namespace wall_detection;
 
+void prepare_mock_for_wall_detection(const Config& cfg, const maze::Maze& maze, mouse::Mouse& mouse);
 std::optional<uint32_t> compute_ir_sensor_3_reading(const maze::Maze& maze,
         const mouse::Mouse& mouse, visualizer::Visualizer& visualizer);
 
@@ -198,15 +199,8 @@ Result run_simulation(const Config& cfg)
     maze::Maze closed_maze{maze::build_maze_from_ascii(ascii_closed, maze::OFFICIAL_POST_SIZE * (cfg.maze_size_scale - 1))};
 
     /* prepare mouse for wall detection */
-    reset_mock_device_drivers();
     mouse::Mouse mouse;
-    double MAX_HORIZONTAL_OFFSET{(maze::OFFICIAL_WALL_LENGTH_SIZE - mouse.hitbox.horizontal_size) / 2};
-    double MAX_VERTICAL_OFFSET{(maze::OFFICIAL_WALL_LENGTH_SIZE - mouse.hitbox.vertical_size) / 2};
-    mouse.rotate(cfg.mouse_angle);
-    mouse.translate(
-        open_maze.mouse_start.x + (MAX_HORIZONTAL_OFFSET * cfg.horizontal_position_variance),
-        open_maze.mouse_start.y + (MAX_VERTICAL_OFFSET * cfg.vertical_position_variance)
-    );
+    prepare_mock_for_wall_detection(cfg, open_maze, mouse);
 
     if (visualizer_enabled) {
         wall_absent_visualizer.draw_maze(100.0f, open_maze);
@@ -370,6 +364,20 @@ namespace
 {
 
 using namespace wall_detection;
+
+void prepare_mock_for_wall_detection(const Config& cfg, const maze::Maze& maze, mouse::Mouse& mouse)
+{
+    reset_mock_device_drivers();
+
+    double max_horizontal_offset{(maze::OFFICIAL_WALL_LENGTH_SIZE - mouse.hitbox.horizontal_size) / 2};
+    double max_vertical_offset{(maze::OFFICIAL_WALL_LENGTH_SIZE - mouse.hitbox.vertical_size) / 2};
+    
+    mouse.rotate(cfg.mouse_angle);
+    mouse.translate(
+        maze.mouse_start.x + (max_horizontal_offset * cfg.horizontal_position_variance),
+        maze.mouse_start.y + (max_vertical_offset * cfg.vertical_position_variance)
+    );
+}
 
 std::optional<uint32_t> compute_ir_sensor_3_reading(const maze::Maze& maze,
         const mouse::Mouse& mouse, visualizer::Visualizer& visualizer)
