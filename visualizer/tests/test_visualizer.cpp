@@ -191,6 +191,34 @@ IGNORE_TEST(VisualizerTests, DrawMouseSensorBeams)
     visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/draw-mouse-sensor-beams.png");
 }
 
+IGNORE_TEST(VisualizerTests, ChangeAndResetBeamColor)
+{
+    Visualizer visualizer;
+    std::vector<std::string> ascii
+    {
+        "+-+ +",
+        "|S|  ",
+        "+-+-+",
+        "  |  ",
+        "+ +-+"
+    };
+    maze::Maze maze{maze::build_maze_from_ascii(ascii, 0)};
+    mouse::Mouse mouse;
+    mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
+    
+    visualizer.draw_maze(100.0f, maze);
+    visualizer.draw_mouse_on_maze(mouse);
+    visualizer.change_beam_color_to_red();
+    visualizer.draw_ir_1_sensor_beam(mouse, 180.0);
+    visualizer.reset_beam_color();
+    visualizer.draw_ir_2_sensor_beam(mouse, 180.0);
+    visualizer.change_beam_color_to_red();
+    visualizer.draw_ir_3_sensor_beam(mouse, 180.0);
+    visualizer.reset_beam_color();
+    visualizer.draw_ir_4_sensor_beam(mouse, 180.0);
+    visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/draw-red-and-regular-beams.png");
+}
+
 IGNORE_TEST(VisualizerTests, DrawMouseSensorBeamsToNearestWalls)
 {
     Visualizer visualizer;

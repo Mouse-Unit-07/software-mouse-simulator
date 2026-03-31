@@ -49,6 +49,7 @@ struct Visualizer::Impl
     double frame_width_pixels{};
     double scale{};
     sf::RenderTexture texture;
+    sf::Color ray_beam_color{sf::Color::Cyan};
 
     sf::Vector2f world_to_screen(const geometry::Point& p) const
     {
@@ -143,8 +144,8 @@ struct Visualizer::Impl
 
         sf::Vertex line[]
         {
-            sf::Vertex(origin, sf::Color::Cyan),
-            sf::Vertex(end,    sf::Color::Cyan)
+            sf::Vertex(origin, ray_beam_color),
+            sf::Vertex(end, ray_beam_color)
         };
 
         texture.draw(line, 2, sf::Lines);
@@ -210,6 +211,16 @@ void Visualizer::draw_ir_3_sensor_beam(const mouse::Mouse& mouse, double length_
 void Visualizer::draw_ir_4_sensor_beam(const mouse::Mouse& mouse, double length_mm)
 {
     impl_->draw_ray_beam(mouse.ir_4_sensor, length_mm);
+}
+
+void Visualizer::reset_beam_color(void)
+{
+    impl_->ray_beam_color = sf::Color::Cyan;
+}
+
+void Visualizer::change_beam_color_to_red(void)
+{
+    impl_->ray_beam_color = sf::Color::Red;
 }
 
 void Visualizer::save_to_image_file(const std::string& filename)

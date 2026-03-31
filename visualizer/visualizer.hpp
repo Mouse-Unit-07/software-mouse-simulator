@@ -27,6 +27,9 @@ public:
     void draw_ir_3_sensor_beam(const mouse::Mouse& mouse, double length_mm);
     void draw_ir_4_sensor_beam(const mouse::Mouse& mouse, double length_mm);
 
+    void reset_beam_color(void);
+    void change_beam_color_to_red(void);
+
     void save_to_image_file(const std::string& filename);
 
 private:
