@@ -46,14 +46,15 @@ namespace visualizer
 struct Visualizer::Impl
 {
     double cell_size_pixels{};
+    double frame_width_pixels{};
     double scale{};
     sf::RenderTexture texture;
 
     sf::Vector2f world_to_screen(const geometry::Point& p) const
     {
         return {
-            static_cast<float>(p.x * scale),
-            static_cast<float>(p.y * scale)
+            static_cast<float>((p.x * scale) + frame_width_pixels),
+            static_cast<float>((p.y * scale) + frame_width_pixels)
         };
     }
 
@@ -84,7 +85,10 @@ struct Visualizer::Impl
 
         for (int r{0}; r < maze.rows; ++r) {
             for (int c{0}; c < maze.cols; ++c) {
-                cell.setPosition(c * cell_size_pixels, r * cell_size_pixels);
+                cell.setPosition(
+                    (c * cell_size_pixels) + frame_width_pixels,
+                    (r * cell_size_pixels) + frame_width_pixels
+                );
                 texture.draw(cell);
             }
         }
@@ -159,8 +163,15 @@ void Visualizer::draw_maze(double cell_size_pixels, const maze::Maze& maze)
 {
     impl_->cell_size_pixels = cell_size_pixels;
     impl_->scale = cell_size_pixels / maze.cell_size;
-    int width{static_cast<int>(maze.cols * impl_->cell_size_pixels)};
-    int height{static_cast<int>(maze.rows * impl_->cell_size_pixels)};
+    impl_->frame_width_pixels = cell_size_pixels / 2;
+    int width{static_cast<int>(
+        (maze.cols * impl_->cell_size_pixels)
+        + (impl_->frame_width_pixels) * 2
+    )};
+    int height{static_cast<int>(
+        (maze.rows * impl_->cell_size_pixels)
+        + (impl_->frame_width_pixels * 2)
+    )};
 
     impl_->texture.create(width, height);
     impl_->texture.clear(sf::Color::Black);
