@@ -105,7 +105,11 @@ struct Candidate
 namespace rotation
 {
 
-Result run_simulation(const maze::Maze& maze, const Config& cfg, double target_angle);
+void enable_visualization(void);
+void disable_visualization(void);
+std::string config_to_string(const Config& cfg);
+
+Result run_simulation(const Config& cfg, double target_angle);
 
 ResultsMetrics compute_results_metrics(const std::vector<Result>& results);
 std::vector<Candidate> build_candidates(const std::vector<Trial>& trials);

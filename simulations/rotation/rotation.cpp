@@ -33,11 +33,14 @@ extern "C"
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
+#include <memory>
+#include <filesystem>
 #include "point.hpp"
 #include "ray.hpp"
 #include "rectangular_hitbox.hpp"
 #include "mouse.hpp"
 #include "maze.hpp"
+#include "visualizer.hpp"
 #include "simulation_common.hpp"
 #include "rotation.hpp"
 
@@ -49,7 +52,12 @@ namespace
 
 using namespace rotation;
 
+void prepare_mock_for_rotation(const Config& cfg, const maze::Maze& maze, mouse::Mouse& mouse);
+mouse_delta update_mock_by_dt(const Config& cfg, mouse::Mouse& mouse);
+bool did_mouse_collide(const maze::Maze& maze, const mouse::Mouse& mouse);
+
 bool dominates(const Candidate& a, const Candidate& b);
+
 void write_summary(std::ofstream& out, const ResultsMetrics& overall_metrics, size_t total_size);
 void write_candidates_banner(std::ofstream& out);
 void write_candidates(std::ofstream& out, const std::vector<Candidate>& candidates);
@@ -65,6 +73,15 @@ extern "C"
 extern double ENCODER_TICKS_PER_ROTATION_ANGLE_RADIANS;
 
 }
+
+namespace
+{
+
+const std::string TEST_OUTPUT_DIRECTORY{"rotation-visualizer"};
+bool visualizer_enabled{false};
+visualizer::Visualizer rotation_visualizer;
+
+} /* unnamed namespace */
 
 /*----------------------------------------------------------------------------*/
 /*                             Public Definitions                             */
@@ -134,16 +151,73 @@ Config ConfigSweeper::value() const
     return cfg;
 }
 
-Result run_simulation(const maze::Maze& maze, const Config& cfg, double target_angle)
+void enable_visualization(void)
 {
-    /* prepare mouse for rotation */
-    reset_mock_device_drivers();
-    set_motor_speed_scale(cfg.motor_speed_scale);
-    set_motor_1_variance(cfg.motor1_variance);
-    set_motor_2_variance(cfg.motor2_variance);
-    set_motor_slip_factor(cfg.slip_factor);
-    set_wheel_circumference_scale(cfg.wheel_circumference_scale);
-    set_wheel_base_scale(cfg.wheel_base_scale);
+    visualizer_enabled = true;
+}
+
+void disable_visualization(void)
+{
+    visualizer_enabled = false;
+}
+
+std::string config_to_string(const Config& cfg)
+{
+    auto fmt = [](double v, int precision = 2) {
+        std::ostringstream oss;
+        oss << std::fixed << std::setprecision(precision) << v;
+        return oss.str();
+    };
+
+    auto sanitize = [](std::string s) {
+        for (char& c : s) {
+            if (c == '.') c = 'p';
+            else if (c == '-') c = 'n';
+        }
+        return s;
+    };
+
+    auto encode = [&](double v) {
+        return sanitize(fmt(v));
+    };
+
+    std::ostringstream oss;
+
+    oss << encode(cfg.dt) << "-"
+        << encode(cfg.motor_speed_scale) << "-"
+        << encode(cfg.motor1_variance) << "-"
+        << encode(cfg.motor2_variance) << "-"
+        << encode(cfg.slip_factor) << "-"
+        << encode(cfg.wheel_circumference_scale) << "-"
+        << encode(cfg.wheel_base_scale) << "-"
+        << static_cast<int>(cfg.motor_speed) << "-"
+        << encode(static_cast<double>(cfg.kp)) << "-"
+        << encode(static_cast<double>(cfg.kd)) << "-"
+        << encode(static_cast<double>(cfg.pid_shift));
+
+    return oss.str();
+}
+
+Result run_simulation(const Config& cfg, double target_angle)
+{
+    if (visualizer_enabled) {
+        std::filesystem::create_directories(TEST_OUTPUT_DIRECTORY);
+    }
+    std::vector<std::string> ascii{
+        "+-+",
+        "|S|",
+        "+-+"
+    };
+    maze::Maze maze{maze::build_maze_from_ascii(ascii, 0.0)};
+
+    mouse::Mouse mouse;
+    prepare_mock_for_rotation(cfg, maze, mouse);
+
+    if (visualizer_enabled) {
+        rotation_visualizer.draw_maze(100.0f, maze);
+        rotation_visualizer.draw_mouse_on_maze(mouse);
+    }
+
     if (target_angle > 0) {
         set_wheel_motor_1_direction_backward();
         set_wheel_motor_2_direction_forward();
@@ -152,34 +226,28 @@ Result run_simulation(const maze::Maze& maze, const Config& cfg, double target_a
         set_wheel_motor_2_direction_backward();
     }
 
-    mouse::Mouse mouse;
-    mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
-
     double total_translation{0.0};
     double total_angle_rotation{0.0};
     double total_time{0.0};
     bool collision{false};
     bool timeout{false};
-
     constexpr int MAX_STEPS{10000};
     int steps{0};
 
     int32_t prev_error{0};
-
     double raw_target{std::abs(ENCODER_TICKS_PER_ROTATION_ANGLE_RADIANS * target_angle)};
     int32_t target_ticks{static_cast<int32_t>(raw_target)};
 
     while ((std::abs(get_encoder_1_ticks()) < target_ticks) || (std::abs(get_encoder_2_ticks()) < target_ticks)) {
         int32_t enc1{std::abs(get_encoder_1_ticks())};
         int32_t enc2{std::abs(get_encoder_2_ticks())};
-        
+    
         int32_t error{enc2 - enc1};
-        int32_t derivative {error - prev_error};
-
+        int32_t derivative{error - prev_error};
+        prev_error = error;
         int64_t p_term{static_cast<int64_t>(cfg.kp) * error};
         int64_t d_term{static_cast<int64_t>(cfg.kd) * derivative};
         int64_t control64{p_term + d_term};
-
         int32_t control{0};
         if (control64 >= 0) {
             control = static_cast<int32_t>(control64 >> cfg.pid_shift);
@@ -192,33 +260,19 @@ Result run_simulation(const maze::Maze& maze, const Config& cfg, double target_a
         int32_t adjusted_speed_2{base_speed - control};
         adjusted_speed_1 = std::clamp(adjusted_speed_1, 0, 255);
         adjusted_speed_2 = std::clamp(adjusted_speed_2, 0, 255);
-
         set_wheel_motor_1_speed(static_cast<uint8_t>(adjusted_speed_1));
         set_wheel_motor_2_speed(static_cast<uint8_t>(adjusted_speed_2));
 
-        prev_error = error;
-
-        /* update virtual mouse */
-        auto delta{compute_mouse_delta(mouse.hitbox.angle_rad, cfg.dt)};
-        update_encoder_1_ticks(cfg.dt);
-        update_encoder_2_ticks(cfg.dt);
-        int32_t new_encoder_1_ticks{get_encoder_1_ticks()};
-        int32_t new_encoder_2_ticks{get_encoder_2_ticks()};
-        mouse.translate(delta.dx, delta.dy);
-        mouse.rotate(delta.dtheta_rad);
-
-        total_translation += sqrt(delta.dx * delta.dx + delta.dy * delta.dy);
+        auto delta{update_mock_by_dt(cfg, mouse)};
+        total_translation += sqrt((delta.dx * delta.dx) + (delta.dy * delta.dy));
         total_angle_rotation += delta.dtheta_rad;
         total_time += cfg.dt;
 
-        auto rc{maze::get_cell_from_point(maze, mouse.hitbox.center)};
-        if (rc) {
-            auto [r, c] {*rc};
-            if (maze::does_hitbox_collide_in_vicinity(maze, mouse.hitbox, r, c)) {
-                collision = true;
-                break;
-            }
-        } else {
+        if (visualizer_enabled) {
+            rotation_visualizer.draw_mouse_on_maze(mouse);
+        }
+
+        if (did_mouse_collide(maze, mouse)) {
             collision = true;
             break;
         }
@@ -228,6 +282,10 @@ Result run_simulation(const maze::Maze& maze, const Config& cfg, double target_a
             timeout = true;
             break;
         }
+    }
+
+    if (visualizer_enabled) {
+        rotation_visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/" + config_to_string(cfg) + ".png");
     }
 
     return Result{
@@ -356,19 +414,13 @@ void write_analysis_to_file(const std::string& filename, const std::vector<Candi
 void run_full_rotation_experiment(const std::string& filename, double target_angle,
         ConfigSweeper& sweeper)
 {
-    std::vector<std::string> ascii{
-        "+-+",
-        "|S|",
-        "+-+"
-    };
-    maze::Maze small_maze{maze::build_maze_from_ascii(ascii, 0.0)};
     std::vector<Trial> trials;
     std::vector<Result> all_results;
 
     while (sweeper.next()) {
         Config cfg {sweeper.value()};
 
-        auto result{rotation::run_simulation(small_maze, cfg, target_angle)};
+        auto result{rotation::run_simulation(cfg, target_angle)};
 
         trials.push_back({cfg, result});
         all_results.push_back(result);
@@ -390,6 +442,45 @@ namespace
 {
 
 using namespace rotation;
+
+void prepare_mock_for_rotation(const Config& cfg, const maze::Maze& maze, mouse::Mouse& mouse)
+{
+    reset_mock_device_drivers();
+    set_motor_speed_scale(cfg.motor_speed_scale);
+    set_motor_1_variance(cfg.motor1_variance);
+    set_motor_2_variance(cfg.motor2_variance);
+    set_motor_slip_factor(cfg.slip_factor);
+    set_wheel_circumference_scale(cfg.wheel_circumference_scale);
+    set_wheel_base_scale(cfg.wheel_base_scale);
+
+    mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
+}
+
+mouse_delta update_mock_by_dt(const Config& cfg, mouse::Mouse& mouse)
+{
+    mouse_delta delta{compute_mouse_delta(mouse.hitbox.angle_rad, cfg.dt)};
+    update_encoder_1_ticks(cfg.dt);
+    update_encoder_2_ticks(cfg.dt);
+    mouse.translate(delta.dx, delta.dy);
+    mouse.rotate(delta.dtheta_rad);
+
+    return delta;
+}
+
+bool did_mouse_collide(const maze::Maze& maze, const mouse::Mouse& mouse)
+{
+    auto rc{maze::get_cell_from_point(maze, mouse.hitbox.center)};
+    if (rc) {
+        auto [r, c] {*rc};
+        if (maze::does_hitbox_collide_in_vicinity(maze, mouse.hitbox, r, c)) {
+            return true;
+        }
+    } else {
+        return true;
+    }
+
+    return false;
+}
 
 bool dominates(const Candidate& a, const Candidate& b)
 {
