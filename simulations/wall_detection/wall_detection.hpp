@@ -16,8 +16,8 @@ namespace wall_detection
 
 struct DetectionWindow
 {
-    int window_start {-1};
-    int window_size {0};
+    int window_start{-1};
+    int window_size{0};
 };
 
 struct Config
