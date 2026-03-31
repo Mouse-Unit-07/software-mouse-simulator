@@ -17,4 +17,5 @@ target_link_libraries(rotation_lib PUBLIC
     mouse_lib
     maze_lib
     simulation_common_lib
+    visualizer_lib
 )

@@ -98,6 +98,28 @@ ConfigSweeper create_no_variance_sweeper(void)
     return sweeper;
 }
 
+bool are_results_equivalent(const Result& r1, const Result& r2)
+{
+    if (std::abs(r1.total_time - r2.total_time) >= FLOAT_TOLERANCE) {
+        return false;
+    }
+    if (std::abs(r1.final_angle_error - r2.final_angle_error) >= FLOAT_TOLERANCE) {
+        return false;
+    }
+    if (std::abs(r1.total_translation - r2.total_translation) >= FLOAT_TOLERANCE) {
+        return false;
+    }
+
+    if (r1.collision != r2.collision) {
+        return false;
+    }
+    if (r1.timeout != r2.timeout) {
+        return false;
+    }
+
+    return true;
+}
+
 /*============================================================================*/
 /*                            Mock Implementations                            */
 /*============================================================================*/
@@ -110,12 +132,12 @@ TEST_GROUP(RotationTests)
 {
     void setup() override
     {
-        
+        disable_visualization();
     }
 
     void teardown() override
     {
-        
+        disable_visualization();
     }
 };
 
@@ -500,6 +522,19 @@ TEST(RotationTests, ParetoFrontKeepsIdenticalCandidates)
     auto front{compute_pareto_front(v)};
 
     CHECK_EQUAL(2, front.size());
+}
+
+IGNORE_TEST(RotationTests, VisualizationDoesNotAffectResults)
+{
+    Config cfg{create_no_variance_config()};
+
+    disable_visualization();
+    auto r1{run_simulation(cfg, M_PI / 2)};
+
+    enable_visualization();
+    auto r2{run_simulation(cfg, M_PI / 2)};
+
+    CHECK(are_results_equivalent(r1, r2));
 }
 
 IGNORE_TEST(RotationTests, RunFullSimulationAndWriteResultsToFile)

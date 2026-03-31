@@ -105,6 +105,10 @@ struct Candidate
 namespace rotation
 {
 
+void enable_visualization(void);
+void disable_visualization(void);
+std::string config_to_string(const Config& cfg);
+
 Result run_simulation(const Config& cfg, double target_angle);
 
 ResultsMetrics compute_results_metrics(const std::vector<Result>& results);

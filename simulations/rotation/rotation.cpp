@@ -33,11 +33,14 @@ extern "C"
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
+#include <memory>
+#include <filesystem>
 #include "point.hpp"
 #include "ray.hpp"
 #include "rectangular_hitbox.hpp"
 #include "mouse.hpp"
 #include "maze.hpp"
+#include "visualizer.hpp"
 #include "simulation_common.hpp"
 #include "rotation.hpp"
 
@@ -70,6 +73,15 @@ extern "C"
 extern double ENCODER_TICKS_PER_ROTATION_ANGLE_RADIANS;
 
 }
+
+namespace
+{
+
+const std::string TEST_OUTPUT_DIRECTORY{"rotation-visualizer"};
+bool visualizer_enabled{false};
+visualizer::Visualizer rotation_visualizer;
+
+} /* unnamed namespace */
 
 /*----------------------------------------------------------------------------*/
 /*                             Public Definitions                             */
@@ -139,8 +151,58 @@ Config ConfigSweeper::value() const
     return cfg;
 }
 
+void enable_visualization(void)
+{
+    visualizer_enabled = true;
+}
+
+void disable_visualization(void)
+{
+    visualizer_enabled = false;
+}
+
+std::string config_to_string(const Config& cfg)
+{
+    auto fmt = [](double v, int precision = 2) {
+        std::ostringstream oss;
+        oss << std::fixed << std::setprecision(precision) << v;
+        return oss.str();
+    };
+
+    auto sanitize = [](std::string s) {
+        for (char& c : s) {
+            if (c == '.') c = 'p';
+            else if (c == '-') c = 'n';
+        }
+        return s;
+    };
+
+    auto encode = [&](double v) {
+        return sanitize(fmt(v));
+    };
+
+    std::ostringstream oss;
+
+    oss << encode(cfg.dt) << "-"
+        << encode(cfg.motor_speed_scale) << "-"
+        << encode(cfg.motor1_variance) << "-"
+        << encode(cfg.motor2_variance) << "-"
+        << encode(cfg.slip_factor) << "-"
+        << encode(cfg.wheel_circumference_scale) << "-"
+        << encode(cfg.wheel_base_scale) << "-"
+        << static_cast<int>(cfg.motor_speed) << "-"
+        << encode(static_cast<double>(cfg.kp)) << "-"
+        << encode(static_cast<double>(cfg.kd)) << "-"
+        << encode(static_cast<double>(cfg.pid_shift));
+
+    return oss.str();
+}
+
 Result run_simulation(const Config& cfg, double target_angle)
 {
+    if (visualizer_enabled) {
+        std::filesystem::create_directories(TEST_OUTPUT_DIRECTORY);
+    }
     std::vector<std::string> ascii{
         "+-+",
         "|S|",
@@ -150,6 +212,11 @@ Result run_simulation(const Config& cfg, double target_angle)
 
     mouse::Mouse mouse;
     prepare_mock_for_rotation(cfg, maze, mouse);
+
+    if (visualizer_enabled) {
+        rotation_visualizer.draw_maze(100.0f, maze);
+        rotation_visualizer.draw_mouse_on_maze(mouse);
+    }
 
     if (target_angle > 0) {
         set_wheel_motor_1_direction_backward();
@@ -201,6 +268,10 @@ Result run_simulation(const Config& cfg, double target_angle)
         total_angle_rotation += delta.dtheta_rad;
         total_time += cfg.dt;
 
+        if (visualizer_enabled) {
+            rotation_visualizer.draw_mouse_on_maze(mouse);
+        }
+
         if (did_mouse_collide(maze, mouse)) {
             collision = true;
             break;
@@ -211,6 +282,10 @@ Result run_simulation(const Config& cfg, double target_angle)
             timeout = true;
             break;
         }
+    }
+
+    if (visualizer_enabled) {
+        rotation_visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/" + config_to_string(cfg) + ".png");
     }
 
     return Result{
