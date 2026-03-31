@@ -19,10 +19,10 @@ using namespace geometry;
 /*============================================================================*/
 /*                             Public Definitions                             */
 /*============================================================================*/
-Point test_origin {0.0, 0.0}; /* arbitrary coordinates */
-double test_angle {M_PI / 4}; /* arbitrary angle */
-Point test_direction {std::cos(test_angle), std::sin(test_angle)};
-Ray test_ray {test_origin, test_angle};
+Point test_origin{0.0, 0.0}; /* arbitrary coordinates */
+double test_angle{M_PI / 4}; /* arbitrary angle */
+Point test_direction{std::cos(test_angle), std::sin(test_angle)};
+Ray test_ray{test_origin, test_angle};
 
 void initialize_test_variables(void)
 {
@@ -63,8 +63,8 @@ TEST(RayTests, PointsMatchOnParameterizedConstructor)
 
 TEST(RayTests, TranslateModifiesOrigin)
 {
-    double test_dx {-10.0};
-    double test_dy {20.0};
+    double test_dx{-10.0};
+    double test_dy{20.0};
     test_ray.translate(test_dx, test_dy);
     test_origin.translate(test_dx, test_dy);
     
@@ -73,8 +73,8 @@ TEST(RayTests, TranslateModifiesOrigin)
 
 TEST(RayTests, RotateModifiesOrigin)
 {
-    Point center {5.0, 6.0};
-    double angle {M_PI / 2}; /* 90 deg counter clockwise */
+    Point center{5.0, 6.0};
+    double angle{M_PI / 2}; /* 90 deg counter clockwise */
     test_ray.rotate(center, angle);
     test_origin.rotate(center, angle);
 
@@ -84,8 +84,8 @@ TEST(RayTests, RotateModifiesOrigin)
 
 TEST(RayTests, TranslateDoesNotModifyDirection)
 {
-    double test_dx {-10.0};
-    double test_dy {20.0};
+    double test_dx{-10.0};
+    double test_dy{20.0};
     test_ray.translate(test_dx, test_dy);
 
     CHECK(test_ray.direction == test_direction);
@@ -93,8 +93,8 @@ TEST(RayTests, TranslateDoesNotModifyDirection)
 
 TEST(RayTests, RotateModifiesDirectionAboutOrigin)
 {
-    Point center {5.0, 6.0};
-    double angle {M_PI / 2}; /* 90 deg counter clockwise */
+    Point center{5.0, 6.0};
+    double angle{M_PI / 2}; /* 90 deg counter clockwise */
     test_ray.rotate(center, angle);
     test_direction.rotate(Point{0.0, 0.0}, angle);
 
