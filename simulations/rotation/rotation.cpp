@@ -138,8 +138,15 @@ Config ConfigSweeper::value() const
     return cfg;
 }
 
-Result run_simulation(const maze::Maze& maze, const Config& cfg, double target_angle)
+Result run_simulation(const Config& cfg, double target_angle)
 {
+    std::vector<std::string> ascii{
+        "+-+",
+        "|S|",
+        "+-+"
+    };
+    maze::Maze maze{maze::build_maze_from_ascii(ascii, 0.0)};
+
     mouse::Mouse mouse;
     prepare_mock_for_rotation(cfg, maze, mouse);
 
@@ -331,19 +338,13 @@ void write_analysis_to_file(const std::string& filename, const std::vector<Candi
 void run_full_rotation_experiment(const std::string& filename, double target_angle,
         ConfigSweeper& sweeper)
 {
-    std::vector<std::string> ascii{
-        "+-+",
-        "|S|",
-        "+-+"
-    };
-    maze::Maze small_maze{maze::build_maze_from_ascii(ascii, 0.0)};
     std::vector<Trial> trials;
     std::vector<Result> all_results;
 
     while (sweeper.next()) {
         Config cfg {sweeper.value()};
 
-        auto result{rotation::run_simulation(small_maze, cfg, target_angle)};
+        auto result{rotation::run_simulation(cfg, target_angle)};
 
         trials.push_back({cfg, result});
         all_results.push_back(result);

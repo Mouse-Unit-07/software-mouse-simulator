@@ -47,13 +47,6 @@ using namespace rotation;
 /*============================================================================*/
 constexpr double FLOAT_TOLERANCE {1e-6};
 
-std::vector<std::string> ascii{
-    "+-+",
-    "|S|",
-    "+-+"
-};
-maze::Maze test_maze{maze::build_maze_from_ascii(ascii, 0.0)};
-
 Config create_no_variance_config(void)
 {
     Config cfg;
@@ -193,7 +186,7 @@ TEST(RotationTests, SimulationProducesValidResult)
 {
     Config cfg{create_no_variance_config()};
 
-    auto r{run_simulation(test_maze, cfg, M_PI / 2)};
+    auto r{run_simulation(cfg, M_PI / 2)};
 
     CHECK(r.total_time >= 0.0);
     CHECK(r.final_angle_error >= 0.0);
@@ -205,7 +198,7 @@ TEST(RotationTests, SimulationFailsWhenDtIsZero)
     Config cfg{create_no_variance_config()};
     cfg.dt = 0.0;
 
-    auto r{run_simulation(test_maze, cfg, M_PI / 2)};
+    auto r{run_simulation(cfg, M_PI / 2)};
 
     CHECK(r.timeout);
 }
@@ -214,8 +207,8 @@ TEST(RotationTests, PositiveAndNegativeAnglesProduceSameAngleAndTranslationError
 {
     Config cfg{create_no_variance_config()};
 
-    auto r1{run_simulation(test_maze, cfg,  M_PI / 2)};
-    auto r2{run_simulation(test_maze, cfg, -M_PI / 2)};
+    auto r1{run_simulation(cfg,  M_PI / 2)};
+    auto r2{run_simulation(cfg, -M_PI / 2)};
 
     CHECK_FALSE(r1.timeout);
     CHECK_FALSE(r2.timeout);
@@ -227,8 +220,8 @@ TEST(RotationTests, LargerAngleTakesMoreTime)
 {
     Config cfg{create_no_variance_config()};
 
-    auto small{run_simulation(test_maze, cfg, M_PI / 4)};
-    auto large{run_simulation(test_maze, cfg, M_PI / 2)};
+    auto small{run_simulation(cfg, M_PI / 4)};
+    auto large{run_simulation(cfg, M_PI / 2)};
 
     CHECK(large.total_time >= small.total_time);
 }
@@ -247,7 +240,7 @@ TEST(RotationTests, SimulationCanDetectCollision)
     cfg.motor_speed = 255u;
     cfg.motor1_variance = -1;
 
-    auto r{run_simulation(test_maze, cfg, M_PI)};
+    auto r{run_simulation(cfg, M_PI)};
 
     CHECK(r.collision);
 }
@@ -266,7 +259,7 @@ TEST(RotationTests, NoTranslationAndAngleErrorForPerfectTestVariables)
     cfg.motor_speed = 100;
     cfg.dt = 0.001;
 
-    auto r{run_simulation(test_maze, cfg, M_PI)};
+    auto r{run_simulation(cfg, M_PI)};
 
     /* 1% of a circle, or 3.6 degrees */
     constexpr double ROTATION_TOLERANCE{(2 * M_PI) * 0.01};
@@ -327,8 +320,8 @@ TEST(RotationTests, DerivativeTermAffectsStability)
     Config with_d{cfg};
     with_d.kd = 1000;
 
-    auto r1{run_simulation(test_maze, no_d,  M_PI / 2)};
-    auto r2{run_simulation(test_maze, with_d,M_PI / 2)};
+    auto r1{run_simulation(no_d, M_PI / 2)};
+    auto r2{run_simulation(with_d, M_PI / 2)};
 
     CHECK((r1.final_angle_error != r2.final_angle_error)
        || (r1.total_translation != r2.total_translation));
@@ -345,8 +338,8 @@ TEST(RotationTests, PDImprovesAccuracyOverNoControl)
     pd_control.kp = 2000;
     pd_control.kd = 1000;
 
-    auto r1{run_simulation(test_maze, no_control, M_PI / 2)};
-    auto r2{run_simulation(test_maze, pd_control, M_PI / 2)};
+    auto r1{run_simulation(no_control, M_PI / 2)};
+    auto r2{run_simulation(pd_control, M_PI / 2)};
 
     CHECK(r2.final_angle_error <= r1.final_angle_error);
 }
@@ -363,8 +356,8 @@ TEST(RotationTests, PidShiftAffectsControlStrength)
     Config weak{cfg};
     weak.pid_shift = 8;
 
-    auto r1{run_simulation(test_maze, strong, M_PI / 2)};
-    auto r2{run_simulation(test_maze, weak,   M_PI / 2)};
+    auto r1{run_simulation(strong, M_PI / 2)};
+    auto r2{run_simulation(weak, M_PI / 2)};
 
     CHECK((r1.total_time != r2.total_time)
        || (r1.final_angle_error != r2.final_angle_error));
