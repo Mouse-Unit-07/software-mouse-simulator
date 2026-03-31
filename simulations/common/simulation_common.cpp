@@ -39,7 +39,7 @@ MetricStats compute_stats(const std::vector<double>& data)
         return s;
     }
 
-    double sum {0.0};
+    double sum{0.0};
     s.min = data[0];
     s.max = data[0];
 
@@ -55,9 +55,9 @@ MetricStats compute_stats(const std::vector<double>& data)
 
     s.mean = sum / data.size();
 
-    double variance {0.0};
+    double variance{0.0};
     for (double v : data) {
-        double d {v - s.mean};
+        double d{v - s.mean};
         variance += d * d;
     }
 

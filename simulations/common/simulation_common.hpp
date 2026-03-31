@@ -33,9 +33,9 @@ std::vector<T> generate_sweep_values(T min, T max, int steps)
 
     values.reserve(steps);
 
-    for (int i = 0; i < steps; ++i) {
-        double t = static_cast<double>(i) / (steps - 1);
-        values.push_back(static_cast<T>(min + t * (max - min)));
+    for (int i{0}; i < steps; ++i) {
+        double t{static_cast<double>(i) / (steps - 1)};
+        values.push_back(static_cast<T>(min + (t * (max - min))));
     }
 
     return values;
@@ -43,10 +43,10 @@ std::vector<T> generate_sweep_values(T min, T max, int steps)
 
 struct MetricStats
 {
-    double mean {0.0};
-    double stddev {0.0};
-    double min {0.0};
-    double max {0.0};
+    double mean{0.0};
+    double stddev{0.0};
+    double min{0.0};
+    double max{0.0};
 };
 
 template <typename Trials, typename Fn>
@@ -69,7 +69,7 @@ double compute_rate(const Trials& trials, Pred pred)
         return 0.0;
     }
 
-    int count {0};
+    int count{0};
     for (const auto& t : trials) {
         if (pred(t)) {
             count++;
