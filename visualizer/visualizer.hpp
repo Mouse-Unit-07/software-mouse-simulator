@@ -16,28 +16,22 @@ namespace visualizer
 class Visualizer
 {
 public:
-    Visualizer() = default;
+    Visualizer();
+    ~Visualizer();
 
     void draw_maze(float cell_size_pixels, const maze::Maze& maze);
     void draw_mouse_on_maze(const mouse::Mouse& mouse);
+
     void draw_ir_1_sensor_beam(const mouse::Mouse& mouse, double length_mm);
     void draw_ir_2_sensor_beam(const mouse::Mouse& mouse, double length_mm);
     void draw_ir_3_sensor_beam(const mouse::Mouse& mouse, double length_mm);
     void draw_ir_4_sensor_beam(const mouse::Mouse& mouse, double length_mm);
+
     void save_to_image_file(const std::string& filename);
 
 private:
-    float cell_size;
-    sf::RenderTexture texture;
-
-    sf::Vector2f world_to_screen(const geometry::Point& p) const;
-    sf::VertexArray make_rectangle(const geometry::RectangularHitbox& hitbox, sf::Color color) const;
-    
-    void draw_cells(const maze::Maze& maze);
-    void draw_obstacles(const maze::Maze& maze);
-    void draw_mouse_start(const maze::Maze& maze);
-    void draw_ray(const geometry::Ray& ray);
-    void draw_ray_beam(const geometry::Ray& ray, double length_mm);
+    struct Impl;
+    std::unique_ptr<Impl> impl_;
 };
 
 } /* visualizer namespace */

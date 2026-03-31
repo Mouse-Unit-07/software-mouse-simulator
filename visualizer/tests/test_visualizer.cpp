@@ -13,7 +13,7 @@
 #include <string>
 #include <optional>
 #include <utility>
-#include <SFML/Graphics.hpp>
+#include <memory>
 #include "point.hpp"
 #include "ray.hpp"
 #include "rectangular_hitbox.hpp"
