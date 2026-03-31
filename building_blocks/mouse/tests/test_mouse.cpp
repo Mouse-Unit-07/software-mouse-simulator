@@ -58,13 +58,13 @@ TEST(MouseTests, TranslateMovesHitboxAndRays)
 {
     Mouse test_mouse;
 
-    double test_dx {10.0};
-    double test_dy {5.0};
-    geometry::RectangularHitbox test_hitbox {test_mouse.hitbox};
-    geometry::Ray ir_1 {test_mouse.ir_1_sensor};
-    geometry::Ray ir_2 {test_mouse.ir_2_sensor};
-    geometry::Ray ir_3 {test_mouse.ir_3_sensor};
-    geometry::Ray ir_4 {test_mouse.ir_4_sensor};
+    double test_dx{10.0};
+    double test_dy{5.0};
+    geometry::RectangularHitbox test_hitbox{test_mouse.hitbox};
+    geometry::Ray ir_1{test_mouse.ir_1_sensor};
+    geometry::Ray ir_2{test_mouse.ir_2_sensor};
+    geometry::Ray ir_3{test_mouse.ir_3_sensor};
+    geometry::Ray ir_4{test_mouse.ir_4_sensor};
     test_mouse.translate(test_dx, test_dy);
 
     test_hitbox.translate(test_dx, test_dy);
@@ -83,13 +83,13 @@ TEST(MouseTests, RotateMovesHitboxAndRaysAboutHitboxCenter)
 {
     Mouse test_mouse;
 
-    double test_angle {M_PI / 4.0};
-    geometry::Point center {test_mouse.hitbox.center};
-    geometry::RectangularHitbox test_hitbox {test_mouse.hitbox};
-    geometry::Ray ir_1 {test_mouse.ir_1_sensor};
-    geometry::Ray ir_2 {test_mouse.ir_2_sensor};
-    geometry::Ray ir_3 {test_mouse.ir_3_sensor};
-    geometry::Ray ir_4 {test_mouse.ir_4_sensor};
+    double test_angle{M_PI / 4.0};
+    geometry::Point center{test_mouse.hitbox.center};
+    geometry::RectangularHitbox test_hitbox{test_mouse.hitbox};
+    geometry::Ray ir_1{test_mouse.ir_1_sensor};
+    geometry::Ray ir_2{test_mouse.ir_2_sensor};
+    geometry::Ray ir_3{test_mouse.ir_3_sensor};
+    geometry::Ray ir_4{test_mouse.ir_4_sensor};
     test_mouse.rotate(test_angle);
 
     test_hitbox.rotate(center, test_angle);
