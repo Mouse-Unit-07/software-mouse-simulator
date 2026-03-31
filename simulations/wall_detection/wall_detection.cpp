@@ -49,7 +49,9 @@ using namespace wall_detection;
 
 std::optional<uint32_t> compute_ir_sensor_3_reading(const maze::Maze& maze,
         const mouse::Mouse& mouse, visualizer::Visualizer& visualizer);
+
 DetectionWindow find_window_with_rate(const ResultsMetrics& m, double required_rate);
+
 void write_summary(std::ofstream& out, const std::vector<Candidate>& candidates, size_t total_size);
 void write_candidates(std::ofstream& out, const std::vector<Candidate>& candidates);
 

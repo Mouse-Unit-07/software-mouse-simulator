@@ -49,14 +49,15 @@ namespace
 
 using namespace rotation;
 
-bool dominates(const Candidate& a, const Candidate& b);
-void write_summary(std::ofstream& out, const ResultsMetrics& overall_metrics, size_t total_size);
-void write_candidates_banner(std::ofstream& out);
-void write_candidates(std::ofstream& out, const std::vector<Candidate>& candidates);
-
 void prepare_mock_for_rotation(const Config& cfg, const maze::Maze& maze, mouse::Mouse& mouse);
 mouse_delta update_mock_by_dt(const Config& cfg, mouse::Mouse& mouse);
 bool did_mouse_collide(const maze::Maze& maze, const mouse::Mouse& mouse);
+
+bool dominates(const Candidate& a, const Candidate& b);
+
+void write_summary(std::ofstream& out, const ResultsMetrics& overall_metrics, size_t total_size);
+void write_candidates_banner(std::ofstream& out);
+void write_candidates(std::ofstream& out, const std::vector<Candidate>& candidates);
 
 } /* unnamed namespace */
 
@@ -367,6 +368,45 @@ namespace
 
 using namespace rotation;
 
+void prepare_mock_for_rotation(const Config& cfg, const maze::Maze& maze, mouse::Mouse& mouse)
+{
+    reset_mock_device_drivers();
+    set_motor_speed_scale(cfg.motor_speed_scale);
+    set_motor_1_variance(cfg.motor1_variance);
+    set_motor_2_variance(cfg.motor2_variance);
+    set_motor_slip_factor(cfg.slip_factor);
+    set_wheel_circumference_scale(cfg.wheel_circumference_scale);
+    set_wheel_base_scale(cfg.wheel_base_scale);
+
+    mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
+}
+
+mouse_delta update_mock_by_dt(const Config& cfg, mouse::Mouse& mouse)
+{
+    mouse_delta delta{compute_mouse_delta(mouse.hitbox.angle_rad, cfg.dt)};
+    update_encoder_1_ticks(cfg.dt);
+    update_encoder_2_ticks(cfg.dt);
+    mouse.translate(delta.dx, delta.dy);
+    mouse.rotate(delta.dtheta_rad);
+
+    return delta;
+}
+
+bool did_mouse_collide(const maze::Maze& maze, const mouse::Mouse& mouse)
+{
+    auto rc{maze::get_cell_from_point(maze, mouse.hitbox.center)};
+    if (rc) {
+        auto [r, c] {*rc};
+        if (maze::does_hitbox_collide_in_vicinity(maze, mouse.hitbox, r, c)) {
+            return true;
+        }
+    } else {
+        return true;
+    }
+
+    return false;
+}
+
 bool dominates(const Candidate& a, const Candidate& b)
 {
     const auto& A{a.results_metrics};
@@ -476,45 +516,6 @@ void write_candidates(std::ofstream& out, const std::vector<Candidate>& candidat
             << std::setw(28) << fmt_stats(c.results_metrics.time_stats)
             << "\n";
     }
-}
-
-void prepare_mock_for_rotation(const Config& cfg, const maze::Maze& maze, mouse::Mouse& mouse)
-{
-    reset_mock_device_drivers();
-    set_motor_speed_scale(cfg.motor_speed_scale);
-    set_motor_1_variance(cfg.motor1_variance);
-    set_motor_2_variance(cfg.motor2_variance);
-    set_motor_slip_factor(cfg.slip_factor);
-    set_wheel_circumference_scale(cfg.wheel_circumference_scale);
-    set_wheel_base_scale(cfg.wheel_base_scale);
-
-    mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
-}
-
-mouse_delta update_mock_by_dt(const Config& cfg, mouse::Mouse& mouse)
-{
-    mouse_delta delta{compute_mouse_delta(mouse.hitbox.angle_rad, cfg.dt)};
-    update_encoder_1_ticks(cfg.dt);
-    update_encoder_2_ticks(cfg.dt);
-    mouse.translate(delta.dx, delta.dy);
-    mouse.rotate(delta.dtheta_rad);
-
-    return delta;
-}
-
-bool did_mouse_collide(const maze::Maze& maze, const mouse::Mouse& mouse)
-{
-    auto rc{maze::get_cell_from_point(maze, mouse.hitbox.center)};
-    if (rc) {
-        auto [r, c] {*rc};
-        if (maze::does_hitbox_collide_in_vicinity(maze, mouse.hitbox, r, c)) {
-            return true;
-        }
-    } else {
-        return true;
-    }
-
-    return false;
 }
 
 } /* unnamed namespace */
