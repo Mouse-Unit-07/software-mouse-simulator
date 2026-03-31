@@ -17,6 +17,7 @@ extern "C"
 #include <string>
 #include <optional>
 #include <utility>
+#include <stdexcept>
 #include "point.hpp"
 #include "ray.hpp"
 #include "rectangular_hitbox.hpp"
@@ -30,6 +31,8 @@ namespace
 {
 
 using namespace maze;
+
+std::string validate_ascii_maze(const std::vector<std::string>& ascii);
 
 geometry::RectangularHitbox create_post(const geometry::Point& center, double size_adjustment);
 geometry::RectangularHitbox create_vertical_wall(const geometry::Point& center, double size_adjustment);
@@ -64,6 +67,11 @@ const Cell& Maze::get_cell(int row, int col) const
 
 Maze build_maze_from_ascii(const std::vector<std::string>& ascii, double obstacle_size_adjustment)
 {
+    const std::string error{validate_ascii_maze(ascii)};
+    if (!error.empty()) {
+        throw std::invalid_argument(error);
+    }
+
     Maze maze;
 
     int ascii_rows{static_cast<int>(ascii.size())};
@@ -189,6 +197,54 @@ bool does_hitbox_collide_in_vicinity(const Maze& maze, const geometry::Rectangul
 /*----------------------------------------------------------------------------*/
 namespace
 {
+
+std::string validate_ascii_maze(const std::vector<std::string>& ascii)
+{
+    if (ascii.empty()) {
+        return "ASCII maze is empty";
+    }
+
+    const size_t expected_cols{ascii.front().size()};
+    bool found_start{false};
+
+    for (size_t r{0}; r < ascii.size(); ++r) {
+        const auto& row{ascii.at(r)};
+
+        /* jagged check */
+        if (row.size() != expected_cols) {
+            return "ASCII maze is jagged (row " + std::to_string(r) + ")";
+        }
+
+        for (size_t c{0}; c < row.size(); ++c) {
+            char ch{row.at(c)};
+
+            /* character validation */
+            if (ch != ' ' &&
+                ch != '+' &&
+                ch != '|' &&
+                ch != '-' &&
+                ch != 'S') {
+                return "Invalid character '" + std::string(1, ch) +
+                       "' at (" + std::to_string(r) +
+                       ", " + std::to_string(c) + ")";
+            }
+
+            /* start validation */
+            if (ch == 'S') {
+                if (found_start) {
+                    return "Multiple 'S' start positions found";
+                }
+                found_start = true;
+            }
+        }
+    }
+
+    if (!found_start) {
+        return "No 'S' start position found";
+    }
+
+    return ""; /* valid */
+}
 
 geometry::RectangularHitbox create_post(const geometry::Point& center, double size_adjustment)
 {
