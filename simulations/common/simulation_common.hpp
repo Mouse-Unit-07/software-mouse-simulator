@@ -13,14 +13,6 @@
 namespace simulation_common
 {
 
-struct SweepConfig
-{
-    std::string name;
-    double min;
-    double max;
-    int steps;
-};
-
 template <typename T>
 std::vector<T> generate_sweep_values(T min, T max, int steps)
 {
