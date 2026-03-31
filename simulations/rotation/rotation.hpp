@@ -16,17 +16,15 @@ namespace rotation
 
 struct Config
 {
-    uint8_t motor_speed;
-
-    double motor_speed_scale;
     double dt;
-
+    double motor_speed_scale;
     double motor1_variance;
     double motor2_variance;
     double slip_factor;
     double wheel_circumference_scale;
     double wheel_base_scale;
-
+    
+    uint8_t motor_speed;
     int32_t kp;
     int32_t kd;
     int32_t pid_shift;
@@ -35,22 +33,21 @@ struct Config
 class ConfigSweeper
 {
 public:
-    std::vector<uint8_t> motor_speed;
-    std::vector<double> motor_speed_scale;
     std::vector<double> dt;
-
+    std::vector<double> motor_speed_scale;
     std::vector<double> motor1_variance;
     std::vector<double> motor2_variance;
     std::vector<double> slip_factor;
     std::vector<double> wheel_circumference_scale;
     std::vector<double> wheel_base_scale;
 
+    std::vector<uint8_t> motor_speed;
     std::vector<int32_t> kp;
     std::vector<int32_t> kd;
     std::vector<int32_t> pid_shift;
 
     std::vector<size_t> indices;
-    bool first {true};
+    bool first{true};
 
     ConfigSweeper();
 
@@ -60,11 +57,11 @@ public:
 
 struct Result
 {
-    double total_time {0.0};
-    double final_angle_error {0.0};
-    double total_translation {0.0};
-    bool collision {false};
-    bool timeout {false};
+    double total_time{0.0};
+    double final_angle_error{0.0};
+    double total_translation{0.0};
+    bool collision{false};
+    bool timeout{false};
 };
 
 struct Trial
@@ -78,8 +75,8 @@ struct ResultsMetrics
     simulation_common::MetricStats time_stats;
     simulation_common::MetricStats angle_error_stats;
     simulation_common::MetricStats translation_stats;
-    double collision_rate {0.0};
-    double timeout_rate {0.0};
+    double collision_rate{0.0};
+    double timeout_rate{0.0};
 };
 
 struct CandidateKey {
