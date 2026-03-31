@@ -77,8 +77,8 @@ TEST(RectangularHitboxTests, ParameterizedConstructorInitializesAllFields)
 
 TEST(RectangularHitboxTests, TranslateModifiesPoints)
 {
-    double test_dx {-10.0}; /* arbitrary translation */
-    double test_dy {20.0};
+    double test_dx{-10.0}; /* arbitrary translation */
+    double test_dy{20.0};
     test_center.translate(test_dx, test_dy);
     test_top_right.translate(test_dx, test_dy);
     test_bottom_right.translate(test_dx, test_dy);
@@ -95,8 +95,8 @@ TEST(RectangularHitboxTests, TranslateModifiesPoints)
 
 TEST(RectangularHitboxTests, RotateModifiesPoints)
 {
-    Point test_rotation_center {10.0, 10.0}; /* arbitrary center */
-    double test_angle {M_PI / 2}; /* arbitrary rotation (90 deg counter clockwise) */
+    Point test_rotation_center{10.0, 10.0}; /* arbitrary center */
+    double test_angle{M_PI / 2}; /* arbitrary rotation (90 deg counter clockwise) */
     test_center.rotate(test_rotation_center, test_angle);
     test_top_right.rotate(test_rotation_center, test_angle);
     test_bottom_right.rotate(test_rotation_center, test_angle);
@@ -113,7 +113,7 @@ TEST(RectangularHitboxTests, RotateModifiesPoints)
 
 TEST(RectangularHitboxTests, RotateModifiesAngle)
 {
-    constexpr double FLOAT_TOLERANCE {1e-6};
+    constexpr double FLOAT_TOLERANCE{1e-6};
 
     test_hitbox.rotate(test_center, M_PI / 2);
     DOUBLES_EQUAL(M_PI, test_hitbox.angle_rad, FLOAT_TOLERANCE);
