@@ -40,8 +40,8 @@ MetricStats compute_stats(const std::vector<double>& data)
     }
 
     double sum{0.0};
-    s.min = data[0];
-    s.max = data[0];
+    s.min = data.at(0);
+    s.max = data.at(0);
 
     for (double v : data) {
         sum += v;

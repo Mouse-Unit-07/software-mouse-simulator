@@ -63,7 +63,7 @@ TEST(CommonTests, GenerateSweepValuesSingleStep)
     auto v{generate_sweep_values(5, 10, 1)};
 
     CHECK_EQUAL(1, v.size());
-    CHECK_EQUAL(5, v[0]);
+    CHECK_EQUAL(5, v.at(0));
 }
 
 TEST(CommonTests, GenerateSweepValuesTwoSteps)
@@ -71,8 +71,8 @@ TEST(CommonTests, GenerateSweepValuesTwoSteps)
     auto v{generate_sweep_values(5, 10, 2)};
 
     CHECK_EQUAL(2, v.size());
-    CHECK_EQUAL(5, v[0]);
-    CHECK_EQUAL(10, v[1]);
+    CHECK_EQUAL(5, v.at(0));
+    CHECK_EQUAL(10, v.at(1));
 }
 
 TEST(CommonTests, GenerateSweepValuesInterpolatesCorrectly)
@@ -80,9 +80,9 @@ TEST(CommonTests, GenerateSweepValuesInterpolatesCorrectly)
     auto v{generate_sweep_values(0.0, 10.0, 5)};
 
     CHECK_EQUAL(5, v.size());
-    DOUBLES_EQUAL(0.0,  v[0], FLOAT_TOLERANCE);
-    DOUBLES_EQUAL(5.0,  v[2], FLOAT_TOLERANCE);
-    DOUBLES_EQUAL(10.0, v[4], FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0,  v.at(0), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(5.0,  v.at(2), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(10.0, v.at(4), FLOAT_TOLERANCE);
 }
 
 TEST(CommonTests, GenerateSweepValuesIntegerTypeTruncates)
@@ -90,15 +90,15 @@ TEST(CommonTests, GenerateSweepValuesIntegerTypeTruncates)
     auto v{generate_sweep_values<int>(0, 10, 4)};
 
     CHECK_EQUAL(4, v.size());
-    CHECK_EQUAL(0, v[0]);
-    CHECK_EQUAL(3, v[1]); /* truncated */
-    CHECK_EQUAL(6, v[2]); /* truncated */
-    CHECK_EQUAL(10, v[3]);
+    CHECK_EQUAL(0, v.at(0));
+    CHECK_EQUAL(3, v.at(1)); /* truncated */
+    CHECK_EQUAL(6, v.at(2)); /* truncated */
+    CHECK_EQUAL(10, v.at(3));
 }
 
 TEST(CommonTests, ComputeStatsSingleValue)
 {
-    std::vector<double> data {42.0};
+    std::vector<double> data{42.0};
 
     auto s{compute_stats(data)};
 
@@ -110,7 +110,7 @@ TEST(CommonTests, ComputeStatsSingleValue)
 
 TEST(CommonTests, ComputeStatsBasic)
 {
-    std::vector<double> data {10.0, 20.0, 30.0};
+    std::vector<double> data{10.0, 20.0, 30.0};
 
     auto s{compute_stats(data)};
 
@@ -134,7 +134,7 @@ TEST(CommonTests, ComputeStatsEmpty)
 
 TEST(CommonTests, ComputeStatsAllSameValues)
 {
-    std::vector<double> data {5.0, 5.0, 5.0};
+    std::vector<double> data{5.0, 5.0, 5.0};
 
     auto s{compute_stats(data)};
 
@@ -163,8 +163,8 @@ TEST(CommonTests, ExtractMetricWorks)
     auto result{extract_metric(trials, [](const auto& t) { return t.second; })};
 
     CHECK_EQUAL(3, result.size());
-    DOUBLES_EQUAL(10.0, result[0], FLOAT_TOLERANCE);
-    DOUBLES_EQUAL(30.0, result[2], FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(10.0, result.at(0), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(30.0, result.at(2), FLOAT_TOLERANCE);
 }
 
 TEST(CommonTests, ComputeRateBasic)
