@@ -21,35 +21,6 @@ struct SweepConfig
     int steps;
 };
 
-class SweepCursor
-{
-public:
-    explicit SweepCursor(const std::vector<SweepConfig>& configs);
-
-    bool next();
-    std::vector<double> values() const;
-
-private:
-    std::vector<SweepConfig> configs_;
-    std::vector<int> progress_counter_;
-};
-
-template <typename Result>
-std::vector<std::pair<std::vector<double>, Result>> run_config_sweep(
-        const std::vector<SweepConfig>& configs,
-        const std::function<Result(const std::vector<double>&)>& sim_fn)
-{
-    SweepCursor cursor(configs);
-    std::vector<std::pair<std::vector<double>, Result>> results;
-
-    do {
-        auto vals = cursor.values();
-        results.push_back({vals, sim_fn(vals)});
-    } while (cursor.next());
-
-    return results;
-}
-
 template <typename T>
 std::vector<T> generate_sweep_values(T min, T max, int steps)
 {
