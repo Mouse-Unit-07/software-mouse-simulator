@@ -19,7 +19,7 @@ public:
     Visualizer();
     ~Visualizer();
 
-    void draw_maze(float cell_size_pixels, const maze::Maze& maze);
+    void draw_maze(double cell_size_pixels, const maze::Maze& maze);
     void draw_mouse_on_maze(const mouse::Mouse& mouse);
 
     void draw_ir_1_sensor_beam(const mouse::Mouse& mouse, double length_mm);

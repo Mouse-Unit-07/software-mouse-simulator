@@ -45,13 +45,12 @@ namespace visualizer
 
 struct Visualizer::Impl
 {
-    float cell_size{};
+    double cell_size_pixels{};
+    double scale{};
     sf::RenderTexture texture;
 
     sf::Vector2f world_to_screen(const geometry::Point& p) const
     {
-        float scale{static_cast<float>(cell_size / maze::CELL_SIZE)};
-
         return {
             static_cast<float>(p.x * scale),
             static_cast<float>(p.y * scale)
@@ -78,14 +77,14 @@ struct Visualizer::Impl
     void draw_cells(const maze::Maze& maze)
     {
         sf::RectangleShape cell;
-        cell.setSize({cell_size, cell_size});
+        cell.setSize({static_cast<float>(cell_size_pixels), static_cast<float>(cell_size_pixels)});
         cell.setFillColor(sf::Color::Transparent);
         cell.setOutlineColor(sf::Color(60, 60, 60));
         cell.setOutlineThickness(1.0f);
 
         for (int r{0}; r < maze.rows; ++r) {
             for (int c{0}; c < maze.cols; ++c) {
-                cell.setPosition(c * cell_size, r * cell_size);
+                cell.setPosition(c * cell_size_pixels, r * cell_size_pixels);
                 texture.draw(cell);
             }
         }
@@ -102,7 +101,7 @@ struct Visualizer::Impl
     void draw_mouse_start(const maze::Maze& maze)
     {
         sf::CircleShape marker;
-        marker.setRadius(cell_size * 0.05f);
+        marker.setRadius(cell_size_pixels * 0.05);
         marker.setFillColor(sf::Color::Green);
 
         auto pos{world_to_screen(maze.mouse_start)};
@@ -113,8 +112,7 @@ struct Visualizer::Impl
 
     void draw_ray(const geometry::Ray& ray)
     {
-        float scale{static_cast<float>(cell_size / maze::CELL_SIZE)};
-        double ray_length{scale * 20.0f};
+        double ray_length{scale * 20.0};
 
         sf::Vector2f origin{world_to_screen(ray.origin)};
         geometry::Point ray_end{ray.origin.x + (ray.direction.x * ray_length), ray.origin.y + (ray.direction.y * ray_length)};
@@ -157,11 +155,12 @@ Visualizer::Visualizer()
 
 Visualizer::~Visualizer() = default;
 
-void Visualizer::draw_maze(float cell_size_pixels, const maze::Maze& maze)
+void Visualizer::draw_maze(double cell_size_pixels, const maze::Maze& maze)
 {
-    impl_->cell_size = cell_size_pixels;
-    int width{static_cast<int>(maze.cols * impl_->cell_size)};
-    int height{static_cast<int>(maze.rows * impl_->cell_size)};
+    impl_->cell_size_pixels = cell_size_pixels;
+    impl_->scale = cell_size_pixels / maze.cell_size;
+    int width{static_cast<int>(maze.cols * impl_->cell_size_pixels)};
+    int height{static_cast<int>(maze.rows * impl_->cell_size_pixels)};
 
     impl_->texture.create(width, height);
     impl_->texture.clear(sf::Color::Black);
