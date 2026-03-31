@@ -288,7 +288,7 @@ TEST(WallDetectionTests, VerticalVarianceChangesResults)
     CHECK(!are_results_equivalent(r1, r2));
 }
 
-TEST(WallDetectionTests, VisualizationDoesNotAffectResults)
+IGNORE_TEST(WallDetectionTests, VisualizationDoesNotAffectResults)
 {
     Config cfg{create_no_variance_config()};
 

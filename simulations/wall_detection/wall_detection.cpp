@@ -24,10 +24,11 @@ extern "C"
 #include <optional>
 #include <functional>
 #include <algorithm>
+#include <map>
 #include <sstream>
 #include <iomanip>
 #include <fstream>
-#include <SFML/Graphics.hpp>
+#include <memory>
 #include <filesystem>
 #include "point.hpp"
 #include "ray.hpp"
