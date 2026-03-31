@@ -83,7 +83,7 @@ IGNORE_TEST(VisualizerTests, DrawMazeWithObstacles)
         "  |  ",
         "+ +-+"
     };
-    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0)};
+    maze::Maze maze{maze::build_maze_from_ascii(ascii, 0)};
     
     visualizer.draw_maze(100.0f, maze);
     visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/draw-maze-with-obstacles.png");
@@ -126,7 +126,7 @@ IGNORE_TEST(VisualizerTests, DrawFullMaze)
         "|S| | | | | | | | | | | | | | | |",
         "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+"
     };
-    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0)};
+    maze::Maze maze{maze::build_maze_from_ascii(ascii, 0)};
 
     visualizer.draw_maze(40.0f, maze);
     visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/draw-full-maze.png");
@@ -143,7 +143,7 @@ IGNORE_TEST(VisualizerTests, DrawMouseOnMaze)
         "  |  ",
         "+ +-+"
     };
-    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0)};
+    maze::Maze maze{maze::build_maze_from_ascii(ascii, 0)};
     mouse::Mouse mouse;
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
     
@@ -163,7 +163,7 @@ IGNORE_TEST(VisualizerTests, DrawMouseSensorBeams)
         "  |  ",
         "+ +-+"
     };
-    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0)};
+    maze::Maze maze{maze::build_maze_from_ascii(ascii, 0)};
     mouse::Mouse mouse;
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
     
@@ -189,17 +189,17 @@ IGNORE_TEST(VisualizerTests, DrawMouseSensorBeamsToNearestWalls)
         "| | | |",
         "+-+-+-+"
     };
-    maze::Maze maze {maze::build_maze_from_ascii(ascii, 0)};
+    maze::Maze maze{maze::build_maze_from_ascii(ascii, 0)};
     mouse::Mouse mouse;
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
     mouse.rotate(-M_PI / 4);
     
     visualizer.draw_maze(100.0f, maze);
     visualizer.draw_mouse_on_maze(mouse);
-    auto ir_1_distance {maze::compute_ray_distance_in_vicinity(maze, mouse.ir_1_sensor, 1, 1)};
-    auto ir_2_distance {maze::compute_ray_distance_in_vicinity(maze, mouse.ir_2_sensor, 1, 1)};
-    auto ir_3_distance {maze::compute_ray_distance_in_vicinity(maze, mouse.ir_3_sensor, 1, 1)};
-    auto ir_4_distance {maze::compute_ray_distance_in_vicinity(maze, mouse.ir_4_sensor, 1, 1)};
+    auto ir_1_distance{maze::compute_ray_distance_in_vicinity(maze, mouse.ir_1_sensor, 1, 1)};
+    auto ir_2_distance{maze::compute_ray_distance_in_vicinity(maze, mouse.ir_2_sensor, 1, 1)};
+    auto ir_3_distance{maze::compute_ray_distance_in_vicinity(maze, mouse.ir_3_sensor, 1, 1)};
+    auto ir_4_distance{maze::compute_ray_distance_in_vicinity(maze, mouse.ir_4_sensor, 1, 1)};
     visualizer.draw_ir_1_sensor_beam(mouse, *ir_1_distance);
     visualizer.draw_ir_2_sensor_beam(mouse, *ir_2_distance);
     visualizer.draw_ir_3_sensor_beam(mouse, *ir_3_distance);

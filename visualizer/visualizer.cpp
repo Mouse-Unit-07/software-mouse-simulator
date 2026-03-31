@@ -45,8 +45,8 @@ namespace visualizer
 void Visualizer::draw_maze(float cell_size_pixels, const maze::Maze& maze)
 {
     cell_size = cell_size_pixels;
-    int width  {static_cast<int>(maze.cols * cell_size)};
-    int height {static_cast<int>(maze.rows * cell_size)};
+    int width{static_cast<int>(maze.cols * cell_size)};
+    int height{static_cast<int>(maze.rows * cell_size)};
 
     texture.create(width, height);
     texture.clear(sf::Color::Black);
@@ -58,7 +58,7 @@ void Visualizer::draw_maze(float cell_size_pixels, const maze::Maze& maze)
 
 void Visualizer::draw_mouse_on_maze(const mouse::Mouse& mouse)
 {
-    auto rect {make_rectangle(mouse.hitbox, sf::Color::Red)};
+    auto rect{make_rectangle(mouse.hitbox, sf::Color::Red)};
     texture.draw(rect);
 
     draw_ray(mouse.ir_1_sensor);
@@ -90,7 +90,7 @@ void Visualizer::draw_ir_4_sensor_beam(const mouse::Mouse& mouse, double length_
 void Visualizer::save_to_image_file(const std::string& filename)
 {
     texture.display();
-    sf::Image image {texture.getTexture().copyToImage()};
+    sf::Image image{texture.getTexture().copyToImage()};
     image.saveToFile(filename);
 }
 
@@ -104,7 +104,7 @@ namespace visualizer
 
 sf::Vector2f Visualizer::world_to_screen(const geometry::Point& p) const
 {
-    float scale {static_cast<float>(cell_size / maze::CELL_SIZE)};
+    float scale{static_cast<float>(cell_size / maze::CELL_SIZE)};
 
     return {
         static_cast<float>(p.x * scale),
@@ -122,7 +122,7 @@ sf::VertexArray Visualizer::make_rectangle(const geometry::RectangularHitbox& hi
     outline[3].position = world_to_screen(hitbox.bottom_right);
     outline[4].position = world_to_screen(hitbox.top_right);
 
-    for (int i {0}; i < 5; ++i) {
+    for (int i{0}; i < 5; ++i) {
         outline[i].color = color;
     }
 
@@ -137,8 +137,8 @@ void Visualizer::draw_cells(const maze::Maze& maze)
     cell.setOutlineColor(sf::Color(60, 60, 60));
     cell.setOutlineThickness(1.0f);
 
-    for (int r {0}; r < maze.rows; ++r) {
-        for (int c {0}; c < maze.cols; ++c) {
+    for (int r{0}; r < maze.rows; ++r) {
+        for (int c{0}; c < maze.cols; ++c) {
             cell.setPosition(c * cell_size, r * cell_size);
             texture.draw(cell);
         }
@@ -159,7 +159,7 @@ void Visualizer::draw_mouse_start(const maze::Maze& maze)
     marker.setRadius(cell_size * 0.05f);
     marker.setFillColor(sf::Color::Green);
 
-    auto pos {world_to_screen(maze.mouse_start)};
+    auto pos{world_to_screen(maze.mouse_start)};
     marker.setPosition(pos.x - marker.getRadius(), pos.y - marker.getRadius());
 
     texture.draw(marker);
@@ -167,12 +167,12 @@ void Visualizer::draw_mouse_start(const maze::Maze& maze)
 
 void Visualizer::draw_ray(const geometry::Ray& ray)
 {
-    float scale {static_cast<float>(cell_size / maze::CELL_SIZE)};
-    double ray_length {scale * 20.0f};
+    float scale{static_cast<float>(cell_size / maze::CELL_SIZE)};
+    double ray_length{scale * 20.0f};
 
-    sf::Vector2f origin {world_to_screen(ray.origin)};
-    geometry::Point ray_end {ray.origin.x + (ray.direction.x * ray_length), ray.origin.y + (ray.direction.y * ray_length)};
-    sf::Vector2f end {world_to_screen(ray_end)};
+    sf::Vector2f origin{world_to_screen(ray.origin)};
+    geometry::Point ray_end{ray.origin.x + (ray.direction.x * ray_length), ray.origin.y + (ray.direction.y * ray_length)};
+    sf::Vector2f end{world_to_screen(ray_end)};
 
     sf::Vertex line[]
     {
@@ -190,8 +190,8 @@ void Visualizer::draw_ray_beam(const geometry::Ray& ray, double length_mm)
         ray.origin.y + ray.direction.y * length_mm
     };
 
-    sf::Vector2f origin {world_to_screen(ray.origin)};
-    sf::Vector2f end {world_to_screen(end_world)};
+    sf::Vector2f origin{world_to_screen(ray.origin)};
+    sf::Vector2f end{world_to_screen(end_world)};
 
     sf::Vertex line[]
     {
