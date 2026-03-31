@@ -13,6 +13,7 @@
 #include <string>
 #include <optional>
 #include <utility>
+#include <stdexcept>
 #include "point.hpp"
 #include "ray.hpp"
 #include "rectangular_hitbox.hpp"
@@ -84,6 +85,86 @@ TEST_GROUP(MazeTests)
 /*============================================================================*/
 /*                                    Tests                                   */
 /*============================================================================*/
+TEST(MazeTests, ThrowsOnEmptyAsciiMaze)
+{
+    std::vector<std::string> ascii{};
+
+    try {
+        build_maze_from_ascii(ascii, 0.0);
+        FAIL("Expected exception not thrown");
+    } catch (const std::invalid_argument& e) {
+        STRCMP_EQUAL("ASCII maze is empty", e.what());
+    }
+}
+
+TEST(MazeTests, ThrowsOnJaggedAsciiMaze)
+{
+    std::vector<std::string> ascii
+    {
+        "+-+",
+        "|S|",
+        "+-+-+"
+    };
+
+    try {
+        build_maze_from_ascii(ascii, 0.0);
+        FAIL("Expected exception not thrown");
+    } catch (const std::invalid_argument& e) {
+        STRCMP_CONTAINS("ASCII maze is jagged", e.what());
+    }
+}
+
+TEST(MazeTests, ThrowsOnInvalidCharacterInAsciiMaze)
+{
+    std::vector<std::string> ascii
+    {
+        "+-+",
+        "|X|",
+        "+-+"
+    };
+
+    try {
+        build_maze_from_ascii(ascii, 0.0);
+        FAIL("Expected exception not thrown");
+    } catch (const std::invalid_argument& e) {
+        STRCMP_CONTAINS("Invalid character 'X'", e.what());
+    }
+}
+
+TEST(MazeTests, ThrowsWhenNoStartPosition)
+{
+    std::vector<std::string> ascii
+    {
+        "+-+",
+        "| |",
+        "+-+"
+    };
+
+    try {
+        build_maze_from_ascii(ascii, 0.0);
+        FAIL("Expected exception not thrown");
+    } catch (const std::invalid_argument& e) {
+        STRCMP_EQUAL("No 'S' start position found", e.what());
+    }
+}
+
+TEST(MazeTests, ThrowsWhenMultipleStartPositions)
+{
+    std::vector<std::string> ascii
+    {
+        "+-+",
+        "|S|",
+        "+S+"
+    };
+
+    try {
+        build_maze_from_ascii(ascii, 0.0);
+        FAIL("Expected exception not thrown");
+    } catch (const std::invalid_argument& e) {
+        STRCMP_EQUAL("Multiple 'S' start positions found", e.what());
+    }
+}
+
 TEST(MazeTests, CorrectNumberOfMazeDimensions)
 {
     std::vector<std::string> ascii
@@ -269,7 +350,7 @@ TEST(MazeTests, SingleCellWallsTouchPosts)
     std::vector<std::string> ascii
     {
         "+-+",
-        "| |",
+        "|S|",
         "+-+"
     };
     Maze maze{build_maze_from_ascii(ascii, 0)};
@@ -286,7 +367,7 @@ TEST(MazeTests, WallAdjustmentsModifySizes)
     std::vector<std::string> ascii
     {
         "+-+",
-        "| |",
+        "|S|",
         "+-+"
     };
     Maze maze{build_maze_from_ascii(ascii, size_adjustment)};
@@ -311,7 +392,7 @@ TEST(MazeTests, PostAdjustmentsModifySizes)
     std::vector<std::string> ascii
     {
         "+-+",
-        "| |",
+        "|S|",
         "+-+"
     };
     Maze maze{build_maze_from_ascii(ascii, size_adjustment)};
@@ -331,7 +412,7 @@ TEST(MazeTests, AdjustedWallsAndPostsTouch)
     std::vector<std::string> ascii
     {
         "+-+",
-        "| |",
+        "|S|",
         "+-+"
     };
     Maze maze{build_maze_from_ascii(ascii, size_adjustment)};
