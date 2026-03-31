@@ -402,20 +402,9 @@ TEST(RotationTests, BuildCandidatesGroupsAndComputesStats)
 
 TEST(RotationTests, RunMinimalSampleSimulation)
 {
-    ConfigSweeper sweeper;
-
-    sweeper.motor_speed_scale = {1.0};
+    ConfigSweeper sweeper{create_no_variance_sweeper()};
     sweeper.dt = {0.001};
-    sweeper.motor1_variance = {0.0};
-    sweeper.motor2_variance = {0.0};
-    sweeper.slip_factor = {1.0};
-    sweeper.wheel_circumference_scale = {1.0};
-    sweeper.wheel_base_scale = {1.0};
-    
     sweeper.motor_speed = {100};
-    sweeper.kp = {0};
-    sweeper.kd = {0};
-    sweeper.pid_shift = {8};
 
     const std::string filename {"test_minimal_output.txt"};
 
