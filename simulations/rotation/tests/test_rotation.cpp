@@ -183,10 +183,10 @@ TEST(RotationTests, ConfigSweeperOrderIsStable)
     CHECK_EQUAL(4, seen.size());
 
     /* Expected order: kp outer, kd inner */
-    CHECK(seen[0] == std::make_pair(1,10));
-    CHECK(seen[1] == std::make_pair(1,20));
-    CHECK(seen[2] == std::make_pair(2,10));
-    CHECK(seen[3] == std::make_pair(2,20));
+    CHECK(seen.at(0) == std::make_pair(1,10));
+    CHECK(seen.at(1) == std::make_pair(1,20));
+    CHECK(seen.at(2) == std::make_pair(2,10));
+    CHECK(seen.at(3) == std::make_pair(2,20));
 }
 
 TEST(RotationTests, SimulationProducesValidResult)
@@ -437,7 +437,7 @@ TEST(RotationTests, CandidateKeyDifferentMotorSpeedNotEquivalent)
     CandidateKey b{1, 2, 3, 200};
 
     /* Equivalent in std::map means !(a < b) && !(b < a) */
-    bool equivalent {!(a < b) && !(b < a)};
+    bool equivalent{!(a < b) && !(b < a)};
 
     CHECK_FALSE(equivalent);
 }
@@ -484,7 +484,7 @@ TEST(RotationTests, ParetoFrontRemovesDominatedCandidate)
     auto front{compute_pareto_front(v)};
 
     CHECK_EQUAL(1, front.size());
-    CHECK(front[0].results_metrics.time_stats.mean == a.results_metrics.time_stats.mean);
+    CHECK(front.at(0).results_metrics.time_stats.mean == a.results_metrics.time_stats.mean);
 }
 
 TEST(RotationTests, ParetoFrontKeepsNonDominatingCandidates)
