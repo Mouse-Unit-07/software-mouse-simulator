@@ -23,7 +23,7 @@ using namespace simulation_common;
 /*============================================================================*/
 /*                             Public Definitions                             */
 /*============================================================================*/
-constexpr double FLOAT_TOLERANCE {1e-6};
+constexpr double FLOAT_TOLERANCE{1e-6};
 
 /*============================================================================*/
 /*                            Mock Implementations                            */
@@ -49,92 +49,76 @@ TEST_GROUP(CommonTests)
 /*============================================================================*/
 /*                                    Tests                                   */
 /*============================================================================*/
-TEST(CommonTests, SweepGeneratesCorrectNumberOfCombinations)
+TEST(CommonTests, GenerateSweepValuesReturnsEmptyForInvalidSteps)
 {
-    std::vector<SweepConfig> configs
-    {
-        {"a", 0, 1, 2},
-        {"b", 0, 1, 3}
-    };
+    auto v0{generate_sweep_values(0, 10, 0)};
+    auto vNeg{generate_sweep_values(0, 10, -5)};
 
-    auto sim_fn {[](const std::vector<double>& vals) {
-        return vals; // identity
-    }};
-
-    auto results {run_config_sweep<std::vector<double>>(configs, sim_fn)};
-
-    CHECK_EQUAL(6, results.size()); // 2 * 3
+    CHECK(v0.empty());
+    CHECK(vNeg.empty());
 }
 
-TEST(CommonTests, SweepSingleStepProducesSingleCombination)
+TEST(CommonTests, GenerateSweepValuesSingleStep)
 {
-    std::vector<SweepConfig> configs
-    {
-        {"a", 5, 5, 1},
-        {"b", 10, 10, 1}
-    };
+    auto v{generate_sweep_values(5, 10, 1)};
 
-    auto sim_fn {[](const std::vector<double>& vals) {
-        return vals;
-    }};
-
-    auto results {run_config_sweep<std::vector<double>>(configs, sim_fn)};
-
-    CHECK_EQUAL(1, results.size());
+    CHECK_EQUAL(1, v.size());
+    CHECK_EQUAL(5, v.at(0));
 }
 
-TEST(CommonTests, SweepValuesAreInterpolatedCorrectly)
+TEST(CommonTests, GenerateSweepValuesTwoSteps)
 {
-    std::vector<SweepConfig> configs
-    {
-        {"a", 0.0, 10.0, 3}
-    };
+    auto v{generate_sweep_values(5, 10, 2)};
 
-    SweepCursor cursor(configs);
-
-    auto v0 {cursor.values()};
-    cursor.next();
-    auto v1 {cursor.values()};
-    cursor.next();
-    auto v2 {cursor.values()};
-
-    DOUBLES_EQUAL(0.0, v0[0], FLOAT_TOLERANCE);
-    DOUBLES_EQUAL(5.0, v1[0], FLOAT_TOLERANCE);
-    DOUBLES_EQUAL(10.0, v2[0], FLOAT_TOLERANCE);
+    CHECK_EQUAL(2, v.size());
+    CHECK_EQUAL(5, v.at(0));
+    CHECK_EQUAL(10, v.at(1));
 }
 
-TEST(CommonTests, SweepPassesCorrectValuesToSimFn)
+TEST(CommonTests, GenerateSweepValuesInterpolatesCorrectly)
 {
-    std::vector<SweepConfig> configs
-    {
-        {"a", 1, 2, 2}
-    };
+    auto v{generate_sweep_values(0.0, 10.0, 5)};
 
-    std::vector<double> captured;
+    CHECK_EQUAL(5, v.size());
+    DOUBLES_EQUAL(0.0,  v.at(0), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(5.0,  v.at(2), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(10.0, v.at(4), FLOAT_TOLERANCE);
+}
 
-    auto sim_fn {[&](const std::vector<double>& vals) {
-        captured.push_back(vals[0]);
-        return 0;
-    }};
+TEST(CommonTests, GenerateSweepValuesIntegerTypeTruncates)
+{
+    auto v{generate_sweep_values<int>(0, 10, 4)};
 
-    run_config_sweep<int>(configs, sim_fn);
+    CHECK_EQUAL(4, v.size());
+    CHECK_EQUAL(0, v.at(0));
+    CHECK_EQUAL(3, v.at(1)); /* truncated */
+    CHECK_EQUAL(6, v.at(2)); /* truncated */
+    CHECK_EQUAL(10, v.at(3));
+}
 
-    CHECK_EQUAL(2, captured.size());
-    CHECK(captured[0] == 1.0);
-    CHECK(captured[1] == 2.0);
+TEST(CommonTests, ComputeStatsSingleValue)
+{
+    std::vector<double> data{42.0};
+
+    auto s{compute_stats(data)};
+
+    DOUBLES_EQUAL(42.0, s.mean, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(42.0, s.min, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(42.0, s.max, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0,  s.stddev, FLOAT_TOLERANCE);
 }
 
 TEST(CommonTests, ComputeStatsBasic)
 {
-    std::vector<double> data {10.0, 20.0, 30.0};
+    std::vector<double> data{10.0, 20.0, 30.0};
 
-    auto s {compute_stats(data)};
+    auto s{compute_stats(data)};
 
     DOUBLES_EQUAL(20.0, s.mean, FLOAT_TOLERANCE);
     DOUBLES_EQUAL(10.0, s.min, FLOAT_TOLERANCE);
     DOUBLES_EQUAL(30.0, s.max, FLOAT_TOLERANCE);
 
-    double expected_stddev {std::sqrt(66.6666667)};
+    double expected_stddev{std::sqrt(66.6666667)};
     DOUBLES_EQUAL(expected_stddev, s.stddev, FLOAT_TOLERANCE);
 }
 
@@ -142,10 +126,29 @@ TEST(CommonTests, ComputeStatsEmpty)
 {
     std::vector<double> data;
 
-    auto s {compute_stats(data)};
+    auto s{compute_stats(data)};
 
     DOUBLES_EQUAL(0.0, s.mean, FLOAT_TOLERANCE);
     DOUBLES_EQUAL(0.0, s.stddev, FLOAT_TOLERANCE);
+}
+
+TEST(CommonTests, ComputeStatsAllSameValues)
+{
+    std::vector<double> data{5.0, 5.0, 5.0};
+
+    auto s{compute_stats(data)};
+
+    DOUBLES_EQUAL(5.0, s.mean, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, s.stddev, FLOAT_TOLERANCE);
+}
+
+TEST(CommonTests, ExtractMetricEmpty)
+{
+    std::vector<int> trials;
+
+    auto result{extract_metric(trials, [](int v) { return static_cast<double>(v); })};
+
+    CHECK(result.empty());
 }
 
 TEST(CommonTests, ExtractMetricWorks)
@@ -157,20 +160,18 @@ TEST(CommonTests, ExtractMetricWorks)
         {3, 30.0}
     };
 
-    auto result {extract_metric(trials,
-        [](const auto& t) { return t.second; })};
+    auto result{extract_metric(trials, [](const auto& t) { return t.second; })};
 
     CHECK_EQUAL(3, result.size());
-    DOUBLES_EQUAL(10.0, result[0], FLOAT_TOLERANCE);
-    DOUBLES_EQUAL(30.0, result[2], FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(10.0, result.at(0), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(30.0, result.at(2), FLOAT_TOLERANCE);
 }
 
 TEST(CommonTests, ComputeRateBasic)
 {
-    std::vector<int> data {0, 1, 0, 1};
+    std::vector<int> data{0, 1, 0, 1};
 
-    auto rate {compute_rate(data,
-        [](int v) { return v == 1; })};
+    auto rate{compute_rate(data, [](int v) { return v == 1; })};
 
     DOUBLES_EQUAL(0.5, rate, FLOAT_TOLERANCE);
 }
@@ -179,8 +180,25 @@ TEST(CommonTests, ComputeRateEmpty)
 {
     std::vector<int> data;
 
-    auto rate {compute_rate(data,
-        [](int) { return true; })};
+    auto rate{compute_rate(data, [](int) { return true; })};
+
+    DOUBLES_EQUAL(0.0, rate, FLOAT_TOLERANCE);
+}
+
+TEST(CommonTests, ComputeRateAllTrue)
+{
+    std::vector<int> data{1, 1, 1};
+
+    auto rate{compute_rate(data, [](int v) { return v == 1; })};
+
+    DOUBLES_EQUAL(1.0, rate, FLOAT_TOLERANCE);
+}
+
+TEST(CommonTests, ComputeRateAllFalse)
+{
+    std::vector<int> data{0, 0, 0};
+
+    auto rate{compute_rate(data, [](int v) { return v == 1; })};
 
     DOUBLES_EQUAL(0.0, rate, FLOAT_TOLERANCE);
 }

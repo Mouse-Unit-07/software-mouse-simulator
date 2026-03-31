@@ -13,49 +13,40 @@
 namespace simulation_common
 {
 
-struct SweepConfig
+template <typename T>
+std::vector<T> generate_sweep_values(T min, T max, int steps)
 {
-    std::string name;
-    double min;
-    double max;
-    int steps;
-};
+    std::vector<T> values;
 
-class SweepCursor
-{
-public:
-    explicit SweepCursor(const std::vector<SweepConfig>& configs);
+    if (steps <= 0) return values;
 
-    bool next();
-    std::vector<double> values() const;
+    if (steps == 1) {
+        values.push_back(min);
+        return values;
+    }
 
-private:
-    std::vector<SweepConfig> configs_;
-    std::vector<int> progress_counter_;
-};
+    if (steps == 2) {
+        values.push_back(min);
+        values.push_back(max);
+        return values;
+    }
 
-template <typename Result>
-std::vector<std::pair<std::vector<double>, Result>> run_config_sweep(
-        const std::vector<SweepConfig>& configs,
-        const std::function<Result(const std::vector<double>&)>& sim_fn)
-{
-    SweepCursor cursor(configs);
-    std::vector<std::pair<std::vector<double>, Result>> results;
+    values.reserve(steps);
 
-    do {
-        auto vals = cursor.values();
-        results.push_back({vals, sim_fn(vals)});
-    } while (cursor.next());
+    for (int i{0}; i < steps; ++i) {
+        double t{static_cast<double>(i) / (steps - 1)};
+        values.push_back(static_cast<T>(min + (t * (max - min))));
+    }
 
-    return results;
+    return values;
 }
 
 struct MetricStats
 {
-    double mean {0.0};
-    double stddev {0.0};
-    double min {0.0};
-    double max {0.0};
+    double mean{0.0};
+    double stddev{0.0};
+    double min{0.0};
+    double max{0.0};
 };
 
 template <typename Trials, typename Fn>
@@ -78,7 +69,7 @@ double compute_rate(const Trials& trials, Pred pred)
         return 0.0;
     }
 
-    int count {0};
+    int count{0};
     for (const auto& t : trials) {
         if (pred(t)) {
             count++;

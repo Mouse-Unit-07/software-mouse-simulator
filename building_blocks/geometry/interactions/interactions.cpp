@@ -112,23 +112,23 @@ using namespace geometry;
 std::optional<double> ray_segment_distance(const Ray& ray, 
         const Point& a, const Point& b)
 {
-    double rdx {ray.direction.x};
-    double rdy {ray.direction.y};
+    double rdx{ray.direction.x};
+    double rdy{ray.direction.y};
 
-    double sdx {b.x - a.x};
-    double sdy {b.y - a.y};
+    double sdx{b.x - a.x};
+    double sdy{b.y - a.y};
 
-    double denom {(rdx * sdy) - (rdy * sdx)};
+    double denom{(rdx * sdy) - (rdy * sdx)};
 
     if (std::abs(denom) < 1e-6) {
         return std::nullopt;
     }
 
-    double dx {a.x - ray.origin.x};
-    double dy {a.y - ray.origin.y};
+    double dx{a.x - ray.origin.x};
+    double dy{a.y - ray.origin.y};
 
-    double t {((dx * sdy) - (dy * sdx)) / denom};
-    double u {((dx * rdy) - (dy * rdx)) / denom};
+    double t{((dx * sdy) - (dy * sdx)) / denom};
+    double u{((dx * rdy) - (dy * rdx)) / denom};
 
     if ((t >= 0.0) && (u >= 0.0) && (u <= 1.0)) {
         return t;
@@ -165,8 +165,8 @@ void project_hitbox_onto_axis(const RectangularHitbox& box,
 
     min = max = compute_dot_product(*pts[0], axis);
 
-    for (int i {1}; i < 4; ++i) {
-        double p {compute_dot_product(*pts[i], axis)};
+    for (int i{1}; i < 4; ++i) {
+        double p{compute_dot_product(*pts[i], axis)};
         min = std::min(min, p);
         max = std::max(max, p);
     }

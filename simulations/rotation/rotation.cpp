@@ -72,25 +72,64 @@ extern double ENCODER_TICKS_PER_ROTATION_ANGLE_RADIANS;
 namespace rotation
 {
 
-Config build_config(const std::vector<double>& v)
+ConfigSweeper::ConfigSweeper()
+{
+    indices = std::vector<size_t>(11, 0);
+}
+
+bool ConfigSweeper::next()
+{
+    if (first) {
+        first = false;
+        return true;
+    }
+
+    std::vector<size_t> sizes {
+        motor_speed.size(),
+        motor_speed_scale.size(),
+        dt.size(),
+        motor1_variance.size(),
+        motor2_variance.size(),
+        slip_factor.size(),
+        wheel_circumference_scale.size(),
+        wheel_base_scale.size(),
+        kp.size(),
+        kd.size(),
+        pid_shift.size()
+    };
+
+    for (int i{static_cast<int>(indices.size()) - 1}; i >= 0; --i) {
+        indices.at(i)++;
+
+        if (indices.at(i) < sizes.at(i)) {
+            return true;
+        }
+
+        indices.at(i) = 0;
+    }
+
+    return false;
+}
+
+Config ConfigSweeper::value() const
 {
     Config cfg{};
 
-    int i {0};
+    int i{0};
 
-    cfg.motor_speed = v[i++];
-    cfg.motor_speed_scale = v[i++];
-    cfg.dt = v[i++];
+    cfg.motor_speed = motor_speed.at(indices.at(i++));
+    cfg.motor_speed_scale = motor_speed_scale.at(indices.at(i++));
+    cfg.dt = dt.at(indices.at(i++));
 
-    cfg.motor1_variance = v[i++];
-    cfg.motor2_variance = v[i++];
-    cfg.slip_factor = v[i++];
-    cfg.wheel_circumference_scale = v[i++];
-    cfg.wheel_base_scale = v[i++];
+    cfg.motor1_variance = motor1_variance.at(indices.at(i++));
+    cfg.motor2_variance = motor2_variance.at(indices.at(i++));
+    cfg.slip_factor = slip_factor.at(indices.at(i++));
+    cfg.wheel_circumference_scale = wheel_circumference_scale.at(indices.at(i++));
+    cfg.wheel_base_scale = wheel_base_scale.at(indices.at(i++));
 
-    cfg.kp = static_cast<int32_t>(v[i++]);
-    cfg.kd = static_cast<int32_t>(v[i++]);
-    cfg.pid_shift = static_cast<int32_t>(v[i++]);
+    cfg.kp = kp.at(indices.at(i++));
+    cfg.kd = kd.at(indices.at(i++));
+    cfg.pid_shift = pid_shift.at(indices.at(i++));
 
     return cfg;
 }
@@ -116,41 +155,41 @@ Result run_simulation(const maze::Maze& maze, const Config& cfg, double target_a
     mouse::Mouse mouse;
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
 
-    double total_translation {0.0};
-    double total_angle_rotation {0.0};
-    double total_time {0.0};
-    bool collision {false};
-    bool timeout {false};
+    double total_translation{0.0};
+    double total_angle_rotation{0.0};
+    double total_time{0.0};
+    bool collision{false};
+    bool timeout{false};
 
-    constexpr int MAX_STEPS {10000};
-    int steps {0};
+    constexpr int MAX_STEPS{10000};
+    int steps{0};
 
-    int32_t prev_error {0};
+    int32_t prev_error{0};
 
-    double raw_target {std::abs(ENCODER_TICKS_PER_ROTATION_ANGLE_RADIANS * target_angle)};
-    int32_t target_ticks {static_cast<int32_t>(raw_target)};
+    double raw_target{std::abs(ENCODER_TICKS_PER_ROTATION_ANGLE_RADIANS * target_angle)};
+    int32_t target_ticks{static_cast<int32_t>(raw_target)};
 
     while ((std::abs(get_encoder_1_ticks()) < target_ticks) || (std::abs(get_encoder_2_ticks()) < target_ticks)) {
-        int32_t enc1 = std::abs(get_encoder_1_ticks());
-        int32_t enc2 = std::abs(get_encoder_2_ticks());
+        int32_t enc1{std::abs(get_encoder_1_ticks())};
+        int32_t enc2{std::abs(get_encoder_2_ticks())};
         
-        int32_t error {enc2 - enc1};
+        int32_t error{enc2 - enc1};
         int32_t derivative {error - prev_error};
 
-        int64_t p_term {static_cast<int64_t>(cfg.kp) * error};
-        int64_t d_term {static_cast<int64_t>(cfg.kd) * derivative};
-        int64_t control64 {p_term + d_term};
+        int64_t p_term{static_cast<int64_t>(cfg.kp) * error};
+        int64_t d_term{static_cast<int64_t>(cfg.kd) * derivative};
+        int64_t control64{p_term + d_term};
 
-        int32_t control;
+        int32_t control{0};
         if (control64 >= 0) {
             control = static_cast<int32_t>(control64 >> cfg.pid_shift);
         } else {
             control = -static_cast<int32_t>((-control64) >> cfg.pid_shift);
         }
 
-        int32_t base_speed {static_cast<int32_t>(cfg.motor_speed)};
-        int32_t adjusted_speed_1 {base_speed + control};
-        int32_t adjusted_speed_2 {base_speed - control};
+        int32_t base_speed{static_cast<int32_t>(cfg.motor_speed)};
+        int32_t adjusted_speed_1{base_speed + control};
+        int32_t adjusted_speed_2{base_speed - control};
         adjusted_speed_1 = std::clamp(adjusted_speed_1, 0, 255);
         adjusted_speed_2 = std::clamp(adjusted_speed_2, 0, 255);
 
@@ -160,11 +199,11 @@ Result run_simulation(const maze::Maze& maze, const Config& cfg, double target_a
         prev_error = error;
 
         /* update virtual mouse */
-        auto delta {compute_mouse_delta(mouse.hitbox.angle_rad, cfg.dt)};
+        auto delta{compute_mouse_delta(mouse.hitbox.angle_rad, cfg.dt)};
         update_encoder_1_ticks(cfg.dt);
         update_encoder_2_ticks(cfg.dt);
-        int32_t new_encoder_1_ticks {get_encoder_1_ticks()};
-        int32_t new_encoder_2_ticks {get_encoder_2_ticks()};
+        int32_t new_encoder_1_ticks{get_encoder_1_ticks()};
+        int32_t new_encoder_2_ticks{get_encoder_2_ticks()};
         mouse.translate(delta.dx, delta.dy);
         mouse.rotate(delta.dtheta_rad);
 
@@ -172,7 +211,7 @@ Result run_simulation(const maze::Maze& maze, const Config& cfg, double target_a
         total_angle_rotation += delta.dtheta_rad;
         total_time += cfg.dt;
 
-        auto rc {maze::get_cell_from_point(maze, mouse.hitbox.center)};
+        auto rc{maze::get_cell_from_point(maze, mouse.hitbox.center)};
         if (rc) {
             auto [r, c] {*rc};
             if (maze::does_hitbox_collide_in_vicinity(maze, mouse.hitbox, r, c)) {
@@ -205,8 +244,8 @@ ResultsMetrics compute_results_metrics(const std::vector<Result>& results)
     std::vector<double> time;
     std::vector<double> angle;
     std::vector<double> translation;
-    int coll_count {0};
-    int fail_count {0};
+    int coll_count{0};
+    int fail_count{0};
 
     time.reserve(results.size());
     angle.reserve(results.size());
@@ -224,7 +263,7 @@ ResultsMetrics compute_results_metrics(const std::vector<Result>& results)
         }
     }
 
-    const double n {static_cast<double>(results.size())};
+    const double n{static_cast<double>(results.size())};
     ResultsMetrics a;
 
     a.time_stats = simulation_common::compute_stats(time);
@@ -258,7 +297,7 @@ std::vector<Candidate> build_candidates(const std::vector<Trial>& trials)
         Candidate c;
         c.key = key;
 
-        auto a {compute_results_metrics(group_results)};
+        auto a{compute_results_metrics(group_results)};
 
         c.results_metrics = a;
 
@@ -272,22 +311,22 @@ std::vector<Candidate> compute_pareto_front(const std::vector<Candidate>& candid
 {
     std::vector<Candidate> front;
 
-    for (size_t i {0}; i < candidates.size(); ++i) {
-        bool dominated = false;
+    for (size_t i{0}; i < candidates.size(); ++i) {
+        bool dominated{false};
 
-        for (size_t j {0}; j < candidates.size(); ++j) {
+        for (size_t j{0}; j < candidates.size(); ++j) {
             if (i == j) {
                 continue;
             }
 
-            if (dominates(candidates[j], candidates[i])) {
+            if (dominates(candidates.at(j), candidates.at(i))) {
                 dominated = true;
                 break;
             }
         }
 
         if (!dominated) {
-            front.push_back(candidates[i]);
+            front.push_back(candidates.at(i));
         }
     }
 
@@ -315,31 +354,29 @@ void write_analysis_to_file(const std::string& filename, const std::vector<Candi
 }
 
 void run_full_rotation_experiment(const std::string& filename, double target_angle,
-        std::vector<simulation_common::SweepConfig> configs)
+        ConfigSweeper& sweeper)
 {
-    std::vector<std::string> ascii {
+    std::vector<std::string> ascii{
         "+-+",
         "|S|",
         "+-+"
     };
-    maze::Maze small_maze {maze::build_maze_from_ascii(ascii, 0.0)};
-    simulation_common::SweepCursor cursor(configs);
+    maze::Maze small_maze{maze::build_maze_from_ascii(ascii, 0.0)};
     std::vector<Trial> trials;
     std::vector<Result> all_results;
 
-    do {
-        auto config_values = cursor.values();
-        auto cfg {rotation::build_config(config_values)};
-        auto result {rotation::run_simulation(small_maze, cfg, target_angle)};
+    while (sweeper.next()) {
+        Config cfg {sweeper.value()};
+
+        auto result{rotation::run_simulation(small_maze, cfg, target_angle)};
 
         trials.push_back({cfg, result});
         all_results.push_back(result);
+    }
 
-    } while (cursor.next());
-
-    auto overall_metrics {compute_results_metrics(all_results)};
-    auto candidates {build_candidates(trials)};
-    auto pareto_front {compute_pareto_front(candidates)};
+    auto overall_metrics{compute_results_metrics(all_results)};
+    auto candidates{build_candidates(trials)};
+    auto pareto_front{compute_pareto_front(candidates)};
 
     write_analysis_to_file(filename, candidates, pareto_front, overall_metrics, all_results.size());
 }
@@ -356,13 +393,13 @@ using namespace rotation;
 
 bool dominates(const Candidate& a, const Candidate& b)
 {
-    const auto& A {a.results_metrics};
-    const auto& B {b.results_metrics};
+    const auto& A{a.results_metrics};
+    const auto& B{b.results_metrics};
 
-    bool strictly_better {false};
+    bool strictly_better{false};
 
-    constexpr double EPS {1e-4};
-    constexpr double k {1.0};
+    constexpr double EPS{1e-4};
+    constexpr double k{1.0};
 
     auto le = [&](double x, double y) {
         return x <= y;
@@ -447,8 +484,8 @@ void write_candidates(std::ofstream& out, const std::vector<Candidate>& candidat
         return oss.str();
     };
 
-    for (size_t i {0}; i < candidates.size(); ++i) {
-        const auto& c {candidates[i]};
+    for (size_t i{0}; i < candidates.size(); ++i) {
+        const auto& c {candidates.at(i)};
 
         out << std::left
             << std::setw(6)  << (i + 1)

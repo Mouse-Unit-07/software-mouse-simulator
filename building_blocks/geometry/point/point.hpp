@@ -16,8 +16,8 @@ namespace geometry
 class Point
 {
 public:
-    double x {0};
-    double y {0};
+    double x{0};
+    double y{0};
     Point() = default;
     Point(double x, double y);
 

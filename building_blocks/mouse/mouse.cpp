@@ -43,14 +43,14 @@ struct Displacement
     double dy;
 };
 
-constexpr double MOUSE_HITBOX_HORIZONTAL_MM {94.16};
-constexpr double MOUSE_HITBOX_VERTICAL_MM {88.90};
+constexpr double MOUSE_HITBOX_HORIZONTAL_MM{94.16};
+constexpr double MOUSE_HITBOX_VERTICAL_MM{88.90};
 
 /* IR sensor coordinates assume mouse facing down */
-constexpr Displacement IR_1_OFFSET_FROM_MOUSE_CENTER {27.29, 25.24};
-constexpr Displacement IR_2_OFFSET_FROM_MOUSE_CENTER {17.45, 38.76};
-constexpr Displacement IR_3_OFFSET_FROM_MOUSE_CENTER {-17.45, 38.76};
-constexpr Displacement IR_4_OFFSET_FROM_MOUSE_CENTER {-27.29, 25.24};
+constexpr Displacement IR_1_OFFSET_FROM_MOUSE_CENTER{27.29, 25.24};
+constexpr Displacement IR_2_OFFSET_FROM_MOUSE_CENTER{17.45, 38.76};
+constexpr Displacement IR_3_OFFSET_FROM_MOUSE_CENTER{-17.45, 38.76};
+constexpr Displacement IR_4_OFFSET_FROM_MOUSE_CENTER{-27.29, 25.24};
 
 } /* mouse namespace */
 

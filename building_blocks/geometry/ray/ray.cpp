@@ -43,8 +43,8 @@ namespace geometry
 Ray::Ray(const Point& origin, double angle_rad)
     : origin{origin}
 {
-    double dir_x {std::cos(angle_rad)};
-    double dir_y {std::sin(angle_rad)};
+    double dir_x{std::cos(angle_rad)};
+    double dir_y{std::sin(angle_rad)};
     direction.x = dir_x;
     direction.y = dir_y;
 }

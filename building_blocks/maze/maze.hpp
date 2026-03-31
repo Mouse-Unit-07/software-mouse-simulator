@@ -13,11 +13,11 @@
 namespace maze
 {
 
-constexpr double OFFICIAL_POST_SIZE {12.07};
-constexpr double OFFICIAL_WALL_LENGTH_SIZE {166.37};
-constexpr double OFFICIAL_WALL_WIDTH_SIZE {12.07};
+constexpr double OFFICIAL_POST_SIZE{12.07};
+constexpr double OFFICIAL_WALL_LENGTH_SIZE{166.37};
+constexpr double OFFICIAL_WALL_WIDTH_SIZE{12.07};
 
-constexpr double CELL_SIZE {OFFICIAL_WALL_LENGTH_SIZE + OFFICIAL_POST_SIZE};
+constexpr double CELL_SIZE{OFFICIAL_WALL_LENGTH_SIZE + OFFICIAL_POST_SIZE};
 
 struct Cell
 {
@@ -27,8 +27,8 @@ struct Cell
 class Maze
 {
 public:
-    int rows {0};
-    int cols {0};
+    int rows{0};
+    int cols{0};
     double cell_size {0.0};
     std::vector<geometry::RectangularHitbox> obstacles;
     std::vector<Cell> cells;
