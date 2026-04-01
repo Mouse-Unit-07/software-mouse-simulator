@@ -556,3 +556,24 @@ IGNORE_TEST(RotationTests, RunFullSimulationAndWriteResultsToFile)
 
     run_full_rotation_experiment("test_full_output.txt", M_PI / 2, sweeper);
 }
+
+IGNORE_TEST(RotationTests, RunFullSimulationForIdealSpeedAndPid)
+{
+    ConfigSweeper sweeper;
+
+    sweeper.motor_speed_scale = simulation_common::generate_sweep_values(0.9, 1.1, 3);
+    sweeper.dt = simulation_common::generate_sweep_values(0.01, 0.5, 3);
+    sweeper.motor1_variance = simulation_common::generate_sweep_values(-0.1, 0.1, 3);
+    sweeper.motor2_variance = simulation_common::generate_sweep_values(-0.1, 0.1, 3);
+    sweeper.slip_factor = simulation_common::generate_sweep_values(0.9, 1.1, 3);
+    sweeper.wheel_circumference_scale = simulation_common::generate_sweep_values(0.95, 1.05, 3);
+    sweeper.wheel_base_scale = simulation_common::generate_sweep_values(0.95, 1.05, 3);
+    
+    sweeper.motor_speed = {120};
+    sweeper.kp = {0};
+    sweeper.kd = {0};
+    sweeper.pid_shift = {0};
+
+    enable_visualization();
+    run_full_rotation_experiment("test_full_output.txt", M_PI / 2, sweeper);
+}

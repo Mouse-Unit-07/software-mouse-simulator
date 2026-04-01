@@ -29,6 +29,9 @@ public:
 
     void reset_beam_color(void);
     void change_beam_color_to_red(void);
+    void reset_mouse_color(void);
+    void change_mouse_color_to_green(void);
+    void change_mouse_color_to_blue(void);
 
     void save_to_image_file(const std::string& filename);
 

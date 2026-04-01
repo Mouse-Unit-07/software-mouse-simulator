@@ -432,3 +432,19 @@ IGNORE_TEST(WallDetectionTests, RunFullSimulationAndWriteResultsToFile)
 
     run_full_wall_detection_experiment("test_full_output.txt", sweeper, 0.5);
 }
+
+IGNORE_TEST(WallDetectionTests, RunFullSimulationForIdealThreshold)
+{
+    ConfigSweeper sweeper;
+
+    sweeper.maze_size_scale = simulation_common::generate_sweep_values(0.95, 1.05, 3);
+    sweeper.ir_reading_scale = simulation_common::generate_sweep_values(0.95, 1.05, 3);
+    sweeper.mouse_angle = simulation_common::generate_sweep_values(-M_PI / 8, M_PI / 8, 3);
+    sweeper.horizontal_position_variance = simulation_common::generate_sweep_values(-0.5, 0.5, 3);
+    sweeper.vertical_position_variance = simulation_common::generate_sweep_values(-0.5, 0.5, 3);
+    sweeper.total_steps = {100};
+    sweeper.reading_threshold = {840};
+
+    enable_visualization();
+    run_full_wall_detection_experiment("test_ideal_output.txt", sweeper, 0.5);
+}

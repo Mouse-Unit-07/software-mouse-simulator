@@ -48,8 +48,8 @@ namespace
 using namespace wall_detection;
 
 void prepare_mock_for_wall_detection(const Config& cfg, const maze::Maze& maze, mouse::Mouse& mouse);
-std::optional<uint32_t> compute_ir_sensor_3_reading(const maze::Maze& maze,
-        const mouse::Mouse& mouse, visualizer::Visualizer& visualizer);
+std::optional<double> compute_ir_sensor_3_distance(const maze::Maze& maze, const mouse::Mouse& mouse);
+uint32_t scale_and_clamp_ir_sensor_reading(uint32_t reading, const Config& cfg);
 
 DetectionWindow find_window_with_rate(const ResultsMetrics& m, double required_rate);
 
@@ -215,24 +215,36 @@ Result run_simulation(const Config& cfg)
     wall_present_at_step.resize(cfg.total_steps);
 
     for (int i{0}; i < cfg.total_steps; i++) {
-        auto potential_reading_1{compute_ir_sensor_3_reading(open_maze, mouse, wall_absent_visualizer)};
-        if (potential_reading_1.has_value()) {
-            uint32_t reading{*potential_reading_1};
-            long rounded_reading{std::lround(static_cast<double>(reading) * cfg.ir_reading_scale)};
-            reading = static_cast<uint32_t>(std::clamp(rounded_reading, 0L, 1024L));
+        auto potential_distance_1{compute_ir_sensor_3_distance(open_maze, mouse)};
+        if (potential_distance_1.has_value()) {
+            update_ir_3_sensor_reading(*potential_distance_1);
+            uint32_t reading = read_ir_3_sensor();
+            reading = scale_and_clamp_ir_sensor_reading(reading, cfg);
             wall_absent_at_step.at(i) = (reading < cfg.reading_threshold) ? true : false;
         } else {
             wall_absent_at_step.at(i) = false;
         }
 
-        auto potential_reading_2{compute_ir_sensor_3_reading(closed_maze, mouse, wall_present_visualizer)};
-        if (potential_reading_2.has_value()) {
-            uint32_t reading{*potential_reading_2};
-            long rounded_reading{std::lround(static_cast<double>(reading) * cfg.ir_reading_scale)};
-            reading = static_cast<uint32_t>(std::clamp(rounded_reading, 0L, 1024L));
+        auto potential_distance_2{compute_ir_sensor_3_distance(closed_maze, mouse)};
+        if (potential_distance_2.has_value()) {
+            update_ir_3_sensor_reading(*potential_distance_2);
+            uint32_t reading = read_ir_3_sensor();
+            reading = scale_and_clamp_ir_sensor_reading(reading, cfg);
             wall_present_at_step.at(i) = (reading >= cfg.reading_threshold) ? true : false;
         } else {
             wall_present_at_step.at(i) = false;
+        }
+
+        if (visualizer_enabled) {
+            if (wall_absent_at_step.at(i) && wall_present_at_step.at(i)) {
+                wall_absent_visualizer.change_beam_color_to_red();
+                wall_present_visualizer.change_beam_color_to_red();
+            } else {
+                wall_absent_visualizer.reset_beam_color();
+                wall_present_visualizer.reset_beam_color();
+            }
+            wall_absent_visualizer.draw_ir_3_sensor_beam(mouse, *potential_distance_1);
+            wall_present_visualizer.draw_ir_3_sensor_beam(mouse, *potential_distance_2);
         }
 
         mouse.translate(0.0, open_maze.cell_size / cfg.total_steps);
@@ -379,27 +391,26 @@ void prepare_mock_for_wall_detection(const Config& cfg, const maze::Maze& maze, 
     );
 }
 
-std::optional<uint32_t> compute_ir_sensor_3_reading(const maze::Maze& maze,
-        const mouse::Mouse& mouse, visualizer::Visualizer& visualizer)
+std::optional<double> compute_ir_sensor_3_distance(const maze::Maze& maze, const mouse::Mouse& mouse)
 {
-    std::optional<uint32_t> reading{std::nullopt};
+    std::optional<double> distance{std::nullopt};
 
     auto potential_rc{maze::get_cell_from_point(maze, mouse.hitbox.center)};
     if (potential_rc) {
         auto [r, c] {*potential_rc};
         auto potential_distance{maze::compute_ray_distance_in_vicinity(maze, mouse.ir_3_sensor, r, c)};
         if (potential_distance.has_value()) {
-            auto distance{*potential_distance};
-            update_ir_3_sensor_reading(distance);
-            reading = read_ir_3_sensor();
-
-            if (visualizer_enabled) {
-                visualizer.draw_ir_3_sensor_beam(mouse, distance);
-            }
+            distance = *potential_distance;
         }
     }
 
-    return reading;
+    return distance;
+}
+
+uint32_t scale_and_clamp_ir_sensor_reading(uint32_t reading, const Config& cfg)
+{
+    long rounded_reading{std::lround(static_cast<double>(reading) * cfg.ir_reading_scale)};
+    return static_cast<uint32_t>(std::clamp(rounded_reading, 0L, 1024L));
 }
 
 DetectionWindow find_window_with_rate(const ResultsMetrics& m, double required_rate)

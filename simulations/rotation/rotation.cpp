@@ -215,7 +215,9 @@ Result run_simulation(const Config& cfg, double target_angle)
 
     if (visualizer_enabled) {
         rotation_visualizer.draw_maze(100.0f, maze);
+        rotation_visualizer.change_mouse_color_to_green();
         rotation_visualizer.draw_mouse_on_maze(mouse);
+        rotation_visualizer.reset_mouse_color();
     }
 
     if (target_angle > 0) {
@@ -285,6 +287,8 @@ Result run_simulation(const Config& cfg, double target_angle)
     }
 
     if (visualizer_enabled) {
+        rotation_visualizer.change_mouse_color_to_blue();
+        rotation_visualizer.draw_mouse_on_maze(mouse);
         rotation_visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/" + config_to_string(cfg) + ".png");
     }
 
