@@ -219,10 +219,6 @@ Result run_simulation(const Config& cfg)
         if (potential_distance_1.has_value()) {
             update_ir_3_sensor_reading(*potential_distance_1);
             uint32_t reading = read_ir_3_sensor();
-            if (visualizer_enabled) {
-                wall_absent_visualizer.draw_ir_3_sensor_beam(mouse, *potential_distance_1);
-            }
-
             reading = scale_and_clamp_ir_sensor_reading(reading, cfg);
             wall_absent_at_step.at(i) = (reading < cfg.reading_threshold) ? true : false;
         } else {
@@ -233,13 +229,22 @@ Result run_simulation(const Config& cfg)
         if (potential_distance_2.has_value()) {
             update_ir_3_sensor_reading(*potential_distance_2);
             uint32_t reading = read_ir_3_sensor();
-            if (visualizer_enabled) {
-                wall_present_visualizer.draw_ir_3_sensor_beam(mouse, *potential_distance_2);
-            }
             reading = scale_and_clamp_ir_sensor_reading(reading, cfg);
             wall_present_at_step.at(i) = (reading >= cfg.reading_threshold) ? true : false;
         } else {
             wall_present_at_step.at(i) = false;
+        }
+
+        if (visualizer_enabled) {
+            if (wall_absent_at_step.at(i) && wall_present_at_step.at(i)) {
+                wall_absent_visualizer.change_beam_color_to_red();
+                wall_present_visualizer.change_beam_color_to_red();
+            } else {
+                wall_absent_visualizer.reset_beam_color();
+                wall_present_visualizer.reset_beam_color();
+            }
+            wall_absent_visualizer.draw_ir_3_sensor_beam(mouse, *potential_distance_1);
+            wall_present_visualizer.draw_ir_3_sensor_beam(mouse, *potential_distance_2);
         }
 
         mouse.translate(0.0, open_maze.cell_size / cfg.total_steps);
