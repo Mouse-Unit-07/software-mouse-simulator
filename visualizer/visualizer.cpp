@@ -50,6 +50,7 @@ struct Visualizer::Impl
     double scale{};
     sf::RenderTexture texture;
     sf::Color ray_beam_color{sf::Color::Cyan};
+    sf::Color mouse_color{sf::Color::Red};
 
     sf::Vector2f world_to_screen(const geometry::Point& p) const
     {
@@ -184,7 +185,7 @@ void Visualizer::draw_maze(double cell_size_pixels, const maze::Maze& maze)
 
 void Visualizer::draw_mouse_on_maze(const mouse::Mouse& mouse)
 {
-    auto rect{impl_->make_rectangle(mouse.hitbox, sf::Color::Red)};
+    auto rect{impl_->make_rectangle(mouse.hitbox, impl_->mouse_color)};
     impl_->texture.draw(rect);
 
     impl_->draw_ray(mouse.ir_1_sensor);
@@ -221,6 +222,21 @@ void Visualizer::reset_beam_color(void)
 void Visualizer::change_beam_color_to_red(void)
 {
     impl_->ray_beam_color = sf::Color::Red;
+}
+
+void Visualizer::reset_mouse_color(void)
+{
+    impl_->mouse_color = sf::Color::Red;
+}
+
+void Visualizer::change_mouse_color_to_green(void)
+{
+    impl_->mouse_color = sf::Color::Green;
+}
+
+void Visualizer::change_mouse_color_to_blue(void)
+{
+    impl_->mouse_color = sf::Color::Blue;
 }
 
 void Visualizer::save_to_image_file(const std::string& filename)
