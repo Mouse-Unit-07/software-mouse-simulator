@@ -49,6 +49,7 @@ using namespace wall_detection;
 
 void prepare_mock_for_wall_detection(const Config& cfg, const maze::Maze& maze, mouse::Mouse& mouse);
 std::optional<double> compute_ir_sensor_3_distance(const maze::Maze& maze, const mouse::Mouse& mouse);
+uint32_t scale_and_clamp_ir_sensor_reading(uint32_t reading, const Config& cfg);
 
 DetectionWindow find_window_with_rate(const ResultsMetrics& m, double required_rate);
 
@@ -222,8 +223,7 @@ Result run_simulation(const Config& cfg)
                 wall_absent_visualizer.draw_ir_3_sensor_beam(mouse, *potential_distance_1);
             }
 
-            long rounded_reading{std::lround(static_cast<double>(reading) * cfg.ir_reading_scale)};
-            reading = static_cast<uint32_t>(std::clamp(rounded_reading, 0L, 1024L));
+            reading = scale_and_clamp_ir_sensor_reading(reading, cfg);
             wall_absent_at_step.at(i) = (reading < cfg.reading_threshold) ? true : false;
         } else {
             wall_absent_at_step.at(i) = false;
@@ -236,9 +236,7 @@ Result run_simulation(const Config& cfg)
             if (visualizer_enabled) {
                 wall_present_visualizer.draw_ir_3_sensor_beam(mouse, *potential_distance_2);
             }
-
-            long rounded_reading{std::lround(static_cast<double>(reading) * cfg.ir_reading_scale)};
-            reading = static_cast<uint32_t>(std::clamp(rounded_reading, 0L, 1024L));
+            reading = scale_and_clamp_ir_sensor_reading(reading, cfg);
             wall_present_at_step.at(i) = (reading >= cfg.reading_threshold) ? true : false;
         } else {
             wall_present_at_step.at(i) = false;
@@ -402,6 +400,12 @@ std::optional<double> compute_ir_sensor_3_distance(const maze::Maze& maze, const
     }
 
     return distance;
+}
+
+uint32_t scale_and_clamp_ir_sensor_reading(uint32_t reading, const Config& cfg)
+{
+    long rounded_reading{std::lround(static_cast<double>(reading) * cfg.ir_reading_scale)};
+    return static_cast<uint32_t>(std::clamp(rounded_reading, 0L, 1024L));
 }
 
 DetectionWindow find_window_with_rate(const ResultsMetrics& m, double required_rate)
