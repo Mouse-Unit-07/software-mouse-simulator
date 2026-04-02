@@ -44,13 +44,11 @@ public:
 
     std::vector<uint32_t> reading_threshold;
 
-    std::vector<size_t> indices;
-    bool first {true};
-
-    ConfigSweeper();
-
     bool next();
     Config value() const;
+private:
+    simulation_common::CommonConfigSweeper sweeper;
+    bool initialized_{false};
 };
 
 struct Result

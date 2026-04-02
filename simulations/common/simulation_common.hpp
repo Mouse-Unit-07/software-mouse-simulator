@@ -13,6 +13,18 @@
 namespace simulation_common
 {
 
+class CommonConfigSweeper
+{
+public:
+    void init_sizes(std::vector<size_t> sizes);
+    bool next(void);
+    const std::vector<size_t>& get_indices(void) const;
+private:
+    std::vector<size_t> sizes_;
+    std::vector<size_t> indices_;
+    bool first_{true};
+};
+
 template <typename T>
 std::vector<T> generate_sweep_values(T min, T max, int steps)
 {
@@ -39,6 +51,21 @@ std::vector<T> generate_sweep_values(T min, T max, int steps)
     }
 
     return values;
+}
+
+template <typename Trials, typename KeyFn, typename ValueFn>
+auto group_by(const Trials& trials, KeyFn key_fn, ValueFn value_fn)
+{
+    using Key = decltype(key_fn(trials.front()));
+    using Value = decltype(value_fn(trials.front()));
+
+    std::map<Key, std::vector<Value>> grouped;
+
+    for (const auto& t : trials) {
+        grouped[key_fn(t)].push_back(value_fn(t));
+    }
+
+    return grouped;
 }
 
 struct MetricStats
@@ -88,6 +115,7 @@ namespace simulation_common
 {
 
 MetricStats compute_stats(const std::vector<double>& data);
+std::string double_to_filename(double v, int precision = 2);
 
 } /* simulation_common namespace */
 

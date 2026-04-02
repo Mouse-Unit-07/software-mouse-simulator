@@ -77,59 +77,41 @@ visualizer::Visualizer wall_present_visualizer;
 namespace wall_detection
 {
 
-ConfigSweeper::ConfigSweeper()
-{
-    indices = std::vector<size_t>(7, 0);
-}
-
 bool ConfigSweeper::next()
 {
-    if (first) {
-        first = false;
-        return true;
+    if (!initialized_) {
+        sweeper.init_sizes({
+            maze_size_scale.size(),
+            ir_reading_scale.size(),
+            mouse_angle.size(),
+            horizontal_position_variance.size(),
+            vertical_position_variance.size(),
+            total_steps.size(),
+            reading_threshold.size()
+        });
+
+        initialized_ = true;
     }
-
-    std::vector<size_t> sizes {
-        maze_size_scale.size(),
-        ir_reading_scale.size(),
-        mouse_angle.size(),
-        horizontal_position_variance.size(),
-        vertical_position_variance.size(),
-        total_steps.size(),
-        reading_threshold.size()
-    };
-
-    for (int i{static_cast<int>(indices.size()) - 1}; i >= 0; --i) {
-        indices.at(i)++;
-
-        if (indices.at(i) < sizes.at(i)) {
-            return true;
-        }
-
-        indices.at(i) = 0;
-    }
-
-    return false;
+    return sweeper.next();
 }
 
 Config ConfigSweeper::value() const
 {
-    Config cfg{};
-
+    const auto& idx {sweeper.get_indices()};
     int i{0};
 
-    cfg.maze_size_scale = maze_size_scale.at(indices.at(i++));
-    cfg.ir_reading_scale = ir_reading_scale.at(indices.at(i++));
-    cfg.mouse_angle = mouse_angle.at(indices.at(i++));
-    cfg.horizontal_position_variance = horizontal_position_variance.at(indices.at(i++));
-    cfg.vertical_position_variance = vertical_position_variance.at(indices.at(i++));
-    cfg.total_steps = total_steps.at(indices.at(i++));
+    Config cfg{};
 
-    cfg.reading_threshold = reading_threshold.at(indices.at(i++));
+    cfg.maze_size_scale = maze_size_scale.at(idx.at(i++));
+    cfg.ir_reading_scale = ir_reading_scale.at(idx.at(i++));
+    cfg.mouse_angle = mouse_angle.at(idx.at(i++));
+    cfg.horizontal_position_variance = horizontal_position_variance.at(idx.at(i++));
+    cfg.vertical_position_variance = vertical_position_variance.at(idx.at(i++));
+    cfg.total_steps = total_steps.at(idx.at(i++));
+    cfg.reading_threshold = reading_threshold.at(idx.at(i++));
 
     return cfg;
 }
-
 
 void enable_visualization(void)
 {
@@ -143,33 +125,15 @@ void disable_visualization(void)
 
 std::string config_to_string(const Config& cfg)
 {
-    auto fmt = [](double v, int precision = 2) {
-        std::ostringstream oss;
-        oss << std::fixed << std::setprecision(precision) << v;
-        return oss.str();
-    };
-
-    auto sanitize = [](std::string s) {
-        for (char& c : s) {
-            if (c == '.') c = 'p';
-            else if (c == '-') c = 'n';
-        }
-        return s;
-    };
-
-    auto encode = [&](double v) {
-        return sanitize(fmt(v));
-    };
-
     std::ostringstream oss;
 
-    oss << encode(cfg.maze_size_scale) << "-"
-        << encode(cfg.ir_reading_scale) << "-"
-        << encode(cfg.mouse_angle) << "-"
-        << encode(cfg.horizontal_position_variance) << "-"
-        << encode(cfg.vertical_position_variance) << "-"
+    oss << simulation_common::double_to_filename(cfg.maze_size_scale) << "-"
+        << simulation_common::double_to_filename(cfg.ir_reading_scale) << "-"
+        << simulation_common::double_to_filename(cfg.mouse_angle) << "-"
+        << simulation_common::double_to_filename(cfg.horizontal_position_variance) << "-"
+        << simulation_common::double_to_filename(cfg.vertical_position_variance) << "-"
         << cfg.total_steps << "-"
-        << encode(cfg.reading_threshold);
+        << simulation_common::double_to_filename(cfg.reading_threshold);
 
     return oss.str();
 }
@@ -289,12 +253,15 @@ ResultsMetrics compute_results_metrics(const std::vector<Result>& results)
 
 std::vector<Candidate> build_candidates(const std::vector<Trial>& trials)
 {
-    std::map<CandidateKey, std::vector<Result>> grouped;
-
-    for (const auto& t : trials) {
-        CandidateKey key{t.config.reading_threshold};
-        grouped[key].push_back(t.result);
-    }
+    auto grouped = simulation_common::group_by(
+        trials,
+        [](const Trial& t) {
+            return CandidateKey{t.config.reading_threshold};
+        },
+        [](const Trial& t) {
+            return t.result;
+        }
+    );
 
     std::vector<Candidate> out;
     out.reserve(grouped.size());

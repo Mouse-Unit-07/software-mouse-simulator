@@ -89,64 +89,46 @@ visualizer::Visualizer rotation_visualizer;
 namespace rotation
 {
 
-ConfigSweeper::ConfigSweeper()
+bool ConfigSweeper::next(void)
 {
-    indices = std::vector<size_t>(11, 0);
+    if (!initialized_) {
+        sweeper.init_sizes({
+            dt.size(),
+            motor_speed_scale.size(),
+            motor1_variance.size(),
+            motor2_variance.size(),
+            slip_factor.size(),
+            wheel_circumference_scale.size(),
+            wheel_base_scale.size(),
+            motor_speed.size(),
+            kp.size(),
+            kd.size(),
+            pid_shift.size()
+        });
+
+        initialized_ = true;
+    }
+    return sweeper.next();
 }
 
-bool ConfigSweeper::next()
+Config ConfigSweeper::value(void) const
 {
-    if (first) {
-        first = false;
-        return true;
-    }
-
-    std::vector<size_t> sizes {
-        motor_speed.size(),
-        motor_speed_scale.size(),
-        dt.size(),
-        motor1_variance.size(),
-        motor2_variance.size(),
-        slip_factor.size(),
-        wheel_circumference_scale.size(),
-        wheel_base_scale.size(),
-        kp.size(),
-        kd.size(),
-        pid_shift.size()
-    };
-
-    for (int i{static_cast<int>(indices.size()) - 1}; i >= 0; --i) {
-        indices.at(i)++;
-
-        if (indices.at(i) < sizes.at(i)) {
-            return true;
-        }
-
-        indices.at(i) = 0;
-    }
-
-    return false;
-}
-
-Config ConfigSweeper::value() const
-{
-    Config cfg{};
-
+    const auto& idx {sweeper.get_indices()};
     int i{0};
 
-    cfg.motor_speed = motor_speed.at(indices.at(i++));
-    cfg.motor_speed_scale = motor_speed_scale.at(indices.at(i++));
-    cfg.dt = dt.at(indices.at(i++));
+    Config cfg{};
 
-    cfg.motor1_variance = motor1_variance.at(indices.at(i++));
-    cfg.motor2_variance = motor2_variance.at(indices.at(i++));
-    cfg.slip_factor = slip_factor.at(indices.at(i++));
-    cfg.wheel_circumference_scale = wheel_circumference_scale.at(indices.at(i++));
-    cfg.wheel_base_scale = wheel_base_scale.at(indices.at(i++));
-
-    cfg.kp = kp.at(indices.at(i++));
-    cfg.kd = kd.at(indices.at(i++));
-    cfg.pid_shift = pid_shift.at(indices.at(i++));
+    cfg.dt = dt.at(idx.at(i++));
+    cfg.motor_speed_scale = motor_speed_scale.at(idx.at(i++));
+    cfg.motor1_variance = motor1_variance.at(idx.at(i++));
+    cfg.motor2_variance = motor2_variance.at(idx.at(i++));
+    cfg.slip_factor = slip_factor.at(idx.at(i++));
+    cfg.wheel_circumference_scale = wheel_circumference_scale.at(idx.at(i++));
+    cfg.wheel_base_scale = wheel_base_scale.at(idx.at(i++));
+    cfg.motor_speed = motor_speed.at(idx.at(i++));
+    cfg.kp = kp.at(idx.at(i++));
+    cfg.kd = kd.at(idx.at(i++));
+    cfg.pid_shift = pid_shift.at(idx.at(i++));
 
     return cfg;
 }
@@ -163,37 +145,19 @@ void disable_visualization(void)
 
 std::string config_to_string(const Config& cfg)
 {
-    auto fmt = [](double v, int precision = 2) {
-        std::ostringstream oss;
-        oss << std::fixed << std::setprecision(precision) << v;
-        return oss.str();
-    };
-
-    auto sanitize = [](std::string s) {
-        for (char& c : s) {
-            if (c == '.') c = 'p';
-            else if (c == '-') c = 'n';
-        }
-        return s;
-    };
-
-    auto encode = [&](double v) {
-        return sanitize(fmt(v));
-    };
-
     std::ostringstream oss;
 
-    oss << encode(cfg.dt) << "-"
-        << encode(cfg.motor_speed_scale) << "-"
-        << encode(cfg.motor1_variance) << "-"
-        << encode(cfg.motor2_variance) << "-"
-        << encode(cfg.slip_factor) << "-"
-        << encode(cfg.wheel_circumference_scale) << "-"
-        << encode(cfg.wheel_base_scale) << "-"
+    oss << simulation_common::double_to_filename(cfg.dt) << "-"
+        << simulation_common::double_to_filename(cfg.motor_speed_scale) << "-"
+        << simulation_common::double_to_filename(cfg.motor1_variance) << "-"
+        << simulation_common::double_to_filename(cfg.motor2_variance) << "-"
+        << simulation_common::double_to_filename(cfg.slip_factor) << "-"
+        << simulation_common::double_to_filename(cfg.wheel_circumference_scale) << "-"
+        << simulation_common::double_to_filename(cfg.wheel_base_scale) << "-"
         << static_cast<int>(cfg.motor_speed) << "-"
-        << encode(static_cast<double>(cfg.kp)) << "-"
-        << encode(static_cast<double>(cfg.kd)) << "-"
-        << encode(static_cast<double>(cfg.pid_shift));
+        << simulation_common::double_to_filename(static_cast<double>(cfg.kp)) << "-"
+        << simulation_common::double_to_filename(static_cast<double>(cfg.kd)) << "-"
+        << simulation_common::double_to_filename(static_cast<double>(cfg.pid_shift));
 
     return oss.str();
 }
@@ -303,54 +267,32 @@ Result run_simulation(const Config& cfg, double target_angle)
 
 ResultsMetrics compute_results_metrics(const std::vector<Result>& results)
 {
-    std::vector<double> time;
-    std::vector<double> angle;
-    std::vector<double> translation;
-    int coll_count{0};
-    int fail_count{0};
-
-    time.reserve(results.size());
-    angle.reserve(results.size());
-    translation.reserve(results.size());
-
-    for (const auto& r : results) {
-        time.push_back(r.total_time);
-        angle.push_back(r.final_angle_error);
-        translation.push_back(r.total_translation);
-        if (r.collision) {
-            coll_count++;
-        }
-        if (r.timeout) {
-            fail_count++;
-        }
-    }
-
-    const double n{static_cast<double>(results.size())};
     ResultsMetrics a;
+
+    auto time {simulation_common::extract_metric(results, [](const Result& r){ return r.total_time; })};
+    auto angle {simulation_common::extract_metric(results, [](const Result& r){ return r.final_angle_error; })};
+    auto translation {simulation_common::extract_metric(results, [](const Result& r){ return r.total_translation; })};
 
     a.time_stats = simulation_common::compute_stats(time);
     a.angle_error_stats = simulation_common::compute_stats(angle);
     a.translation_stats = simulation_common::compute_stats(translation);
-    a.timeout_rate = (n > 0) ? fail_count / n : 0.0;
-    a.collision_rate = (n > 0) ? coll_count / n : 0.0;
+    a.timeout_rate = simulation_common::compute_rate(results, [](const Result& r){ return r.timeout; });
+    a.collision_rate = simulation_common::compute_rate(results, [](const Result& r){ return r.collision; });
 
     return a;
 }
 
 std::vector<Candidate> build_candidates(const std::vector<Trial>& trials)
 {
-    std::map<CandidateKey, std::vector<Result>> grouped;
-
-    for (const auto& t : trials) {
-        CandidateKey key {
-            t.config.kp,
-            t.config.kd,
-            t.config.pid_shift,
-            t.config.motor_speed
-        };
-
-        grouped[key].push_back(t.result);
-    }
+    auto grouped = simulation_common::group_by(
+        trials,
+        [](const Trial& t) {
+            return CandidateKey{t.config.kp, t.config.kd, t.config.pid_shift, t.config.motor_speed};
+        },
+        [](const Trial& t) {
+            return t.result;
+        }
+    );
 
     std::vector<Candidate> out;
     out.reserve(grouped.size());
