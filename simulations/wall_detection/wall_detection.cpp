@@ -271,12 +271,15 @@ ResultsMetrics compute_results_metrics(const std::vector<Result>& results)
 
 std::vector<Candidate> build_candidates(const std::vector<Trial>& trials)
 {
-    std::map<CandidateKey, std::vector<Result>> grouped;
-
-    for (const auto& t : trials) {
-        CandidateKey key{t.config.reading_threshold};
-        grouped[key].push_back(t.result);
-    }
+    auto grouped = simulation_common::group_by(
+        trials,
+        [](const Trial& t) {
+            return CandidateKey{t.config.reading_threshold};
+        },
+        [](const Trial& t) {
+            return t.result;
+        }
+    );
 
     std::vector<Candidate> out;
     out.reserve(grouped.size());

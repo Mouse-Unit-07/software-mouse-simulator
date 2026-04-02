@@ -22,6 +22,7 @@ extern "C"
 #include <string>
 #include <optional>
 #include <functional>
+#include <map>
 #include "point.hpp"
 #include "ray.hpp"
 #include "rectangular_hitbox.hpp"

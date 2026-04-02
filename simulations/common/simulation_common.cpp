@@ -13,6 +13,7 @@
 #include <string>
 #include <functional>
 #include <algorithm>
+#include <map>
 #include <stdexcept>
 #include "simulation_common.hpp"
 

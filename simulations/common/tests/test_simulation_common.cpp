@@ -13,6 +13,7 @@
 #include <string>
 #include <functional>
 #include <algorithm>
+#include <map>
 #include "simulation_common.hpp"
 
 #include <CppUTest/TestHarness.h>

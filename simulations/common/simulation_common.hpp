@@ -53,6 +53,21 @@ std::vector<T> generate_sweep_values(T min, T max, int steps)
     return values;
 }
 
+template <typename Trials, typename KeyFn, typename ValueFn>
+auto group_by(const Trials& trials, KeyFn key_fn, ValueFn value_fn)
+{
+    using Key = decltype(key_fn(trials.front()));
+    using Value = decltype(value_fn(trials.front()));
+
+    std::map<Key, std::vector<Value>> grouped;
+
+    for (const auto& t : trials) {
+        grouped[key_fn(t)].push_back(value_fn(t));
+    }
+
+    return grouped;
+}
+
 struct MetricStats
 {
     double mean{0.0};
