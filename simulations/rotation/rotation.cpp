@@ -303,36 +303,17 @@ Result run_simulation(const Config& cfg, double target_angle)
 
 ResultsMetrics compute_results_metrics(const std::vector<Result>& results)
 {
-    std::vector<double> time;
-    std::vector<double> angle;
-    std::vector<double> translation;
-    int coll_count{0};
-    int fail_count{0};
-
-    time.reserve(results.size());
-    angle.reserve(results.size());
-    translation.reserve(results.size());
-
-    for (const auto& r : results) {
-        time.push_back(r.total_time);
-        angle.push_back(r.final_angle_error);
-        translation.push_back(r.total_translation);
-        if (r.collision) {
-            coll_count++;
-        }
-        if (r.timeout) {
-            fail_count++;
-        }
-    }
-
-    const double n{static_cast<double>(results.size())};
     ResultsMetrics a;
+
+    auto time {simulation_common::extract_metric(results, [](const Result& r){ return r.total_time; })};
+    auto angle {simulation_common::extract_metric(results, [](const Result& r){ return r.final_angle_error; })};
+    auto translation {simulation_common::extract_metric(results, [](const Result& r){ return r.total_translation; })};
 
     a.time_stats = simulation_common::compute_stats(time);
     a.angle_error_stats = simulation_common::compute_stats(angle);
     a.translation_stats = simulation_common::compute_stats(translation);
-    a.timeout_rate = (n > 0) ? fail_count / n : 0.0;
-    a.collision_rate = (n > 0) ? coll_count / n : 0.0;
+    a.timeout_rate = simulation_common::compute_rate(results, [](const Result& r){ return r.timeout; });
+    a.collision_rate = simulation_common::compute_rate(results, [](const Result& r){ return r.collision; });
 
     return a;
 }
