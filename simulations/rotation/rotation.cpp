@@ -145,37 +145,19 @@ void disable_visualization(void)
 
 std::string config_to_string(const Config& cfg)
 {
-    auto fmt = [](double v, int precision = 2) {
-        std::ostringstream oss;
-        oss << std::fixed << std::setprecision(precision) << v;
-        return oss.str();
-    };
-
-    auto sanitize = [](std::string s) {
-        for (char& c : s) {
-            if (c == '.') c = 'p';
-            else if (c == '-') c = 'n';
-        }
-        return s;
-    };
-
-    auto encode = [&](double v) {
-        return sanitize(fmt(v));
-    };
-
     std::ostringstream oss;
 
-    oss << encode(cfg.dt) << "-"
-        << encode(cfg.motor_speed_scale) << "-"
-        << encode(cfg.motor1_variance) << "-"
-        << encode(cfg.motor2_variance) << "-"
-        << encode(cfg.slip_factor) << "-"
-        << encode(cfg.wheel_circumference_scale) << "-"
-        << encode(cfg.wheel_base_scale) << "-"
+    oss << simulation_common::double_to_filename(cfg.dt) << "-"
+        << simulation_common::double_to_filename(cfg.motor_speed_scale) << "-"
+        << simulation_common::double_to_filename(cfg.motor1_variance) << "-"
+        << simulation_common::double_to_filename(cfg.motor2_variance) << "-"
+        << simulation_common::double_to_filename(cfg.slip_factor) << "-"
+        << simulation_common::double_to_filename(cfg.wheel_circumference_scale) << "-"
+        << simulation_common::double_to_filename(cfg.wheel_base_scale) << "-"
         << static_cast<int>(cfg.motor_speed) << "-"
-        << encode(static_cast<double>(cfg.kp)) << "-"
-        << encode(static_cast<double>(cfg.kd)) << "-"
-        << encode(static_cast<double>(cfg.pid_shift));
+        << simulation_common::double_to_filename(static_cast<double>(cfg.kp)) << "-"
+        << simulation_common::double_to_filename(static_cast<double>(cfg.kd)) << "-"
+        << simulation_common::double_to_filename(static_cast<double>(cfg.pid_shift));
 
     return oss.str();
 }

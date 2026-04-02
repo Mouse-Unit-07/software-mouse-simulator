@@ -14,6 +14,8 @@
 #include <functional>
 #include <algorithm>
 #include <map>
+#include <iomanip>
+#include <sstream>
 #include <stdexcept>
 #include "simulation_common.hpp"
 
@@ -101,6 +103,19 @@ MetricStats compute_stats(const std::vector<double>& data)
     }
 
     s.stddev = sqrt(variance / data.size());
+    return s;
+}
+
+std::string double_to_filename(double v, int precision)
+{
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(precision) << v;
+
+    std::string s{oss.str()};
+    for (char& c : s) {
+        if (c == '.') c = 'p';
+        else if (c == '-') c = 'n';
+    }
     return s;
 }
 

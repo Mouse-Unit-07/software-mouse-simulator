@@ -125,33 +125,15 @@ void disable_visualization(void)
 
 std::string config_to_string(const Config& cfg)
 {
-    auto fmt = [](double v, int precision = 2) {
-        std::ostringstream oss;
-        oss << std::fixed << std::setprecision(precision) << v;
-        return oss.str();
-    };
-
-    auto sanitize = [](std::string s) {
-        for (char& c : s) {
-            if (c == '.') c = 'p';
-            else if (c == '-') c = 'n';
-        }
-        return s;
-    };
-
-    auto encode = [&](double v) {
-        return sanitize(fmt(v));
-    };
-
     std::ostringstream oss;
 
-    oss << encode(cfg.maze_size_scale) << "-"
-        << encode(cfg.ir_reading_scale) << "-"
-        << encode(cfg.mouse_angle) << "-"
-        << encode(cfg.horizontal_position_variance) << "-"
-        << encode(cfg.vertical_position_variance) << "-"
+    oss << simulation_common::double_to_filename(cfg.maze_size_scale) << "-"
+        << simulation_common::double_to_filename(cfg.ir_reading_scale) << "-"
+        << simulation_common::double_to_filename(cfg.mouse_angle) << "-"
+        << simulation_common::double_to_filename(cfg.horizontal_position_variance) << "-"
+        << simulation_common::double_to_filename(cfg.vertical_position_variance) << "-"
         << cfg.total_steps << "-"
-        << encode(cfg.reading_threshold);
+        << simulation_common::double_to_filename(cfg.reading_threshold);
 
     return oss.str();
 }

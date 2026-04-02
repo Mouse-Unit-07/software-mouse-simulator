@@ -115,6 +115,7 @@ namespace simulation_common
 {
 
 MetricStats compute_stats(const std::vector<double>& data);
+std::string double_to_filename(double v, int precision = 2);
 
 } /* simulation_common namespace */
 
