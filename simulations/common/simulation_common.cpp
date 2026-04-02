@@ -13,6 +13,7 @@
 #include <string>
 #include <functional>
 #include <algorithm>
+#include <stdexcept>
 #include "simulation_common.hpp"
 
 /*----------------------------------------------------------------------------*/
@@ -30,6 +31,43 @@
 /*----------------------------------------------------------------------------*/
 namespace simulation_common
 {
+
+void CommonConfigSweeper::init_sizes(std::vector<size_t> sizes)
+{
+    sizes_ = std::move(sizes);
+    for (int x : sizes_) {
+        if (x == 0) {
+            throw std::invalid_argument("size of zero found- parameter missing in sweeper");
+        }
+    }
+
+    indices_.assign(sizes_.size(), 0);
+}
+
+bool CommonConfigSweeper:: next(void)
+{
+    if (first_) {
+        first_ = false;
+        return true;
+    }
+
+    for (int i{static_cast<int>(indices_.size()) - 1}; i >= 0; --i) {
+        indices_.at(i)++;
+
+        if (indices_.at(i) < sizes_.at(i)) {
+            return true;
+        }
+
+        indices_.at(i) = 0;
+    }
+
+    return false;
+}
+
+const std::vector<size_t>& CommonConfigSweeper::get_indices(void) const
+{
+    return indices_;
+}
 
 MetricStats compute_stats(const std::vector<double>& data)
 {

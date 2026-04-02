@@ -46,13 +46,11 @@ public:
     std::vector<int32_t> kd;
     std::vector<int32_t> pid_shift;
 
-    std::vector<size_t> indices;
-    bool first{true};
-
-    ConfigSweeper();
-
-    bool next();
-    Config value() const;
+    bool next(void);
+    Config value(void) const;
+private:
+    simulation_common::CommonConfigSweeper sweeper;
+    bool initialized_{false};
 };
 
 struct Result

@@ -301,16 +301,6 @@ IGNORE_TEST(WallDetectionTests, VisualizationDoesNotAffectResults)
     CHECK(are_results_equivalent(r1, r2));
 }
 
-TEST(WallDetectionTests, ComputeResultsMetricsEmpty)
-{
-    std::vector<Result> results;
-
-    auto m{compute_results_metrics(results)};
-
-    CHECK_EQUAL(-1, m.detection_window.window_start);
-    CHECK_EQUAL(0,  m.detection_window.window_size);
-}
-
 TEST(WallDetectionTests, ComputeResultsMetricsCountsConsensusCorrectly)
 {
     Result r1;

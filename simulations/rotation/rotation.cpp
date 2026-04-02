@@ -89,64 +89,46 @@ visualizer::Visualizer rotation_visualizer;
 namespace rotation
 {
 
-ConfigSweeper::ConfigSweeper()
+bool ConfigSweeper::next(void)
 {
-    indices = std::vector<size_t>(11, 0);
+    if (!initialized_) {
+        sweeper.init_sizes({
+            dt.size(),
+            motor_speed_scale.size(),
+            motor1_variance.size(),
+            motor2_variance.size(),
+            slip_factor.size(),
+            wheel_circumference_scale.size(),
+            wheel_base_scale.size(),
+            motor_speed.size(),
+            kp.size(),
+            kd.size(),
+            pid_shift.size()
+        });
+
+        initialized_ = true;
+    }
+    return sweeper.next();
 }
 
-bool ConfigSweeper::next()
+Config ConfigSweeper::value(void) const
 {
-    if (first) {
-        first = false;
-        return true;
-    }
-
-    std::vector<size_t> sizes {
-        motor_speed.size(),
-        motor_speed_scale.size(),
-        dt.size(),
-        motor1_variance.size(),
-        motor2_variance.size(),
-        slip_factor.size(),
-        wheel_circumference_scale.size(),
-        wheel_base_scale.size(),
-        kp.size(),
-        kd.size(),
-        pid_shift.size()
-    };
-
-    for (int i{static_cast<int>(indices.size()) - 1}; i >= 0; --i) {
-        indices.at(i)++;
-
-        if (indices.at(i) < sizes.at(i)) {
-            return true;
-        }
-
-        indices.at(i) = 0;
-    }
-
-    return false;
-}
-
-Config ConfigSweeper::value() const
-{
-    Config cfg{};
-
+    const auto& idx {sweeper.get_indices()};
     int i{0};
 
-    cfg.motor_speed = motor_speed.at(indices.at(i++));
-    cfg.motor_speed_scale = motor_speed_scale.at(indices.at(i++));
-    cfg.dt = dt.at(indices.at(i++));
+    Config cfg{};
 
-    cfg.motor1_variance = motor1_variance.at(indices.at(i++));
-    cfg.motor2_variance = motor2_variance.at(indices.at(i++));
-    cfg.slip_factor = slip_factor.at(indices.at(i++));
-    cfg.wheel_circumference_scale = wheel_circumference_scale.at(indices.at(i++));
-    cfg.wheel_base_scale = wheel_base_scale.at(indices.at(i++));
-
-    cfg.kp = kp.at(indices.at(i++));
-    cfg.kd = kd.at(indices.at(i++));
-    cfg.pid_shift = pid_shift.at(indices.at(i++));
+    cfg.dt = dt.at(idx.at(i++));
+    cfg.motor_speed_scale = motor_speed_scale.at(idx.at(i++));
+    cfg.motor1_variance = motor1_variance.at(idx.at(i++));
+    cfg.motor2_variance = motor2_variance.at(idx.at(i++));
+    cfg.slip_factor = slip_factor.at(idx.at(i++));
+    cfg.wheel_circumference_scale = wheel_circumference_scale.at(idx.at(i++));
+    cfg.wheel_base_scale = wheel_base_scale.at(idx.at(i++));
+    cfg.motor_speed = motor_speed.at(idx.at(i++));
+    cfg.kp = kp.at(idx.at(i++));
+    cfg.kd = kd.at(idx.at(i++));
+    cfg.pid_shift = pid_shift.at(idx.at(i++));
 
     return cfg;
 }

@@ -77,59 +77,41 @@ visualizer::Visualizer wall_present_visualizer;
 namespace wall_detection
 {
 
-ConfigSweeper::ConfigSweeper()
-{
-    indices = std::vector<size_t>(7, 0);
-}
-
 bool ConfigSweeper::next()
 {
-    if (first) {
-        first = false;
-        return true;
+    if (!initialized_) {
+        sweeper.init_sizes({
+            maze_size_scale.size(),
+            ir_reading_scale.size(),
+            mouse_angle.size(),
+            horizontal_position_variance.size(),
+            vertical_position_variance.size(),
+            total_steps.size(),
+            reading_threshold.size()
+        });
+
+        initialized_ = true;
     }
-
-    std::vector<size_t> sizes {
-        maze_size_scale.size(),
-        ir_reading_scale.size(),
-        mouse_angle.size(),
-        horizontal_position_variance.size(),
-        vertical_position_variance.size(),
-        total_steps.size(),
-        reading_threshold.size()
-    };
-
-    for (int i{static_cast<int>(indices.size()) - 1}; i >= 0; --i) {
-        indices.at(i)++;
-
-        if (indices.at(i) < sizes.at(i)) {
-            return true;
-        }
-
-        indices.at(i) = 0;
-    }
-
-    return false;
+    return sweeper.next();
 }
 
 Config ConfigSweeper::value() const
 {
-    Config cfg{};
-
+    const auto& idx {sweeper.get_indices()};
     int i{0};
 
-    cfg.maze_size_scale = maze_size_scale.at(indices.at(i++));
-    cfg.ir_reading_scale = ir_reading_scale.at(indices.at(i++));
-    cfg.mouse_angle = mouse_angle.at(indices.at(i++));
-    cfg.horizontal_position_variance = horizontal_position_variance.at(indices.at(i++));
-    cfg.vertical_position_variance = vertical_position_variance.at(indices.at(i++));
-    cfg.total_steps = total_steps.at(indices.at(i++));
+    Config cfg{};
 
-    cfg.reading_threshold = reading_threshold.at(indices.at(i++));
+    cfg.maze_size_scale = maze_size_scale.at(idx.at(i++));
+    cfg.ir_reading_scale = ir_reading_scale.at(idx.at(i++));
+    cfg.mouse_angle = mouse_angle.at(idx.at(i++));
+    cfg.horizontal_position_variance = horizontal_position_variance.at(idx.at(i++));
+    cfg.vertical_position_variance = vertical_position_variance.at(idx.at(i++));
+    cfg.total_steps = total_steps.at(idx.at(i++));
+    cfg.reading_threshold = reading_threshold.at(idx.at(i++));
 
     return cfg;
 }
-
 
 void enable_visualization(void)
 {

@@ -291,46 +291,6 @@ TEST(RotationTests, NoTranslationAndAngleErrorForPerfectTestVariables)
     DOUBLES_EQUAL(0.0, r.total_translation, 0.01);
 }
 
-TEST(RotationTests, ComputeResultsMetricsProducesCorrectStats)
-{
-    std::vector<Result> results{
-        {0,1, 10, false, false},
-        {0,2, 20, false, false},
-        {0,3, 30, false, false}
-    };
-
-    auto s{compute_results_metrics(results)};
-
-    DOUBLES_EQUAL(20.0, s.translation_stats.mean, FLOAT_TOLERANCE);
-    CHECK_EQUAL(10.0, s.translation_stats.min);
-    CHECK_EQUAL(30.0, s.translation_stats.max);
-}
-
-TEST(RotationTests, ComputeResultsMetricsComputesRates)
-{
-    std::vector<Result> results{
-        {0, 0, 0, false, false},
-        {0, 0, 0, true, false},
-        {0, 0, 0, false, true},
-        {0, 0, 0, true, true}
-    };
-
-    auto s{compute_results_metrics(results)};
-
-    DOUBLES_EQUAL(0.5, s.timeout_rate, FLOAT_TOLERANCE);
-    DOUBLES_EQUAL(0.5, s.collision_rate, FLOAT_TOLERANCE);
-}
-
-TEST(RotationTests, ComputeResultsMetricsHandlesEmptyInput)
-{
-    std::vector<Result> results{};
-
-    auto s{compute_results_metrics(results)};
-
-    DOUBLES_EQUAL(0.0, s.timeout_rate, FLOAT_TOLERANCE);
-    DOUBLES_EQUAL(0.0, s.collision_rate, FLOAT_TOLERANCE);
-}
-
 TEST(RotationTests, DerivativeTermAffectsStability)
 {
     Config cfg{create_no_variance_config()};

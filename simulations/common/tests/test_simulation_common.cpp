@@ -49,6 +49,68 @@ TEST_GROUP(CommonTests)
 /*============================================================================*/
 /*                                    Tests                                   */
 /*============================================================================*/
+TEST(CommonTests, SweeperRejectsZeroSize)
+{
+    CommonConfigSweeper sweeper;
+
+    CHECK_THROWS(std::invalid_argument, sweeper.init_sizes({3, 0, 2}));
+}
+
+TEST(CommonTests, SweeperSingleDimension)
+{
+    CommonConfigSweeper sweeper;
+    sweeper.init_sizes({3});
+
+    std::vector<size_t> expected{0};
+
+    CHECK(sweeper.next());
+    CHECK_EQUAL(expected.at(0), sweeper.get_indices().at(0));
+
+    expected.at(0) = 1;
+    CHECK(sweeper.next());
+    CHECK_EQUAL(expected.at(0), sweeper.get_indices().at(0));
+
+    expected.at(0) = 2;
+    CHECK(sweeper.next());
+    CHECK_EQUAL(expected.at(0), sweeper.get_indices().at(0));
+
+    CHECK_FALSE(sweeper.next());
+}
+
+TEST(CommonTests, SweeperMultiDimensionIteration)
+{
+    CommonConfigSweeper sweeper;
+    sweeper.init_sizes({2, 3});
+
+    std::vector<std::vector<size_t>> expected{
+        {0,0}, {0,1}, {0,2},
+        {1,0}, {1,1}, {1,2}
+    };
+
+    size_t idx{0};
+
+    while (sweeper.next()) {
+        const auto& indices{sweeper.get_indices()};
+        CHECK_EQUAL(expected.at(idx).at(0), indices.at(0));
+        CHECK_EQUAL(expected.at(idx).at(1), indices.at(1));
+        idx++;
+    }
+
+    CHECK_EQUAL(expected.size(), idx);
+}
+
+TEST(CommonTests, SweeperFirstCallReturnsInitialIndices)
+{
+    CommonConfigSweeper sweeper;
+    sweeper.init_sizes({2, 2});
+
+    CHECK(sweeper.next());
+
+    const auto& indices{sweeper.get_indices()};
+    CHECK_EQUAL(0, indices.at(0));
+    CHECK_EQUAL(0, indices.at(1));
+}
+
 TEST(CommonTests, GenerateSweepValuesReturnsEmptyForInvalidSteps)
 {
     auto v0{generate_sweep_values(0, 10, 0)};
@@ -142,6 +204,39 @@ TEST(CommonTests, ComputeStatsAllSameValues)
     DOUBLES_EQUAL(0.0, s.stddev, FLOAT_TOLERANCE);
 }
 
+TEST(CommonTests, ComputeStatsNegativeValues)
+{
+    std::vector<double> data{-10.0, -20.0, -30.0};
+
+    auto s{compute_stats(data)};
+
+    DOUBLES_EQUAL(-20.0, s.mean, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(-30.0, s.min, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(-10.0, s.max, FLOAT_TOLERANCE);
+}
+
+TEST(CommonTests, ComputeStatsMixedValues)
+{
+    std::vector<double> data{-10.0, 0.0, 10.0};
+
+    auto s{compute_stats(data)};
+
+    DOUBLES_EQUAL(0.0, s.mean, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(-10.0, s.min, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(10.0, s.max, FLOAT_TOLERANCE);
+}
+
+TEST(CommonTests, ExtractMetricPreservesOrder)
+{
+    std::vector<int> trials{3, 1, 2};
+
+    auto result{extract_metric(trials, [](int v) { return static_cast<double>(v); })};
+
+    CHECK_EQUAL(3, result.at(0));
+    CHECK_EQUAL(1, result.at(1));
+    CHECK_EQUAL(2, result.at(2));
+}
+
 TEST(CommonTests, ExtractMetricEmpty)
 {
     std::vector<int> trials;
@@ -201,4 +296,13 @@ TEST(CommonTests, ComputeRateAllFalse)
     auto rate{compute_rate(data, [](int v) { return v == 1; })};
 
     DOUBLES_EQUAL(0.0, rate, FLOAT_TOLERANCE);
+}
+
+TEST(CommonTests, ComputeRatePartial)
+{
+    std::vector<int> data{1, 2, 3, 4};
+
+    auto rate{compute_rate(data, [](int v) { return v > 2; })};
+
+    DOUBLES_EQUAL(0.5, rate, FLOAT_TOLERANCE);
 }

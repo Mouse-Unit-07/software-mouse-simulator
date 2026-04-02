@@ -13,6 +13,18 @@
 namespace simulation_common
 {
 
+class CommonConfigSweeper
+{
+public:
+    void init_sizes(std::vector<size_t> sizes);
+    bool next(void);
+    const std::vector<size_t>& get_indices(void) const;
+private:
+    std::vector<size_t> sizes_;
+    std::vector<size_t> indices_;
+    bool first_{true};
+};
+
 template <typename T>
 std::vector<T> generate_sweep_values(T min, T max, int steps)
 {
