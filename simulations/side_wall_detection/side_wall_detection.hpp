@@ -1,17 +1,17 @@
 /*-------------------------------- FILE INFO ---------------------------------*/
-/* Filename           : wall_detection.hpp                                    */
+/* Filename           : side_wall_detection.hpp                               */
 /*                                                                            */
-/* Interface to functions to run micromouse wall detection simulation and     */ 
-/* associated config and results analysis helpers                             */
+/* Interface to functions to run micromouse side wall detection simulation    */ 
+/* and associated config and results analysis helpers                         */
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
-#ifndef WALL_DETECTION_HPP_
-#define WALL_DETECTION_HPP_
+#ifndef SIDE_WALL_DETECTION_HPP_
+#define SIDE_WALL_DETECTION_HPP_
 
 /*----------------------------------------------------------------------------*/
 /*                             Public Definitions                             */
 /*----------------------------------------------------------------------------*/
-namespace wall_detection
+namespace side_wall_detection
 {
 
 struct DetectionWindow
@@ -85,12 +85,12 @@ struct Candidate
     ResultsMetrics results_metrics;
 };
 
-} /* wall_detection namespace */
+} /* side_wall_detection namespace */
 
 /*----------------------------------------------------------------------------*/
 /*                             Public Declarations                            */
 /*----------------------------------------------------------------------------*/
-namespace wall_detection
+namespace side_wall_detection
 {
 
 void enable_visualization(void);
@@ -106,9 +106,9 @@ std::vector<Candidate> filter_candidates_by_rate(const std::vector<Candidate>& c
 
 void write_analysis_to_file(const std::string& filename, const std::vector<Candidate>& candidates,
         size_t total_size, double min_correct_rate);
-void run_full_wall_detection_experiment(const std::string& filename,
+void run_full_side_wall_detection_experiment(const std::string& filename,
         ConfigSweeper& sweeper, double min_correct_rate);
 
-} /* wall_detection namespace */
+} /* side_wall_detection namespace */
 
-#endif /* WALL_DETECTION_HPP_ */
+#endif /* SIDE_WALL_DETECTION_HPP_ */

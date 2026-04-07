@@ -1,8 +1,8 @@
 /*-------------------------------- FILE INFO ---------------------------------*/
-/* Filename           : wall_detection.cpp                                    */
+/* Filename           : side_wall_detection.cpp                               */
 /*                                                                            */
-/* Implementation for micromouse wall detection simulation and associated     */
-/* config and results analysis helpers                                        */
+/* Implementation for micromouse side wall detection simulation and           */
+/* associated config and results analysis helpers                             */
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
 
@@ -37,7 +37,7 @@ extern "C"
 #include "maze.hpp"
 #include "visualizer.hpp"
 #include "simulation_common.hpp"
-#include "wall_detection.hpp"
+#include "side_wall_detection.hpp"
 
 /*----------------------------------------------------------------------------*/
 /*                            Private Declarations                            */
@@ -45,9 +45,9 @@ extern "C"
 namespace
 {
 
-using namespace wall_detection;
+using namespace side_wall_detection;
 
-void prepare_mock_for_wall_detection(const Config& cfg, const maze::Maze& maze, mouse::Mouse& mouse);
+void prepare_mock_for_side_wall_detection(const Config& cfg, const maze::Maze& maze, mouse::Mouse& mouse);
 std::optional<double> compute_ir_sensor_3_distance(const maze::Maze& maze, const mouse::Mouse& mouse);
 uint32_t scale_and_clamp_ir_sensor_reading(uint32_t reading, const Config& cfg);
 
@@ -74,7 +74,7 @@ visualizer::Visualizer wall_present_visualizer;
 /*----------------------------------------------------------------------------*/
 /*                             Public Definitions                             */
 /*----------------------------------------------------------------------------*/
-namespace wall_detection
+namespace side_wall_detection
 {
 
 bool ConfigSweeper::next()
@@ -164,7 +164,7 @@ Result run_simulation(const Config& cfg)
 
     /* prepare mouse for wall detection */
     mouse::Mouse mouse;
-    prepare_mock_for_wall_detection(cfg, open_maze, mouse);
+    prepare_mock_for_side_wall_detection(cfg, open_maze, mouse);
 
     if (visualizer_enabled) {
         wall_absent_visualizer.draw_maze(100.0f, open_maze);
@@ -314,7 +314,7 @@ void write_analysis_to_file(const std::string& filename, const std::vector<Candi
     }
 }
 
-void run_full_wall_detection_experiment(const std::string& filename,
+void run_full_side_wall_detection_experiment(const std::string& filename,
         ConfigSweeper& sweeper, double min_correct_rate)
 {
     std::vector<Trial> trials;
@@ -334,7 +334,7 @@ void run_full_wall_detection_experiment(const std::string& filename,
     write_analysis_to_file(filename, candidates, all_results.size(), min_correct_rate);
 }
 
-} /* wall_detection namespace */
+} /* side_wall_detection namespace */
 
 /*----------------------------------------------------------------------------*/
 /*                             Private Definitions                            */
@@ -342,9 +342,9 @@ void run_full_wall_detection_experiment(const std::string& filename,
 namespace
 {
 
-using namespace wall_detection;
+using namespace side_wall_detection;
 
-void prepare_mock_for_wall_detection(const Config& cfg, const maze::Maze& maze, mouse::Mouse& mouse)
+void prepare_mock_for_side_wall_detection(const Config& cfg, const maze::Maze& maze, mouse::Mouse& mouse)
 {
     reset_mock_device_drivers();
 
