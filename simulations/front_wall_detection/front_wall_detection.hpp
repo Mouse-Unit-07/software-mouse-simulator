@@ -14,6 +14,33 @@
 namespace front_wall_detection
 {
 
+struct Config
+{
+    double ir_reading_scale;
+    double mouse_angle;
+    double horizontal_position_variance;
+    double vertical_position_variance;
+
+    uint32_t reading_threshold;
+};
+
+class ConfigSweeper
+{
+public:
+    std::vector<double> ir_reading_scale;
+    std::vector<double> mouse_angle;
+    std::vector<double> horizontal_position_variance;
+    std::vector<double> vertical_position_variance;
+
+    std::vector<uint32_t> reading_threshold;
+
+    bool next();
+    Config value() const;
+private:
+    simulation_common::CommonConfigSweeper sweeper;
+    bool initialized_{false};
+};
+
 } /* front_wall_detection namespace */
 
 /*----------------------------------------------------------------------------*/
