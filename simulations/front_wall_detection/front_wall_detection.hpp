@@ -86,6 +86,7 @@ Result run_simulation(const Config& cfg);
 
 ResultsMetrics compute_results_metrics(const std::vector<Result>& results);
 std::vector<Candidate> build_candidates(const std::vector<Trial>& trials);
+std::vector<Candidate> sort_candidates_by_rate(const std::vector<Candidate>& candidates);
 
 } /* front_wall_detection namespace */
 

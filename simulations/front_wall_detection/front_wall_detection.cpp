@@ -198,6 +198,32 @@ std::vector<Candidate> build_candidates(const std::vector<Trial>& trials)
     return out;
 }
 
+std::vector<Candidate> sort_candidates_by_rate(const std::vector<Candidate>& candidates)
+{
+    constexpr double FLOAT_TOLERANCE{1e-6};
+    std::vector<Candidate> out{candidates};
+
+    auto score = [](const Candidate& c) {
+        return (c.results_metrics.absent_wall_identification_rate +
+                c.results_metrics.present_wall_identification_rate) / 2.0;
+    };
+
+    std::sort(out.begin(), out.end(),
+        [&](const Candidate& a, const Candidate& b) {
+            double sa{score(a)};
+            double sb{score(b)};
+
+            if (std::abs(sa - sb) > FLOAT_TOLERANCE) {
+                return sa > sb;
+            }
+
+            return a.key.threshold < b.key.threshold;
+        }
+    );
+
+    return out;
+}
+
 } /* front_wall_detection namespace */
 
 /*----------------------------------------------------------------------------*/

@@ -310,3 +310,45 @@ TEST(FrontWallDetectionTests, BuildCandidatesComputesResultsMetrics)
     DOUBLES_EQUAL(0.5, candidates.at(0).results_metrics.absent_wall_identification_rate, FLOAT_TOLERANCE);
     DOUBLES_EQUAL(1.0, candidates.at(0).results_metrics.present_wall_identification_rate, FLOAT_TOLERANCE);
 }
+
+TEST(FrontWallDetectionTests, SortCandidatesOrdersByDescendingScore)
+{
+    Candidate c1;
+    c1.key.threshold = 100;
+    c1.results_metrics = {0.2, 0.2}; /* avg = 0.2 */
+
+    Candidate c2;
+    c2.key.threshold = 200;
+    c2.results_metrics = {0.8, 0.8}; /* avg = 0.8 */
+
+    std::vector<Candidate> input{c1, c2};
+
+    auto sorted{sort_candidates_by_rate(input)};
+
+    CHECK_EQUAL(2, sorted.size());
+
+    /* highest score first */
+    CHECK_EQUAL(200u, sorted.at(0).key.threshold);
+    CHECK_EQUAL(100u, sorted.at(1).key.threshold);
+}
+
+TEST(FrontWallDetectionTests, SortCandidatesTieBreaksOnThreshold)
+{
+    Candidate c1;
+    c1.key.threshold = 100;
+    c1.results_metrics = {0.5, 0.5}; /* avg = 0.5 */
+
+    Candidate c2;
+    c2.key.threshold = 200;
+    c2.results_metrics = {0.5, 0.5}; /* same avg */
+
+    std::vector<Candidate> input{c2, c1};
+
+    auto sorted{sort_candidates_by_rate(input)};
+
+    CHECK_EQUAL(2, sorted.size());
+
+    /* lower threshold first */
+    CHECK_EQUAL(100u, sorted.at(0).key.threshold);
+    CHECK_EQUAL(200u, sorted.at(1).key.threshold);
+}
