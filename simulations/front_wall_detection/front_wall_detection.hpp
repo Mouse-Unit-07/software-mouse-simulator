@@ -47,10 +47,31 @@ struct Result
     bool identified_present_wall;
 };
 
+struct Trial
+{
+    Config config;
+    Result result;
+};
+
 struct ResultsMetrics
 {
     double absent_wall_identification_rate{0.0};
     double present_wall_identification_rate{0.0};
+};
+
+struct CandidateKey
+{
+    uint32_t threshold;
+
+    bool operator<(const CandidateKey& other) const {
+        return threshold < other.threshold;
+    }
+};
+
+struct Candidate
+{
+    CandidateKey key;
+    ResultsMetrics results_metrics;
 };
 
 } /* front_wall_detection namespace */
@@ -64,6 +85,7 @@ namespace front_wall_detection
 Result run_simulation(const Config& cfg);
 
 ResultsMetrics compute_results_metrics(const std::vector<Result>& results);
+std::vector<Candidate> build_candidates(const std::vector<Trial>& trials);
 
 } /* front_wall_detection namespace */
 

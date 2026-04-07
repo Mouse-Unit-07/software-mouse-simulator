@@ -273,3 +273,40 @@ TEST(FrontWallDetectionTests, ComputeResultsMetricsFieldsAreIndependent)
     DOUBLES_EQUAL(0.5, metrics.absent_wall_identification_rate, FLOAT_TOLERANCE);
     DOUBLES_EQUAL(0.25, metrics.present_wall_identification_rate, FLOAT_TOLERANCE);
 }
+
+TEST(FrontWallDetectionTests, BuildCandidatesGroupsByThreshold)
+{
+    Trial t1;
+    t1.config.reading_threshold = 100;
+
+    Trial t2{t1};
+
+    Trial t3;
+    t3.config.reading_threshold = 200;
+
+    std::vector<Trial> trials{t1, t2, t3};
+
+    auto candidates{build_candidates(trials)};
+
+    CHECK_EQUAL(2, candidates.size());
+}
+
+TEST(FrontWallDetectionTests, BuildCandidatesComputesResultsMetrics)
+{
+    Trial t1;
+    t1.result.identified_absent_wall = true;
+    t1.result.identified_present_wall = true;
+    t1.config.reading_threshold = 100;
+
+    Trial t2{t1};
+    t2.result.identified_absent_wall = false;
+    t2.result.identified_present_wall = true;
+
+    std::vector<Trial> trials{t1, t2};
+
+    auto candidates{build_candidates(trials)};
+
+    CHECK_EQUAL(1, candidates.size());
+    DOUBLES_EQUAL(0.5, candidates.at(0).results_metrics.absent_wall_identification_rate, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(1.0, candidates.at(0).results_metrics.present_wall_identification_rate, FLOAT_TOLERANCE);
+}

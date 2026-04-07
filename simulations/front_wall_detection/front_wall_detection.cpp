@@ -173,6 +173,31 @@ ResultsMetrics compute_results_metrics(const std::vector<Result>& results)
     return a;
 }
 
+std::vector<Candidate> build_candidates(const std::vector<Trial>& trials)
+{
+    auto grouped = simulation_common::group_by(
+        trials,
+        [](const Trial& t) {
+            return CandidateKey{t.config.reading_threshold};
+        },
+        [](const Trial& t) {
+            return t.result;
+        }
+    );
+
+    std::vector<Candidate> out;
+    out.reserve(grouped.size());
+
+    for (const auto& [key, group_results] : grouped) {
+        Candidate c;
+        c.key = key;
+        c.results_metrics = compute_results_metrics(group_results);
+        out.push_back(c);
+    }
+
+    return out;
+}
+
 } /* front_wall_detection namespace */
 
 /*----------------------------------------------------------------------------*/
@@ -220,4 +245,4 @@ uint32_t scale_and_clamp_ir_sensor_reading(uint32_t reading, const Config& cfg)
     return static_cast<uint32_t>(std::clamp(rounded_reading, 0L, 1024L));
 }
 
-}
+} /* unnamed namespace */
