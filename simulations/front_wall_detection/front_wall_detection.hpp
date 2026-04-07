@@ -47,6 +47,12 @@ struct Result
     bool identified_present_wall;
 };
 
+struct ResultsMetrics
+{
+    double absent_wall_identification_rate{0.0};
+    double present_wall_identification_rate{0.0};
+};
+
 } /* front_wall_detection namespace */
 
 /*----------------------------------------------------------------------------*/
@@ -56,6 +62,8 @@ namespace front_wall_detection
 {
 
 Result run_simulation(const Config& cfg);
+
+ResultsMetrics compute_results_metrics(const std::vector<Result>& results);
 
 } /* front_wall_detection namespace */
 

@@ -245,3 +245,31 @@ TEST(FrontWallDetectionTests, VerticalVarianceAffectsResults)
 
     CHECK(!are_results_equivalent(back, front));
 }
+
+TEST(FrontWallDetectionTests, ComputeResultsMetricsEmptyInput)
+{
+    std::vector<Result> results{};
+
+    auto metrics{compute_results_metrics(results)};
+
+    DOUBLES_EQUAL(0.0, metrics.absent_wall_identification_rate, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, metrics.present_wall_identification_rate, FLOAT_TOLERANCE);
+}
+
+TEST(FrontWallDetectionTests, ComputeResultsMetricsFieldsAreIndependent)
+{
+    std::vector<Result> results{
+        {true,  false},
+        {true,  false},
+        {false, false},
+        {false, true }
+    };
+
+    /* absent: 2 / 4 = 0.5 */
+    /* present: 1 / 4 = 0.25 */
+
+    auto metrics{compute_results_metrics(results)};
+
+    DOUBLES_EQUAL(0.5, metrics.absent_wall_identification_rate, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.25, metrics.present_wall_identification_rate, FLOAT_TOLERANCE);
+}

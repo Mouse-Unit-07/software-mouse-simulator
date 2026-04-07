@@ -159,6 +159,20 @@ Result run_simulation(const Config& cfg)
     };
 }
 
+ResultsMetrics compute_results_metrics(const std::vector<Result>& results)
+{
+    ResultsMetrics a;
+
+    a.absent_wall_identification_rate = simulation_common::compute_rate(
+        results, [](const Result& r){ return r.identified_absent_wall; }
+    );
+    a.present_wall_identification_rate = simulation_common::compute_rate(
+        results, [](const Result& r){ return r.identified_present_wall; }
+    );
+
+    return a;
+}
+
 } /* front_wall_detection namespace */
 
 /*----------------------------------------------------------------------------*/
