@@ -41,6 +41,12 @@ private:
     bool initialized_{false};
 };
 
+struct Result
+{
+    bool identified_absent_wall;
+    bool identified_present_wall;
+};
+
 } /* front_wall_detection namespace */
 
 /*----------------------------------------------------------------------------*/
@@ -48,6 +54,8 @@ private:
 /*----------------------------------------------------------------------------*/
 namespace front_wall_detection
 {
+
+Result run_simulation(const Config& cfg);
 
 } /* front_wall_detection namespace */
 
