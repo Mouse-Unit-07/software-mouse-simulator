@@ -8,16 +8,15 @@
 /*============================================================================*/
 /*                               Include Files                                */
 /*============================================================================*/
-#include <cmath>
-#include <vector>
-#include <string>
-#include <functional>
-#include <algorithm>
-#include <map>
-#include "simulation_common.hpp"
-
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
+#include <algorithm>
+#include <cmath>
+#include <functional>
+#include <map>
+#include <string>
+#include <vector>
+#include "simulation_common.hpp"
 
 using namespace simulation_common;
 
@@ -143,8 +142,8 @@ TEST(CommonTests, GenerateSweepValuesInterpolatesCorrectly)
     auto v{generate_sweep_values(0.0, 10.0, 5)};
 
     CHECK_EQUAL(5, v.size());
-    DOUBLES_EQUAL(0.0,  v.at(0), FLOAT_TOLERANCE);
-    DOUBLES_EQUAL(5.0,  v.at(2), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, v.at(0), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(5.0, v.at(2), FLOAT_TOLERANCE);
     DOUBLES_EQUAL(10.0, v.at(4), FLOAT_TOLERANCE);
 }
 
@@ -168,7 +167,7 @@ TEST(CommonTests, ComputeStatsSingleValue)
     DOUBLES_EQUAL(42.0, s.mean, FLOAT_TOLERANCE);
     DOUBLES_EQUAL(42.0, s.min, FLOAT_TOLERANCE);
     DOUBLES_EQUAL(42.0, s.max, FLOAT_TOLERANCE);
-    DOUBLES_EQUAL(0.0,  s.stddev, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, s.stddev, FLOAT_TOLERANCE);
 }
 
 TEST(CommonTests, ComputeStatsBasic)

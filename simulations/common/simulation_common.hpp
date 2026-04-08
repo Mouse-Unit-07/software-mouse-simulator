@@ -13,24 +13,25 @@
 namespace simulation_common
 {
 
-class CommonConfigSweeper
-{
+class CommonConfigSweeper {
 public:
     void init_sizes(std::vector<size_t> sizes);
     bool next(void);
     const std::vector<size_t>& get_indices(void) const;
+
 private:
     std::vector<size_t> sizes_;
     std::vector<size_t> indices_;
     bool first_{true};
 };
 
-template <typename T>
-std::vector<T> generate_sweep_values(T min, T max, int steps)
+template <typename T> std::vector<T> generate_sweep_values(T min, T max, int steps)
 {
     std::vector<T> values;
 
-    if (steps <= 0) return values;
+    if (steps <= 0) {
+        return values;
+    }
 
     if (steps == 1) {
         values.push_back(min);
@@ -68,8 +69,7 @@ auto group_by(const Trials& trials, KeyFn key_fn, ValueFn value_fn)
     return grouped;
 }
 
-struct MetricStats
-{
+struct MetricStats {
     double mean{0.0};
     double stddev{0.0};
     double min{0.0};
@@ -89,8 +89,7 @@ std::vector<double> extract_metric(const Trials& trials, Fn fn)
     return out;
 }
 
-template <typename Trials, typename Pred>
-double compute_rate(const Trials& trials, Pred pred)
+template <typename Trials, typename Pred> double compute_rate(const Trials& trials, Pred pred)
 {
     if (trials.empty()) {
         return 0.0;

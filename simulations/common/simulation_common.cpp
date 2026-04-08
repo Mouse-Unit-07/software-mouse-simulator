@@ -8,15 +8,15 @@
 /*----------------------------------------------------------------------------*/
 /*                               Include Files                                */
 /*----------------------------------------------------------------------------*/
-#include <cmath>
-#include <vector>
-#include <string>
-#include <functional>
 #include <algorithm>
-#include <map>
+#include <cmath>
+#include <functional>
 #include <iomanip>
+#include <map>
 #include <sstream>
 #include <stdexcept>
+#include <string>
+#include <vector>
 #include "simulation_common.hpp"
 
 /*----------------------------------------------------------------------------*/
@@ -47,7 +47,7 @@ void CommonConfigSweeper::init_sizes(std::vector<size_t> sizes)
     indices_.assign(sizes_.size(), 0);
 }
 
-bool CommonConfigSweeper:: next(void)
+bool CommonConfigSweeper::next(void)
 {
     if (first_) {
         first_ = false;
@@ -113,8 +113,11 @@ std::string double_to_filename(double v, int precision)
 
     std::string s{oss.str()};
     for (char& c : s) {
-        if (c == '.') c = 'p';
-        else if (c == '-') c = 'n';
+        if (c == '.') {
+            c = 'p';
+        } else if (c == '-') {
+            c = 'n';
+        }
     }
     return s;
 }
