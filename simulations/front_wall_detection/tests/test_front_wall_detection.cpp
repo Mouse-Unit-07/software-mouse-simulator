@@ -8,21 +8,15 @@
 /*============================================================================*/
 /*                               Include Files                                */
 /*============================================================================*/
-extern "C"
-{
-
-}
-
-#include <cstdint>
-#include <cmath>
-#include <vector>
-#include <string>
-#include <map>
-#include "simulation_common.hpp"
-#include "front_wall_detection.hpp"
-
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
+#include <cmath>
+#include <cstdint>
+#include <map>
+#include <string>
+#include <vector>
+#include "simulation_common.hpp"
+#include "front_wall_detection.hpp"
 
 using namespace front_wall_detection;
 
@@ -168,8 +162,7 @@ TEST(FrontWallDetectionTests, ExtremeScaleTriggersClamping)
 
     auto result{run_simulation(cfg)};
 
-    CHECK(result.identified_present_wall == true ||
-          result.identified_present_wall == false);
+    CHECK(result.identified_present_wall == true || result.identified_present_wall == false);
 }
 
 TEST(FrontWallDetectionTests, ZeroThresholdMeansWallAlwaysPresent)
@@ -212,7 +205,7 @@ TEST(FrontWallDetectionTests, AngleAffectsResults)
     Config cfg{create_no_variance_config()};
 
     auto no_angle{run_simulation(cfg)};
-    
+
     cfg.mouse_angle = M_PI / 3;
     auto some_angle{run_simulation(cfg)};
 
@@ -307,8 +300,10 @@ TEST(FrontWallDetectionTests, BuildCandidatesComputesResultsMetrics)
     auto candidates{build_candidates(trials)};
 
     CHECK_EQUAL(1, candidates.size());
-    DOUBLES_EQUAL(0.5, candidates.at(0).results_metrics.absent_wall_identification_rate, FLOAT_TOLERANCE);
-    DOUBLES_EQUAL(1.0, candidates.at(0).results_metrics.present_wall_identification_rate, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.5, candidates.at(0).results_metrics.absent_wall_identification_rate,
+                  FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(1.0, candidates.at(0).results_metrics.present_wall_identification_rate,
+                  FLOAT_TOLERANCE);
 }
 
 TEST(FrontWallDetectionTests, SortCandidatesOrdersByDescendingScore)
@@ -378,7 +373,7 @@ TEST(FrontWallDetectionTests, RunMinimalSampleSimulation)
 {
     ConfigSweeper sweeper{create_no_variance_sweeper()};
 
-    const std::string filename {"test_minimal_output.txt"};
+    const std::string filename{"test_minimal_output.txt"};
 
     run_full_front_wall_detection_experiment(filename, sweeper);
 }
