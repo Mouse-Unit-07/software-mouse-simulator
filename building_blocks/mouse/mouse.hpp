@@ -13,8 +13,7 @@
 namespace mouse
 {
 
-class Mouse
-{
+class Mouse {
 public:
     geometry::RectangularHitbox hitbox;
     geometry::Ray ir_1_sensor;
