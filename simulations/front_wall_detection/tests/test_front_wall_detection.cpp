@@ -327,7 +327,28 @@ TEST(FrontWallDetectionTests, SortCandidatesOrdersByDescendingScore)
 
     CHECK_EQUAL(2, sorted.size());
 
-    /* highest score first */
+    /* highest avg first */
+    CHECK_EQUAL(200u, sorted.at(0).key.threshold);
+    CHECK_EQUAL(100u, sorted.at(1).key.threshold);
+}
+
+TEST(FrontWallDetectionTests, SortCandidatesOrdersByDescendingDiff)
+{
+    Candidate c1;
+    c1.key.threshold = 100;
+    c1.results_metrics = {0.1, 0.9}; /* avg = 0.5, diff = 0.8 */
+
+    Candidate c2;
+    c2.key.threshold = 200;
+    c2.results_metrics = {0.5, 0.5}; /* avg = 0.5, diff = 0 */
+
+    std::vector<Candidate> input{c1, c2};
+
+    auto sorted{sort_candidates_by_rate(input)};
+
+    CHECK_EQUAL(2, sorted.size());
+
+    /* lowest diff first */
     CHECK_EQUAL(200u, sorted.at(0).key.threshold);
     CHECK_EQUAL(100u, sorted.at(1).key.threshold);
 }

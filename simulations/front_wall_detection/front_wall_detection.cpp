@@ -209,8 +209,13 @@ std::vector<Candidate> sort_candidates_by_rate(const std::vector<Candidate>& can
     std::vector<Candidate> out{candidates};
 
     auto score = [](const Candidate& c) {
-        return (c.results_metrics.absent_wall_identification_rate +
-                c.results_metrics.present_wall_identification_rate) / 2.0;
+        double absent{c.results_metrics.absent_wall_identification_rate};
+        double present{c.results_metrics.present_wall_identification_rate};
+
+        double average{(absent + present) / 2.0};
+        double diff{std::abs(absent - present)};
+
+        return average - diff;
     };
 
     std::sort(out.begin(), out.end(),
