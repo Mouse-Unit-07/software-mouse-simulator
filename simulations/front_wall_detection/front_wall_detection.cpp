@@ -27,14 +27,17 @@ extern "C"
 #include <string>
 #include <map>
 #include <iomanip>
+#include <sstream>
 #include <fstream>
 #include <optional>
 #include <algorithm>
+#include <filesystem>
 #include "point.hpp"
 #include "ray.hpp"
 #include "rectangular_hitbox.hpp"
 #include "mouse.hpp"
 #include "maze.hpp"
+#include "visualizer.hpp"
 #include "simulation_common.hpp"
 #include "front_wall_detection.hpp"
 
@@ -59,7 +62,15 @@ void write_candidates(std::ofstream& out, const std::vector<Candidate>& candidat
 /*----------------------------------------------------------------------------*/
 /*                               Private Globals                              */
 /*----------------------------------------------------------------------------*/
-/* none */
+namespace
+{
+
+const std::string TEST_OUTPUT_DIRECTORY{"front-wall-detection-visualizer"};
+bool visualizer_enabled{false};
+visualizer::Visualizer wall_absent_visualizer;
+visualizer::Visualizer wall_present_visualizer;
+
+} /* unnamed namespace */
 
 /*----------------------------------------------------------------------------*/
 /*                             Public Definitions                             */
@@ -99,8 +110,34 @@ Config ConfigSweeper::value() const
     return cfg;
 }
 
+void enable_visualization(void)
+{
+    visualizer_enabled = true;
+}
+
+void disable_visualization(void)
+{
+    visualizer_enabled = false;
+}
+
+std::string config_to_string(const Config& cfg)
+{
+    std::ostringstream oss;
+
+    oss << simulation_common::double_to_filename(cfg.ir_reading_scale) << "-"
+        << simulation_common::double_to_filename(cfg.mouse_angle) << "-"
+        << simulation_common::double_to_filename(cfg.horizontal_position_variance) << "-"
+        << simulation_common::double_to_filename(cfg.vertical_position_variance) << "-"
+        << simulation_common::double_to_filename(cfg.reading_threshold);
+
+    return oss.str();
+}
+
 Result run_simulation(const Config& cfg)
 {
+    if (visualizer_enabled) {
+        std::filesystem::create_directories(TEST_OUTPUT_DIRECTORY);
+    }
     std::vector<std::string> ascii_open{
         "+-+",
         "|S|",
@@ -121,6 +158,13 @@ Result run_simulation(const Config& cfg)
 
     mouse::Mouse mouse;
     prepare_mock_for_front_wall_detection(cfg, open_maze, mouse);
+
+    if (visualizer_enabled) {
+        wall_absent_visualizer.draw_maze(100.0f, open_maze);
+        wall_present_visualizer.draw_maze(100.0f, closed_maze);
+        wall_absent_visualizer.draw_mouse_on_maze(mouse);
+        wall_present_visualizer.draw_mouse_on_maze(mouse);
+    }
 
     bool identified_absent_wall{false};
     bool identified_present_wall{false};
@@ -145,6 +189,15 @@ Result run_simulation(const Config& cfg)
         identified_absent_wall = false;
     }
 
+    if (visualizer_enabled) {
+        if (identified_absent_wall) {
+            wall_absent_visualizer.change_beam_color_to_red();
+        } 
+        wall_absent_visualizer.draw_ir_1_sensor_beam(mouse, *potential_ir_1_distance);
+        wall_absent_visualizer.draw_ir_4_sensor_beam(mouse, *potential_ir_4_distance);
+        wall_absent_visualizer.reset_beam_color();
+    }
+
     potential_ir_1_distance = compute_ir_sensor_distance(closed_maze, mouse, mouse.ir_1_sensor);
     potential_ir_4_distance = compute_ir_sensor_distance(closed_maze, mouse, mouse.ir_4_sensor);
     if (potential_ir_1_distance.has_value() && potential_ir_4_distance.has_value()) {
@@ -158,6 +211,20 @@ Result run_simulation(const Config& cfg)
         identified_present_wall = (average_reading >= cfg.reading_threshold) ? true : false;
     } else {
         identified_present_wall = false;
+    }
+
+    if (visualizer_enabled) {
+        if (identified_present_wall) {
+            wall_present_visualizer.change_beam_color_to_red();
+        } 
+        wall_present_visualizer.draw_ir_1_sensor_beam(mouse, *potential_ir_1_distance);
+        wall_present_visualizer.draw_ir_4_sensor_beam(mouse, *potential_ir_4_distance);
+        wall_present_visualizer.reset_beam_color();
+    }
+
+    if (visualizer_enabled) {
+        wall_absent_visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/" + config_to_string(cfg) + "-wa.png");
+        wall_present_visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/" + config_to_string(cfg) + "-wp.png");
     }
 
     return Result{

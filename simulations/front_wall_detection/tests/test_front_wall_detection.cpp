@@ -82,12 +82,12 @@ TEST_GROUP(FrontWallDetectionTests)
 {
     void setup() override
     {
-        
+        disable_visualization();
     }
 
     void teardown() override
     {
-        
+        disable_visualization();
     }
 };
 
@@ -405,6 +405,8 @@ IGNORE_TEST(FrontWallDetectionTests, RunFullSimulationForIdealThreshold)
     sweeper.horizontal_position_variance = simulation_common::generate_sweep_values(-0.9, 0.9, 5);
     sweeper.vertical_position_variance = simulation_common::generate_sweep_values(-0.9, 0.9, 5);
     sweeper.reading_threshold = {295};
+
+    enable_visualization();
 
     run_full_front_wall_detection_experiment("test_ideal_output.txt", sweeper);
 }
