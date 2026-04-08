@@ -11,24 +11,26 @@
 extern "C"
 {
 
-#include <stdint.h>
 #include <math.h>
+#include <stdint.h>
 #include "mock_device_drivers.h"
 #include "wheel_motor.h"
 #include "magnetic_encoder.h"
 
 }
 
+#include <CppUTest/TestHarness.h>
+#include <CppUTestExt/MockSupport.h>
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
-#include <vector>
-#include <string>
-#include <optional>
-#include <functional>
-#include <algorithm>
-#include <map>
 #include <fstream>
+#include <functional>
+#include <map>
+#include <optional>
 #include <sstream>
+#include <string>
+#include <vector>
 #include "point.hpp"
 #include "ray.hpp"
 #include "rectangular_hitbox.hpp"
@@ -37,15 +39,12 @@ extern "C"
 #include "simulation_common.hpp"
 #include "rotation.hpp"
 
-#include <CppUTest/TestHarness.h>
-#include <CppUTestExt/MockSupport.h>
-
 using namespace rotation;
 
 /*============================================================================*/
 /*                             Public Definitions                             */
 /*============================================================================*/
-constexpr double FLOAT_TOLERANCE {1e-6};
+constexpr double FLOAT_TOLERANCE{1e-6};
 
 Config create_no_variance_config(void)
 {
@@ -69,15 +68,14 @@ Config create_no_variance_config(void)
 Config create_config_custom_pid_and_speed(int kp, int kd, int shift, uint8_t motor_speed = 0)
 {
     Config cfg{create_no_variance_config()};
-    
+
     cfg.kp = kp;
     cfg.kd = kd;
     cfg.pid_shift = shift;
     cfg.motor_speed = motor_speed;
-    
+
     return cfg;
 }
-
 
 ConfigSweeper create_no_variance_sweeper(void)
 {
@@ -188,7 +186,7 @@ TEST(RotationTests, ConfigSweeperOrderIsStable)
     sweeper.kp = {1, 2};
     sweeper.kd = {10, 20};
 
-    std::vector<std::pair<int,int>> seen;
+    std::vector<std::pair<int, int>> seen;
 
     while (sweeper.next()) {
         auto cfg{sweeper.value()};
@@ -198,10 +196,10 @@ TEST(RotationTests, ConfigSweeperOrderIsStable)
     CHECK_EQUAL(4, seen.size());
 
     /* Expected order: kp outer, kd inner */
-    CHECK(seen.at(0) == std::make_pair(1,10));
-    CHECK(seen.at(1) == std::make_pair(1,20));
-    CHECK(seen.at(2) == std::make_pair(2,10));
-    CHECK(seen.at(3) == std::make_pair(2,20));
+    CHECK(seen.at(0) == std::make_pair(1, 10));
+    CHECK(seen.at(1) == std::make_pair(1, 20));
+    CHECK(seen.at(2) == std::make_pair(2, 10));
+    CHECK(seen.at(3) == std::make_pair(2, 20));
 }
 
 TEST(RotationTests, SimulationProducesValidResult)
@@ -229,7 +227,7 @@ TEST(RotationTests, PositiveAndNegativeAnglesProduceSameAngleAndTranslationError
 {
     Config cfg{create_no_variance_config()};
 
-    auto r1{run_simulation(cfg,  M_PI / 2)};
+    auto r1{run_simulation(cfg, M_PI / 2)};
     auto r2{run_simulation(cfg, -M_PI / 2)};
 
     CHECK_FALSE(r1.timeout);
@@ -306,7 +304,7 @@ TEST(RotationTests, DerivativeTermAffectsStability)
     auto r2{run_simulation(with_d, M_PI / 2)};
 
     CHECK((r1.final_angle_error != r2.final_angle_error)
-       || (r1.total_translation != r2.total_translation));
+          || (r1.total_translation != r2.total_translation));
 }
 
 TEST(RotationTests, PDImprovesAccuracyOverNoControl)
@@ -341,17 +339,15 @@ TEST(RotationTests, PidShiftAffectsControlStrength)
     auto r1{run_simulation(strong, M_PI / 2)};
     auto r2{run_simulation(weak, M_PI / 2)};
 
-    CHECK((r1.total_time != r2.total_time)
-       || (r1.final_angle_error != r2.final_angle_error));
+    CHECK((r1.total_time != r2.total_time) || (r1.final_angle_error != r2.final_angle_error));
 }
 
 TEST(RotationTests, BuildCandidatesGroupsAndComputesStats)
 {
     std::vector<Trial> trials{
-        {create_config_custom_pid_and_speed(1,2,3), {10, 1.0, 100, false, false}},
-        {create_config_custom_pid_and_speed(1,2,3), {20, 2.0, 200, false, false}},
-        {create_config_custom_pid_and_speed(4,5,6), {30, 3.0, 300, true,  true}}
-    };
+        {create_config_custom_pid_and_speed(1, 2, 3), {10, 1.0, 100, false, false}},
+        {create_config_custom_pid_and_speed(1, 2, 3), {20, 2.0, 200, false, false}},
+        {create_config_custom_pid_and_speed(4, 5, 6), {30, 3.0, 300, true, true}}};
 
     auto candidates{build_candidates(trials)};
 
@@ -360,17 +356,17 @@ TEST(RotationTests, BuildCandidatesGroupsAndComputesStats)
     for (const auto& c : candidates) {
         if ((c.key.kp == 1) && (c.key.kd == 2) && (c.key.shift == 3)) {
             DOUBLES_EQUAL(15.0, c.results_metrics.time_stats.mean, FLOAT_TOLERANCE);
-            DOUBLES_EQUAL(1.5,  c.results_metrics.angle_error_stats.mean, FLOAT_TOLERANCE);
-            DOUBLES_EQUAL(150.0,c.results_metrics.translation_stats.mean, FLOAT_TOLERANCE);
-            DOUBLES_EQUAL(0.0,  c.results_metrics.timeout_rate, FLOAT_TOLERANCE);
-            DOUBLES_EQUAL(0.0,  c.results_metrics.collision_rate, FLOAT_TOLERANCE);
+            DOUBLES_EQUAL(1.5, c.results_metrics.angle_error_stats.mean, FLOAT_TOLERANCE);
+            DOUBLES_EQUAL(150.0, c.results_metrics.translation_stats.mean, FLOAT_TOLERANCE);
+            DOUBLES_EQUAL(0.0, c.results_metrics.timeout_rate, FLOAT_TOLERANCE);
+            DOUBLES_EQUAL(0.0, c.results_metrics.collision_rate, FLOAT_TOLERANCE);
         }
         if ((c.key.kp == 4) && (c.key.kd == 5) && (c.key.shift == 6)) {
             DOUBLES_EQUAL(30.0, c.results_metrics.time_stats.mean, FLOAT_TOLERANCE);
-            DOUBLES_EQUAL(3.0,  c.results_metrics.angle_error_stats.mean, FLOAT_TOLERANCE);
-            DOUBLES_EQUAL(300.0,c.results_metrics.translation_stats.mean, FLOAT_TOLERANCE);
-            DOUBLES_EQUAL(1.0,  c.results_metrics.timeout_rate, FLOAT_TOLERANCE);
-            DOUBLES_EQUAL(1.0,  c.results_metrics.collision_rate, FLOAT_TOLERANCE);
+            DOUBLES_EQUAL(3.0, c.results_metrics.angle_error_stats.mean, FLOAT_TOLERANCE);
+            DOUBLES_EQUAL(300.0, c.results_metrics.translation_stats.mean, FLOAT_TOLERANCE);
+            DOUBLES_EQUAL(1.0, c.results_metrics.timeout_rate, FLOAT_TOLERANCE);
+            DOUBLES_EQUAL(1.0, c.results_metrics.collision_rate, FLOAT_TOLERANCE);
         }
     }
 }
@@ -381,7 +377,7 @@ TEST(RotationTests, RunMinimalSampleSimulation)
     sweeper.dt = {0.001};
     sweeper.motor_speed = {100};
 
-    const std::string filename {"test_minimal_output.txt"};
+    const std::string filename{"test_minimal_output.txt"};
 
     run_full_rotation_experiment(filename, M_PI / 2, sweeper);
 }
@@ -422,9 +418,8 @@ TEST(RotationTests, CandidateKeyMapSeparatesDifferentSpeeds)
 TEST(RotationTests, BuildCandidatesSeparatesMotorSpeed)
 {
     std::vector<Trial> trials{
-        {create_config_custom_pid_and_speed(1,2,3,100), {10,1,100,false,false}},
-        {create_config_custom_pid_and_speed(1,2,3,200), {20,2,200,false,false}}
-    };
+        {create_config_custom_pid_and_speed(1, 2, 3, 100), {10, 1, 100, false, false}},
+        {create_config_custom_pid_and_speed(1, 2, 3, 200), {20, 2, 200, false, false}}};
 
     auto candidates{build_candidates(trials)};
 
@@ -508,7 +503,7 @@ IGNORE_TEST(RotationTests, RunFullSimulationAndWriteResultsToFile)
     sweeper.slip_factor = simulation_common::generate_sweep_values(0.9, 1.1, 3);
     sweeper.wheel_circumference_scale = simulation_common::generate_sweep_values(0.95, 1.05, 3);
     sweeper.wheel_base_scale = simulation_common::generate_sweep_values(0.95, 1.05, 3);
-    
+
     sweeper.motor_speed = simulation_common::generate_sweep_values<uint8_t>(120, 220, 6);
     sweeper.kp = simulation_common::generate_sweep_values(0, 4000, 21);
     sweeper.kd = simulation_common::generate_sweep_values(0, 2000, 21);
@@ -528,7 +523,7 @@ IGNORE_TEST(RotationTests, RunFullSimulationForIdealSpeedAndPid)
     sweeper.slip_factor = simulation_common::generate_sweep_values(0.9, 1.1, 3);
     sweeper.wheel_circumference_scale = simulation_common::generate_sweep_values(0.95, 1.05, 3);
     sweeper.wheel_base_scale = simulation_common::generate_sweep_values(0.95, 1.05, 3);
-    
+
     sweeper.motor_speed = {120};
     sweeper.kp = {0};
     sweeper.kd = {0};

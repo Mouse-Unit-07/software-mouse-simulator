@@ -12,29 +12,29 @@
 extern "C"
 {
 
-#include <stdint.h>
 #include <math.h>
+#include <stdint.h>
 #include "mock_device_drivers.h"
 #include "wheel_motor.h"
 #include "magnetic_encoder.h"
 
 }
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
-#include <vector>
-#include <string>
-#include <optional>
-#include <functional>
-#include <algorithm>
-#include <map>
-#include <iostream>
-#include <iomanip>
+#include <filesystem>
 #include <fstream>
+#include <functional>
+#include <iomanip>
+#include <iostream>
+#include <map>
+#include <memory>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
-#include <memory>
-#include <filesystem>
+#include <string>
+#include <vector>
 #include "point.hpp"
 #include "ray.hpp"
 #include "rectangular_hitbox.hpp"
@@ -113,7 +113,7 @@ bool ConfigSweeper::next(void)
 
 Config ConfigSweeper::value(void) const
 {
-    const auto& idx {sweeper.get_indices()};
+    const auto& idx{sweeper.get_indices()};
     int i{0};
 
     Config cfg{};
@@ -204,10 +204,11 @@ Result run_simulation(const Config& cfg, double target_angle)
     double raw_target{std::abs(ENCODER_TICKS_PER_ROTATION_ANGLE_RADIANS * target_angle)};
     int32_t target_ticks{static_cast<int32_t>(raw_target)};
 
-    while ((std::abs(get_encoder_1_ticks()) < target_ticks) || (std::abs(get_encoder_2_ticks()) < target_ticks)) {
+    while ((std::abs(get_encoder_1_ticks()) < target_ticks)
+           || (std::abs(get_encoder_2_ticks()) < target_ticks)) {
         int32_t enc1{std::abs(get_encoder_1_ticks())};
         int32_t enc2{std::abs(get_encoder_2_ticks())};
-    
+
         int32_t error{enc2 - enc1};
         int32_t derivative{error - prev_error};
         prev_error = error;
@@ -253,7 +254,8 @@ Result run_simulation(const Config& cfg, double target_angle)
     if (visualizer_enabled) {
         rotation_visualizer.change_mouse_color_to_blue();
         rotation_visualizer.draw_mouse_on_maze(mouse);
-        rotation_visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/" + config_to_string(cfg) + ".png");
+        rotation_visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/" + config_to_string(cfg)
+                                               + ".png");
     }
 
     return Result{
@@ -269,15 +271,20 @@ ResultsMetrics compute_results_metrics(const std::vector<Result>& results)
 {
     ResultsMetrics a;
 
-    auto time {simulation_common::extract_metric(results, [](const Result& r){ return r.total_time; })};
-    auto angle {simulation_common::extract_metric(results, [](const Result& r){ return r.final_angle_error; })};
-    auto translation {simulation_common::extract_metric(results, [](const Result& r){ return r.total_translation; })};
+    auto time{simulation_common::extract_metric(
+        results, [](const Result& r) { return r.total_time; })};
+    auto angle{simulation_common::extract_metric(
+        results, [](const Result& r) { return r.final_angle_error; })};
+    auto translation{simulation_common::extract_metric(
+        results, [](const Result& r) { return r.total_translation; })};
 
     a.time_stats = simulation_common::compute_stats(time);
     a.angle_error_stats = simulation_common::compute_stats(angle);
     a.translation_stats = simulation_common::compute_stats(translation);
-    a.timeout_rate = simulation_common::compute_rate(results, [](const Result& r){ return r.timeout; });
-    a.collision_rate = simulation_common::compute_rate(results, [](const Result& r){ return r.collision; });
+    a.timeout_rate =
+        simulation_common::compute_rate(results, [](const Result& r) { return r.timeout; });
+    a.collision_rate =
+        simulation_common::compute_rate(results, [](const Result& r) { return r.collision; });
 
     return a;
 }
@@ -289,10 +296,7 @@ std::vector<Candidate> build_candidates(const std::vector<Trial>& trials)
         [](const Trial& t) {
             return CandidateKey{t.config.kp, t.config.kd, t.config.pid_shift, t.config.motor_speed};
         },
-        [](const Trial& t) {
-            return t.result;
-        }
-    );
+        [](const Trial& t) { return t.result; });
 
     std::vector<Candidate> out;
     out.reserve(grouped.size());
@@ -337,8 +341,10 @@ std::vector<Candidate> compute_pareto_front(const std::vector<Candidate>& candid
     return front;
 }
 
-void write_analysis_to_file(const std::string& filename, const std::vector<Candidate>& all_candidates,
-        const std::vector<Candidate>& pareto_front, const ResultsMetrics& overall_metrics, size_t total_size)
+void write_analysis_to_file(const std::string& filename,
+                            const std::vector<Candidate>& all_candidates,
+                            const std::vector<Candidate>& pareto_front,
+                            const ResultsMetrics& overall_metrics, size_t total_size)
 {
     std::ofstream out(filename);
     if (!out.is_open()) {
@@ -347,7 +353,7 @@ void write_analysis_to_file(const std::string& filename, const std::vector<Candi
     out << std::fixed << std::setprecision(3);
 
     write_summary(out, overall_metrics, total_size);
-    
+
     out << "\n=== PARETO FRONT ===\n";
     write_candidates_banner(out);
     write_candidates(out, pareto_front);
@@ -358,13 +364,13 @@ void write_analysis_to_file(const std::string& filename, const std::vector<Candi
 }
 
 void run_full_rotation_experiment(const std::string& filename, double target_angle,
-        ConfigSweeper& sweeper)
+                                  ConfigSweeper& sweeper)
 {
     std::vector<Trial> trials;
     std::vector<Result> all_results;
 
     while (sweeper.next()) {
-        Config cfg {sweeper.value()};
+        Config cfg{sweeper.value()};
 
         auto result{rotation::run_simulation(cfg, target_angle)};
 
@@ -417,7 +423,7 @@ bool did_mouse_collide(const maze::Maze& maze, const mouse::Mouse& mouse)
 {
     auto rc{maze::get_cell_from_point(maze, mouse.hitbox.center)};
     if (rc) {
-        auto [r, c] {*rc};
+        auto [r, c]{*rc};
         if (maze::does_hitbox_collide_in_vicinity(maze, mouse.hitbox, r, c)) {
             return true;
         }
@@ -438,32 +444,39 @@ bool dominates(const Candidate& a, const Candidate& b)
     constexpr double EPS{1e-4};
     constexpr double k{1.0};
 
-    auto le = [&](double x, double y) {
-        return x <= y;
-    };
+    auto le = [&](double x, double y) { return x <= y; };
 
     auto lt = [&](double x, double y) {
-        if (x < y) strictly_better = true;
+        if (x < y) {
+            strictly_better = true;
+        }
+
         return x <= y;
     };
 
-    auto score = [&](double mean, double stddev) {
-        return mean + k * stddev;
-    };
+    auto score = [&](double mean, double stddev) { return mean + k * stddev; };
 
     /* hard constraints */
-    if (!lt(A.timeout_rate,   B.timeout_rate))   return false;
-    if (!lt(A.collision_rate, B.collision_rate)) return false;
+    if (!lt(A.timeout_rate, B.timeout_rate)) {
+        return false;
+    }
+    if (!lt(A.collision_rate, B.collision_rate)) {
+        return false;
+    }
 
     /* collapsed metrics */
-    if (!lt(score(A.angle_error_stats.mean,   A.angle_error_stats.stddev),
-            score(B.angle_error_stats.mean,   B.angle_error_stats.stddev))) return false;
-
-    if (!lt(score(A.translation_stats.mean,   A.translation_stats.stddev),
-            score(B.translation_stats.mean,   B.translation_stats.stddev))) return false;
-
-    if (!lt(score(A.time_stats.mean,          A.time_stats.stddev),
-            score(B.time_stats.mean,          B.time_stats.stddev))) return false;
+    if (!lt(score(A.angle_error_stats.mean, A.angle_error_stats.stddev),
+            score(B.angle_error_stats.mean, B.angle_error_stats.stddev))) {
+        return false;
+    }
+    if (!lt(score(A.translation_stats.mean, A.translation_stats.stddev),
+            score(B.translation_stats.mean, B.translation_stats.stddev))) {
+        return false;
+    }
+    if (!lt(score(A.time_stats.mean, A.time_stats.stddev),
+            score(B.time_stats.mean, B.time_stats.stddev))) {
+        return false;
+    }
 
     return strictly_better;
 }
