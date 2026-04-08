@@ -13,8 +13,7 @@
 namespace visualizer
 {
 
-class Visualizer
-{
+class Visualizer {
 public:
     Visualizer();
     ~Visualizer();

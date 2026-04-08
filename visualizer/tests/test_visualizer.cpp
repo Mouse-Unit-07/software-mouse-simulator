@@ -8,12 +8,15 @@
 /*============================================================================*/
 /*                               Include Files                                */
 /*============================================================================*/
+#include <CppUTest/TestHarness.h>
+#include <CppUTestExt/MockSupport.h>
 #include <cmath>
-#include <vector>
-#include <string>
-#include <optional>
-#include <utility>
+#include <filesystem>
 #include <memory>
+#include <optional>
+#include <string>
+#include <utility>
+#include <vector>
 #include "point.hpp"
 #include "ray.hpp"
 #include "rectangular_hitbox.hpp"
@@ -21,24 +24,20 @@
 #include "maze.hpp"
 #include "visualizer.hpp"
 
-#include <filesystem>
-#include <CppUTest/TestHarness.h>
-#include <CppUTestExt/MockSupport.h>
-
 using namespace visualizer;
 
 /*============================================================================*/
 /*                             Public Definitions                             */
 /*============================================================================*/
-const std::string TEST_OUTPUT_DIRECTORY {"visualizer-test-images"};
+const std::string TEST_OUTPUT_DIRECTORY{"visualizer-test-images"};
 
 void create_test_images_directory(void)
 {
     std::filesystem::create_directories(TEST_OUTPUT_DIRECTORY);
 }
 
-void draw_mouse_sensor_beams_to_nearest_walls(visualizer::Visualizer& visualizer,
-        maze::Maze& maze, const mouse::Mouse mouse)
+void draw_mouse_sensor_beams_to_nearest_walls(visualizer::Visualizer& visualizer, maze::Maze& maze,
+                                              const mouse::Mouse mouse)
 {
     visualizer.draw_maze(100.0f, maze);
     visualizer.draw_mouse_on_maze(mouse);
@@ -205,7 +204,7 @@ IGNORE_TEST(VisualizerTests, ChangeAndResetBeamColor)
     maze::Maze maze{maze::build_maze_from_ascii(ascii, 0)};
     mouse::Mouse mouse;
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
-    
+
     visualizer.draw_maze(100.0f, maze);
     visualizer.draw_mouse_on_maze(mouse);
     visualizer.change_beam_color_to_red();
@@ -231,14 +230,14 @@ IGNORE_TEST(VisualizerTests, ChangeAndResetMouseColor)
     maze::Maze maze{maze::build_maze_from_ascii(ascii, 0)};
     mouse::Mouse mouse;
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
-    
+
     visualizer.draw_maze(100.0f, maze);
     visualizer.draw_mouse_on_maze(mouse);
 
     visualizer.change_mouse_color_to_green();
     mouse.rotate(M_PI / 6);
     visualizer.draw_mouse_on_maze(mouse);
-    
+
     visualizer.change_mouse_color_to_blue();
     mouse.rotate(M_PI / 6);
     visualizer.draw_mouse_on_maze(mouse);
@@ -270,7 +269,8 @@ IGNORE_TEST(VisualizerTests, DrawMouseSensorBeamsToNearestWalls)
 
     draw_mouse_sensor_beams_to_nearest_walls(visualizer, maze, mouse);
 
-    visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/draw-mouse-sensor-beams-to-nearest-walls.png");
+    visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY
+                                  + "/draw-mouse-sensor-beams-to-nearest-walls.png");
 }
 
 IGNORE_TEST(VisualizerTests, DrawMouseAndBeamsOnLargeScaledMaze)
@@ -316,5 +316,6 @@ IGNORE_TEST(VisualizerTests, DrawMouseAndBeamsOnSmallScaledMaze)
 
     draw_mouse_sensor_beams_to_nearest_walls(visualizer, maze, mouse);
 
-    visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/draw-mouse-and-beams-on-small-scale-maze.png");
+    visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY
+                                  + "/draw-mouse-and-beams-on-small-scale-maze.png");
 }
