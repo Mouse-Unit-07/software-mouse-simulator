@@ -10,8 +10,8 @@
 /*============================================================================*/
 extern "C"
 {
-    #include <stdint.h>
     #include <math.h>
+    #include <stdint.h>
     #include "infrared_sensor.h"
     #include "magnetic_encoder.h"
     #include "wheel_motor.h"
@@ -24,7 +24,7 @@ extern "C"
 /*============================================================================*/
 /*                             Public Definitions                             */
 /*============================================================================*/
-constexpr double FLOATING_POINT_TEST_TOLERANCE {1e-6};
+constexpr double FLOATING_POINT_TEST_TOLERANCE{1e-6};
 
 /*============================================================================*/
 /*                            Mock Implementations                            */
