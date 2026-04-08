@@ -11,18 +11,20 @@
 extern "C"
 {
 
-#include <stdint.h>
 #include <math.h>
+#include <stdint.h>
 #include "mock_device_drivers.h"
 #include "infrared_sensor.h"
 
 }
 
-#include <vector>
-#include <string>
-#include <optional>
+#include <CppUTest/TestHarness.h>
+#include <CppUTestExt/MockSupport.h>
 #include <functional>
 #include <map>
+#include <optional>
+#include <string>
+#include <vector>
 #include "point.hpp"
 #include "ray.hpp"
 #include "rectangular_hitbox.hpp"
@@ -30,9 +32,6 @@ extern "C"
 #include "maze.hpp"
 #include "simulation_common.hpp"
 #include "side_wall_detection.hpp"
-
-#include <CppUTest/TestHarness.h>
-#include <CppUTestExt/MockSupport.h>
 
 using namespace side_wall_detection;
 
@@ -186,7 +185,7 @@ TEST(SideWallDetectionTests, SimulationHandlesZeroSteps)
 TEST(SideWallDetectionTests, WallAbsentAllFalseWhenThresholdIsZero)
 {
     Config cfg{create_no_variance_config()};
-    cfg.reading_threshold = 0u;  /* nothing should pass */
+    cfg.reading_threshold = 0u; /* nothing should pass */
 
     auto result{run_simulation(cfg)};
 
@@ -198,7 +197,7 @@ TEST(SideWallDetectionTests, WallAbsentAllFalseWhenThresholdIsZero)
 TEST(SideWallDetectionTests, WallPresentAllTrueWhenThresholdIsZero)
 {
     Config cfg{create_no_variance_config()};
-    cfg.reading_threshold = 0u;  /* everything should pass */
+    cfg.reading_threshold = 0u; /* everything should pass */
 
     auto result{run_simulation(cfg)};
 
@@ -232,7 +231,7 @@ TEST(SideWallDetectionTests, MazeSizeScaleChangesResults)
 TEST(SideWallDetectionTests, IrReadingScaleChangesResults)
 {
     Config cfg1{create_no_variance_config()};
-    Config cfg2 {cfg1};
+    Config cfg2{cfg1};
     cfg2.ir_reading_scale = 0.5;
 
     auto r1{run_simulation(cfg1)};
@@ -328,7 +327,7 @@ TEST(SideWallDetectionTests, BuildCandidatesGroupsByThreshold)
     t1.result.wall_present_at_step = {true, true};
     t1.config.reading_threshold = 100;
 
-    Trial t2 {t1};
+    Trial t2{t1};
 
     Trial t3;
     t3.result.wall_absent_at_step = {false, false};
@@ -349,7 +348,7 @@ TEST(SideWallDetectionTests, BuildCandidatesDoesNotComputeMetricsPerGroup)
     t1.result.wall_present_at_step = {true, true, true};
     t1.config.reading_threshold = 100;
 
-    Trial t2 {t1};
+    Trial t2{t1};
 
     std::vector<Trial> trials{t1, t2};
 

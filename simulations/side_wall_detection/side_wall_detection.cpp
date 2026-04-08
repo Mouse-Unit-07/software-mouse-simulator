@@ -12,24 +12,24 @@
 extern "C"
 {
 
-#include <stdint.h>
 #include <math.h>
+#include <stdint.h>
 #include "mock_device_drivers.h"
 #include "infrared_sensor.h"
 
 }
 
-#include <vector>
-#include <string>
-#include <optional>
-#include <functional>
 #include <algorithm>
-#include <map>
-#include <sstream>
-#include <iomanip>
-#include <fstream>
-#include <memory>
 #include <filesystem>
+#include <fstream>
+#include <functional>
+#include <iomanip>
+#include <map>
+#include <memory>
+#include <optional>
+#include <sstream>
+#include <string>
+#include <vector>
 #include "point.hpp"
 #include "ray.hpp"
 #include "rectangular_hitbox.hpp"
@@ -47,8 +47,10 @@ namespace
 
 using namespace side_wall_detection;
 
-void prepare_mock_for_side_wall_detection(const Config& cfg, const maze::Maze& maze, mouse::Mouse& mouse);
-std::optional<double> compute_ir_sensor_3_distance(const maze::Maze& maze, const mouse::Mouse& mouse);
+void prepare_mock_for_side_wall_detection(const Config& cfg, const maze::Maze& maze,
+                                          mouse::Mouse& mouse);
+std::optional<double> compute_ir_sensor_3_distance(const maze::Maze& maze,
+                                                   const mouse::Mouse& mouse);
 uint32_t scale_and_clamp_ir_sensor_reading(uint32_t reading, const Config& cfg);
 
 DetectionWindow find_window_with_rate(const ResultsMetrics& m, double required_rate);
@@ -97,7 +99,7 @@ bool ConfigSweeper::next()
 
 Config ConfigSweeper::value() const
 {
-    const auto& idx {sweeper.get_indices()};
+    const auto& idx{sweeper.get_indices()};
     int i{0};
 
     Config cfg{};
@@ -151,7 +153,8 @@ Result run_simulation(const Config& cfg)
         "+-+ +",
         "|   |",
         "+-+-+"
-    };maze::Maze open_maze{maze::build_maze_from_ascii(ascii_open, maze::OFFICIAL_POST_SIZE * (cfg.maze_size_scale - 1))};
+    };
+    maze::Maze open_maze{maze::build_maze_from_ascii(ascii_open, maze::OFFICIAL_POST_SIZE * (cfg.maze_size_scale - 1))};
 
     std::vector<std::string> ascii_closed{
         "  +-+",
@@ -215,8 +218,10 @@ Result run_simulation(const Config& cfg)
     }
 
     if (visualizer_enabled) {
-        wall_absent_visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/" + config_to_string(cfg) + "-wa.png");
-        wall_present_visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/" + config_to_string(cfg) + "-wp.png");
+        wall_absent_visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/"
+                                                  + config_to_string(cfg) + "-wa.png");
+        wall_present_visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/"
+                                                   + config_to_string(cfg) + "-wp.png");
     }
 
     return Result{
@@ -255,13 +260,8 @@ std::vector<Candidate> build_candidates(const std::vector<Trial>& trials)
 {
     auto grouped = simulation_common::group_by(
         trials,
-        [](const Trial& t) {
-            return CandidateKey{t.config.reading_threshold};
-        },
-        [](const Trial& t) {
-            return t.result;
-        }
-    );
+        [](const Trial& t) { return CandidateKey{t.config.reading_threshold}; },
+        [](const Trial& t) { return t.result; });
 
     std::vector<Candidate> out;
     out.reserve(grouped.size());
@@ -277,7 +277,7 @@ std::vector<Candidate> build_candidates(const std::vector<Trial>& trials)
 }
 
 std::vector<Candidate> filter_candidates_by_rate(const std::vector<Candidate>& candidates,
-        double required_rate)
+                                                 double required_rate)
 {
     std::vector<Candidate> out;
 
@@ -295,7 +295,7 @@ std::vector<Candidate> filter_candidates_by_rate(const std::vector<Candidate>& c
 }
 
 void write_analysis_to_file(const std::string& filename, const std::vector<Candidate>& candidates,
-        size_t total_size, double min_correct_rate)
+                            size_t total_size, double min_correct_rate)
 {
     std::ofstream out(filename);
     if (!out.is_open()) {
@@ -314,8 +314,8 @@ void write_analysis_to_file(const std::string& filename, const std::vector<Candi
     }
 }
 
-void run_full_side_wall_detection_experiment(const std::string& filename,
-        ConfigSweeper& sweeper, double min_correct_rate)
+void run_full_side_wall_detection_experiment(const std::string& filename, ConfigSweeper& sweeper,
+                                             double min_correct_rate)
 {
     std::vector<Trial> trials;
     std::vector<Result> all_results;
@@ -344,28 +344,30 @@ namespace
 
 using namespace side_wall_detection;
 
-void prepare_mock_for_side_wall_detection(const Config& cfg, const maze::Maze& maze, mouse::Mouse& mouse)
+void prepare_mock_for_side_wall_detection(const Config& cfg, const maze::Maze& maze,
+                                          mouse::Mouse& mouse)
 {
     reset_mock_device_drivers();
 
-    double max_horizontal_offset{(maze::OFFICIAL_WALL_LENGTH_SIZE - mouse.hitbox.horizontal_size) / 2};
+    double max_horizontal_offset{(maze::OFFICIAL_WALL_LENGTH_SIZE - mouse.hitbox.horizontal_size)
+                                 / 2};
     double max_vertical_offset{(maze::OFFICIAL_WALL_LENGTH_SIZE - mouse.hitbox.vertical_size) / 2};
-    
+
     mouse.rotate(cfg.mouse_angle);
-    mouse.translate(
-        maze.mouse_start.x + (max_horizontal_offset * cfg.horizontal_position_variance),
-        maze.mouse_start.y + (max_vertical_offset * cfg.vertical_position_variance)
-    );
+    mouse.translate(maze.mouse_start.x + (max_horizontal_offset * cfg.horizontal_position_variance),
+                    maze.mouse_start.y + (max_vertical_offset * cfg.vertical_position_variance));
 }
 
-std::optional<double> compute_ir_sensor_3_distance(const maze::Maze& maze, const mouse::Mouse& mouse)
+std::optional<double> compute_ir_sensor_3_distance(const maze::Maze& maze,
+                                                   const mouse::Mouse& mouse)
 {
     std::optional<double> distance{std::nullopt};
 
     auto potential_rc{maze::get_cell_from_point(maze, mouse.hitbox.center)};
     if (potential_rc) {
-        auto [r, c] {*potential_rc};
-        auto potential_distance{maze::compute_ray_distance_in_vicinity(maze, mouse.ir_3_sensor, r, c)};
+        auto [r, c]{*potential_rc};
+        auto potential_distance{
+            maze::compute_ray_distance_in_vicinity(maze, mouse.ir_3_sensor, r, c)};
         if (potential_distance.has_value()) {
             distance = *potential_distance;
         }
@@ -391,7 +393,8 @@ DetectionWindow find_window_with_rate(const ResultsMetrics& m, double required_r
     const size_t steps{m.correct_detection_count_at_step.size()};
 
     for (size_t t{0}; t < steps; ++t) {
-        double rate{static_cast<double>(m.correct_detection_count_at_step.at(t)) / m.total_detection_counts_per_step};
+        double rate{static_cast<double>(m.correct_detection_count_at_step.at(t))
+                    / m.total_detection_counts_per_step};
 
         if (rate >= required_rate) {
             if (current_size == 0) {
