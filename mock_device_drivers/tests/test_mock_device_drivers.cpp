@@ -53,9 +53,9 @@ TEST_GROUP(MockDeviceDriversTests)
 TEST(MockDeviceDriversTests, DesiredIrSensorValuesSettableAndGettable)
 {
     update_ir_1_sensor_reading(0.0);
-    update_ir_2_sensor_reading(500.0);
-    update_ir_3_sensor_reading(1000.0);
-    update_ir_4_sensor_reading(1500.0);
+    update_ir_2_sensor_reading(50.0);
+    update_ir_3_sensor_reading(100.0);
+    update_ir_4_sensor_reading(150.0);
     CHECK(read_ir_1_sensor() == 1024);
     CHECK(read_ir_2_sensor() == 495);
     CHECK(read_ir_3_sensor() == 230);

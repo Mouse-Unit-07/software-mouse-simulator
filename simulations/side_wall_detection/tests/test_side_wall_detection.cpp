@@ -48,7 +48,7 @@ Config create_no_variance_config(void)
     cfg.horizontal_position_variance = 0.0;
     cfg.vertical_position_variance = 0.0;
     cfg.total_steps = 100;
-    cfg.reading_threshold = 750u; /* arbitrary threshold */
+    cfg.reading_threshold = 80u; /* arbitrary threshold */
 
     return cfg;
 }
@@ -64,7 +64,7 @@ ConfigSweeper create_no_variance_sweeper(void)
     sweeper.vertical_position_variance = {0.0};
     sweeper.total_steps = {100};
 
-    sweeper.reading_threshold = {750u};
+    sweeper.reading_threshold = {80u};
 
     return sweeper;
 }
@@ -123,7 +123,7 @@ TEST(SideWallDetectionTests, ConfigSweeperProducesFirstValue)
     auto cfg{sweeper.value()};
 
     CHECK_EQUAL(1.0, cfg.maze_size_scale);
-    CHECK_EQUAL(750u, cfg.reading_threshold);
+    CHECK_EQUAL(80u, cfg.reading_threshold);
 }
 
 TEST(SideWallDetectionTests, ConfigSweeperIteratesAllCombinations)
@@ -419,9 +419,9 @@ IGNORE_TEST(SideWallDetectionTests, RunFullSimulationAndWriteResultsToFile)
     sweeper.horizontal_position_variance = simulation_common::generate_sweep_values(-0.5, 0.5, 3);
     sweeper.vertical_position_variance = simulation_common::generate_sweep_values(-0.5, 0.5, 3);
     sweeper.total_steps = {100};
-    sweeper.reading_threshold = simulation_common::generate_sweep_values<uint32_t>(700, 1024, 225);
+    sweeper.reading_threshold = simulation_common::generate_sweep_values<uint32_t>(0, 300, 300);
 
-    run_full_side_wall_detection_experiment("test_full_output.txt", sweeper, 0.5);
+    run_full_side_wall_detection_experiment("test_full_output.txt", sweeper, 0.2);
 }
 
 IGNORE_TEST(SideWallDetectionTests, RunFullSimulationForIdealThreshold)
@@ -434,7 +434,7 @@ IGNORE_TEST(SideWallDetectionTests, RunFullSimulationForIdealThreshold)
     sweeper.horizontal_position_variance = simulation_common::generate_sweep_values(-0.5, 0.5, 3);
     sweeper.vertical_position_variance = simulation_common::generate_sweep_values(-0.5, 0.5, 3);
     sweeper.total_steps = {100};
-    sweeper.reading_threshold = {840};
+    sweeper.reading_threshold = {78};
 
     enable_visualization();
     run_full_side_wall_detection_experiment("test_ideal_output.txt", sweeper, 0.5);

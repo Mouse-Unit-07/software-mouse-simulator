@@ -19,6 +19,8 @@ extern "C"
 
 }
 
+#include <iostream>
+
 #include <cstdint>
 #include <cmath>
 #include <vector>

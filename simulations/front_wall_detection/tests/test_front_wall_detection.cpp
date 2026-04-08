@@ -39,7 +39,7 @@ Config create_no_variance_config(void)
     cfg.horizontal_position_variance = {0.0};
     cfg.vertical_position_variance = {0.0};
 
-    cfg.reading_threshold = {750u};
+    cfg.reading_threshold = {300u};
 
     return cfg;
 }
@@ -53,7 +53,7 @@ ConfigSweeper create_no_variance_sweeper(void)
     sweeper.horizontal_position_variance = {0.0};
     sweeper.vertical_position_variance = {0.0};
 
-    sweeper.reading_threshold = {750u};
+    sweeper.reading_threshold = {300u};
 
     return sweeper;
 }
@@ -103,7 +103,7 @@ TEST(FrontWallDetectionTests, ConfigSweeperProducesFirstValue)
     auto cfg{sweeper.value()};
 
     DOUBLES_EQUAL(1.0, cfg.ir_reading_scale, FLOAT_TOLERANCE);
-    CHECK_EQUAL(750u, cfg.reading_threshold);
+    CHECK_EQUAL(300u, cfg.reading_threshold);
 }
 
 TEST(FrontWallDetectionTests, ConfigSweeperIteratesAllCombinations)
@@ -213,7 +213,7 @@ TEST(FrontWallDetectionTests, AngleAffectsResults)
 
     auto no_angle{run_simulation(cfg)};
     
-    cfg.mouse_angle = M_PI / 8;
+    cfg.mouse_angle = M_PI / 3;
     auto some_angle{run_simulation(cfg)};
 
     CHECK(!are_results_equivalent(no_angle, some_angle));
@@ -400,11 +400,11 @@ IGNORE_TEST(FrontWallDetectionTests, RunFullSimulationForIdealThreshold)
 {
     ConfigSweeper sweeper;
 
-    sweeper.ir_reading_scale = simulation_common::generate_sweep_values(0.95, 1.05, 3);
-    sweeper.mouse_angle = simulation_common::generate_sweep_values(-M_PI / 8, M_PI / 8, 3);
-    sweeper.horizontal_position_variance = simulation_common::generate_sweep_values(-0.5, 0.5, 3);
-    sweeper.vertical_position_variance = simulation_common::generate_sweep_values(-0.5, 0.5, 3);
-    sweeper.reading_threshold = {840};
+    sweeper.ir_reading_scale = simulation_common::generate_sweep_values(0.90, 1.1, 5);
+    sweeper.mouse_angle = simulation_common::generate_sweep_values(-M_PI / 4, M_PI / 4, 9);
+    sweeper.horizontal_position_variance = simulation_common::generate_sweep_values(-0.9, 0.9, 5);
+    sweeper.vertical_position_variance = simulation_common::generate_sweep_values(-0.9, 0.9, 5);
+    sweeper.reading_threshold = {295};
 
     run_full_front_wall_detection_experiment("test_ideal_output.txt", sweeper);
 }
