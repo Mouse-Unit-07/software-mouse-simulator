@@ -284,7 +284,8 @@ void set_wheel_motor_2_direction_backward(void)
 /*----------------------------------------------------------------------------*/
 uint32_t compute_ir_sensor_reading_from_distance_mm(double distance)
 {
-    double value = CONSTANT_IR_SCALE * pow(0.858585, distance / 100.0);
+    /* below formula converts cm -> reading, so convert distance mm -> cm */
+    double value = CONSTANT_IR_SCALE * pow(0.858585, distance / 10.0);
 
     if (value < 0.0) {
         value = 0.0;

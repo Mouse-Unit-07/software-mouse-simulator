@@ -1,8 +1,8 @@
 /*-------------------------------- FILE INFO ---------------------------------*/
-/* Filename           : wall_detection.cpp                                    */
+/* Filename           : front_wall_detection.cpp                              */
 /*                                                                            */
-/* Implementation for micromouse wall detection simulation and associated     */
-/* config and results analysis helpers                                        */
+/* Implementation for micromouse front wall detection simulation and          */
+/* associated config and results analysis helpers                             */
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
 
@@ -19,16 +19,18 @@ extern "C"
 
 }
 
+#include <iostream>
+
+#include <cstdint>
+#include <cmath>
 #include <vector>
 #include <string>
-#include <optional>
-#include <functional>
-#include <algorithm>
 #include <map>
-#include <sstream>
 #include <iomanip>
+#include <sstream>
 #include <fstream>
-#include <memory>
+#include <optional>
+#include <algorithm>
 #include <filesystem>
 #include "point.hpp"
 #include "ray.hpp"
@@ -37,7 +39,7 @@ extern "C"
 #include "maze.hpp"
 #include "visualizer.hpp"
 #include "simulation_common.hpp"
-#include "wall_detection.hpp"
+#include "front_wall_detection.hpp"
 
 /*----------------------------------------------------------------------------*/
 /*                            Private Declarations                            */
@@ -45,13 +47,12 @@ extern "C"
 namespace
 {
 
-using namespace wall_detection;
+using namespace front_wall_detection;
 
-void prepare_mock_for_wall_detection(const Config& cfg, const maze::Maze& maze, mouse::Mouse& mouse);
-std::optional<double> compute_ir_sensor_3_distance(const maze::Maze& maze, const mouse::Mouse& mouse);
+void prepare_mock_for_front_wall_detection(const Config& cfg, const maze::Maze& maze, mouse::Mouse& mouse);
+std::optional<double> compute_ir_sensor_distance(const maze::Maze& maze,
+        const mouse::Mouse& mouse, const geometry::Ray& ir_sensor);
 uint32_t scale_and_clamp_ir_sensor_reading(uint32_t reading, const Config& cfg);
-
-DetectionWindow find_window_with_rate(const ResultsMetrics& m, double required_rate);
 
 void write_summary(std::ofstream& out, const std::vector<Candidate>& candidates, size_t total_size);
 void write_candidates(std::ofstream& out, const std::vector<Candidate>& candidates);
@@ -64,7 +65,7 @@ void write_candidates(std::ofstream& out, const std::vector<Candidate>& candidat
 namespace
 {
 
-const std::string TEST_OUTPUT_DIRECTORY{"wall-detection-visualizer"};
+const std::string TEST_OUTPUT_DIRECTORY{"front-wall-detection-visualizer"};
 bool visualizer_enabled{false};
 visualizer::Visualizer wall_absent_visualizer;
 visualizer::Visualizer wall_present_visualizer;
@@ -74,19 +75,17 @@ visualizer::Visualizer wall_present_visualizer;
 /*----------------------------------------------------------------------------*/
 /*                             Public Definitions                             */
 /*----------------------------------------------------------------------------*/
-namespace wall_detection
+namespace front_wall_detection
 {
 
 bool ConfigSweeper::next()
 {
     if (!initialized_) {
         sweeper.init_sizes({
-            maze_size_scale.size(),
             ir_reading_scale.size(),
             mouse_angle.size(),
             horizontal_position_variance.size(),
             vertical_position_variance.size(),
-            total_steps.size(),
             reading_threshold.size()
         });
 
@@ -102,12 +101,10 @@ Config ConfigSweeper::value() const
 
     Config cfg{};
 
-    cfg.maze_size_scale = maze_size_scale.at(idx.at(i++));
     cfg.ir_reading_scale = ir_reading_scale.at(idx.at(i++));
     cfg.mouse_angle = mouse_angle.at(idx.at(i++));
     cfg.horizontal_position_variance = horizontal_position_variance.at(idx.at(i++));
     cfg.vertical_position_variance = vertical_position_variance.at(idx.at(i++));
-    cfg.total_steps = total_steps.at(idx.at(i++));
     cfg.reading_threshold = reading_threshold.at(idx.at(i++));
 
     return cfg;
@@ -127,12 +124,10 @@ std::string config_to_string(const Config& cfg)
 {
     std::ostringstream oss;
 
-    oss << simulation_common::double_to_filename(cfg.maze_size_scale) << "-"
-        << simulation_common::double_to_filename(cfg.ir_reading_scale) << "-"
+    oss << simulation_common::double_to_filename(cfg.ir_reading_scale) << "-"
         << simulation_common::double_to_filename(cfg.mouse_angle) << "-"
         << simulation_common::double_to_filename(cfg.horizontal_position_variance) << "-"
         << simulation_common::double_to_filename(cfg.vertical_position_variance) << "-"
-        << cfg.total_steps << "-"
         << simulation_common::double_to_filename(cfg.reading_threshold);
 
     return oss.str();
@@ -143,28 +138,26 @@ Result run_simulation(const Config& cfg)
     if (visualizer_enabled) {
         std::filesystem::create_directories(TEST_OUTPUT_DIRECTORY);
     }
-
-    /* create maze */
     std::vector<std::string> ascii_open{
-        "  +-+",
-        "  |S|",
-        "+-+ +",
-        "|   |",
-        "+-+-+"
-    };maze::Maze open_maze{maze::build_maze_from_ascii(ascii_open, maze::OFFICIAL_POST_SIZE * (cfg.maze_size_scale - 1))};
+        "+-+",
+        "|S|",
+        "+ +",
+        "| |",
+        "+-+"
+    };
+    maze::Maze open_maze{maze::build_maze_from_ascii(ascii_open, 0.0)};
 
     std::vector<std::string> ascii_closed{
-        "  +-+",
-        "  |S|",
-        "  + +",
-        "  | |",
-        "  +-+"
+        "+-+",
+        "|S|",
+        "+-+",
+        "   ",
+        "   "
     };
-    maze::Maze closed_maze{maze::build_maze_from_ascii(ascii_closed, maze::OFFICIAL_POST_SIZE * (cfg.maze_size_scale - 1))};
+    maze::Maze closed_maze{maze::build_maze_from_ascii(ascii_closed, 0.0)};
 
-    /* prepare mouse for wall detection */
     mouse::Mouse mouse;
-    prepare_mock_for_wall_detection(cfg, open_maze, mouse);
+    prepare_mock_for_front_wall_detection(cfg, open_maze, mouse);
 
     if (visualizer_enabled) {
         wall_absent_visualizer.draw_maze(100.0f, open_maze);
@@ -173,45 +166,60 @@ Result run_simulation(const Config& cfg)
         wall_present_visualizer.draw_mouse_on_maze(mouse);
     }
 
-    std::vector<bool> wall_absent_at_step;
-    std::vector<bool> wall_present_at_step;
-    wall_absent_at_step.resize(cfg.total_steps);
-    wall_present_at_step.resize(cfg.total_steps);
+    bool identified_absent_wall{false};
+    bool identified_present_wall{false};
+    uint32_t ir_1_reading{0u};
+    uint32_t ir_4_reading{0u};
+    uint32_t average_reading{0u};
+    std::optional<double> potential_ir_1_distance{std::nullopt};
+    std::optional<double> potential_ir_4_distance{std::nullopt};
 
-    for (int i{0}; i < cfg.total_steps; i++) {
-        auto potential_distance_1{compute_ir_sensor_3_distance(open_maze, mouse)};
-        if (potential_distance_1.has_value()) {
-            update_ir_3_sensor_reading(*potential_distance_1);
-            uint32_t reading = read_ir_3_sensor();
-            reading = scale_and_clamp_ir_sensor_reading(reading, cfg);
-            wall_absent_at_step.at(i) = (reading < cfg.reading_threshold) ? true : false;
-        } else {
-            wall_absent_at_step.at(i) = false;
-        }
+    potential_ir_1_distance = compute_ir_sensor_distance(open_maze, mouse, mouse.ir_1_sensor);
+    potential_ir_4_distance = compute_ir_sensor_distance(open_maze, mouse, mouse.ir_4_sensor);
+    if (potential_ir_1_distance.has_value() && potential_ir_4_distance.has_value()) {
+        update_ir_1_sensor_reading(*potential_ir_1_distance);
+        update_ir_4_sensor_reading(*potential_ir_4_distance);
+        ir_1_reading = read_ir_1_sensor();
+        ir_1_reading = scale_and_clamp_ir_sensor_reading(ir_1_reading, cfg);
+        ir_4_reading = read_ir_4_sensor();
+        ir_4_reading = scale_and_clamp_ir_sensor_reading(ir_4_reading, cfg);
+        average_reading = (ir_1_reading + ir_4_reading) / 2;
+        identified_absent_wall = (average_reading < cfg.reading_threshold) ? true : false;
+    } else {
+        identified_absent_wall = false;
+    }
 
-        auto potential_distance_2{compute_ir_sensor_3_distance(closed_maze, mouse)};
-        if (potential_distance_2.has_value()) {
-            update_ir_3_sensor_reading(*potential_distance_2);
-            uint32_t reading = read_ir_3_sensor();
-            reading = scale_and_clamp_ir_sensor_reading(reading, cfg);
-            wall_present_at_step.at(i) = (reading >= cfg.reading_threshold) ? true : false;
-        } else {
-            wall_present_at_step.at(i) = false;
-        }
+    if (visualizer_enabled) {
+        if (identified_absent_wall) {
+            wall_absent_visualizer.change_beam_color_to_red();
+        } 
+        wall_absent_visualizer.draw_ir_1_sensor_beam(mouse, *potential_ir_1_distance);
+        wall_absent_visualizer.draw_ir_4_sensor_beam(mouse, *potential_ir_4_distance);
+        wall_absent_visualizer.reset_beam_color();
+    }
 
-        if (visualizer_enabled) {
-            if (wall_absent_at_step.at(i) && wall_present_at_step.at(i)) {
-                wall_absent_visualizer.change_beam_color_to_red();
-                wall_present_visualizer.change_beam_color_to_red();
-            } else {
-                wall_absent_visualizer.reset_beam_color();
-                wall_present_visualizer.reset_beam_color();
-            }
-            wall_absent_visualizer.draw_ir_3_sensor_beam(mouse, *potential_distance_1);
-            wall_present_visualizer.draw_ir_3_sensor_beam(mouse, *potential_distance_2);
-        }
+    potential_ir_1_distance = compute_ir_sensor_distance(closed_maze, mouse, mouse.ir_1_sensor);
+    potential_ir_4_distance = compute_ir_sensor_distance(closed_maze, mouse, mouse.ir_4_sensor);
+    if (potential_ir_1_distance.has_value() && potential_ir_4_distance.has_value()) {
+        update_ir_1_sensor_reading(*potential_ir_1_distance);
+        update_ir_4_sensor_reading(*potential_ir_4_distance);
+        ir_1_reading = read_ir_1_sensor();
+        ir_1_reading = scale_and_clamp_ir_sensor_reading(ir_1_reading, cfg);
+        ir_4_reading = read_ir_4_sensor();
+        ir_4_reading = scale_and_clamp_ir_sensor_reading(ir_4_reading, cfg);
+        average_reading = (ir_1_reading + ir_4_reading) / 2;
+        identified_present_wall = (average_reading >= cfg.reading_threshold) ? true : false;
+    } else {
+        identified_present_wall = false;
+    }
 
-        mouse.translate(0.0, open_maze.cell_size / cfg.total_steps);
+    if (visualizer_enabled) {
+        if (identified_present_wall) {
+            wall_present_visualizer.change_beam_color_to_red();
+        } 
+        wall_present_visualizer.draw_ir_1_sensor_beam(mouse, *potential_ir_1_distance);
+        wall_present_visualizer.draw_ir_4_sensor_beam(mouse, *potential_ir_4_distance);
+        wall_present_visualizer.reset_beam_color();
     }
 
     if (visualizer_enabled) {
@@ -220,35 +228,23 @@ Result run_simulation(const Config& cfg)
     }
 
     return Result{
-        std::move(wall_absent_at_step),
-        std::move(wall_present_at_step),
+        identified_absent_wall,
+        identified_present_wall
     };
 }
 
 ResultsMetrics compute_results_metrics(const std::vector<Result>& results)
 {
-    ResultsMetrics m;
+    ResultsMetrics a;
 
-    if (results.empty()) {
-        return m;
-    }
+    a.absent_wall_identification_rate = simulation_common::compute_rate(
+        results, [](const Result& r){ return r.identified_absent_wall; }
+    );
+    a.present_wall_identification_rate = simulation_common::compute_rate(
+        results, [](const Result& r){ return r.identified_present_wall; }
+    );
 
-    const size_t steps{results.front().wall_absent_at_step.size()};
-
-    std::vector<int> agreements(steps, 0);
-
-    for (size_t t{0}; t < steps; ++t) {
-        for (const auto& r : results) {
-            if (r.wall_absent_at_step.at(t) && r.wall_present_at_step.at(t)) {
-                agreements.at(t)++;
-            }
-        }
-    }
-
-    m.correct_detection_count_at_step = std::move(agreements);
-    m.total_detection_counts_per_step = results.size();
-
-    return m;
+    return a;
 }
 
 std::vector<Candidate> build_candidates(const std::vector<Trial>& trials)
@@ -276,52 +272,59 @@ std::vector<Candidate> build_candidates(const std::vector<Trial>& trials)
     return out;
 }
 
-std::vector<Candidate> filter_candidates_by_rate(const std::vector<Candidate>& candidates,
-        double required_rate)
+std::vector<Candidate> sort_candidates_by_rate(const std::vector<Candidate>& candidates)
 {
-    std::vector<Candidate> out;
+    constexpr double FLOAT_TOLERANCE{1e-6};
+    std::vector<Candidate> out{candidates};
 
-    for (const auto& c : candidates) {
-        auto [start, size] = find_window_with_rate(c.results_metrics, required_rate);
-        if (size > 0) {
-            Candidate copy = c;
-            copy.results_metrics.detection_window.window_start = start;
-            copy.results_metrics.detection_window.window_size = size;
-            out.push_back(copy);
+    auto score = [](const Candidate& c) {
+        double absent{c.results_metrics.absent_wall_identification_rate};
+        double present{c.results_metrics.present_wall_identification_rate};
+
+        double average{(absent + present) / 2.0};
+        double diff{std::abs(absent - present)};
+
+        return average - diff;
+    };
+
+    std::sort(out.begin(), out.end(),
+        [&](const Candidate& a, const Candidate& b) {
+            double sa{score(a)};
+            double sb{score(b)};
+
+            if (std::abs(sa - sb) > FLOAT_TOLERANCE) {
+                return sa > sb;
+            }
+
+            return a.key.threshold < b.key.threshold;
         }
-    }
+    );
 
     return out;
 }
 
-void write_analysis_to_file(const std::string& filename, const std::vector<Candidate>& candidates,
-        size_t total_size, double min_correct_rate)
+void write_analysis_to_file(const std::string& filename,
+        const std::vector<Candidate>& candidates, size_t total_size)
 {
     std::ofstream out(filename);
     if (!out.is_open()) {
-        throw std::runtime_error("Failed to open file: " + filename);
+        throw std::runtime_error("Failed to open output file: " + filename);
     }
+    out << std::fixed << std::setprecision(3);
 
     write_summary(out, candidates, total_size);
-
-    /* sweep agreement rates: 100%, 95%, ..., down to cutoff */
-    for (double rate{1.0}; rate >= min_correct_rate; rate -= 0.05) {
-        out << "\n=== CORRECT DETECTION RATE >= " << (rate * 100.0) << "% ===\n";
-
-        auto filtered{filter_candidates_by_rate(candidates, rate)};
-
-        write_candidates(out, filtered);
-    }
+    
+    out << "\n=== ALL CANDIDATES ===\n";
+    write_candidates(out, candidates);
 }
 
-void run_full_wall_detection_experiment(const std::string& filename,
-        ConfigSweeper& sweeper, double min_correct_rate)
+void run_full_front_wall_detection_experiment(const std::string& filename, ConfigSweeper& sweeper)
 {
     std::vector<Trial> trials;
     std::vector<Result> all_results;
 
     while (sweeper.next()) {
-        Config cfg{sweeper.value()};
+        Config cfg {sweeper.value()};
 
         auto result{run_simulation(cfg)};
 
@@ -329,12 +332,12 @@ void run_full_wall_detection_experiment(const std::string& filename,
         all_results.push_back(result);
     }
 
-    auto candidates{build_candidates(trials)};
+    auto sorted_candidates{sort_candidates_by_rate(build_candidates(trials))};
 
-    write_analysis_to_file(filename, candidates, all_results.size(), min_correct_rate);
+    write_analysis_to_file(filename, sorted_candidates, all_results.size());
 }
 
-} /* wall_detection namespace */
+} /* front_wall_detection namespace */
 
 /*----------------------------------------------------------------------------*/
 /*                             Private Definitions                            */
@@ -342,9 +345,9 @@ void run_full_wall_detection_experiment(const std::string& filename,
 namespace
 {
 
-using namespace wall_detection;
+using namespace front_wall_detection;
 
-void prepare_mock_for_wall_detection(const Config& cfg, const maze::Maze& maze, mouse::Mouse& mouse)
+void prepare_mock_for_front_wall_detection(const Config& cfg, const maze::Maze& maze, mouse::Mouse& mouse)
 {
     reset_mock_device_drivers();
 
@@ -358,14 +361,15 @@ void prepare_mock_for_wall_detection(const Config& cfg, const maze::Maze& maze, 
     );
 }
 
-std::optional<double> compute_ir_sensor_3_distance(const maze::Maze& maze, const mouse::Mouse& mouse)
+std::optional<double> compute_ir_sensor_distance(const maze::Maze& maze,
+        const mouse::Mouse& mouse, const geometry::Ray& ir_sensor)
 {
     std::optional<double> distance{std::nullopt};
 
     auto potential_rc{maze::get_cell_from_point(maze, mouse.hitbox.center)};
     if (potential_rc) {
         auto [r, c] {*potential_rc};
-        auto potential_distance{maze::compute_ray_distance_in_vicinity(maze, mouse.ir_3_sensor, r, c)};
+        auto potential_distance{maze::compute_ray_distance_in_vicinity(maze, ir_sensor, r, c)};
         if (potential_distance.has_value()) {
             distance = *potential_distance;
         }
@@ -380,37 +384,6 @@ uint32_t scale_and_clamp_ir_sensor_reading(uint32_t reading, const Config& cfg)
     return static_cast<uint32_t>(std::clamp(rounded_reading, 0L, 1024L));
 }
 
-DetectionWindow find_window_with_rate(const ResultsMetrics& m, double required_rate)
-{
-    int best_start{-1};
-    int best_size{0};
-
-    int current_start{-1};
-    int current_size{0};
-
-    const size_t steps{m.correct_detection_count_at_step.size()};
-
-    for (size_t t{0}; t < steps; ++t) {
-        double rate{static_cast<double>(m.correct_detection_count_at_step.at(t)) / m.total_detection_counts_per_step};
-
-        if (rate >= required_rate) {
-            if (current_size == 0) {
-                current_start = static_cast<int>(t);
-            }
-            current_size++;
-
-            if (current_size > best_size) {
-                best_size = current_size;
-                best_start = current_start;
-            }
-        } else {
-            current_size = 0;
-        }
-    }
-
-    return {best_start, best_size};
-}
-
 void write_summary(std::ofstream& out, const std::vector<Candidate>& candidates, size_t total_size)
 {
     out << "=== SUMMARY ===\n";
@@ -422,15 +395,15 @@ void write_candidates(std::ofstream& out, const std::vector<Candidate>& candidat
 {
     out << std::left
         << std::setw(12) << "Threshold"
-        << std::setw(14) << "WindowStart"
-        << std::setw(12) << "WindowSize"
+        << std::setw(10) << "Absent"
+        << std::setw(10) << "Present"
         << "\n";
 
     for (const auto& c : candidates) {
         out << std::left
             << std::setw(12) << c.key.threshold
-            << std::setw(14) << c.results_metrics.detection_window.window_start
-            << std::setw(12) << c.results_metrics.detection_window.window_size
+            << std::setw(10) << c.results_metrics.absent_wall_identification_rate
+            << std::setw(10) << c.results_metrics.present_wall_identification_rate
             << "\n";
     }
 }

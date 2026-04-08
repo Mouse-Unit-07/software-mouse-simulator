@@ -1,7 +1,7 @@
 /*================================ FILE INFO =================================*/
-/* Filename           : test_wall_detection.cpp                               */
+/* Filename           : test_side_wall_detection.cpp                          */
 /*                                                                            */
-/* Test implementation for wall_detection.cpp                                 */
+/* Test implementation for side_wall_detection.cpp                            */
 /*                                                                            */
 /*============================================================================*/
 
@@ -29,12 +29,12 @@ extern "C"
 #include "mouse.hpp"
 #include "maze.hpp"
 #include "simulation_common.hpp"
-#include "wall_detection.hpp"
+#include "side_wall_detection.hpp"
 
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
-using namespace wall_detection;
+using namespace side_wall_detection;
 
 /*============================================================================*/
 /*                             Public Definitions                             */
@@ -48,7 +48,7 @@ Config create_no_variance_config(void)
     cfg.horizontal_position_variance = 0.0;
     cfg.vertical_position_variance = 0.0;
     cfg.total_steps = 100;
-    cfg.reading_threshold = 750u; /* arbitrary threshold */
+    cfg.reading_threshold = 80u; /* arbitrary threshold */
 
     return cfg;
 }
@@ -64,7 +64,7 @@ ConfigSweeper create_no_variance_sweeper(void)
     sweeper.vertical_position_variance = {0.0};
     sweeper.total_steps = {100};
 
-    sweeper.reading_threshold = {750u};
+    sweeper.reading_threshold = {80u};
 
     return sweeper;
 }
@@ -98,7 +98,7 @@ bool are_results_equivalent(const Result& r1, const Result& r2)
 /*============================================================================*/
 /*                                 Test Group                                 */
 /*============================================================================*/
-TEST_GROUP(WallDetectionTests)
+TEST_GROUP(SideWallDetectionTests)
 {
     void setup() override
     {
@@ -114,7 +114,7 @@ TEST_GROUP(WallDetectionTests)
 /*============================================================================*/
 /*                                    Tests                                   */
 /*============================================================================*/
-TEST(WallDetectionTests, ConfigSweeperProducesFirstValue)
+TEST(SideWallDetectionTests, ConfigSweeperProducesFirstValue)
 {
     ConfigSweeper sweeper{create_no_variance_sweeper()};
 
@@ -123,10 +123,10 @@ TEST(WallDetectionTests, ConfigSweeperProducesFirstValue)
     auto cfg{sweeper.value()};
 
     CHECK_EQUAL(1.0, cfg.maze_size_scale);
-    CHECK_EQUAL(750u, cfg.reading_threshold);
+    CHECK_EQUAL(80u, cfg.reading_threshold);
 }
 
-TEST(WallDetectionTests, ConfigSweeperIteratesAllCombinations)
+TEST(SideWallDetectionTests, ConfigSweeperIteratesAllCombinations)
 {
     ConfigSweeper sweeper{create_no_variance_sweeper()};
     sweeper.maze_size_scale = {1.0, 1.05};
@@ -142,7 +142,7 @@ TEST(WallDetectionTests, ConfigSweeperIteratesAllCombinations)
     CHECK_EQUAL(4, count); /* 2 maze_size_scale * 2 reading_threshold */
 }
 
-TEST(WallDetectionTests, ConfigSweeperStopsAtEnd)
+TEST(SideWallDetectionTests, ConfigSweeperStopsAtEnd)
 {
     ConfigSweeper sweeper{create_no_variance_sweeper()};
 
@@ -150,7 +150,7 @@ TEST(WallDetectionTests, ConfigSweeperStopsAtEnd)
     CHECK_FALSE(sweeper.next());
 }
 
-TEST(WallDetectionTests, ConfigSweeperOrderIsStable)
+TEST(SideWallDetectionTests, ConfigSweeperOrderIsStable)
 {
     ConfigSweeper sweeper{create_no_variance_sweeper()};
     sweeper.maze_size_scale = {1.0, 1.05};
@@ -172,7 +172,7 @@ TEST(WallDetectionTests, ConfigSweeperOrderIsStable)
     CHECK(seen.at(3) == std::make_pair(1.05, 200u));
 }
 
-TEST(WallDetectionTests, SimulationHandlesZeroSteps)
+TEST(SideWallDetectionTests, SimulationHandlesZeroSteps)
 {
     Config cfg{create_no_variance_config()};
     cfg.total_steps = 0;
@@ -183,7 +183,7 @@ TEST(WallDetectionTests, SimulationHandlesZeroSteps)
     CHECK_EQUAL(0, result.wall_present_at_step.size());
 }
 
-TEST(WallDetectionTests, WallAbsentAllFalseWhenThresholdIsZero)
+TEST(SideWallDetectionTests, WallAbsentAllFalseWhenThresholdIsZero)
 {
     Config cfg{create_no_variance_config()};
     cfg.reading_threshold = 0u;  /* nothing should pass */
@@ -195,7 +195,7 @@ TEST(WallDetectionTests, WallAbsentAllFalseWhenThresholdIsZero)
     }
 }
 
-TEST(WallDetectionTests, WallPresentAllTrueWhenThresholdIsZero)
+TEST(SideWallDetectionTests, WallPresentAllTrueWhenThresholdIsZero)
 {
     Config cfg{create_no_variance_config()};
     cfg.reading_threshold = 0u;  /* everything should pass */
@@ -207,7 +207,7 @@ TEST(WallDetectionTests, WallPresentAllTrueWhenThresholdIsZero)
     }
 }
 
-TEST(WallDetectionTests, IdenticalConfigsProduceIdenticalResults)
+TEST(SideWallDetectionTests, IdenticalConfigsProduceIdenticalResults)
 {
     Config cfg{create_no_variance_config()};
 
@@ -217,7 +217,7 @@ TEST(WallDetectionTests, IdenticalConfigsProduceIdenticalResults)
     CHECK(are_results_equivalent(r1, r2));
 }
 
-TEST(WallDetectionTests, MazeSizeScaleChangesResults)
+TEST(SideWallDetectionTests, MazeSizeScaleChangesResults)
 {
     Config cfg1{create_no_variance_config()};
     Config cfg2{cfg1};
@@ -229,7 +229,7 @@ TEST(WallDetectionTests, MazeSizeScaleChangesResults)
     CHECK(!are_results_equivalent(r1, r2));
 }
 
-TEST(WallDetectionTests, IrReadingScaleChangesResults)
+TEST(SideWallDetectionTests, IrReadingScaleChangesResults)
 {
     Config cfg1{create_no_variance_config()};
     Config cfg2 {cfg1};
@@ -241,7 +241,7 @@ TEST(WallDetectionTests, IrReadingScaleChangesResults)
     CHECK(!are_results_equivalent(r1, r2));
 }
 
-TEST(WallDetectionTests, ZeroIrReadingScaleCollapsesToAllTrueWhenThresholdIsMax)
+TEST(SideWallDetectionTests, ZeroIrReadingScaleCollapsesToAllTrueWhenThresholdIsMax)
 {
     Config cfg{create_no_variance_config()};
     cfg.reading_threshold = 1024u;
@@ -253,7 +253,7 @@ TEST(WallDetectionTests, ZeroIrReadingScaleCollapsesToAllTrueWhenThresholdIsMax)
     }
 }
 
-TEST(WallDetectionTests, MouseAngleChangesResults)
+TEST(SideWallDetectionTests, MouseAngleChangesResults)
 {
     Config cfg1{create_no_variance_config()};
     Config cfg2{cfg1};
@@ -265,7 +265,7 @@ TEST(WallDetectionTests, MouseAngleChangesResults)
     CHECK(!are_results_equivalent(r1, r2));
 }
 
-TEST(WallDetectionTests, HorizontalVarianceChangesResults)
+TEST(SideWallDetectionTests, HorizontalVarianceChangesResults)
 {
     Config cfg1{create_no_variance_config()};
     Config cfg2{cfg1};
@@ -277,7 +277,7 @@ TEST(WallDetectionTests, HorizontalVarianceChangesResults)
     CHECK(!are_results_equivalent(r1, r2));
 }
 
-TEST(WallDetectionTests, VerticalVarianceChangesResults)
+TEST(SideWallDetectionTests, VerticalVarianceChangesResults)
 {
     Config cfg1{create_no_variance_config()};
     Config cfg2{cfg1};
@@ -289,7 +289,7 @@ TEST(WallDetectionTests, VerticalVarianceChangesResults)
     CHECK(!are_results_equivalent(r1, r2));
 }
 
-IGNORE_TEST(WallDetectionTests, VisualizationDoesNotAffectResults)
+IGNORE_TEST(SideWallDetectionTests, VisualizationDoesNotAffectResults)
 {
     Config cfg{create_no_variance_config()};
 
@@ -302,7 +302,7 @@ IGNORE_TEST(WallDetectionTests, VisualizationDoesNotAffectResults)
     CHECK(are_results_equivalent(r1, r2));
 }
 
-TEST(WallDetectionTests, ComputeResultsMetricsCountsConsensusCorrectly)
+TEST(SideWallDetectionTests, ComputeResultsMetricsCountsConsensusCorrectly)
 {
     Result r1;
     r1.wall_absent_at_step = {true, true, false, true, true, true};
@@ -321,7 +321,7 @@ TEST(WallDetectionTests, ComputeResultsMetricsCountsConsensusCorrectly)
     }
 }
 
-TEST(WallDetectionTests, BuildCandidatesGroupsByThreshold)
+TEST(SideWallDetectionTests, BuildCandidatesGroupsByThreshold)
 {
     Trial t1;
     t1.result.wall_absent_at_step = {true, true};
@@ -342,7 +342,7 @@ TEST(WallDetectionTests, BuildCandidatesGroupsByThreshold)
     CHECK_EQUAL(2, candidates.size());
 }
 
-TEST(WallDetectionTests, BuildCandidatesDoesNotComputeMetricsPerGroup)
+TEST(SideWallDetectionTests, BuildCandidatesDoesNotComputeMetricsPerGroup)
 {
     Trial t1;
     t1.result.wall_absent_at_step = {true, true, false};
@@ -363,7 +363,7 @@ TEST(WallDetectionTests, BuildCandidatesDoesNotComputeMetricsPerGroup)
     CHECK_EQUAL(0, m.detection_window.window_size);
 }
 
-TEST(WallDetectionTests, FilterCandidatesPerfectDetection)
+TEST(SideWallDetectionTests, FilterCandidatesPerfectDetection)
 {
     Candidate c;
     c.key.threshold = 100;
@@ -379,7 +379,7 @@ TEST(WallDetectionTests, FilterCandidatesPerfectDetection)
     CHECK_EQUAL(2, filtered.at(0).results_metrics.detection_window.window_size);
 }
 
-TEST(WallDetectionTests, FilterCandidatesPartialCorrectDetection)
+TEST(SideWallDetectionTests, FilterCandidatesPartialCorrectDetection)
 {
     Candidate c;
     c.key.threshold = 100;
@@ -395,7 +395,7 @@ TEST(WallDetectionTests, FilterCandidatesPartialCorrectDetection)
     CHECK_EQUAL(4, filtered.at(0).results_metrics.detection_window.window_size);
 }
 
-TEST(WallDetectionTests, FilterCandidatesNoValidWindow)
+TEST(SideWallDetectionTests, FilterCandidatesNoValidWindow)
 {
     Candidate c;
     c.key.threshold = 100;
@@ -409,7 +409,7 @@ TEST(WallDetectionTests, FilterCandidatesNoValidWindow)
     CHECK_EQUAL(0, filtered.size());
 }
 
-IGNORE_TEST(WallDetectionTests, RunFullSimulationAndWriteResultsToFile)
+IGNORE_TEST(SideWallDetectionTests, RunFullSimulationAndWriteResultsToFile)
 {
     ConfigSweeper sweeper;
 
@@ -419,12 +419,12 @@ IGNORE_TEST(WallDetectionTests, RunFullSimulationAndWriteResultsToFile)
     sweeper.horizontal_position_variance = simulation_common::generate_sweep_values(-0.5, 0.5, 3);
     sweeper.vertical_position_variance = simulation_common::generate_sweep_values(-0.5, 0.5, 3);
     sweeper.total_steps = {100};
-    sweeper.reading_threshold = simulation_common::generate_sweep_values<uint32_t>(700, 1024, 225);
+    sweeper.reading_threshold = simulation_common::generate_sweep_values<uint32_t>(0, 300, 300);
 
-    run_full_wall_detection_experiment("test_full_output.txt", sweeper, 0.5);
+    run_full_side_wall_detection_experiment("test_full_output.txt", sweeper, 0.2);
 }
 
-IGNORE_TEST(WallDetectionTests, RunFullSimulationForIdealThreshold)
+IGNORE_TEST(SideWallDetectionTests, RunFullSimulationForIdealThreshold)
 {
     ConfigSweeper sweeper;
 
@@ -434,8 +434,8 @@ IGNORE_TEST(WallDetectionTests, RunFullSimulationForIdealThreshold)
     sweeper.horizontal_position_variance = simulation_common::generate_sweep_values(-0.5, 0.5, 3);
     sweeper.vertical_position_variance = simulation_common::generate_sweep_values(-0.5, 0.5, 3);
     sweeper.total_steps = {100};
-    sweeper.reading_threshold = {840};
+    sweeper.reading_threshold = {78};
 
     enable_visualization();
-    run_full_wall_detection_experiment("test_ideal_output.txt", sweeper, 0.5);
+    run_full_side_wall_detection_experiment("test_ideal_output.txt", sweeper, 0.5);
 }
