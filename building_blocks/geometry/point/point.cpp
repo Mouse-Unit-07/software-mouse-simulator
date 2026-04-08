@@ -39,8 +39,7 @@ bool check_point_equality(const Point& p1, const Point& p2);
 namespace geometry
 {
 
-Point::Point(double x, double y)
-    : x{x}, y{y}
+Point::Point(double x, double y) : x{x}, y{y}
 {
     /* no additional logic */
 }
@@ -59,15 +58,11 @@ void Point::rotate(const Point& center, double angle_rad) noexcept
     const double x_relative_to_center{x - center.x};
     const double y_relative_to_center{y - center.y};
 
-    const double rotated_x_relative{
-        (x_relative_to_center * cosine_of_angle)
-        - (y_relative_to_center * sine_of_angle)
-    };
+    const double rotated_x_relative{(x_relative_to_center * cosine_of_angle)
+                                    - (y_relative_to_center * sine_of_angle)};
 
-    const double rotated_y_relative{
-        (x_relative_to_center * sine_of_angle)
-        + (y_relative_to_center * cosine_of_angle)
-    };
+    const double rotated_y_relative{(x_relative_to_center * sine_of_angle)
+                                    + (y_relative_to_center * cosine_of_angle)};
 
     x = center.x + rotated_x_relative;
     y = center.y + rotated_y_relative;
@@ -97,8 +92,7 @@ bool check_point_equality(const Point& p1, const Point& p2)
 {
     constexpr double tolerance{1e-6};
 
-    return (std::abs(p1.x - p2.x) <= tolerance)
-        && (std::abs(p1.y - p2.y) <= tolerance);
+    return (std::abs(p1.x - p2.x) <= tolerance) && (std::abs(p1.y - p2.y) <= tolerance);
 }
 
 } /* unnamed namespace */

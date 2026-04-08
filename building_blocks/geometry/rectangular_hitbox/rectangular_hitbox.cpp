@@ -8,11 +8,6 @@
 /*----------------------------------------------------------------------------*/
 /*                               Include Files                                */
 /*----------------------------------------------------------------------------*/
-extern "C"
-{
-
-}
-
 #include <cmath>
 #include "point.hpp"
 #include "rectangular_hitbox.hpp"
@@ -41,7 +36,8 @@ double normalize_angle(double angle);
 namespace geometry
 {
 
-RectangularHitbox::RectangularHitbox(const Point& center, double horizontal_size, double vertical_size)
+RectangularHitbox::RectangularHitbox(const Point& center, double horizontal_size,
+                                     double vertical_size)
     : center{center}, horizontal_size{horizontal_size}, vertical_size{vertical_size}
 {
     top_right = Point{center.x + (horizontal_size / 2), center.y + (vertical_size / 2)};
@@ -90,20 +86,20 @@ namespace
 
 using namespace geometry;
 
-constexpr double FLOAT_TOLERANCE {1e-6};
+constexpr double FLOAT_TOLERANCE{1e-6};
 
 bool check_hitbox_equality(const RectangularHitbox& h1, const RectangularHitbox& h2)
 {
     return (std::abs(h1.horizontal_size - h2.horizontal_size) <= FLOAT_TOLERANCE)
-        && (std::abs(h1.vertical_size - h2.vertical_size) <= FLOAT_TOLERANCE)
-        && (h1.center == h2.center) && (h1.top_right == h2.top_right)
-        && (h1.top_left == h2.top_left) && (h1.bottom_left == h2.bottom_left) 
-        && (h1.bottom_left == h2.bottom_left);
+           && (std::abs(h1.vertical_size - h2.vertical_size) <= FLOAT_TOLERANCE)
+           && (h1.center == h2.center) && (h1.top_right == h2.top_right)
+           && (h1.top_left == h2.top_left) && (h1.bottom_left == h2.bottom_left)
+           && (h1.bottom_left == h2.bottom_left);
 }
 
 double normalize_angle(double angle)
 {
-    double normalized {std::atan2(std::sin(angle), std::cos(angle))};
+    double normalized{std::atan2(std::sin(angle), std::cos(angle))};
     if (std::abs(std::abs(normalized) - M_PI) < FLOAT_TOLERANCE) {
         normalized = M_PI;
     }

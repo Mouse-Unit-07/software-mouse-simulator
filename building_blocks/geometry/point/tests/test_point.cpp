@@ -8,10 +8,10 @@
 /*============================================================================*/
 /*                               Include Files                                */
 /*============================================================================*/
-#include <cmath>
-#include "point.hpp"
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
+#include <cmath>
+#include "point.hpp"
 
 using namespace geometry;
 

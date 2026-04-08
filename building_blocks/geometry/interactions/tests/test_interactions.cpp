@@ -8,14 +8,14 @@
 /*============================================================================*/
 /*                               Include Files                                */
 /*============================================================================*/
+#include <CppUTest/TestHarness.h>
+#include <CppUTestExt/MockSupport.h>
 #include <cmath>
 #include <optional>
 #include "point.hpp"
 #include "rectangular_hitbox.hpp"
 #include "ray.hpp"
 #include "interactions.hpp"
-#include <CppUTest/TestHarness.h>
-#include <CppUTestExt/MockSupport.h>
 
 using namespace geometry;
 
@@ -75,7 +75,7 @@ TEST(InteractionsTests, RayAndHitboxDistanceComputable)
 
     auto distance{compute_ray_hitbox_distance(test_ray, test_hitbox)};
     CHECK(distance.has_value());
-    
+
     double d{*distance};
     DOUBLES_EQUAL(4.0, d, 1e-6);
 }
@@ -88,8 +88,7 @@ TEST(InteractionsTests, RayAndHitboxDistanceComputableAfterTranslation)
 
     test_ray.translate(1.0, 2.0);
     auto distance{compute_ray_hitbox_distance(test_ray, test_hitbox)};
-    
-    
+
     double d{*distance};
     DOUBLES_EQUAL(3.0, d, 1e-6);
 }
@@ -102,7 +101,7 @@ TEST(InteractionsTests, RayAndHitboxDistanceComputableAfterRotation)
 
     test_ray.rotate(test_point_a, M_PI);
     auto distance{compute_ray_hitbox_distance(test_ray, test_hitbox)};
-    
+
     double d{*distance};
     DOUBLES_EQUAL(5.0, d, 1e-6);
 }

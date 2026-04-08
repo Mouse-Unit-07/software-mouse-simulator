@@ -13,8 +13,7 @@
 namespace geometry
 {
 
-class Ray
-{
+class Ray {
 public:
     Point origin;
     Point direction;
