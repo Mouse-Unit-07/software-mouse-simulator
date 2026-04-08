@@ -15,9 +15,9 @@ extern "C"
 }
 
 #include <cstdint>
-#include <vector>
-#include <string>
 #include <map>
+#include <string>
+#include <vector>
 #include "simulation_common.hpp"
 #include "move_forward.hpp"
 
@@ -69,7 +69,7 @@ bool ConfigSweeper::next(void)
 
 Config ConfigSweeper::value(void) const
 {
-    const auto& idx {sweeper.get_indices()};
+    const auto& idx{sweeper.get_indices()};
     int i{0};
 
     Config cfg{};

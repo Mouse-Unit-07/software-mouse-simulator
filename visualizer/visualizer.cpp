@@ -8,18 +8,14 @@
 /*----------------------------------------------------------------------------*/
 /*                               Include Files                                */
 /*----------------------------------------------------------------------------*/
-extern "C"
-{
-
-}
-
 #include <cmath>
-#include <vector>
-#include <string>
-#include <optional>
-#include <utility>
-#include <memory>
 #include <SFML/Graphics.hpp>
+#include <cmath>
+#include <memory>
+#include <optional>
+#include <string>
+#include <utility>
+#include <vector>
 #include "point.hpp"
 #include "ray.hpp"
 #include "rectangular_hitbox.hpp"
@@ -43,8 +39,7 @@ extern "C"
 namespace visualizer
 {
 
-struct Visualizer::Impl
-{
+struct Visualizer::Impl {
     double cell_size_pixels{};
     double frame_width_pixels{};
     double scale{};
@@ -54,10 +49,8 @@ struct Visualizer::Impl
 
     sf::Vector2f world_to_screen(const geometry::Point& p) const
     {
-        return {
-            static_cast<float>((p.x * scale) + frame_width_pixels),
-            static_cast<float>((p.y * scale) + frame_width_pixels)
-        };
+        return {static_cast<float>((p.x * scale) + frame_width_pixels),
+                static_cast<float>((p.y * scale) + frame_width_pixels)};
     }
 
     sf::VertexArray make_rectangle(const geometry::RectangularHitbox& hitbox, sf::Color color) const
@@ -87,10 +80,8 @@ struct Visualizer::Impl
 
         for (int r{0}; r < maze.rows; ++r) {
             for (int c{0}; c < maze.cols; ++c) {
-                cell.setPosition(
-                    (c * cell_size_pixels) + frame_width_pixels,
-                    (r * cell_size_pixels) + frame_width_pixels
-                );
+                cell.setPosition((c * cell_size_pixels) + frame_width_pixels,
+                                 (r * cell_size_pixels) + frame_width_pixels);
                 texture.draw(cell);
             }
         }
@@ -99,7 +90,7 @@ struct Visualizer::Impl
     void draw_obstacles(const maze::Maze& maze)
     {
         for (const auto& obstacle : maze.obstacles) {
-            auto rect {make_rectangle(obstacle, sf::Color::White)};
+            auto rect{make_rectangle(obstacle, sf::Color::White)};
             texture.draw(rect);
         }
     }
@@ -121,40 +112,31 @@ struct Visualizer::Impl
         double ray_length{scale * 20.0};
 
         sf::Vector2f origin{world_to_screen(ray.origin)};
-        geometry::Point ray_end{ray.origin.x + (ray.direction.x * ray_length), ray.origin.y + (ray.direction.y * ray_length)};
+        geometry::Point ray_end{ray.origin.x + (ray.direction.x * ray_length),
+                                ray.origin.y + (ray.direction.y * ray_length)};
         sf::Vector2f end{world_to_screen(ray_end)};
 
-        sf::Vertex line[]
-        {
-            sf::Vertex(origin, sf::Color::Yellow),
-            sf::Vertex(end,    sf::Color::Yellow)
-        };
+        sf::Vertex line[]{sf::Vertex(origin, sf::Color::Yellow),
+                          sf::Vertex(end, sf::Color::Yellow)};
 
         texture.draw(line, 2, sf::Lines);
     }
 
     void draw_ray_beam(const geometry::Ray& ray, double length_mm)
     {
-        geometry::Point end_world {
-            ray.origin.x + ray.direction.x * length_mm,
-            ray.origin.y + ray.direction.y * length_mm
-        };
+        geometry::Point end_world{ray.origin.x + ray.direction.x * length_mm,
+                                  ray.origin.y + ray.direction.y * length_mm};
 
         sf::Vector2f origin{world_to_screen(ray.origin)};
         sf::Vector2f end{world_to_screen(end_world)};
 
-        sf::Vertex line[]
-        {
-            sf::Vertex(origin, ray_beam_color),
-            sf::Vertex(end, ray_beam_color)
-        };
+        sf::Vertex line[]{sf::Vertex(origin, ray_beam_color), sf::Vertex(end, ray_beam_color)};
 
         texture.draw(line, 2, sf::Lines);
     }
 };
 
-Visualizer::Visualizer()
-    : impl_(std::make_unique<Impl>())
+Visualizer::Visualizer() : impl_(std::make_unique<Impl>())
 {
     /* no additional logic */
 }
@@ -166,18 +148,14 @@ void Visualizer::draw_maze(double cell_size_pixels, const maze::Maze& maze)
     impl_->cell_size_pixels = cell_size_pixels;
     impl_->scale = cell_size_pixels / maze.cell_size;
     impl_->frame_width_pixels = cell_size_pixels / 2;
-    int width{static_cast<int>(
-        (maze.cols * impl_->cell_size_pixels)
-        + (impl_->frame_width_pixels) * 2
-    )};
-    int height{static_cast<int>(
-        (maze.rows * impl_->cell_size_pixels)
-        + (impl_->frame_width_pixels * 2)
-    )};
+    int width{
+        static_cast<int>((maze.cols * impl_->cell_size_pixels) + (impl_->frame_width_pixels) * 2)};
+    int height{
+        static_cast<int>((maze.rows * impl_->cell_size_pixels) + (impl_->frame_width_pixels * 2))};
 
     impl_->texture.create(width, height);
     impl_->texture.clear(sf::Color::Black);
-    
+
     impl_->draw_cells(maze);
     impl_->draw_obstacles(maze);
     impl_->draw_mouse_start(maze);

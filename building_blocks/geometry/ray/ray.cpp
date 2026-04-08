@@ -8,11 +8,6 @@
 /*----------------------------------------------------------------------------*/
 /*                               Include Files                                */
 /*----------------------------------------------------------------------------*/
-extern "C"
-{
-
-}
-
 #include <cmath>
 #include "point.hpp"
 #include "ray.hpp"
@@ -40,8 +35,7 @@ bool check_ray_inequality(const Ray& r1, const Ray& r2);
 namespace geometry
 {
 
-Ray::Ray(const Point& origin, double angle_rad)
-    : origin{origin}
+Ray::Ray(const Point& origin, double angle_rad) : origin{origin}
 {
     double dir_x{std::cos(angle_rad)};
     double dir_y{std::sin(angle_rad)};

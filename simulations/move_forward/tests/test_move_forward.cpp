@@ -8,27 +8,21 @@
 /*============================================================================*/
 /*                               Include Files                                */
 /*============================================================================*/
-extern "C"
-{
-
-}
-
-#include <cstdint>
-#include <vector>
-#include <string>
-#include <map>
-#include "simulation_common.hpp"
-#include "move_forward.hpp"
-
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
+#include <cstdint>
+#include <map>
+#include <string>
+#include <vector>
+#include "simulation_common.hpp"
+#include "move_forward.hpp"
 
 using namespace move_forward;
 
 /*============================================================================*/
 /*                             Public Definitions                             */
 /*============================================================================*/
-constexpr double FLOAT_TOLERANCE {1e-6};
+constexpr double FLOAT_TOLERANCE{1e-6};
 
 ConfigSweeper create_no_variance_sweeper(void)
 {
@@ -125,7 +119,7 @@ TEST(MoveForwardTests, ConfigSweeperOrderIsStable)
     sweeper.kp = {1, 2};
     sweeper.kd = {10, 20};
 
-    std::vector<std::pair<int,int>> seen;
+    std::vector<std::pair<int, int>> seen;
 
     while (sweeper.next()) {
         auto cfg{sweeper.value()};
@@ -135,8 +129,8 @@ TEST(MoveForwardTests, ConfigSweeperOrderIsStable)
     CHECK_EQUAL(4, seen.size());
 
     /* Expected order: kp outer, kd inner */
-    CHECK(seen.at(0) == std::make_pair(1,10));
-    CHECK(seen.at(1) == std::make_pair(1,20));
-    CHECK(seen.at(2) == std::make_pair(2,10));
-    CHECK(seen.at(3) == std::make_pair(2,20));
+    CHECK(seen.at(0) == std::make_pair(1, 10));
+    CHECK(seen.at(1) == std::make_pair(1, 20));
+    CHECK(seen.at(2) == std::make_pair(2, 10));
+    CHECK(seen.at(3) == std::make_pair(2, 20));
 }

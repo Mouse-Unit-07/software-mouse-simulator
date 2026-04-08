@@ -8,25 +8,29 @@
 /*============================================================================*/
 /*                               Include Files                                */
 /*============================================================================*/
+#include <CppUTest/TestHarness.h>
+#include <CppUTestExt/MockSupport.h>
 #include <cmath>
 #include "point.hpp"
 #include "rectangular_hitbox.hpp"
-#include <CppUTest/TestHarness.h>
-#include <CppUTestExt/MockSupport.h>
 
 using namespace geometry;
 
 /*============================================================================*/
 /*                             Public Definitions                             */
 /*============================================================================*/
-Point test_center {0.0, 0.0}; /* arbitrary center */
-double test_horizontal_size {10.0}; /* arbitrary size */
-double test_vertical_size {10.0}; /* arbitrary size */
-RectangularHitbox test_hitbox {test_center, test_horizontal_size, test_vertical_size};
-Point test_top_right {test_center.x + (test_horizontal_size / 2), test_center.y + (test_vertical_size / 2)};
-Point test_top_left {test_center.x - (test_horizontal_size / 2), test_center.y + (test_vertical_size / 2)};
-Point test_bottom_left {test_center.x - (test_horizontal_size / 2), test_center.y - (test_vertical_size / 2)};
-Point test_bottom_right {test_center.x + (test_horizontal_size / 2), test_center.y - (test_vertical_size / 2)};
+Point test_center{0.0, 0.0}; /* arbitrary center */
+double test_horizontal_size{10.0}; /* arbitrary size */
+double test_vertical_size{10.0}; /* arbitrary size */
+RectangularHitbox test_hitbox{test_center, test_horizontal_size, test_vertical_size};
+Point test_top_right{test_center.x + (test_horizontal_size / 2),
+                     test_center.y + (test_vertical_size / 2)};
+Point test_top_left{test_center.x - (test_horizontal_size / 2),
+                    test_center.y + (test_vertical_size / 2)};
+Point test_bottom_left{test_center.x - (test_horizontal_size / 2),
+                       test_center.y - (test_vertical_size / 2)};
+Point test_bottom_right{test_center.x + (test_horizontal_size / 2),
+                        test_center.y - (test_vertical_size / 2)};
 
 void initialize_test_variables(void)
 {
@@ -34,10 +38,14 @@ void initialize_test_variables(void)
     test_horizontal_size = 10.0;
     test_vertical_size = 10.0;
     test_hitbox = RectangularHitbox{test_center, test_horizontal_size, test_vertical_size};
-    test_top_right = Point{test_center.x + (test_horizontal_size / 2), test_center.y + (test_vertical_size / 2)};
-    test_top_left = Point{test_center.x - (test_horizontal_size / 2), test_center.y + (test_vertical_size / 2)};
-    test_bottom_left = Point{test_center.x - (test_horizontal_size / 2), test_center.y - (test_vertical_size / 2)};
-    test_bottom_right = Point{test_center.x + (test_horizontal_size / 2), test_center.y - (test_vertical_size / 2)};
+    test_top_right =
+        Point{test_center.x + (test_horizontal_size / 2), test_center.y + (test_vertical_size / 2)};
+    test_top_left =
+        Point{test_center.x - (test_horizontal_size / 2), test_center.y + (test_vertical_size / 2)};
+    test_bottom_left =
+        Point{test_center.x - (test_horizontal_size / 2), test_center.y - (test_vertical_size / 2)};
+    test_bottom_right =
+        Point{test_center.x + (test_horizontal_size / 2), test_center.y - (test_vertical_size / 2)};
 }
 
 /*============================================================================*/
@@ -133,14 +141,14 @@ TEST(RectangularHitboxTests, RotateModifiesAngle)
 
 TEST(RectangularHitboxTests, EqualityOperatorOverloaded)
 {
-    RectangularHitbox test_hitbox_2 {test_center, test_horizontal_size, test_vertical_size};
+    RectangularHitbox test_hitbox_2{test_center, test_horizontal_size, test_vertical_size};
 
     CHECK(test_hitbox_2 == test_hitbox);
 }
 
 TEST(RectangularHitboxTests, InequalityOperatorOverloaded)
 {
-    RectangularHitbox test_hitbox_2 {Point{1.0, 1.0}, test_horizontal_size, test_vertical_size};
+    RectangularHitbox test_hitbox_2{Point{1.0, 1.0}, test_horizontal_size, test_vertical_size};
 
     CHECK(test_hitbox_2 != test_hitbox);
 }

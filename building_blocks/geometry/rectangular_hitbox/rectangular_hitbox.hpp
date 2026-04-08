@@ -13,8 +13,7 @@
 namespace geometry
 {
 
-class RectangularHitbox
-{
+class RectangularHitbox {
 public:
     Point center;
     Point top_right;

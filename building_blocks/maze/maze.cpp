@@ -8,16 +8,11 @@
 /*----------------------------------------------------------------------------*/
 /*                               Include Files                                */
 /*----------------------------------------------------------------------------*/
-extern "C"
-{
-
-}
-
-#include <vector>
-#include <string>
 #include <optional>
-#include <utility>
 #include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
 #include "point.hpp"
 #include "ray.hpp"
 #include "rectangular_hitbox.hpp"
@@ -35,8 +30,10 @@ using namespace maze;
 std::string validate_ascii_maze(const std::vector<std::string>& ascii);
 
 geometry::RectangularHitbox create_post(const geometry::Point& center, double size_adjustment);
-geometry::RectangularHitbox create_vertical_wall(const geometry::Point& center, double size_adjustment);
-geometry::RectangularHitbox create_horizontal_wall(const geometry::Point& center, double size_adjustment);
+geometry::RectangularHitbox create_vertical_wall(const geometry::Point& center,
+                                                 double size_adjustment);
+geometry::RectangularHitbox create_horizontal_wall(const geometry::Point& center,
+                                                   double size_adjustment);
 
 geometry::Point ascii_to_world(int r, int c, double size_adjustment);
 void attach_to_cell(Maze& maze, size_t obstacle_index, int row, int col);
@@ -45,7 +42,7 @@ void attach_horizontal_wall_cells(Maze& maze, size_t obstacle_index, int r, int 
 void attach_post_cells(Maze& maze, size_t obstacle_index, int r, int c);
 
 std::optional<double> compute_ray_distance_in_cell(const Maze& maze, const geometry::Ray& ray,
-        int row, int col);
+                                                   int row, int col);
 
 } /* unnamed namespace */
 
@@ -107,11 +104,8 @@ Maze build_maze_from_ascii(const std::vector<std::string>& ascii, double obstacl
                 int cell_r{r / 2};
                 int cell_c{c / 2};
 
-                maze.mouse_start =
-                {
-                    (cell_c * adjusted_cell_size) + (adjusted_cell_size / 2),
-                    (cell_r * adjusted_cell_size) + (adjusted_cell_size / 2)
-                };
+                maze.mouse_start = {(cell_c * adjusted_cell_size) + (adjusted_cell_size / 2),
+                                    (cell_r * adjusted_cell_size) + (adjusted_cell_size / 2)};
             }
         }
     }
@@ -142,7 +136,7 @@ std::optional<std::pair<int, int>> get_cell_from_point(const Maze& maze, const g
 }
 
 std::optional<double> compute_ray_distance_in_vicinity(const Maze& maze, const geometry::Ray& ray,
-        int row, int col)
+                                                       int row, int col)
 {
     std::optional<double> closest{std::nullopt};
 
@@ -164,7 +158,7 @@ std::optional<double> compute_ray_distance_in_vicinity(const Maze& maze, const g
 }
 
 bool does_hitbox_collide_in_vicinity(const Maze& maze, const geometry::RectangularHitbox& hitbox,
-        int row, int col)
+                                     int row, int col)
 {
     for (int dr{-1}; dr <= 1; dr++) {
         for (int dc{-1}; dc <= 1; dc++) {
@@ -178,7 +172,7 @@ bool does_hitbox_collide_in_vicinity(const Maze& maze, const geometry::Rectangul
             const auto& cell{maze.get_cell(r, c)};
 
             for (size_t idx : cell.obstacles) {
-                const auto& obstacle {maze.obstacles.at(idx)};
+                const auto& obstacle{maze.obstacles.at(idx)};
 
                 if (geometry::do_hitboxes_overlap(hitbox, obstacle)) {
                     return true;
@@ -219,14 +213,9 @@ std::string validate_ascii_maze(const std::vector<std::string>& ascii)
             char ch{row.at(c)};
 
             /* character validation */
-            if (ch != ' ' &&
-                ch != '+' &&
-                ch != '|' &&
-                ch != '-' &&
-                ch != 'S') {
-                return "Invalid character '" + std::string(1, ch) +
-                       "' at (" + std::to_string(r) +
-                       ", " + std::to_string(c) + ")";
+            if ((ch != ' ') && (ch != '+') && (ch != '|') && (ch != '-') && (ch != 'S')) {
+                return "Invalid character '" + std::string(1, ch) + "' at (" + std::to_string(r)
+                       + ", " + std::to_string(c) + ")";
             }
 
             /* start validation */
@@ -255,7 +244,8 @@ geometry::RectangularHitbox create_post(const geometry::Point& center, double si
     };
 }
 
-geometry::RectangularHitbox create_vertical_wall(const geometry::Point& center, double size_adjustment)
+geometry::RectangularHitbox create_vertical_wall(const geometry::Point& center,
+                                                 double size_adjustment)
 {
     return geometry::RectangularHitbox{
         center,
@@ -264,7 +254,8 @@ geometry::RectangularHitbox create_vertical_wall(const geometry::Point& center, 
     };
 }
 
-geometry::RectangularHitbox create_horizontal_wall(const geometry::Point& center, double size_adjustment)
+geometry::RectangularHitbox create_horizontal_wall(const geometry::Point& center,
+                                                   double size_adjustment)
 {
     return geometry::RectangularHitbox{
         center,
@@ -300,8 +291,7 @@ void attach_to_cell(Maze& maze, size_t obstacle_index, int row, int col)
         return;
     }
 
-    maze.cells.at(row * maze.cols + col)
-        .obstacles.push_back(obstacle_index);
+    maze.cells.at(row * maze.cols + col).obstacles.push_back(obstacle_index);
 }
 
 void attach_vertical_wall_cells(Maze& maze, size_t obstacle_index, int r, int c)
@@ -329,14 +319,14 @@ void attach_post_cells(Maze& maze, size_t obstacle_index, int r, int c)
     int base_r{(r / 2) - 1};
     int base_c{(c / 2) - 1};
 
-    attach_to_cell(maze, obstacle_index, base_r,     base_c);
+    attach_to_cell(maze, obstacle_index, base_r, base_c);
     attach_to_cell(maze, obstacle_index, base_r + 1, base_c);
-    attach_to_cell(maze, obstacle_index, base_r,     base_c + 1);
+    attach_to_cell(maze, obstacle_index, base_r, base_c + 1);
     attach_to_cell(maze, obstacle_index, base_r + 1, base_c + 1);
 }
 
 std::optional<double> compute_ray_distance_in_cell(const Maze& maze, const geometry::Ray& ray,
-        int row, int col)
+                                                   int row, int col)
 {
     if (((row < 0) || (row >= maze.rows)) || ((col < 0) || (col >= maze.cols))) {
         return std::nullopt;
@@ -344,10 +334,10 @@ std::optional<double> compute_ray_distance_in_cell(const Maze& maze, const geome
 
     const auto& cell{maze.get_cell(row, col)};
 
-    std::optional<double> closest {std::nullopt};
+    std::optional<double> closest{std::nullopt};
 
     for (size_t idx : cell.obstacles) {
-        const auto& obstacle {maze.obstacles.at(idx)};
+        const auto& obstacle{maze.obstacles.at(idx)};
 
         auto d{geometry::compute_ray_hitbox_distance(ray, obstacle)};
 

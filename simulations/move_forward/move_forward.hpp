@@ -1,7 +1,7 @@
 /*-------------------------------- FILE INFO ---------------------------------*/
 /* Filename           : move_forward.hpp                                      */
 /*                                                                            */
-/* Interface to functions to run micromouse move_forward simulation and       */ 
+/* Interface to functions to run micromouse move_forward simulation and       */
 /* associated config and results analysis helpers                             */
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
@@ -14,8 +14,7 @@
 namespace move_forward
 {
 
-struct Config
-{
+struct Config {
     double dt;
     double motor_speed_scale;
     double motor1_variance;
@@ -38,8 +37,7 @@ struct Config
     int32_t pid_shift;
 };
 
-class ConfigSweeper
-{
+class ConfigSweeper {
 public:
     std::vector<double> dt;
     std::vector<double> motor_speed_scale;
@@ -64,6 +62,7 @@ public:
 
     bool next(void);
     Config value(void) const;
+
 private:
     simulation_common::CommonConfigSweeper sweeper;
     bool initialized_{false};

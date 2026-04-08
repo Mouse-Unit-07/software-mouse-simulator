@@ -8,11 +8,11 @@
 /*============================================================================*/
 /*                               Include Files                                */
 /*============================================================================*/
+#include <CppUTest/TestHarness.h>
+#include <CppUTestExt/MockSupport.h>
 #include <cmath>
 #include "point.hpp"
 #include "ray.hpp"
-#include <CppUTest/TestHarness.h>
-#include <CppUTestExt/MockSupport.h>
 
 using namespace geometry;
 
@@ -67,7 +67,7 @@ TEST(RayTests, TranslateModifiesOrigin)
     double test_dy{20.0};
     test_ray.translate(test_dx, test_dy);
     test_origin.translate(test_dx, test_dy);
-    
+
     CHECK(test_ray.origin == test_origin);
 }
 
@@ -80,7 +80,6 @@ TEST(RayTests, RotateModifiesOrigin)
 
     CHECK(test_ray.origin == test_origin);
 }
-
 
 TEST(RayTests, TranslateDoesNotModifyDirection)
 {
@@ -100,7 +99,6 @@ TEST(RayTests, RotateModifiesDirectionAboutOrigin)
 
     CHECK(test_ray.direction == test_direction);
 }
-
 
 TEST(RayTests, EqualityOperatorOverloaded)
 {

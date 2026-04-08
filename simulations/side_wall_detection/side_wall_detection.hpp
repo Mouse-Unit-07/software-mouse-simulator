@@ -1,7 +1,7 @@
 /*-------------------------------- FILE INFO ---------------------------------*/
 /* Filename           : side_wall_detection.hpp                               */
 /*                                                                            */
-/* Interface to functions to run micromouse side wall detection simulation    */ 
+/* Interface to functions to run micromouse side wall detection simulation    */
 /* and associated config and results analysis helpers                         */
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
@@ -14,14 +14,12 @@
 namespace side_wall_detection
 {
 
-struct DetectionWindow
-{
+struct DetectionWindow {
     int window_start{-1};
     int window_size{0};
 };
 
-struct Config
-{
+struct Config {
     double maze_size_scale;
     double ir_reading_scale;
     double mouse_angle;
@@ -32,8 +30,7 @@ struct Config
     uint32_t reading_threshold;
 };
 
-class ConfigSweeper
-{
+class ConfigSweeper {
 public:
     std::vector<double> maze_size_scale;
     std::vector<double> ir_reading_scale;
@@ -51,36 +48,32 @@ private:
     bool initialized_{false};
 };
 
-struct Result
-{
+struct Result {
     std::vector<bool> wall_absent_at_step;
     std::vector<bool> wall_present_at_step;
 };
 
-struct Trial
-{
+struct Trial {
     Config config;
     Result result;
 };
 
-struct ResultsMetrics
-{
+struct ResultsMetrics {
     DetectionWindow detection_window;
     std::vector<int> correct_detection_count_at_step;
     int total_detection_counts_per_step;
 };
 
-struct CandidateKey
-{
+struct CandidateKey {
     uint32_t threshold;
 
-    bool operator<(const CandidateKey& other) const {
+    bool operator<(const CandidateKey& other) const
+    {
         return threshold < other.threshold;
     }
 };
 
-struct Candidate
-{
+struct Candidate {
     CandidateKey key;
     ResultsMetrics results_metrics;
 };
@@ -102,12 +95,12 @@ Result run_simulation(const Config& cfg);
 ResultsMetrics compute_results_metrics(const std::vector<Result>& results);
 std::vector<Candidate> build_candidates(const std::vector<Trial>& trials);
 std::vector<Candidate> filter_candidates_by_rate(const std::vector<Candidate>& candidates,
-        double required_rate);
+                                                 double required_rate);
 
 void write_analysis_to_file(const std::string& filename, const std::vector<Candidate>& candidates,
-        size_t total_size, double min_correct_rate);
-void run_full_side_wall_detection_experiment(const std::string& filename,
-        ConfigSweeper& sweeper, double min_correct_rate);
+                            size_t total_size, double min_correct_rate);
+void run_full_side_wall_detection_experiment(const std::string& filename, ConfigSweeper& sweeper,
+                                             double min_correct_rate);
 
 } /* side_wall_detection namespace */
 

@@ -8,13 +8,13 @@
 /*============================================================================*/
 /*                               Include Files                                */
 /*============================================================================*/
+#include <CppUTest/TestHarness.h>
+#include <CppUTestExt/MockSupport.h>
 #include <cmath>
 #include "point.hpp"
 #include "ray.hpp"
 #include "rectangular_hitbox.hpp"
 #include "mouse.hpp"
-#include <CppUTest/TestHarness.h>
-#include <CppUTestExt/MockSupport.h>
 
 using namespace mouse;
 

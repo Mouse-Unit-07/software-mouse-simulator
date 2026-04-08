@@ -8,8 +8,8 @@
 /*----------------------------------------------------------------------------*/
 /*                               Include Files                                */
 /*----------------------------------------------------------------------------*/
-#include <stdint.h>
 #include <math.h>
+#include <stdint.h>
 #include "infrared_sensor.h"
 #include "magnetic_encoder.h"
 #include "wheel_motor.h"
@@ -28,18 +28,21 @@ static const double CONSTANT_IR_SCALE = ((2.71272 * (2.2 / 3.2)) / 1.8) * 1024.0
 
 static const double MAX_MOTOR_RPM = 4900.0;
 static const double ENCODER_EVENTS_PER_REVOLUTION = 60.8077;
-static double MAX_ENCODER_TICKS_PER_SECOND = (MAX_MOTOR_RPM / 60.0) * (ENCODER_EVENTS_PER_REVOLUTION / 4);
+static double MAX_ENCODER_TICKS_PER_SECOND =
+    (MAX_MOTOR_RPM / 60.0) * (ENCODER_EVENTS_PER_REVOLUTION / 4);
 
 static const double GEAR_RATIO = 13.0 / 44.0;
 static const double WHEEL_DIAMETER_MM = 32.0;
 static const double WHEEL_BASE_MM = 87.56;
 static double WHEEL_CIRCUMFERENCE_MM = M_PI * WHEEL_DIAMETER_MM;
 
-static double const ENCODER_TICKS_PER_REVOLUTION = (ENCODER_EVENTS_PER_REVOLUTION / 4) * (1 / GEAR_RATIO);
+static double const ENCODER_TICKS_PER_REVOLUTION =
+    (ENCODER_EVENTS_PER_REVOLUTION / 4) * (1 / GEAR_RATIO);
 
 /* these two variables need to be accessible for movement simulation */
 double ENCODER_TICKS_PER_MILLIMETER = ENCODER_TICKS_PER_REVOLUTION / (M_PI * WHEEL_DIAMETER_MM);
-double ENCODER_TICKS_PER_ROTATION_ANGLE_RADIANS = (ENCODER_TICKS_PER_REVOLUTION * WHEEL_BASE_MM) / (2 * M_PI * WHEEL_DIAMETER_MM);
+double ENCODER_TICKS_PER_ROTATION_ANGLE_RADIANS =
+    (ENCODER_TICKS_PER_REVOLUTION * WHEEL_BASE_MM) / (2 * M_PI * WHEEL_DIAMETER_MM);
 
 static uint32_t mock_ir_1_sensor_reading = 0u;
 static uint32_t mock_ir_2_sensor_reading = 0u;
@@ -117,8 +120,10 @@ void update_ir_4_sensor_reading(double distance)
 void update_encoder_1_ticks(double time_elapsed_sec)
 {
     double encoder_ticks_per_second = MAX_ENCODER_TICKS_PER_SECOND * (wheel_motor_1_speed / 255.0)
-        * motor_speed_scale * (1.0 + motor_1_variance) * motor_slip_factor;
-    double change_in_ticks = (encoder_ticks_per_second * time_elapsed_sec) * wheel_motor_1_direction;
+                                      * motor_speed_scale * (1.0 + motor_1_variance)
+                                      * motor_slip_factor;
+    double change_in_ticks =
+        (encoder_ticks_per_second * time_elapsed_sec) * wheel_motor_1_direction;
 
     encoder_1_ticks += change_in_ticks;
 }
@@ -126,8 +131,10 @@ void update_encoder_1_ticks(double time_elapsed_sec)
 void update_encoder_2_ticks(double time_elapsed_sec)
 {
     double encoder_ticks_per_second = MAX_ENCODER_TICKS_PER_SECOND * (wheel_motor_2_speed / 255.0)
-        * motor_speed_scale * (1.0 + motor_2_variance) * motor_slip_factor;
-    double change_in_ticks = (encoder_ticks_per_second * time_elapsed_sec) * wheel_motor_2_direction;
+                                      * motor_speed_scale * (1.0 + motor_2_variance)
+                                      * motor_slip_factor;
+    double change_in_ticks =
+        (encoder_ticks_per_second * time_elapsed_sec) * wheel_motor_2_direction;
 
     encoder_2_ticks += change_in_ticks;
 }
@@ -164,28 +171,18 @@ void set_wheel_base_scale(double scale)
 
 struct mouse_delta compute_mouse_delta(double current_mouse_angle, double time_elapsed_sec)
 {
-    double motor_1_rpm = (wheel_motor_1_speed / 255.0) \
-        * MAX_MOTOR_RPM \
-        * motor_speed_scale \
-        * (1.0 + motor_1_variance) \
-        * wheel_motor_1_direction;
+    double motor_1_rpm = (wheel_motor_1_speed / 255.0) * MAX_MOTOR_RPM * motor_speed_scale
+                         * (1.0 + motor_1_variance) * wheel_motor_1_direction;
 
-    double motor_2_rpm = (wheel_motor_2_speed / 255.0) \
-        * MAX_MOTOR_RPM \
-        * motor_speed_scale \
-        * (1.0 + motor_2_variance) \
-        * wheel_motor_2_direction;
+    double motor_2_rpm = (wheel_motor_2_speed / 255.0) * MAX_MOTOR_RPM * motor_speed_scale
+                         * (1.0 + motor_2_variance) * wheel_motor_2_direction;
 
     double wheel_1_rpm = motor_1_rpm * GEAR_RATIO;
     double wheel_2_rpm = motor_2_rpm * GEAR_RATIO;
 
-    double velocity_1 = wheel_1_rpm \
-        * (WHEEL_CIRCUMFERENCE_MM * wheel_circumference_scale) \
-        / 60.0;
+    double velocity_1 = wheel_1_rpm * (WHEEL_CIRCUMFERENCE_MM * wheel_circumference_scale) / 60.0;
 
-    double velocity_2 = wheel_2_rpm \
-        * (WHEEL_CIRCUMFERENCE_MM * wheel_circumference_scale) \
-        / 60.0;
+    double velocity_2 = wheel_2_rpm * (WHEEL_CIRCUMFERENCE_MM * wheel_circumference_scale) / 60.0;
 
     double combined_velocity = (velocity_1 + velocity_2) / 2.0;
 
