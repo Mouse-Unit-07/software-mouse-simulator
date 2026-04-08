@@ -88,6 +88,10 @@ ResultsMetrics compute_results_metrics(const std::vector<Result>& results);
 std::vector<Candidate> build_candidates(const std::vector<Trial>& trials);
 std::vector<Candidate> sort_candidates_by_rate(const std::vector<Candidate>& candidates);
 
+void write_analysis_to_file(const std::string& filename,
+        const std::vector<Candidate>& candidates, size_t total_size);
+void run_full_front_wall_detection_experiment(const std::string& filename, ConfigSweeper& sweeper);
+
 } /* front_wall_detection namespace */
 
 #endif /* FRONT_WALL_DETECTION_HPP_ */

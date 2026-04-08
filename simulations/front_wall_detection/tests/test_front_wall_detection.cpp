@@ -352,3 +352,38 @@ TEST(FrontWallDetectionTests, SortCandidatesTieBreaksOnThreshold)
     CHECK_EQUAL(100u, sorted.at(0).key.threshold);
     CHECK_EQUAL(200u, sorted.at(1).key.threshold);
 }
+
+TEST(FrontWallDetectionTests, RunMinimalSampleSimulation)
+{
+    ConfigSweeper sweeper{create_no_variance_sweeper()};
+
+    const std::string filename {"test_minimal_output.txt"};
+
+    run_full_front_wall_detection_experiment(filename, sweeper);
+}
+
+IGNORE_TEST(FrontWallDetectionTests, RunFullSimulationAndWriteResultsToFile)
+{
+    ConfigSweeper sweeper;
+
+    sweeper.ir_reading_scale = simulation_common::generate_sweep_values(0.90, 1.1, 5);
+    sweeper.mouse_angle = simulation_common::generate_sweep_values(-M_PI / 4, M_PI / 4, 9);
+    sweeper.horizontal_position_variance = simulation_common::generate_sweep_values(-0.9, 0.9, 5);
+    sweeper.vertical_position_variance = simulation_common::generate_sweep_values(-0.9, 0.9, 5);
+    sweeper.reading_threshold = simulation_common::generate_sweep_values<uint32_t>(0, 1024, 1025);
+
+    run_full_front_wall_detection_experiment("test_full_output.txt", sweeper);
+}
+
+IGNORE_TEST(FrontWallDetectionTests, RunFullSimulationForIdealThreshold)
+{
+    ConfigSweeper sweeper;
+
+    sweeper.ir_reading_scale = simulation_common::generate_sweep_values(0.95, 1.05, 3);
+    sweeper.mouse_angle = simulation_common::generate_sweep_values(-M_PI / 8, M_PI / 8, 3);
+    sweeper.horizontal_position_variance = simulation_common::generate_sweep_values(-0.5, 0.5, 3);
+    sweeper.vertical_position_variance = simulation_common::generate_sweep_values(-0.5, 0.5, 3);
+    sweeper.reading_threshold = {840};
+
+    run_full_front_wall_detection_experiment("test_ideal_output.txt", sweeper);
+}

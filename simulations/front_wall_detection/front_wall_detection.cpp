@@ -24,6 +24,8 @@ extern "C"
 #include <vector>
 #include <string>
 #include <map>
+#include <iomanip>
+#include <fstream>
 #include <optional>
 #include <algorithm>
 #include "point.hpp"
@@ -46,6 +48,9 @@ void prepare_mock_for_front_wall_detection(const Config& cfg, const maze::Maze& 
 std::optional<double> compute_ir_sensor_distance(const maze::Maze& maze,
         const mouse::Mouse& mouse, const geometry::Ray& ir_sensor);
 uint32_t scale_and_clamp_ir_sensor_reading(uint32_t reading, const Config& cfg);
+
+void write_summary(std::ofstream& out, const std::vector<Candidate>& candidates, size_t total_size);
+void write_candidates(std::ofstream& out, const std::vector<Candidate>& candidates);
 
 } /* unnamed namespace */
 
@@ -224,6 +229,40 @@ std::vector<Candidate> sort_candidates_by_rate(const std::vector<Candidate>& can
     return out;
 }
 
+void write_analysis_to_file(const std::string& filename,
+        const std::vector<Candidate>& candidates, size_t total_size)
+{
+    std::ofstream out(filename);
+    if (!out.is_open()) {
+        throw std::runtime_error("Failed to open output file: " + filename);
+    }
+    out << std::fixed << std::setprecision(3);
+
+    write_summary(out, candidates, total_size);
+    
+    out << "\n=== ALL CANDIDATES ===\n";
+    write_candidates(out, candidates);
+}
+
+void run_full_front_wall_detection_experiment(const std::string& filename, ConfigSweeper& sweeper)
+{
+    std::vector<Trial> trials;
+    std::vector<Result> all_results;
+
+    while (sweeper.next()) {
+        Config cfg {sweeper.value()};
+
+        auto result{run_simulation(cfg)};
+
+        trials.push_back({cfg, result});
+        all_results.push_back(result);
+    }
+
+    auto sorted_candidates{sort_candidates_by_rate(build_candidates(trials))};
+
+    write_analysis_to_file(filename, sorted_candidates, all_results.size());
+}
+
 } /* front_wall_detection namespace */
 
 /*----------------------------------------------------------------------------*/
@@ -269,6 +308,30 @@ uint32_t scale_and_clamp_ir_sensor_reading(uint32_t reading, const Config& cfg)
 {
     long rounded_reading{std::lround(static_cast<double>(reading) * cfg.ir_reading_scale)};
     return static_cast<uint32_t>(std::clamp(rounded_reading, 0L, 1024L));
+}
+
+void write_summary(std::ofstream& out, const std::vector<Candidate>& candidates, size_t total_size)
+{
+    out << "=== SUMMARY ===\n";
+    out << "Total Trials : " << total_size << "\n";
+    out << "Candidates   : " << candidates.size() << "\n\n";
+}
+
+void write_candidates(std::ofstream& out, const std::vector<Candidate>& candidates)
+{
+    out << std::left
+        << std::setw(12) << "Threshold"
+        << std::setw(10) << "Absent"
+        << std::setw(10) << "Present"
+        << "\n";
+
+    for (const auto& c : candidates) {
+        out << std::left
+            << std::setw(12) << c.key.threshold
+            << std::setw(10) << c.results_metrics.absent_wall_identification_rate
+            << std::setw(10) << c.results_metrics.present_wall_identification_rate
+            << "\n";
+    }
 }
 
 } /* unnamed namespace */
