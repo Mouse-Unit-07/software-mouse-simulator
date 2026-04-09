@@ -41,8 +41,16 @@ void attach_vertical_wall_cells(Maze& maze, size_t obstacle_index, int r, int c)
 void attach_horizontal_wall_cells(Maze& maze, size_t obstacle_index, int r, int c);
 void attach_post_cells(Maze& maze, size_t obstacle_index, int r, int c);
 
+std::optional<std::pair<int, int>> get_cell_from_point(const Maze& maze, const geometry::Point& p);
+bool does_hitbox_collide_in_vicinity(const Maze& maze, const geometry::RectangularHitbox& hitbox,
+                                     int row, int col);
 std::optional<double> compute_ray_distance_in_cell(const Maze& maze, const geometry::Ray& ray,
                                                    int row, int col);
+std::optional<double> compute_ray_distance_in_vicinity(const Maze& maze, const geometry::Ray& ray,
+                                                       int row, int col);
+std::optional<double> compute_ir_sensor_distance(const maze::Maze& maze,
+                                                 const geometry::Point& point,
+                                                 const geometry::Ray& ir_sensor);
 
 } /* unnamed namespace */
 
@@ -113,72 +121,39 @@ Maze build_maze_from_ascii(const std::vector<std::string>& ascii, double obstacl
     return maze;
 }
 
-std::optional<std::pair<int, int>> get_cell_from_point(const Maze& maze, const geometry::Point& p)
+double compute_ray_distance_in_closed_space(const maze::Maze& maze, const geometry::Point& point,
+                                            const geometry::Ray& ir_sensor)
 {
-    const double cell{maze.cell_size};
-
-    if ((cell <= 0.0) || (p.x < 0.0) || (p.y < 0.0)) {
-        return std::nullopt;
+    auto potential_distance{compute_ir_sensor_distance(maze, point, ir_sensor)};
+    if (potential_distance.has_value()) {
+        return *potential_distance;
+    } else {
+        throw std::runtime_error("No sensor reading in closed space");
     }
-
-    const int col{static_cast<int>(p.x / cell)};
-    const int row{static_cast<int>(p.y / cell)};
-
-    if ((row < 0) || (row >= maze.rows)) {
-        return std::nullopt;
-    }
-
-    if ((col < 0) || (col >= maze.cols)) {
-        return std::nullopt;
-    }
-
-    return std::make_pair(row, col);
 }
 
-std::optional<double> compute_ray_distance_in_vicinity(const Maze& maze, const geometry::Ray& ray,
-                                                       int row, int col)
+double compute_ray_distance_in_open_space(const maze::Maze& maze, const geometry::Point& point,
+                                          const geometry::Ray& ir_sensor)
 {
-    std::optional<double> closest{std::nullopt};
-
-    for (int dr{-1}; dr <= 1; dr++) {
-        for (int dc{-1}; dc <= 1; dc++) {
-            auto d{compute_ray_distance_in_cell(maze, ray, row + dr, col + dc)};
-
-            if (!d) {
-                continue;
-            }
-
-            if (!closest || (*d < *closest)) {
-                closest = d;
-            }
-        }
+    auto potential_distance{compute_ir_sensor_distance(maze, point, ir_sensor)};
+    if (potential_distance.has_value()) {
+        return *potential_distance;
+    } else {
+        return 0;
     }
-
-    return closest;
 }
 
-bool does_hitbox_collide_in_vicinity(const Maze& maze, const geometry::RectangularHitbox& hitbox,
-                                     int row, int col)
+bool does_hitbox_collide_with_maze(const maze::Maze& maze,
+                                   const geometry::RectangularHitbox& hitbox)
 {
-    for (int dr{-1}; dr <= 1; dr++) {
-        for (int dc{-1}; dc <= 1; dc++) {
-            int r{row + dr};
-            int c{col + dc};
-
-            if (((r < 0) || (r >= maze.rows)) || ((c < 0) || (c >= maze.cols))) {
-                continue;
-            }
-
-            const auto& cell{maze.get_cell(r, c)};
-
-            for (size_t idx : cell.obstacles) {
-                const auto& obstacle{maze.obstacles.at(idx)};
-
-                if (geometry::do_hitboxes_overlap(hitbox, obstacle)) {
-                    return true;
-                }
-            }
+    auto rc{get_cell_from_point(maze, hitbox.center)};
+    if (rc) {
+        auto [r, c]{*rc};
+        if (does_hitbox_collide_in_vicinity(maze, hitbox, r, c)) {
+            return true;
         }
+    } else {
+        return true;
     }
 
     return false;
@@ -325,6 +300,55 @@ void attach_post_cells(Maze& maze, size_t obstacle_index, int r, int c)
     attach_to_cell(maze, obstacle_index, base_r + 1, base_c + 1);
 }
 
+std::optional<std::pair<int, int>> get_cell_from_point(const Maze& maze, const geometry::Point& p)
+{
+    const double cell{maze.cell_size};
+
+    if ((cell <= 0.0) || (p.x < 0.0) || (p.y < 0.0)) {
+        return std::nullopt;
+    }
+
+    const int col{static_cast<int>(p.x / cell)};
+    const int row{static_cast<int>(p.y / cell)};
+
+    if ((row < 0) || (row >= maze.rows)) {
+        return std::nullopt;
+    }
+
+    if ((col < 0) || (col >= maze.cols)) {
+        return std::nullopt;
+    }
+
+    return std::make_pair(row, col);
+}
+
+bool does_hitbox_collide_in_vicinity(const Maze& maze, const geometry::RectangularHitbox& hitbox,
+                                     int row, int col)
+{
+    for (int dr{-1}; dr <= 1; dr++) {
+        for (int dc{-1}; dc <= 1; dc++) {
+            int r{row + dr};
+            int c{col + dc};
+
+            if (((r < 0) || (r >= maze.rows)) || ((c < 0) || (c >= maze.cols))) {
+                continue;
+            }
+
+            const auto& cell{maze.get_cell(r, c)};
+
+            for (size_t idx : cell.obstacles) {
+                const auto& obstacle{maze.obstacles.at(idx)};
+
+                if (geometry::do_hitboxes_overlap(hitbox, obstacle)) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
 std::optional<double> compute_ray_distance_in_cell(const Maze& maze, const geometry::Ray& ray,
                                                    int row, int col)
 {
@@ -351,6 +375,46 @@ std::optional<double> compute_ray_distance_in_cell(const Maze& maze, const geome
     }
 
     return closest;
+}
+
+std::optional<double> compute_ray_distance_in_vicinity(const Maze& maze, const geometry::Ray& ray,
+                                                       int row, int col)
+{
+    std::optional<double> closest{std::nullopt};
+
+    for (int dr{-1}; dr <= 1; dr++) {
+        for (int dc{-1}; dc <= 1; dc++) {
+            auto d{compute_ray_distance_in_cell(maze, ray, row + dr, col + dc)};
+
+            if (!d) {
+                continue;
+            }
+
+            if (!closest || (*d < *closest)) {
+                closest = d;
+            }
+        }
+    }
+
+    return closest;
+}
+
+std::optional<double> compute_ir_sensor_distance(const maze::Maze& maze,
+                                                 const geometry::Point& point,
+                                                 const geometry::Ray& ir_sensor)
+{
+    std::optional<double> distance{std::nullopt};
+
+    auto potential_rc{get_cell_from_point(maze, point)};
+    if (potential_rc) {
+        auto [r, c]{*potential_rc};
+        auto potential_distance{compute_ray_distance_in_vicinity(maze, ir_sensor, r, c)};
+        if (potential_distance.has_value()) {
+            distance = *potential_distance;
+        }
+    }
+
+    return distance;
 }
 
 } /* unnamed namespace */

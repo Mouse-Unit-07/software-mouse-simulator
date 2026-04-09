@@ -45,13 +45,13 @@ namespace maze
 
 Maze build_maze_from_ascii(const std::vector<std::string>& ascii, double obstacle_size_adjustment);
 
-std::optional<std::pair<int, int>> get_cell_from_point(const Maze& maze, const geometry::Point& p);
+double compute_ray_distance_in_closed_space(const maze::Maze& maze, const geometry::Point& point,
+                                            const geometry::Ray& ir_sensor);
+double compute_ray_distance_in_open_space(const maze::Maze& maze, const geometry::Point& point,
+                                          const geometry::Ray& ir_sensor);
 
-std::optional<double> compute_ray_distance_in_vicinity(const Maze& maze, const geometry::Ray& ray,
-                                                       int row, int col);
-
-bool does_hitbox_collide_in_vicinity(const Maze& maze, const geometry::RectangularHitbox& hitbox,
-                                     int row, int col);
+bool does_hitbox_collide_with_maze(const maze::Maze& maze,
+                                   const geometry::RectangularHitbox& hitbox);
 
 } /* maze namespace */
 

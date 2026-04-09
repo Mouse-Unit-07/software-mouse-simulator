@@ -426,101 +426,7 @@ TEST(MazeTests, AdjustedWallsAndPostsTouch)
     CHECK(touching_count == 12);
 }
 
-TEST(MazeTests, MazeRowAndColumnComputableFromRawCoordinates)
-{
-    std::vector<std::string> ascii
-    {
-        "+-+ +",
-        "|S|  ",
-        "+-+-+",
-        "  |  ",
-        "+ +-+"
-    };
-    Maze maze{build_maze_from_ascii(ascii, 0.0)};
-
-    auto test_1{get_cell_from_point(maze, maze.mouse_start)};
-    auto test_2{get_cell_from_point(
-        maze, geometry::Point{maze.mouse_start.x + CELL_SIZE, maze.mouse_start.y})};
-    auto test_3{get_cell_from_point(
-        maze, geometry::Point{maze.mouse_start.x, maze.mouse_start.y + CELL_SIZE})};
-    auto test_4{get_cell_from_point(
-        maze, geometry::Point{maze.mouse_start.x + CELL_SIZE, maze.mouse_start.y + CELL_SIZE})};
-
-    CHECK(test_1.has_value());
-    CHECK(test_2.has_value());
-    CHECK(test_3.has_value());
-    CHECK(test_4.has_value());
-
-    auto [row_1, col_1]{*test_1};
-    auto [row_2, col_2]{*test_2};
-    auto [row_3, col_3]{*test_3};
-    auto [row_4, col_4]{*test_4};
-    CHECK((row_1 == 0) && (col_1 == 0));
-    CHECK((row_2 == 0) && (col_2 == 1));
-    CHECK((row_3 == 1) && (col_3 == 0));
-    CHECK((row_4 == 1) && (col_4 == 1));
-}
-
-TEST(MazeTests, MazeRowAndColumnComputableFromAdjustedCoordinates)
-{
-    double adjustment{20.0};
-    std::vector<std::string> ascii
-    {
-        "+-+ +",
-        "|S|  ",
-        "+-+-+",
-        "  |  ",
-        "+ +-+"
-    };
-    Maze maze{build_maze_from_ascii(ascii, adjustment)};
-
-    double new_cell_size{CELL_SIZE + adjustment * 2};
-    auto test_1{get_cell_from_point(maze, maze.mouse_start)};
-    auto test_2{get_cell_from_point(
-        maze, geometry::Point{maze.mouse_start.x + new_cell_size, maze.mouse_start.y})};
-    auto test_3{get_cell_from_point(
-        maze, geometry::Point{maze.mouse_start.x, maze.mouse_start.y + new_cell_size})};
-    auto test_4{get_cell_from_point(
-        maze, geometry::Point{maze.mouse_start.x + new_cell_size,
-                              maze.mouse_start.y + new_cell_size})};
-
-    CHECK(test_1.has_value());
-    CHECK(test_2.has_value());
-    CHECK(test_3.has_value());
-    CHECK(test_4.has_value());
-
-    auto [row_1, col_1]{*test_1};
-    auto [row_2, col_2]{*test_2};
-    auto [row_3, col_3]{*test_3};
-    auto [row_4, col_4]{*test_4};
-    CHECK((row_1 == 0) && (col_1 == 0));
-    CHECK((row_2 == 0) && (col_2 == 1));
-    CHECK((row_3 == 1) && (col_3 == 0));
-    CHECK((row_4 == 1) && (col_4 == 1));
-}
-
-TEST(MazeTests, NoMazeRowAndColumnFromOutOfBoundsCoordinates)
-{
-    std::vector<std::string> ascii
-    {
-        "+-+ +",
-        "|S|  ",
-        "+-+-+",
-        "  |  ",
-        "+ +-+"
-    };
-    Maze maze{build_maze_from_ascii(ascii, 0.0)};
-
-    auto test_1{get_cell_from_point(
-        maze, geometry::Point{maze.mouse_start.x - CELL_SIZE, maze.mouse_start.y})};
-    auto test_2{get_cell_from_point(
-        maze, geometry::Point{maze.mouse_start.x, maze.mouse_start.y + (CELL_SIZE * 2)})};
-
-    CHECK(!test_1.has_value());
-    CHECK(!test_2.has_value());
-}
-
-TEST(MazeTests, FourRayDistancesComputedInSingleCell)
+TEST(MazeTests, ClosedSpaceRayAlwaysReturnsDistance)
 {
     std::vector<std::string> ascii
     {
@@ -534,25 +440,25 @@ TEST(MazeTests, FourRayDistancesComputedInSingleCell)
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
 
     for (int i{1}; i < 4; i++) {
-        auto result_1{compute_ray_distance_in_vicinity(maze, mouse.ir_1_sensor, 0, 0)};
-        auto result_2{compute_ray_distance_in_vicinity(maze, mouse.ir_2_sensor, 0, 0)};
-        auto result_3{compute_ray_distance_in_vicinity(maze, mouse.ir_3_sensor, 0, 0)};
-        auto result_4{compute_ray_distance_in_vicinity(maze, mouse.ir_4_sensor, 0, 0)};
+        double distance_1{
+            compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_1_sensor)};
+        double distance_2{
+            compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_2_sensor)};
+        double distance_3{
+            compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_3_sensor)};
+        double distance_4{
+            compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_4_sensor)};
 
-        CHECK(result_1.has_value());
-        CHECK(result_2.has_value());
-        CHECK(result_3.has_value());
-        CHECK(result_4.has_value());
-        CHECK(*result_1 > 0.0);
-        CHECK(*result_2 > 0.0);
-        CHECK(*result_3 > 0.0);
-        CHECK(*result_4 > 0.0);
+        CHECK(distance_1 > 0.0);
+        CHECK(distance_2 > 0.0);
+        CHECK(distance_3 > 0.0);
+        CHECK(distance_4 > 0.0);
 
         mouse.rotate((M_PI / 4) * i);
     }
 }
 
-TEST(MazeTests, FourRayDistancesComputedInClosedThreeByThree)
+TEST(MazeTests, RaysReturnPositiveDistancesInClosedThreeByThree)
 {
     std::vector<std::string> ascii
     {
@@ -569,76 +475,26 @@ TEST(MazeTests, FourRayDistancesComputedInClosedThreeByThree)
     mouse::Mouse mouse;
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
 
-    auto mouse_row_and_column{get_cell_from_point(maze, maze.mouse_start)};
-    auto [mouse_row, mouse_col]{*mouse_row_and_column};
-
     for (int i{1}; i < 4; i++) {
-        auto result_1{
-            compute_ray_distance_in_vicinity(maze, mouse.ir_1_sensor, mouse_row, mouse_col)};
-        auto result_2{
-            compute_ray_distance_in_vicinity(maze, mouse.ir_2_sensor, mouse_row, mouse_col)};
-        auto result_3{
-            compute_ray_distance_in_vicinity(maze, mouse.ir_3_sensor, mouse_row, mouse_col)};
-        auto result_4{
-            compute_ray_distance_in_vicinity(maze, mouse.ir_4_sensor, mouse_row, mouse_col)};
+        double distance_1{
+            compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_1_sensor)};
+        double distance_2{
+            compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_2_sensor)};
+        double distance_3{
+            compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_3_sensor)};
+        double distance_4{
+            compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_4_sensor)};
 
-        CHECK(result_1.has_value());
-        CHECK(result_2.has_value());
-        CHECK(result_3.has_value());
-        CHECK(result_4.has_value());
-        CHECK(*result_1 > 0.0);
-        CHECK(*result_2 > 0.0);
-        CHECK(*result_3 > 0.0);
-        CHECK(*result_4 > 0.0);
+        CHECK(distance_1 > 0.0);
+        CHECK(distance_2 > 0.0);
+        CHECK(distance_3 > 0.0);
+        CHECK(distance_4 > 0.0);
 
         mouse.rotate((M_PI / 4) * i);
     }
 }
 
-TEST(MazeTests, AllRayDistancesAreShortestDistance)
-{
-    std::vector<std::string> ascii
-    {
-        "+-+-+-+",
-        "|     |",
-        "+ +-+ +",
-        "| |S| |",
-        "+ +-+ +",
-        "|     |",
-        "+-+-+-+",
-    };
-    Maze maze{build_maze_from_ascii(ascii, 0.0)};
-
-    mouse::Mouse mouse;
-    mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
-
-    auto mouse_row_and_column{get_cell_from_point(maze, maze.mouse_start)};
-    auto [mouse_row, mouse_col]{*mouse_row_and_column};
-
-    for (int i{1}; i < 4; i++) {
-        auto result_1{
-            compute_ray_distance_in_vicinity(maze, mouse.ir_1_sensor, mouse_row, mouse_col)};
-        auto result_2{
-            compute_ray_distance_in_vicinity(maze, mouse.ir_2_sensor, mouse_row, mouse_col)};
-        auto result_3{
-            compute_ray_distance_in_vicinity(maze, mouse.ir_3_sensor, mouse_row, mouse_col)};
-        auto result_4{
-            compute_ray_distance_in_vicinity(maze, mouse.ir_4_sensor, mouse_row, mouse_col)};
-
-        CHECK(result_1.has_value());
-        CHECK(result_2.has_value());
-        CHECK(result_3.has_value());
-        CHECK(result_4.has_value());
-        CHECK(*result_1 < maze.cell_size);
-        CHECK(*result_2 < maze.cell_size);
-        CHECK(*result_3 < maze.cell_size);
-        CHECK(*result_4 < maze.cell_size);
-
-        mouse.rotate((M_PI / 4) * i);
-    }
-}
-
-TEST(MazeTests, NoRayDistancesComputedInEmptyThreeByThree)
+TEST(MazeTests, OpenSpaceReturnsZeroWhenNoHit)
 {
     std::vector<std::string> ascii
     {
@@ -655,38 +511,62 @@ TEST(MazeTests, NoRayDistancesComputedInEmptyThreeByThree)
     mouse::Mouse mouse;
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
 
-    auto mouse_row_and_column{get_cell_from_point(maze, maze.mouse_start)};
-    auto [mouse_row, mouse_col]{*mouse_row_and_column};
-
     for (int i{1}; i < 4; i++) {
-        auto result_1{
-            compute_ray_distance_in_vicinity(maze, mouse.ir_1_sensor, mouse_row, mouse_col)};
-        auto result_2{
-            compute_ray_distance_in_vicinity(maze, mouse.ir_2_sensor, mouse_row, mouse_col)};
-        auto result_3{
-            compute_ray_distance_in_vicinity(maze, mouse.ir_3_sensor, mouse_row, mouse_col)};
-        auto result_4{
-            compute_ray_distance_in_vicinity(maze, mouse.ir_4_sensor, mouse_row, mouse_col)};
+        double distance_1{
+            compute_ray_distance_in_open_space(maze, mouse.hitbox.center, mouse.ir_1_sensor)};
+        double distance_2{
+            compute_ray_distance_in_open_space(maze, mouse.hitbox.center, mouse.ir_2_sensor)};
+        double distance_3{
+            compute_ray_distance_in_open_space(maze, mouse.hitbox.center, mouse.ir_3_sensor)};
+        double distance_4{
+            compute_ray_distance_in_open_space(maze, mouse.hitbox.center, mouse.ir_4_sensor)};
 
-        CHECK(!(result_1.has_value()));
-        CHECK(!(result_2.has_value()));
-        CHECK(!(result_3.has_value()));
-        CHECK(!(result_4.has_value()));
+        DOUBLES_EQUAL(0.0, distance_1, FLOAT_TOLERANCE);
+        DOUBLES_EQUAL(0.0, distance_2, FLOAT_TOLERANCE);
+        DOUBLES_EQUAL(0.0, distance_3, FLOAT_TOLERANCE);
+        DOUBLES_EQUAL(0.0, distance_4, FLOAT_TOLERANCE);
 
         mouse.rotate((M_PI / 4) * i);
     }
 }
 
-TEST(MazeTests, MouseAtCellCenterNoCollision)
+TEST(MazeTests, ClosedSpaceThrowsWhenNoHit)
+{
+    std::vector<std::string> ascii
+    {
+        "       ",
+        "       ",
+        "       ",
+        "   S   ",
+        "       ",
+        "       ",
+        "       ",
+    };
+    Maze maze{build_maze_from_ascii(ascii, 0.0)};
+
+    mouse::Mouse mouse;
+    mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
+
+    CHECK_THROWS(std::runtime_error, compute_ray_distance_in_closed_space(maze, mouse.hitbox.center,
+                                                                          mouse.ir_1_sensor));
+    CHECK_THROWS(std::runtime_error, compute_ray_distance_in_closed_space(maze, mouse.hitbox.center,
+                                                                          mouse.ir_2_sensor));
+    CHECK_THROWS(std::runtime_error, compute_ray_distance_in_closed_space(maze, mouse.hitbox.center,
+                                                                          mouse.ir_3_sensor));
+    CHECK_THROWS(std::runtime_error, compute_ray_distance_in_closed_space(maze, mouse.hitbox.center,
+                                                                          mouse.ir_4_sensor));
+}
+
+TEST(MazeTests, RayReturnsNearestObstacleDistance)
 {
     std::vector<std::string> ascii
     {
         "+-+-+-+",
-        "| | | |",
-        "+-+-+-+",
+        "|     |",
+        "+ +-+ +",
         "| |S| |",
-        "+-+-+-+",
-        "| | | |",
+        "+ +-+ +",
+        "|     |",
         "+-+-+-+",
     };
     Maze maze{build_maze_from_ascii(ascii, 0.0)};
@@ -694,9 +574,72 @@ TEST(MazeTests, MouseAtCellCenterNoCollision)
     mouse::Mouse mouse;
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
 
-    auto [row, col]{*(get_cell_from_point(maze, maze.mouse_start))};
+    for (int i{1}; i < 4; i++) {
+        double distance_1{
+            compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_1_sensor)};
+        double distance_2{
+            compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_2_sensor)};
+        double distance_3{
+            compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_3_sensor)};
+        double distance_4{
+            compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_4_sensor)};
 
-    CHECK(!does_hitbox_collide_in_vicinity(maze, mouse.hitbox, row, col));
+        CHECK(distance_1 < maze.cell_size);
+        CHECK(distance_2 < maze.cell_size);
+        CHECK(distance_3 < maze.cell_size);
+        CHECK(distance_4 < maze.cell_size);
+
+        mouse.rotate((M_PI / 4) * i);
+    }
+}
+
+TEST(MazeTests, HitboxAtCenterDoesNotCollide)
+{
+    std::vector<std::string> ascii
+    {
+        "+-+",
+        "|S|",
+        "+-+"
+    };
+    Maze maze{build_maze_from_ascii(ascii, 0.0)};
+
+    mouse::Mouse mouse;
+    mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
+
+    CHECK(!does_hitbox_collide_with_maze(maze, mouse.hitbox));
+}
+
+TEST(MazeTests, HitboxCollidesWhenMovedIntoWall)
+{
+    std::vector<std::string> ascii
+    {
+        "+-+",
+        "|S|",
+        "+-+"
+    };
+    Maze maze{build_maze_from_ascii(ascii, 0.0)};
+
+    mouse::Mouse mouse;
+    mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
+    mouse.translate(maze.cell_size / 2, 0.0);
+
+    CHECK(does_hitbox_collide_with_maze(maze, mouse.hitbox));
+}
+
+TEST(MazeTests, HitboxOutsideMazeIsCollision)
+{
+    std::vector<std::string> ascii
+    {
+        "+-+",
+        "|S|",
+        "+-+"
+    };
+    Maze maze{build_maze_from_ascii(ascii, 0.0)};
+
+    mouse::Mouse mouse;
+    mouse.translate(maze.cell_size * 5, maze.cell_size * 5);
+
+    CHECK(does_hitbox_collide_with_maze(maze, mouse.hitbox));
 }
 
 TEST(MazeTests, MouseMovingNearWallsNoCollision)
@@ -721,19 +664,19 @@ TEST(MazeTests, MouseMovingNearWallsNoCollision)
         - 1};
 
     mouse.translate(0.0, vertical_distance_to_cell_wall);
-    CHECK(!does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 0.0, 0.0));
+    CHECK(!does_hitbox_collide_with_maze(maze, mouse.hitbox));
     mouse.translate(0.0, -vertical_distance_to_cell_wall);
 
     mouse.translate(-horizontal_distance_to_cell_wall, 0.0);
-    CHECK(!does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 0.0, 0.0));
+    CHECK(!does_hitbox_collide_with_maze(maze, mouse.hitbox));
     mouse.translate(horizontal_distance_to_cell_wall, 0.0);
 
     mouse.translate(-0.0, -vertical_distance_to_cell_wall);
-    CHECK(!does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 0.0, 0.0));
+    CHECK(!does_hitbox_collide_with_maze(maze, mouse.hitbox));
     mouse.translate(0.0, vertical_distance_to_cell_wall);
 
     mouse.translate(horizontal_distance_to_cell_wall, 0.0);
-    CHECK(!does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 0.0, 0.0));
+    CHECK(!does_hitbox_collide_with_maze(maze, mouse.hitbox));
     mouse.translate(-horizontal_distance_to_cell_wall, 0.0);
 }
 
@@ -757,19 +700,19 @@ TEST(MazeTests, MouseMovingJustOntoWallsCausesCollision)
         (distance_to_wall_center - (mouse.hitbox.vertical_size / 2) - (OFFICIAL_POST_SIZE / 2))};
 
     mouse.translate(0.0, vertical_distance_to_cell_wall);
-    CHECK(does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 0.0, 0.0));
+    CHECK(does_hitbox_collide_with_maze(maze, mouse.hitbox));
     mouse.translate(0.0, -vertical_distance_to_cell_wall);
 
     mouse.translate(-horizontal_distance_to_cell_wall, 0.0);
-    CHECK(does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 0.0, 0.0));
+    CHECK(does_hitbox_collide_with_maze(maze, mouse.hitbox));
     mouse.translate(horizontal_distance_to_cell_wall, 0.0);
 
     mouse.translate(-0.0, -vertical_distance_to_cell_wall);
-    CHECK(does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 0.0, 0.0));
+    CHECK(does_hitbox_collide_with_maze(maze, mouse.hitbox));
     mouse.translate(0.0, vertical_distance_to_cell_wall);
 
     mouse.translate(horizontal_distance_to_cell_wall, 0.0);
-    CHECK(does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 0.0, 0.0));
+    CHECK(does_hitbox_collide_with_maze(maze, mouse.hitbox));
     mouse.translate(-horizontal_distance_to_cell_wall, 0.0);
 }
 
@@ -789,22 +732,21 @@ TEST(MazeTests, MouseCollidesWithNearWalls)
     double distance_to_near_wall{maze.cell_size / 2};
 
     mouse.translate(-(distance_to_near_wall), 0.0);
-    CHECK(does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 0, 0));
+    CHECK(does_hitbox_collide_with_maze(maze, mouse.hitbox));
     mouse.translate(distance_to_near_wall, 0.0);
 
     mouse.translate(distance_to_near_wall, 0.0);
-    CHECK(does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 0, 0));
+    CHECK(does_hitbox_collide_with_maze(maze, mouse.hitbox));
     mouse.translate(-(distance_to_near_wall), 0.0);
 
     mouse.translate(0.0, -(distance_to_near_wall));
-    CHECK(does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 0, 0));
+    CHECK(does_hitbox_collide_with_maze(maze, mouse.hitbox));
     mouse.translate(0.0, distance_to_near_wall);
 
     mouse.translate(0.0, distance_to_near_wall);
-    CHECK(does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 0, 0));
+    CHECK(does_hitbox_collide_with_maze(maze, mouse.hitbox));
     mouse.translate(0.0, -(distance_to_near_wall));
 }
-
 
 TEST(MazeTests, MouseCollidesWithNearPosts)
 {
@@ -822,19 +764,19 @@ TEST(MazeTests, MouseCollidesWithNearPosts)
     double distance_to_near_wall{maze.cell_size / 2};
 
     mouse.translate(distance_to_near_wall, distance_to_near_wall);
-    CHECK(does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 0, 0));
+    CHECK(does_hitbox_collide_with_maze(maze, mouse.hitbox));
     mouse.translate(-(distance_to_near_wall), -(distance_to_near_wall));
 
     mouse.translate(-(distance_to_near_wall), distance_to_near_wall);
-    CHECK(does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 0, 0));
+    CHECK(does_hitbox_collide_with_maze(maze, mouse.hitbox));
     mouse.translate(distance_to_near_wall, -(distance_to_near_wall));
 
     mouse.translate(-(distance_to_near_wall), -(distance_to_near_wall));
-    CHECK(does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 0, 0));
+    CHECK(does_hitbox_collide_with_maze(maze, mouse.hitbox));
     mouse.translate(distance_to_near_wall, distance_to_near_wall);
 
     mouse.translate(distance_to_near_wall, -(distance_to_near_wall));
-    CHECK(does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 0, 0));
+    CHECK(does_hitbox_collide_with_maze(maze, mouse.hitbox));
     mouse.translate(-(distance_to_near_wall), distance_to_near_wall);
 }
 
@@ -858,22 +800,21 @@ TEST(MazeTests, MouseCollidesWithFarWalls)
     double distance_to_far_wall{maze.cell_size + (maze.cell_size / 2)};
 
     mouse.translate(-(distance_to_far_wall), 0.0);
-    CHECK(does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 1, 1));
+    CHECK(does_hitbox_collide_with_maze(maze, mouse.hitbox));
     mouse.translate(distance_to_far_wall, 0.0);
 
     mouse.translate(distance_to_far_wall, 0.0);
-    CHECK(does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 1, 1));
+    CHECK(does_hitbox_collide_with_maze(maze, mouse.hitbox));
     mouse.translate(-(distance_to_far_wall), 0.0);
 
     mouse.translate(0.0, -(distance_to_far_wall));
-    CHECK(does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 1, 1));
+    CHECK(does_hitbox_collide_with_maze(maze, mouse.hitbox));
     mouse.translate(0.0, distance_to_far_wall);
 
     mouse.translate(0.0, distance_to_far_wall);
-    CHECK(does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 1, 1));
+    CHECK(does_hitbox_collide_with_maze(maze, mouse.hitbox));
     mouse.translate(0.0, -(distance_to_far_wall));
 }
-
 
 TEST(MazeTests, MouseCollidesWithFarPosts)
 {
@@ -895,18 +836,18 @@ TEST(MazeTests, MouseCollidesWithFarPosts)
     double distance_to_far_wall{maze.cell_size + (maze.cell_size / 2)};
 
     mouse.translate(distance_to_far_wall, distance_to_far_wall);
-    CHECK(does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 1, 1));
+    CHECK(does_hitbox_collide_with_maze(maze, mouse.hitbox));
     mouse.translate(-(distance_to_far_wall), -(distance_to_far_wall));
 
     mouse.translate(-(distance_to_far_wall), distance_to_far_wall);
-    CHECK(does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 1, 1));
+    CHECK(does_hitbox_collide_with_maze(maze, mouse.hitbox));
     mouse.translate(distance_to_far_wall, -(distance_to_far_wall));
 
     mouse.translate(-(distance_to_far_wall), -(distance_to_far_wall));
-    CHECK(does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 1, 1));
+    CHECK(does_hitbox_collide_with_maze(maze, mouse.hitbox));
     mouse.translate(distance_to_far_wall, distance_to_far_wall);
 
     mouse.translate(distance_to_far_wall, -(distance_to_far_wall));
-    CHECK(does_hitbox_collide_in_vicinity(maze, mouse.hitbox, 1, 1));
+    CHECK(does_hitbox_collide_with_maze(maze, mouse.hitbox));
     mouse.translate(-(distance_to_far_wall), distance_to_far_wall);
 }

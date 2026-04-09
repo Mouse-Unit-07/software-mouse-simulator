@@ -30,7 +30,6 @@ extern "C"
 #include <iostream>
 #include <map>
 #include <memory>
-#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -54,7 +53,6 @@ using namespace rotation;
 
 void prepare_mock_for_rotation(const Config& cfg, const maze::Maze& maze, mouse::Mouse& mouse);
 mouse_delta update_mock_by_dt(const Config& cfg, mouse::Mouse& mouse);
-bool did_mouse_collide(const maze::Maze& maze, const mouse::Mouse& mouse);
 
 bool dominates(const Candidate& a, const Candidate& b);
 
@@ -239,7 +237,7 @@ Result run_simulation(const Config& cfg, double target_angle)
             rotation_visualizer.draw_mouse_on_maze(mouse);
         }
 
-        if (did_mouse_collide(maze, mouse)) {
+        if (maze::does_hitbox_collide_with_maze(maze, mouse.hitbox)) {
             collision = true;
             break;
         }
@@ -417,21 +415,6 @@ mouse_delta update_mock_by_dt(const Config& cfg, mouse::Mouse& mouse)
     mouse.rotate(delta.dtheta_rad);
 
     return delta;
-}
-
-bool did_mouse_collide(const maze::Maze& maze, const mouse::Mouse& mouse)
-{
-    auto rc{maze::get_cell_from_point(maze, mouse.hitbox.center)};
-    if (rc) {
-        auto [r, c]{*rc};
-        if (maze::does_hitbox_collide_in_vicinity(maze, mouse.hitbox, r, c)) {
-            return true;
-        }
-    } else {
-        return true;
-    }
-
-    return false;
 }
 
 bool dominates(const Candidate& a, const Candidate& b)

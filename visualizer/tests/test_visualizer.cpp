@@ -13,7 +13,6 @@
 #include <cmath>
 #include <filesystem>
 #include <memory>
-#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -41,14 +40,18 @@ void draw_mouse_sensor_beams_to_nearest_walls(visualizer::Visualizer& visualizer
 {
     visualizer.draw_maze(100.0f, maze);
     visualizer.draw_mouse_on_maze(mouse);
-    auto ir_1_distance{maze::compute_ray_distance_in_vicinity(maze, mouse.ir_1_sensor, 1, 1)};
-    auto ir_2_distance{maze::compute_ray_distance_in_vicinity(maze, mouse.ir_2_sensor, 1, 1)};
-    auto ir_3_distance{maze::compute_ray_distance_in_vicinity(maze, mouse.ir_3_sensor, 1, 1)};
-    auto ir_4_distance{maze::compute_ray_distance_in_vicinity(maze, mouse.ir_4_sensor, 1, 1)};
-    visualizer.draw_ir_1_sensor_beam(mouse, *ir_1_distance);
-    visualizer.draw_ir_2_sensor_beam(mouse, *ir_2_distance);
-    visualizer.draw_ir_3_sensor_beam(mouse, *ir_3_distance);
-    visualizer.draw_ir_4_sensor_beam(mouse, *ir_4_distance);
+    double ir_1_distance{
+        maze::compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_1_sensor)};
+    double ir_2_distance{
+        maze::compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_2_sensor)};
+    double ir_3_distance{
+        maze::compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_3_sensor)};
+    double ir_4_distance{
+        maze::compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_4_sensor)};
+    visualizer.draw_ir_1_sensor_beam(mouse, ir_1_distance);
+    visualizer.draw_ir_2_sensor_beam(mouse, ir_2_distance);
+    visualizer.draw_ir_3_sensor_beam(mouse, ir_3_distance);
+    visualizer.draw_ir_4_sensor_beam(mouse, ir_4_distance);
 }
 
 /*============================================================================*/
@@ -293,7 +296,8 @@ IGNORE_TEST(VisualizerTests, DrawMouseAndBeamsOnLargeScaledMaze)
 
     draw_mouse_sensor_beams_to_nearest_walls(visualizer, maze, mouse);
 
-    visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/draw-mouse-and-beams-on-large-scale-maze.png");
+    visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY
+                                  + "/draw-mouse-and-beams-on-large-scale-maze.png");
 }
 
 IGNORE_TEST(VisualizerTests, DrawMouseAndBeamsOnSmallScaledMaze)
