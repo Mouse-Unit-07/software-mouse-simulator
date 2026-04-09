@@ -48,7 +48,6 @@ using namespace side_wall_detection;
 
 void prepare_mock_for_side_wall_detection(const Config& cfg, const maze::Maze& maze,
                                           mouse::Mouse& mouse);
-uint32_t scale_and_clamp_ir_sensor_reading(uint32_t reading, const Config& cfg);
 
 DetectionWindow find_window_with_rate(const ResultsMetrics& m, double required_rate);
 
@@ -186,13 +185,13 @@ Result run_simulation(const Config& cfg)
         open_maze_distance = maze::compute_ray_distance_in_closed_space(
             open_maze, mouse.hitbox.center, mouse.ir_3_sensor);
         update_ir_3_sensor_reading(open_maze_distance);
-        reading = scale_and_clamp_ir_sensor_reading(read_ir_3_sensor(), cfg);
+        reading = scale_and_clamp_ir_sensor_reading(read_ir_3_sensor(), cfg.ir_reading_scale);
         wall_absent_at_step.at(i) = (reading < cfg.reading_threshold) ? true : false;
 
         closed_maze_distance = maze::compute_ray_distance_in_closed_space(
             closed_maze, mouse.hitbox.center, mouse.ir_3_sensor);
         update_ir_3_sensor_reading(closed_maze_distance);
-        reading = scale_and_clamp_ir_sensor_reading(read_ir_3_sensor(), cfg);
+        reading = scale_and_clamp_ir_sensor_reading(read_ir_3_sensor(), cfg.ir_reading_scale);
         wall_present_at_step.at(i) = (reading >= cfg.reading_threshold) ? true : false;
 
         if (visualizer_enabled) {
@@ -349,12 +348,6 @@ void prepare_mock_for_side_wall_detection(const Config& cfg, const maze::Maze& m
     mouse.rotate(cfg.mouse_angle);
     mouse.translate(maze.mouse_start.x + (max_horizontal_offset * cfg.horizontal_position_variance),
                     maze.mouse_start.y + (max_vertical_offset * cfg.vertical_position_variance));
-}
-
-uint32_t scale_and_clamp_ir_sensor_reading(uint32_t reading, const Config& cfg)
-{
-    long rounded_reading{std::lround(static_cast<double>(reading) * cfg.ir_reading_scale)};
-    return static_cast<uint32_t>(std::clamp(rounded_reading, 0L, 1024L));
 }
 
 DetectionWindow find_window_with_rate(const ResultsMetrics& m, double required_rate)

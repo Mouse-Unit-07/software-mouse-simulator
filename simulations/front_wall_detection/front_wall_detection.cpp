@@ -48,7 +48,6 @@ using namespace front_wall_detection;
 
 void prepare_mock_for_front_wall_detection(const Config& cfg, const maze::Maze& maze,
                                            mouse::Mouse& mouse);
-uint32_t scale_and_clamp_ir_sensor_reading(uint32_t reading, const Config& cfg);
 
 void write_summary(std::ofstream& out, const std::vector<Candidate>& candidates, size_t total_size);
 void write_candidates(std::ofstream& out, const std::vector<Candidate>& candidates);
@@ -177,9 +176,9 @@ Result run_simulation(const Config& cfg)
     update_ir_1_sensor_reading(ir_1_distance);
     update_ir_4_sensor_reading(ir_4_distance);
     ir_1_reading = read_ir_1_sensor();
-    ir_1_reading = scale_and_clamp_ir_sensor_reading(ir_1_reading, cfg);
+    ir_1_reading = scale_and_clamp_ir_sensor_reading(ir_1_reading, cfg.ir_reading_scale);
     ir_4_reading = read_ir_4_sensor();
-    ir_4_reading = scale_and_clamp_ir_sensor_reading(ir_4_reading, cfg);
+    ir_4_reading = scale_and_clamp_ir_sensor_reading(ir_4_reading, cfg.ir_reading_scale);
     average_reading = (ir_1_reading + ir_4_reading) / 2;
     identified_absent_wall = (average_reading < cfg.reading_threshold) ? true : false;
 
@@ -199,9 +198,9 @@ Result run_simulation(const Config& cfg)
     update_ir_1_sensor_reading(ir_1_distance);
     update_ir_4_sensor_reading(ir_4_distance);
     ir_1_reading = read_ir_1_sensor();
-    ir_1_reading = scale_and_clamp_ir_sensor_reading(ir_1_reading, cfg);
+    ir_1_reading = scale_and_clamp_ir_sensor_reading(ir_1_reading, cfg.ir_reading_scale);
     ir_4_reading = read_ir_4_sensor();
-    ir_4_reading = scale_and_clamp_ir_sensor_reading(ir_4_reading, cfg);
+    ir_4_reading = scale_and_clamp_ir_sensor_reading(ir_4_reading, cfg.ir_reading_scale);
     average_reading = (ir_1_reading + ir_4_reading) / 2;
     identified_present_wall = (average_reading >= cfg.reading_threshold) ? true : false;
 
@@ -341,12 +340,6 @@ void prepare_mock_for_front_wall_detection(const Config& cfg, const maze::Maze& 
     mouse.rotate(cfg.mouse_angle);
     mouse.translate(maze.mouse_start.x + (max_horizontal_offset * cfg.horizontal_position_variance),
                     maze.mouse_start.y + (max_vertical_offset * cfg.vertical_position_variance));
-}
-
-uint32_t scale_and_clamp_ir_sensor_reading(uint32_t reading, const Config& cfg)
-{
-    long rounded_reading{std::lround(static_cast<double>(reading) * cfg.ir_reading_scale)};
-    return static_cast<uint32_t>(std::clamp(rounded_reading, 0L, 1024L));
 }
 
 void write_summary(std::ofstream& out, const std::vector<Candidate>& candidates, size_t total_size)
