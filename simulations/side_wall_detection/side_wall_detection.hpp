@@ -43,6 +43,7 @@ public:
 
     bool next();
     Config value() const;
+
 private:
     simulation_common::CommonConfigSweeper sweeper;
     bool initialized_{false};
@@ -60,8 +61,8 @@ struct Trial {
 
 struct ResultsMetrics {
     DetectionWindow detection_window;
-    std::vector<int> correct_detection_count_at_step;
-    int total_detection_counts_per_step;
+    std::vector<double> present_detection_rate_at_step;
+    std::vector<double> absent_detection_rate_at_step;
 };
 
 struct CandidateKey {

@@ -23,6 +23,8 @@ using namespace side_wall_detection;
 /*============================================================================*/
 /*                             Public Definitions                             */
 /*============================================================================*/
+constexpr double FLOAT_TOLERANCE{1e-6};
+
 Config create_no_variance_config(void)
 {
     Config cfg{};
@@ -286,7 +288,7 @@ IGNORE_TEST(SideWallDetectionTests, VisualizationDoesNotAffectResults)
     CHECK(are_results_equivalent(r1, r2));
 }
 
-TEST(SideWallDetectionTests, ComputeResultsMetricsCountsConsensusCorrectly)
+TEST(SideWallDetectionTests, ComputeResultsMetricsComputesRatesCorrectly)
 {
     Result r1;
     r1.wall_absent_at_step = {true, true, false, true, true, true};
@@ -298,10 +300,15 @@ TEST(SideWallDetectionTests, ComputeResultsMetricsCountsConsensusCorrectly)
 
     auto m{compute_results_metrics(results)};
 
-    std::vector<int> expected{2, 2, 0, 2, 2, 2};
+    std::vector<double> expected_present{1, 1, 1, 1, 1, 1};
+    std::vector<double> expected_absent{1, 1, 0, 1, 1, 1};
 
-    for (size_t i{0}; i < expected.size(); ++i) {
-        CHECK_EQUAL(expected.at(i), m.correct_detection_count_at_step.at(i));
+    for (size_t i{0}; i < expected_present.size(); ++i) {
+        DOUBLES_EQUAL(expected_present.at(i), m.present_detection_rate_at_step.at(i),
+                      FLOAT_TOLERANCE);
+
+        DOUBLES_EQUAL(expected_absent.at(i), m.absent_detection_rate_at_step.at(i),
+                      FLOAT_TOLERANCE);
     }
 }
 
@@ -351,8 +358,8 @@ TEST(SideWallDetectionTests, FilterCandidatesPerfectDetection)
 {
     Candidate c;
     c.key.threshold = 100;
-    c.results_metrics.correct_detection_count_at_step = {2, 2, 0, 2};
-    c.results_metrics.total_detection_counts_per_step = 2;
+    c.results_metrics.present_detection_rate_at_step = {1.0, 1.0, 0.0, 1.0};
+    c.results_metrics.absent_detection_rate_at_step = {1.0, 1.0, 0.0, 1.0};
 
     std::vector<Candidate> candidates{c};
 
@@ -367,8 +374,8 @@ TEST(SideWallDetectionTests, FilterCandidatesPartialCorrectDetection)
 {
     Candidate c;
     c.key.threshold = 100;
-    c.results_metrics.correct_detection_count_at_step = {2, 1, 1, 2};
-    c.results_metrics.total_detection_counts_per_step = 2;
+    c.results_metrics.present_detection_rate_at_step = {1.0, 0.5, 0.5, 1.0};
+    c.results_metrics.absent_detection_rate_at_step = {1.0, 0.5, 0.5, 1.0};
 
     std::vector<Candidate> candidates{c};
 
@@ -383,8 +390,8 @@ TEST(SideWallDetectionTests, FilterCandidatesNoValidWindow)
 {
     Candidate c;
     c.key.threshold = 100;
-    c.results_metrics.correct_detection_count_at_step = {0, 0, 1};
-    c.results_metrics.total_detection_counts_per_step = 2;
+    c.results_metrics.present_detection_rate_at_step = {0.0, 0.0, 0.5};
+    c.results_metrics.absent_detection_rate_at_step = {0.0, 0.0, 0.5};
 
     std::vector<Candidate> candidates{c};
 
