@@ -27,6 +27,7 @@ void update_ir_1_sensor_reading(double distance_mm);
 void update_ir_2_sensor_reading(double distance_mm);
 void update_ir_3_sensor_reading(double distance_mm);
 void update_ir_4_sensor_reading(double distance_mm);
+uint32_t scale_and_clamp_ir_sensor_reading(uint32_t reading, double scale);
 void set_motor_speed_scale(double scale);
 void set_motor_1_variance(double variance); /* pass value from -1.0 to 1.0 */
 void set_motor_2_variance(double variance); /* pass value from -1.0 to 1.0 */

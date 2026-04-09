@@ -318,3 +318,53 @@ TEST(MockDeviceDriversTests, DistanceProportionalToPWM)
 
     CHECK(fast.dx > slow.dx);
 }
+
+TEST(MockDeviceDriversTests, ScaleOneReturnsSameValue)
+{
+    CHECK_EQUAL(100u, scale_and_clamp_ir_sensor_reading(100u, 1.0));
+    CHECK_EQUAL(0u, scale_and_clamp_ir_sensor_reading(0u, 1.0));
+    CHECK_EQUAL(1024u, scale_and_clamp_ir_sensor_reading(1024u, 1.0));
+}
+
+TEST(MockDeviceDriversTests, ScalingUpClampsToMax)
+{
+    CHECK_EQUAL(1024u, scale_and_clamp_ir_sensor_reading(800u, 2.0));
+    CHECK_EQUAL(1024u, scale_and_clamp_ir_sensor_reading(1024u, 10.0));
+}
+
+TEST(MockDeviceDriversTests, ScalingDownReducesValue)
+{
+    CHECK_EQUAL(50u, scale_and_clamp_ir_sensor_reading(100u, 0.5));
+    CHECK_EQUAL(1u, scale_and_clamp_ir_sensor_reading(2u, 0.5));
+}
+
+TEST(MockDeviceDriversTests, NegativeScaleClampsToZero)
+{
+    CHECK_EQUAL(0u, scale_and_clamp_ir_sensor_reading(100u, -1.0));
+    CHECK_EQUAL(0u, scale_and_clamp_ir_sensor_reading(1u, -0.1));
+}
+
+TEST(MockDeviceDriversTests, RoundingBehaviorIsCorrect)
+{
+    /* 100 * 0.49 = 49 → rounds to 49 */
+    CHECK_EQUAL(49u, scale_and_clamp_ir_sensor_reading(100u, 0.49));
+
+    /* 100 * 0.5 = 50 → exact */
+    CHECK_EQUAL(50u, scale_and_clamp_ir_sensor_reading(100u, 0.5));
+
+    /* 3 * 0.5 = 1.5 → lround → 2 */
+    CHECK_EQUAL(2u, scale_and_clamp_ir_sensor_reading(3u, 0.5));
+}
+
+TEST(MockDeviceDriversTests, ZeroInputAlwaysZero)
+{
+    CHECK_EQUAL(0u, scale_and_clamp_ir_sensor_reading(0u, 0.0));
+    CHECK_EQUAL(0u, scale_and_clamp_ir_sensor_reading(0u, 10.0));
+    CHECK_EQUAL(0u, scale_and_clamp_ir_sensor_reading(0u, -10.0));
+}
+
+TEST(MockDeviceDriversTests, LargeInputStillClamped)
+{
+    CHECK_EQUAL(1024u, scale_and_clamp_ir_sensor_reading(100000u, 1.0));
+    CHECK_EQUAL(1024u, scale_and_clamp_ir_sensor_reading(UINT32_MAX, 1.0));
+}

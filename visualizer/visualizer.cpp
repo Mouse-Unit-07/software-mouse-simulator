@@ -8,11 +8,9 @@
 /*----------------------------------------------------------------------------*/
 /*                               Include Files                                */
 /*----------------------------------------------------------------------------*/
-#include <cmath>
 #include <SFML/Graphics.hpp>
 #include <cmath>
 #include <memory>
-#include <optional>
 #include <string>
 #include <utility>
 #include <vector>

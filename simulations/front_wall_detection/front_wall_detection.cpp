@@ -26,7 +26,6 @@ extern "C"
 #include <fstream>
 #include <iomanip>
 #include <map>
-#include <optional>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -49,9 +48,6 @@ using namespace front_wall_detection;
 
 void prepare_mock_for_front_wall_detection(const Config& cfg, const maze::Maze& maze,
                                            mouse::Mouse& mouse);
-std::optional<double> compute_ir_sensor_distance(const maze::Maze& maze, const mouse::Mouse& mouse,
-                                                 const geometry::Ray& ir_sensor);
-uint32_t scale_and_clamp_ir_sensor_reading(uint32_t reading, const Config& cfg);
 
 void write_summary(std::ofstream& out, const std::vector<Candidate>& candidates, size_t total_size);
 void write_candidates(std::ofstream& out, const std::vector<Candidate>& candidates);
@@ -170,54 +166,50 @@ Result run_simulation(const Config& cfg)
     uint32_t ir_1_reading{0u};
     uint32_t ir_4_reading{0u};
     uint32_t average_reading{0u};
-    std::optional<double> potential_ir_1_distance{std::nullopt};
-    std::optional<double> potential_ir_4_distance{std::nullopt};
+    double ir_1_distance{0.0};
+    double ir_4_distance{0.0};
 
-    potential_ir_1_distance = compute_ir_sensor_distance(open_maze, mouse, mouse.ir_1_sensor);
-    potential_ir_4_distance = compute_ir_sensor_distance(open_maze, mouse, mouse.ir_4_sensor);
-    if (potential_ir_1_distance.has_value() && potential_ir_4_distance.has_value()) {
-        update_ir_1_sensor_reading(*potential_ir_1_distance);
-        update_ir_4_sensor_reading(*potential_ir_4_distance);
-        ir_1_reading = read_ir_1_sensor();
-        ir_1_reading = scale_and_clamp_ir_sensor_reading(ir_1_reading, cfg);
-        ir_4_reading = read_ir_4_sensor();
-        ir_4_reading = scale_and_clamp_ir_sensor_reading(ir_4_reading, cfg);
-        average_reading = (ir_1_reading + ir_4_reading) / 2;
-        identified_absent_wall = (average_reading < cfg.reading_threshold) ? true : false;
-    } else {
-        identified_absent_wall = false;
-    }
+    ir_1_distance = maze::compute_ray_distance_in_closed_space(open_maze, mouse.hitbox.center,
+                                                               mouse.ir_1_sensor);
+    ir_4_distance = maze::compute_ray_distance_in_closed_space(open_maze, mouse.hitbox.center,
+                                                               mouse.ir_4_sensor);
+    update_ir_1_sensor_reading(ir_1_distance);
+    update_ir_4_sensor_reading(ir_4_distance);
+    ir_1_reading = read_ir_1_sensor();
+    ir_1_reading = scale_and_clamp_ir_sensor_reading(ir_1_reading, cfg.ir_reading_scale);
+    ir_4_reading = read_ir_4_sensor();
+    ir_4_reading = scale_and_clamp_ir_sensor_reading(ir_4_reading, cfg.ir_reading_scale);
+    average_reading = (ir_1_reading + ir_4_reading) / 2;
+    identified_absent_wall = (average_reading < cfg.reading_threshold) ? true : false;
 
     if (visualizer_enabled) {
         if (identified_absent_wall) {
             wall_absent_visualizer.change_beam_color_to_red();
         }
-        wall_absent_visualizer.draw_ir_1_sensor_beam(mouse, *potential_ir_1_distance);
-        wall_absent_visualizer.draw_ir_4_sensor_beam(mouse, *potential_ir_4_distance);
+        wall_absent_visualizer.draw_ir_1_sensor_beam(mouse, ir_1_distance);
+        wall_absent_visualizer.draw_ir_4_sensor_beam(mouse, ir_4_distance);
         wall_absent_visualizer.reset_beam_color();
     }
 
-    potential_ir_1_distance = compute_ir_sensor_distance(closed_maze, mouse, mouse.ir_1_sensor);
-    potential_ir_4_distance = compute_ir_sensor_distance(closed_maze, mouse, mouse.ir_4_sensor);
-    if (potential_ir_1_distance.has_value() && potential_ir_4_distance.has_value()) {
-        update_ir_1_sensor_reading(*potential_ir_1_distance);
-        update_ir_4_sensor_reading(*potential_ir_4_distance);
-        ir_1_reading = read_ir_1_sensor();
-        ir_1_reading = scale_and_clamp_ir_sensor_reading(ir_1_reading, cfg);
-        ir_4_reading = read_ir_4_sensor();
-        ir_4_reading = scale_and_clamp_ir_sensor_reading(ir_4_reading, cfg);
-        average_reading = (ir_1_reading + ir_4_reading) / 2;
-        identified_present_wall = (average_reading >= cfg.reading_threshold) ? true : false;
-    } else {
-        identified_present_wall = false;
-    }
+    ir_1_distance = maze::compute_ray_distance_in_closed_space(closed_maze, mouse.hitbox.center,
+                                                               mouse.ir_1_sensor);
+    ir_4_distance = maze::compute_ray_distance_in_closed_space(closed_maze, mouse.hitbox.center,
+                                                               mouse.ir_4_sensor);
+    update_ir_1_sensor_reading(ir_1_distance);
+    update_ir_4_sensor_reading(ir_4_distance);
+    ir_1_reading = read_ir_1_sensor();
+    ir_1_reading = scale_and_clamp_ir_sensor_reading(ir_1_reading, cfg.ir_reading_scale);
+    ir_4_reading = read_ir_4_sensor();
+    ir_4_reading = scale_and_clamp_ir_sensor_reading(ir_4_reading, cfg.ir_reading_scale);
+    average_reading = (ir_1_reading + ir_4_reading) / 2;
+    identified_present_wall = (average_reading >= cfg.reading_threshold) ? true : false;
 
     if (visualizer_enabled) {
         if (identified_present_wall) {
             wall_present_visualizer.change_beam_color_to_red();
         }
-        wall_present_visualizer.draw_ir_1_sensor_beam(mouse, *potential_ir_1_distance);
-        wall_present_visualizer.draw_ir_4_sensor_beam(mouse, *potential_ir_4_distance);
+        wall_present_visualizer.draw_ir_1_sensor_beam(mouse, ir_1_distance);
+        wall_present_visualizer.draw_ir_4_sensor_beam(mouse, ir_4_distance);
         wall_present_visualizer.reset_beam_color();
     }
 
@@ -348,29 +340,6 @@ void prepare_mock_for_front_wall_detection(const Config& cfg, const maze::Maze& 
     mouse.rotate(cfg.mouse_angle);
     mouse.translate(maze.mouse_start.x + (max_horizontal_offset * cfg.horizontal_position_variance),
                     maze.mouse_start.y + (max_vertical_offset * cfg.vertical_position_variance));
-}
-
-std::optional<double> compute_ir_sensor_distance(const maze::Maze& maze, const mouse::Mouse& mouse,
-                                                 const geometry::Ray& ir_sensor)
-{
-    std::optional<double> distance{std::nullopt};
-
-    auto potential_rc{maze::get_cell_from_point(maze, mouse.hitbox.center)};
-    if (potential_rc) {
-        auto [r, c]{*potential_rc};
-        auto potential_distance{maze::compute_ray_distance_in_vicinity(maze, ir_sensor, r, c)};
-        if (potential_distance.has_value()) {
-            distance = *potential_distance;
-        }
-    }
-
-    return distance;
-}
-
-uint32_t scale_and_clamp_ir_sensor_reading(uint32_t reading, const Config& cfg)
-{
-    long rounded_reading{std::lround(static_cast<double>(reading) * cfg.ir_reading_scale)};
-    return static_cast<uint32_t>(std::clamp(rounded_reading, 0L, 1024L));
 }
 
 void write_summary(std::ofstream& out, const std::vector<Candidate>& candidates, size_t total_size)

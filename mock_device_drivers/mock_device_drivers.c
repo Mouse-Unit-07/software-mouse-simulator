@@ -97,26 +97,6 @@ void reset_mock_device_drivers(void)
     wheel_base_scale = 1.0;
 }
 
-void update_ir_1_sensor_reading(double distance)
-{
-    mock_ir_1_sensor_reading = compute_ir_sensor_reading_from_distance_mm(distance);
-}
-
-void update_ir_2_sensor_reading(double distance)
-{
-    mock_ir_2_sensor_reading = compute_ir_sensor_reading_from_distance_mm(distance);
-}
-
-void update_ir_3_sensor_reading(double distance)
-{
-    mock_ir_3_sensor_reading = compute_ir_sensor_reading_from_distance_mm(distance);
-}
-
-void update_ir_4_sensor_reading(double distance)
-{
-    mock_ir_4_sensor_reading = compute_ir_sensor_reading_from_distance_mm(distance);
-}
-
 void update_encoder_1_ticks(double time_elapsed_sec)
 {
     double encoder_ticks_per_second = MAX_ENCODER_TICKS_PER_SECOND * (wheel_motor_1_speed / 255.0)
@@ -137,6 +117,40 @@ void update_encoder_2_ticks(double time_elapsed_sec)
         (encoder_ticks_per_second * time_elapsed_sec) * wheel_motor_2_direction;
 
     encoder_2_ticks += change_in_ticks;
+}
+
+void update_ir_1_sensor_reading(double distance)
+{
+    mock_ir_1_sensor_reading = compute_ir_sensor_reading_from_distance_mm(distance);
+}
+
+void update_ir_2_sensor_reading(double distance)
+{
+    mock_ir_2_sensor_reading = compute_ir_sensor_reading_from_distance_mm(distance);
+}
+
+void update_ir_3_sensor_reading(double distance)
+{
+    mock_ir_3_sensor_reading = compute_ir_sensor_reading_from_distance_mm(distance);
+}
+
+void update_ir_4_sensor_reading(double distance)
+{
+    mock_ir_4_sensor_reading = compute_ir_sensor_reading_from_distance_mm(distance);
+}
+
+uint32_t scale_and_clamp_ir_sensor_reading(uint32_t reading, double scale)
+{
+    double scaled = (double)reading * scale;
+
+    if (scaled <= 0.0) {
+        return 0;
+    }
+    if (scaled >= 1024.0) {
+        return 1024;
+    }
+
+    return (uint32_t)lround(scaled);
 }
 
 void set_motor_speed_scale(double scale)

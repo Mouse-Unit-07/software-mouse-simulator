@@ -8,28 +8,13 @@
 /*============================================================================*/
 /*                               Include Files                                */
 /*============================================================================*/
-extern "C"
-{
-
-#include <math.h>
-#include <stdint.h>
-#include "mock_device_drivers.h"
-#include "infrared_sensor.h"
-
-}
-
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
-#include <functional>
+#include <cmath>
+#include <cstdint>
 #include <map>
-#include <optional>
 #include <string>
 #include <vector>
-#include "point.hpp"
-#include "ray.hpp"
-#include "rectangular_hitbox.hpp"
-#include "mouse.hpp"
-#include "maze.hpp"
 #include "simulation_common.hpp"
 #include "side_wall_detection.hpp"
 

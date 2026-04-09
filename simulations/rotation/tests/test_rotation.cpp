@@ -8,27 +8,11 @@
 /*============================================================================*/
 /*                               Include Files                                */
 /*============================================================================*/
-extern "C"
-{
-
-#include <math.h>
-#include <stdint.h>
-#include "mock_device_drivers.h"
-#include "wheel_motor.h"
-#include "magnetic_encoder.h"
-
-}
-
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
-#include <algorithm>
 #include <cmath>
 #include <cstdint>
-#include <fstream>
-#include <functional>
 #include <map>
-#include <optional>
-#include <sstream>
 #include <string>
 #include <vector>
 #include "point.hpp"
