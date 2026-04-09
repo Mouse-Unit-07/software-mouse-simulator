@@ -231,19 +231,29 @@ ResultsMetrics compute_results_metrics(const std::vector<Result>& results)
     }
 
     const size_t steps{results.front().wall_absent_at_step.size()};
+    const double total{static_cast<double>(results.size())};
 
-    std::vector<int> agreements(steps, 0);
+    std::vector<int> present_counts(steps, 0);
+    std::vector<int> absent_counts(steps, 0);
 
     for (size_t t{0}; t < steps; ++t) {
         for (const auto& r : results) {
-            if (r.wall_absent_at_step.at(t) && r.wall_present_at_step.at(t)) {
-                agreements.at(t)++;
+            if (r.wall_present_at_step.at(t)) {
+                present_counts.at(t)++;
+            }
+            if (r.wall_absent_at_step.at(t)) {
+                absent_counts.at(t)++;
             }
         }
     }
 
-    m.correct_detection_count_at_step = std::move(agreements);
-    m.total_detection_counts_per_step = results.size();
+    m.present_detection_rate_at_step.resize(steps);
+    m.absent_detection_rate_at_step.resize(steps);
+
+    for (size_t t{0}; t < steps; ++t) {
+        m.present_detection_rate_at_step.at(t) = present_counts.at(t) / total;
+        m.absent_detection_rate_at_step.at(t) = absent_counts.at(t) / total;
+    }
 
     return m;
 }
@@ -358,13 +368,13 @@ DetectionWindow find_window_with_rate(const ResultsMetrics& m, double required_r
     int current_start{-1};
     int current_size{0};
 
-    const size_t steps{m.correct_detection_count_at_step.size()};
+    const size_t steps{m.present_detection_rate_at_step.size()};
 
     for (size_t t{0}; t < steps; ++t) {
-        double rate{static_cast<double>(m.correct_detection_count_at_step.at(t))
-                    / m.total_detection_counts_per_step};
+        double present_rate{m.present_detection_rate_at_step.at(t)};
+        double absent_rate{m.absent_detection_rate_at_step.at(t)};
 
-        if (rate >= required_rate) {
+        if ((present_rate >= required_rate) && (absent_rate >= required_rate)) {
             if (current_size == 0) {
                 current_start = static_cast<int>(t);
             }
