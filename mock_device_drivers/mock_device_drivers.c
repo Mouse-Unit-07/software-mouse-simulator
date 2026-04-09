@@ -141,16 +141,16 @@ void update_ir_4_sensor_reading(double distance)
 
 uint32_t scale_and_clamp_ir_sensor_reading(uint32_t reading, double scale)
 {
-    long r = lround((double)reading * scale);
+    double scaled = (double)reading * scale;
 
-    if (r <= 0) {
+    if (scaled <= 0.0) {
         return 0;
     }
-    if (r >= 1024) {
+    if (scaled >= 1024.0) {
         return 1024;
     }
 
-    return (uint32_t)r;
+    return (uint32_t)lround(scaled);
 }
 
 void set_motor_speed_scale(double scale)
