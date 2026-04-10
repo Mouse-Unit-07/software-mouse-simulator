@@ -40,11 +40,8 @@ ConfigSweeper create_no_variance_sweeper(void)
     sweeper.mouse_angle = {0.0};
     sweeper.horizontal_position_variance = {0.0};
     sweeper.vertical_position_variance = {0.0};
-    sweeper.wall_detection_threshold = {840};
-    sweeper.wall_detection_start_percent = {0.32};
-    sweeper.wall_detection_window_size_percent = {0.2};
 
-    sweeper.motor_speed = {150u};
+    sweeper.motor_speed = {120u};
     sweeper.kp = {0};
     sweeper.kd = {0};
     sweeper.pid_shift = {0};
@@ -84,9 +81,9 @@ TEST(MoveForwardTests, ConfigSweeperProducesFirstValue)
 
     auto cfg{sweeper.value()};
 
-    CHECK_EQUAL(840, cfg.wall_detection_threshold);
-    DOUBLES_EQUAL(0.32, cfg.wall_detection_start_percent, FLOAT_TOLERANCE);
-    DOUBLES_EQUAL(0.2, cfg.wall_detection_window_size_percent, FLOAT_TOLERANCE);
+    CHECK_EQUAL(120, cfg.motor_speed);
+    DOUBLES_EQUAL(0.0, cfg.motor1_variance, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(1.0, cfg.ir_reading_scale, FLOAT_TOLERANCE);
 }
 
 TEST(MoveForwardTests, ConfigSweeperIteratesAllCombinations)

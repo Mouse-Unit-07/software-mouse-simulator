@@ -27,9 +27,6 @@ struct Config {
     double mouse_angle;
     double horizontal_position_variance;
     double vertical_position_variance;
-    uint32_t wall_detection_threshold;
-    double wall_detection_start_percent;
-    double wall_detection_window_size_percent;
 
     uint8_t motor_speed;
     int32_t kp;
@@ -51,9 +48,6 @@ public:
     std::vector<double> mouse_angle;
     std::vector<double> horizontal_position_variance;
     std::vector<double> vertical_position_variance;
-    std::vector<uint32_t> wall_detection_threshold;
-    std::vector<double> wall_detection_start_percent;
-    std::vector<double> wall_detection_window_size_percent;
 
     std::vector<uint8_t> motor_speed;
     std::vector<int32_t> kp;

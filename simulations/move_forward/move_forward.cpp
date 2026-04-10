@@ -56,10 +56,7 @@ bool ConfigSweeper::next(void)
             ir_reading_scale.size(),
             mouse_angle.size(),
             horizontal_position_variance.size(),
-            vertical_position_variance.size(),
-            wall_detection_threshold.size(),
-            wall_detection_start_percent.size(),
-            wall_detection_window_size_percent.size()
+            vertical_position_variance.size()
         });
 
         initialized_ = true;
@@ -90,9 +87,6 @@ Config ConfigSweeper::value(void) const
     cfg.mouse_angle = mouse_angle.at(idx.at(i++));
     cfg.horizontal_position_variance = horizontal_position_variance.at(idx.at(i++));
     cfg.vertical_position_variance = vertical_position_variance.at(idx.at(i++));
-    cfg.wall_detection_threshold = wall_detection_threshold.at(idx.at(i++));
-    cfg.wall_detection_start_percent = wall_detection_start_percent.at(idx.at(i++));
-    cfg.wall_detection_window_size_percent = wall_detection_window_size_percent.at(idx.at(i++));
 
     return cfg;
 }
