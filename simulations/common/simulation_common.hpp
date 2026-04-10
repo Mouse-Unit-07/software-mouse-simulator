@@ -114,6 +114,9 @@ namespace simulation_common
 {
 
 MetricStats compute_stats(const std::vector<double>& data);
+double collapse_metric(const MetricStats& s);
+double safe_norm(double v, double max);
+double compute_metric_score(double collapsed, double global_max);
 std::string double_to_filename(double v, int precision = 2);
 
 } /* simulation_common namespace */

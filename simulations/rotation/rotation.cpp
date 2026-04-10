@@ -54,7 +54,8 @@ using namespace rotation;
 void prepare_mock_for_rotation(const Config& cfg, const maze::Maze& maze, mouse::Mouse& mouse);
 mouse_delta update_mock_by_dt(const Config& cfg, mouse::Mouse& mouse);
 
-bool dominates(const Candidate& a, const Candidate& b);
+MetricGlobalMax compute_global_max(const std::vector<Candidate>& candidates);
+ScoreBreakdown compute_score_breakdown(const Candidate& c, const MetricGlobalMax& g);
 
 void write_summary(std::ofstream& out, const ResultsMetrics& overall_metrics, size_t total_size);
 void write_candidates_banner(std::ofstream& out);
@@ -313,35 +314,19 @@ std::vector<Candidate> build_candidates(const std::vector<Trial>& trials)
     return out;
 }
 
-std::vector<Candidate> compute_pareto_front(const std::vector<Candidate>& candidates)
+void score_and_sort_candidates(std::vector<Candidate>& candidates)
 {
-    std::vector<Candidate> front;
+    auto g{compute_global_max(candidates)};
 
-    for (size_t i{0}; i < candidates.size(); ++i) {
-        bool dominated{false};
-
-        for (size_t j{0}; j < candidates.size(); ++j) {
-            if (i == j) {
-                continue;
-            }
-
-            if (dominates(candidates.at(j), candidates.at(i))) {
-                dominated = true;
-                break;
-            }
-        }
-
-        if (!dominated) {
-            front.push_back(candidates.at(i));
-        }
+    for (auto& c : candidates) {
+        c.score = compute_score_breakdown(c, g);
     }
 
-    return front;
+    std::sort(candidates.begin(), candidates.end(),
+              [](const Candidate& a, const Candidate& b) { return a.score.total < b.score.total; });
 }
 
-void write_analysis_to_file(const std::string& filename,
-                            const std::vector<Candidate>& all_candidates,
-                            const std::vector<Candidate>& pareto_front,
+void write_analysis_to_file(const std::string& filename, const std::vector<Candidate>& candidates,
                             const ResultsMetrics& overall_metrics, size_t total_size)
 {
     std::ofstream out(filename);
@@ -352,13 +337,9 @@ void write_analysis_to_file(const std::string& filename,
 
     write_summary(out, overall_metrics, total_size);
 
-    out << "\n=== PARETO FRONT ===\n";
+    out << "\n=== SORTED CANDIDATES ===\n";
     write_candidates_banner(out);
-    write_candidates(out, pareto_front);
-
-    out << "\n=== ALL CANDIDATES ===\n";
-    write_candidates_banner(out);
-    write_candidates(out, all_candidates);
+    write_candidates(out, candidates);
 }
 
 void run_full_rotation_experiment(const std::string& filename, double target_angle,
@@ -378,9 +359,9 @@ void run_full_rotation_experiment(const std::string& filename, double target_ang
 
     auto overall_metrics{compute_results_metrics(all_results)};
     auto candidates{build_candidates(trials)};
-    auto pareto_front{compute_pareto_front(candidates)};
+    score_and_sort_candidates(candidates);
 
-    write_analysis_to_file(filename, candidates, pareto_front, overall_metrics, all_results.size());
+    write_analysis_to_file(filename, candidates, overall_metrics, all_results.size());
 }
 
 } /* rotation namespace */
@@ -417,51 +398,39 @@ mouse_delta update_mock_by_dt(const Config& cfg, mouse::Mouse& mouse)
     return delta;
 }
 
-bool dominates(const Candidate& a, const Candidate& b)
+MetricGlobalMax compute_global_max(const std::vector<Candidate>& candidates)
 {
-    const auto& A{a.results_metrics};
-    const auto& B{b.results_metrics};
+    MetricGlobalMax g;
 
-    bool strictly_better{false};
-
-    constexpr double EPS{1e-4};
-    constexpr double k{1.0};
-
-    auto le = [&](double x, double y) { return x <= y; };
-
-    auto lt = [&](double x, double y) {
-        if (x < y) {
-            strictly_better = true;
-        }
-
-        return x <= y;
-    };
-
-    auto score = [&](double mean, double stddev) { return mean + k * stddev; };
-
-    /* hard constraints */
-    if (!lt(A.timeout_rate, B.timeout_rate)) {
-        return false;
-    }
-    if (!lt(A.collision_rate, B.collision_rate)) {
-        return false;
+    for (const auto& c : candidates) {
+        g.time = std::max(g.time, simulation_common::collapse_metric(c.results_metrics.time_stats));
+        g.angle = std::max(g.angle,
+                           simulation_common::collapse_metric(c.results_metrics.angle_error_stats));
+        g.translation = std::max(
+            g.translation, simulation_common::collapse_metric(c.results_metrics.translation_stats));
     }
 
-    /* collapsed metrics */
-    if (!lt(score(A.angle_error_stats.mean, A.angle_error_stats.stddev),
-            score(B.angle_error_stats.mean, B.angle_error_stats.stddev))) {
-        return false;
-    }
-    if (!lt(score(A.translation_stats.mean, A.translation_stats.stddev),
-            score(B.translation_stats.mean, B.translation_stats.stddev))) {
-        return false;
-    }
-    if (!lt(score(A.time_stats.mean, A.time_stats.stddev),
-            score(B.time_stats.mean, B.time_stats.stddev))) {
-        return false;
-    }
+    return g;
+}
 
-    return strictly_better;
+ScoreBreakdown compute_score_breakdown(const Candidate& c, const MetricGlobalMax& g)
+{
+    const auto& m{c.results_metrics};
+
+    ScoreBreakdown s;
+
+    s.angle = simulation_common::compute_metric_score(
+        simulation_common::collapse_metric(m.angle_error_stats), g.angle);
+    s.translation = simulation_common::compute_metric_score(
+        simulation_common::collapse_metric(m.translation_stats), g.translation);
+    s.time = simulation_common::compute_metric_score(
+        simulation_common::collapse_metric(m.time_stats), g.time);
+    s.collision = m.collision_rate;
+    s.timeout = m.timeout_rate;
+
+    s.total = s.angle + s.translation + s.time + s.collision + s.timeout;
+
+    return s;
 }
 
 void write_summary(std::ofstream& out, const ResultsMetrics& overall_metrics, size_t total_size)
@@ -493,16 +462,20 @@ void write_summary(std::ofstream& out, const ResultsMetrics& overall_metrics, si
 void write_candidates_banner(std::ofstream& out)
 {
     out << std::left
-        << std::setw(6)  << "Rank"
+        << std::setw(6)  << "#"
         << std::setw(6)  << "kp"
         << std::setw(6)  << "kd"
         << std::setw(6)  << "sh"
         << std::setw(8)  << "speed"
         << std::setw(10) << "Timeout"
         << std::setw(10) << "Coll"
-        << std::setw(38) << "Angle(m/sd/min/max)"
-        << std::setw(28) << "Trans(m/sd/min/max)"
-        << std::setw(28) << "Time(m/sd/min/max)"
+        << std::setw(10) << "Angle"
+        << std::setw(10) << "Trsln"
+        << std::setw(10) << "Time"
+        << std::setw(10) << "Score"
+        << std::setw(26) << "Angle(m/sd/min/max)"
+        << std::setw(26) << "Trans(m/sd/min/max)"
+        << std::setw(26) << "Time(m/sd/min/max)"
         << "\n";
 }
 
@@ -510,15 +483,12 @@ void write_candidates(std::ofstream& out, const std::vector<Candidate>& candidat
 {
     auto fmt_stats = [](const simulation_common::MetricStats& s) {
         std::ostringstream oss;
-        oss << s.mean
-            << "|" << s.stddev
-            << "|" << s.min
-            << "|" << s.max;
+        oss << std::setprecision(3) << s.mean << "|" << s.stddev << "|" << s.min << "|" << s.max;
         return oss.str();
     };
 
     for (size_t i{0}; i < candidates.size(); ++i) {
-        const auto& c {candidates.at(i)};
+        const auto& c{candidates.at(i)};
 
         out << std::left
             << std::setw(6)  << (i + 1)
@@ -528,9 +498,13 @@ void write_candidates(std::ofstream& out, const std::vector<Candidate>& candidat
             << std::setw(8)  << static_cast<int>(c.key.motor_speed)
             << std::setw(10) << c.results_metrics.timeout_rate
             << std::setw(10) << c.results_metrics.collision_rate
-            << std::setw(38) << fmt_stats(c.results_metrics.angle_error_stats)
-            << std::setw(28) << fmt_stats(c.results_metrics.translation_stats)
-            << std::setw(28) << fmt_stats(c.results_metrics.time_stats)
+            << std::setw(10) << c.score.angle
+            << std::setw(10) << c.score.translation
+            << std::setw(10) << c.score.time
+            << std::setw(10) << c.score.total
+            << std::setw(26) << fmt_stats(c.results_metrics.angle_error_stats)
+            << std::setw(26) << fmt_stats(c.results_metrics.translation_stats)
+            << std::setw(26) << fmt_stats(c.results_metrics.time_stats)
             << "\n";
     }
 }

@@ -306,3 +306,148 @@ TEST(CommonTests, ComputeRatePartial)
 
     DOUBLES_EQUAL(0.5, rate, FLOAT_TOLERANCE);
 }
+
+TEST(CommonTests, GroupByBasic)
+{
+    struct Item {
+        int key;
+        int value;
+    };
+
+    std::vector<Item> data{
+        {1, 10},
+        {2, 20},
+        {1, 30},
+        {2, 40}
+    };
+
+    auto grouped = group_by(
+        data,
+        [](const Item& i) { return i.key; },
+        [](const Item& i) { return i.value; }
+    );
+
+    CHECK_EQUAL(2, grouped[1].size());
+    CHECK_EQUAL(10, grouped[1][0]);
+    CHECK_EQUAL(30, grouped[1][1]);
+
+    CHECK_EQUAL(2, grouped[2].size());
+    CHECK_EQUAL(20, grouped[2][0]);
+    CHECK_EQUAL(40, grouped[2][1]);
+}
+
+TEST(CommonTests, GroupBySingleGroup)
+{
+    std::vector<int> data{1, 2, 3};
+
+    auto grouped = group_by(
+        data,
+        [](int) { return 0; },
+        [](int v) { return v; }
+    );
+
+    CHECK_EQUAL(3, grouped[0].size());
+}
+
+TEST(CommonTests, DoubleToFilenameBasic)
+{
+    std::string s{double_to_filename(1.23)};
+    STRCMP_EQUAL("1p23", s.c_str());
+}
+
+TEST(CommonTests, DoubleToFilenameNegative)
+{
+    std::string s{double_to_filename(-1.23)};
+    STRCMP_EQUAL("n1p23", s.c_str());
+}
+
+TEST(CommonTests, DoubleToFilenamePrecision)
+{
+    std::string s{double_to_filename(1.2345, 3)};
+    STRCMP_EQUAL("1p234", s.c_str()); /* truncated */
+}
+
+TEST(CommonTests, DoubleToFilenameNoDecimal)
+{
+    std::string s{double_to_filename(5.0, 0)};
+    STRCMP_EQUAL("5", s.c_str());
+}
+
+TEST(CommonTests, CollapseMetricBasic)
+{
+    MetricStats s{};
+    s.mean = 1.0;
+    s.stddev = 2.0;
+    s.min = 3.0;
+    s.max = 4.0;
+
+    double result{collapse_metric(s)};
+
+    DOUBLES_EQUAL(10.0, result, FLOAT_TOLERANCE);
+}
+
+TEST(CommonTests, CollapseMetricAllZero)
+{
+    MetricStats s{};
+
+    double result{collapse_metric(s)};
+
+    DOUBLES_EQUAL(0.0, result, FLOAT_TOLERANCE);
+}
+
+TEST(CommonTests, CollapseMetricNegativeValues)
+{
+    MetricStats s{};
+    s.mean = -1.0;
+    s.stddev = -2.0;
+    s.min = -3.0;
+    s.max = -4.0;
+
+    double result{collapse_metric(s)};
+
+    DOUBLES_EQUAL(-10.0, result, FLOAT_TOLERANCE);
+}
+
+TEST(CommonTests, SafeNormBasic)
+{
+    double result{safe_norm(5.0, 10.0)};
+    DOUBLES_EQUAL(0.5, result, FLOAT_TOLERANCE);
+}
+
+TEST(CommonTests, SafeNormZeroMax)
+{
+    double result{safe_norm(5.0, 0.0)};
+    DOUBLES_EQUAL(0.0, result, FLOAT_TOLERANCE);
+}
+
+TEST(CommonTests, SafeNormNearZeroMax)
+{
+    double result{safe_norm(5.0, 1e-8)};
+    DOUBLES_EQUAL(0.0, result, FLOAT_TOLERANCE);
+}
+
+TEST(CommonTests, SafeNormZeroValue)
+{
+    double result{safe_norm(0.0, 10.0)};
+    DOUBLES_EQUAL(0.0, result, FLOAT_TOLERANCE);
+}
+
+TEST(CommonTests, ComputeMetricScoreBasic)
+{
+    double result{compute_metric_score(2.0, 4.0)};
+    /* norm = 0.5, /4 = 0.125 */
+    DOUBLES_EQUAL(0.125, result, FLOAT_TOLERANCE);
+}
+
+TEST(CommonTests, ComputeMetricScoreZeroMax)
+{
+    double result{compute_metric_score(2.0, 0.0)};
+    DOUBLES_EQUAL(0.0, result, FLOAT_TOLERANCE);
+}
+
+TEST(CommonTests, ComputeMetricScoreFullScale)
+{
+    double result{compute_metric_score(4.0, 4.0)};
+    /* norm = 1, /4 = 0.25 */
+    DOUBLES_EQUAL(0.25, result, FLOAT_TOLERANCE);
+}

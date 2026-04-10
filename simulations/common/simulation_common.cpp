@@ -106,6 +106,27 @@ MetricStats compute_stats(const std::vector<double>& data)
     return s;
 }
 
+double collapse_metric(const simulation_common::MetricStats& s)
+{
+    return s.mean + s.stddev + s.min + s.max;
+}
+
+double safe_norm(double v, double max)
+{
+    if (max <= 1e-6) {
+        return 0.0;
+    }
+    return v / max;
+}
+
+double compute_metric_score(double collapsed, double global_max)
+{
+    double norm{safe_norm(collapsed, global_max)};
+
+    /* 4 fields in MetricStats */
+    return norm / 4.0;
+}
+
 std::string double_to_filename(double v, int precision)
 {
     std::ostringstream oss;
