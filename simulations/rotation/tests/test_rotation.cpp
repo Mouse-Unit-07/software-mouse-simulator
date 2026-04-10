@@ -410,7 +410,34 @@ TEST(RotationTests, BuildCandidatesSeparatesMotorSpeed)
     CHECK_EQUAL(2, candidates.size());
 }
 
-TEST(RotationTests, ParetoFrontRemovesDominatedCandidate)
+TEST(RotationTests, ComputeResultsMetricsEmpty)
+{
+    std::vector<Result> results;
+
+    auto m{compute_results_metrics(results)};
+
+    DOUBLES_EQUAL(0.0, m.time_stats.mean, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, m.angle_error_stats.mean, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, m.translation_stats.mean, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, m.timeout_rate, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, m.collision_rate, FLOAT_TOLERANCE);
+}
+
+TEST(RotationTests, ComputeResultsMetricsRatesAreCorrect)
+{
+    std::vector<Result> results{
+        {1, 1, 1, false, false},
+        {1, 1, 1, true,  false},
+        {1, 1, 1, false, true}
+    };
+
+    auto m{compute_results_metrics(results)};
+
+    DOUBLES_EQUAL(1.0 / 3.0, m.collision_rate, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(1.0 / 3.0, m.timeout_rate, FLOAT_TOLERANCE);
+}
+
+TEST(RotationTests, ScoreAndSortCandidatesPrefersLowerMetrics)
 {
     Candidate a{
         {1,2,3,100},
@@ -419,37 +446,36 @@ TEST(RotationTests, ParetoFrontRemovesDominatedCandidate)
 
     Candidate b{
         {1,2,3,100},
-        {{2,0,2,2}, {2,0,2,2}, {2,0,2,2}, 0.5, 0.5}
+        {{10,0,10,10}, {10,0,10,10}, {10,0,10,10}, 0.0, 0.0}
     };
 
-    std::vector<Candidate> v{a, b};
+    std::vector<Candidate> v{b, a};
 
-    auto front{compute_pareto_front(v)};
+    score_and_sort_candidates(v);
 
-    CHECK_EQUAL(1, front.size());
-    CHECK(front.at(0).results_metrics.time_stats.mean == a.results_metrics.time_stats.mean);
+    CHECK(v.front().results_metrics.time_stats.mean == a.results_metrics.time_stats.mean);
 }
 
-TEST(RotationTests, ParetoFrontKeepsNonDominatingCandidates)
+TEST(RotationTests, ScorePenalizesCollisionAndTimeout)
 {
-    Candidate a{
+    Candidate clean{
         {1,2,3,100},
-        {{1,0,1,1}, {10,0,10,10}, {1,0,1,1}, 0.0, 0.0}
+        {{1,0,1,1}, {1,0,1,1}, {1,0,1,1}, 0.0, 0.0}
     };
 
-    Candidate b{
+    Candidate bad{
         {1,2,3,100},
-        {{10,0,10,10}, {1,0,1,1}, {1,0,1,1}, 0.0, 0.0}
+        {{1,0,1,1}, {1,0,1,1}, {1,0,1,1}, 1.0, 1.0}
     };
 
-    std::vector<Candidate> v{a, b};
+    std::vector<Candidate> v{bad, clean};
 
-    auto front{compute_pareto_front(v)};
+    score_and_sort_candidates(v);
 
-    CHECK_EQUAL(2, front.size());
+    CHECK(v.front().results_metrics.collision_rate == 0.0);
 }
 
-TEST(RotationTests, ParetoFrontKeepsIdenticalCandidates)
+TEST(RotationTests, ScoreAndSortStableForEqualCandidates)
 {
     Candidate a{
         {1,2,3,100},
@@ -458,9 +484,23 @@ TEST(RotationTests, ParetoFrontKeepsIdenticalCandidates)
 
     std::vector<Candidate> v{a, a};
 
-    auto front{compute_pareto_front(v)};
+    score_and_sort_candidates(v);
 
-    CHECK_EQUAL(2, front.size());
+    CHECK_EQUAL(2, v.size());
+}
+
+TEST(RotationTests, ScoreHandlesZeroGlobalMax)
+{
+    Candidate c{
+        {1,2,3,100},
+        {{0,0,0,0}, {0,0,0,0}, {0,0,0,0}, 0.0, 0.0}
+    };
+
+    std::vector<Candidate> v{c};
+
+    score_and_sort_candidates(v);
+
+    DOUBLES_EQUAL(0.0, v.at(0).score.total, FLOAT_TOLERANCE);
 }
 
 IGNORE_TEST(RotationTests, VisualizationDoesNotAffectResults)
@@ -481,15 +521,15 @@ IGNORE_TEST(RotationTests, RunFullSimulationAndWriteResultsToFile)
     ConfigSweeper sweeper;
 
     sweeper.motor_speed_scale = simulation_common::generate_sweep_values(0.9, 1.1, 3);
-    sweeper.dt = simulation_common::generate_sweep_values(0.01, 0.5, 3);
-    sweeper.motor1_variance = simulation_common::generate_sweep_values(-0.1, 0.1, 3);
-    sweeper.motor2_variance = simulation_common::generate_sweep_values(-0.1, 0.1, 3);
+    sweeper.dt = {0.05, 0.1, 0.15};
+    sweeper.motor1_variance = simulation_common::generate_sweep_values(-0.2, 0.2, 11);
+    sweeper.motor2_variance = simulation_common::generate_sweep_values(-0.2, 0.2, 11);
     sweeper.slip_factor = simulation_common::generate_sweep_values(0.9, 1.1, 3);
     sweeper.wheel_circumference_scale = simulation_common::generate_sweep_values(0.95, 1.05, 3);
     sweeper.wheel_base_scale = simulation_common::generate_sweep_values(0.95, 1.05, 3);
 
-    sweeper.motor_speed = simulation_common::generate_sweep_values<uint8_t>(120, 220, 6);
-    sweeper.kp = simulation_common::generate_sweep_values(0, 4000, 21);
+    sweeper.motor_speed = {120}; //simulation_common::generate_sweep_values<uint8_t>(120, 220, 6);
+    sweeper.kp = simulation_common::generate_sweep_values(0, 2000, 21);
     sweeper.kd = simulation_common::generate_sweep_values(0, 2000, 21);
     sweeper.pid_shift = {8};
 

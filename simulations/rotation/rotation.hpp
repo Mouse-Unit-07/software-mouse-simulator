@@ -73,6 +73,21 @@ struct ResultsMetrics {
     double timeout_rate{0.0};
 };
 
+struct MetricGlobalMax {
+    double time{0};
+    double angle{0};
+    double translation{0};
+};
+
+struct ScoreBreakdown {
+    double angle{0.0};
+    double translation{0.0};
+    double time{0.0};
+    double collision{0.0};
+    double timeout{0.0};
+    double total{0.0};
+};
+
 struct CandidateKey {
     int32_t kp;
     int32_t kd;
@@ -89,6 +104,7 @@ struct CandidateKey {
 struct Candidate {
     CandidateKey key;
     ResultsMetrics results_metrics;
+    ScoreBreakdown score;
 };
 
 } /* rotation namespace */
@@ -107,11 +123,9 @@ Result run_simulation(const Config& cfg, double target_angle);
 
 ResultsMetrics compute_results_metrics(const std::vector<Result>& results);
 std::vector<Candidate> build_candidates(const std::vector<Trial>& trials);
-std::vector<Candidate> compute_pareto_front(const std::vector<Candidate>& candidates);
+void score_and_sort_candidates(std::vector<Candidate>& candidates);
 
-void write_analysis_to_file(const std::string& filename,
-                            const std::vector<Candidate>& all_candidates,
-                            const std::vector<Candidate>& pareto_front,
+void write_analysis_to_file(const std::string& filename, const std::vector<Candidate>& candidates,
                             const ResultsMetrics& overall_metrics, size_t total_size);
 void run_full_rotation_experiment(const std::string& filename, double target_angle,
                                   ConfigSweeper& sweeper);
