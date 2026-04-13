@@ -439,7 +439,7 @@ TEST(MazeTests, ClosedSpaceRayAlwaysReturnsDistance)
     mouse::Mouse mouse;
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
 
-    for (int i{1}; i < 4; i++) {
+    for (int i{0}; i < 8; i++) {
         double distance_1{
             compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_1_sensor)};
         double distance_2{
@@ -454,7 +454,39 @@ TEST(MazeTests, ClosedSpaceRayAlwaysReturnsDistance)
         CHECK(distance_3 > 0.0);
         CHECK(distance_4 > 0.0);
 
-        mouse.rotate((M_PI / 4) * i);
+        mouse.rotate(M_PI / 4);
+    }
+}
+
+TEST(MazeTests, IdealRayDistancesAreKnown)
+{
+    std::vector<std::string> ascii
+    {
+        "+-+",
+        "|S|",
+        "+-+"
+    };
+    Maze maze{build_maze_from_ascii(ascii, 0.0)};
+
+    mouse::Mouse mouse;
+    mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
+
+    for (int i{0}; i < 4; i++) {
+        double distance_1{
+            compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_1_sensor)};
+        double distance_2{
+            compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_2_sensor)};
+        double distance_3{
+            compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_3_sensor)};
+        double distance_4{
+            compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_4_sensor)};
+
+        DOUBLES_EQUAL(57.945, distance_1, 1e-3);
+        DOUBLES_EQUAL(62.82644, distance_2, 1e-3);
+        DOUBLES_EQUAL(62.82644, distance_3, 1e-3);
+        DOUBLES_EQUAL(57.945, distance_4, 1e-3);
+
+        mouse.rotate(M_PI / 2);
     }
 }
 
@@ -475,7 +507,7 @@ TEST(MazeTests, RaysReturnPositiveDistancesInClosedThreeByThree)
     mouse::Mouse mouse;
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
 
-    for (int i{1}; i < 4; i++) {
+    for (int i{0}; i < 8; i++) {
         double distance_1{
             compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_1_sensor)};
         double distance_2{
@@ -490,7 +522,7 @@ TEST(MazeTests, RaysReturnPositiveDistancesInClosedThreeByThree)
         CHECK(distance_3 > 0.0);
         CHECK(distance_4 > 0.0);
 
-        mouse.rotate((M_PI / 4) * i);
+        mouse.rotate(M_PI / 4);
     }
 }
 
@@ -511,7 +543,7 @@ TEST(MazeTests, OpenSpaceReturnsZeroWhenNoHit)
     mouse::Mouse mouse;
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
 
-    for (int i{1}; i < 4; i++) {
+    for (int i{0}; i < 8; i++) {
         double distance_1{
             compute_ray_distance_in_open_space(maze, mouse.hitbox.center, mouse.ir_1_sensor)};
         double distance_2{
@@ -526,7 +558,7 @@ TEST(MazeTests, OpenSpaceReturnsZeroWhenNoHit)
         DOUBLES_EQUAL(0.0, distance_3, FLOAT_TOLERANCE);
         DOUBLES_EQUAL(0.0, distance_4, FLOAT_TOLERANCE);
 
-        mouse.rotate((M_PI / 4) * i);
+        mouse.rotate(M_PI / 4);
     }
 }
 
@@ -574,7 +606,7 @@ TEST(MazeTests, RayReturnsNearestObstacleDistance)
     mouse::Mouse mouse;
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
 
-    for (int i{1}; i < 4; i++) {
+    for (int i{0}; i < 8; i++) {
         double distance_1{
             compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_1_sensor)};
         double distance_2{
@@ -589,7 +621,7 @@ TEST(MazeTests, RayReturnsNearestObstacleDistance)
         CHECK(distance_3 < maze.cell_size);
         CHECK(distance_4 < maze.cell_size);
 
-        mouse.rotate((M_PI / 4) * i);
+        mouse.rotate(M_PI / 4);
     }
 }
 
