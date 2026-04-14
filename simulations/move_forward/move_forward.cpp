@@ -298,6 +298,52 @@ Result run_simulation(const Config& cfg)
     return out;
 }
 
+ResultsMetrics compute_results_metrics(const std::vector<Result>& results)
+{
+    ResultsMetrics out;
+
+    auto compute_single_case = [](const std::vector<Result>& results,
+                                  auto accessor) -> SingleCaseResultsMetrics {
+        SingleCaseResultsMetrics m;
+
+        auto time = simulation_common::extract_metric(
+            results, [&](const Result& r) { return accessor(r).total_time; });
+
+        auto angle = simulation_common::extract_metric(
+            results, [&](const Result& r) { return accessor(r).total_angle_error; });
+
+        auto horiz = simulation_common::extract_metric(
+            results, [&](const Result& r) { return accessor(r).total_horizontal_translation; });
+
+        auto vert = simulation_common::extract_metric(
+            results, [&](const Result& r) { return accessor(r).final_vertical_translation; });
+
+        m.time_stats = simulation_common::compute_stats(time);
+        m.angle_error_stats = simulation_common::compute_stats(angle);
+        m.horizontal_translation_stats = simulation_common::compute_stats(horiz);
+        m.vertical_translation_stats = simulation_common::compute_stats(vert);
+
+        m.collision_rate = simulation_common::compute_rate(
+            results, [&](const Result& r) { return accessor(r).collision; });
+
+        m.timeout_rate = simulation_common::compute_rate(
+            results, [&](const Result& r) { return accessor(r).timeout; });
+
+        return m;
+    };
+
+    out.no_wall_metrics = compute_single_case(
+        results, [](const Result& r) -> const SingleCaseResult& { return r.no_wall; });
+
+    out.one_wall_metrics = compute_single_case(
+        results, [](const Result& r) -> const SingleCaseResult& { return r.one_wall; });
+
+    out.two_wall_metrics = compute_single_case(
+        results, [](const Result& r) -> const SingleCaseResult& { return r.two_wall; });
+
+    return out;
+}
+
 } /* move_forward namespace */
 
 /*----------------------------------------------------------------------------*/

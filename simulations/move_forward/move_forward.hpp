@@ -91,6 +91,26 @@ enum wall_mode
     BOTH_WALLS
 };
 
+struct Trial {
+    Config config;
+    Result result;
+};
+
+struct SingleCaseResultsMetrics {
+    simulation_common::MetricStats time_stats;
+    simulation_common::MetricStats angle_error_stats;
+    simulation_common::MetricStats horizontal_translation_stats;
+    simulation_common::MetricStats vertical_translation_stats;
+    double collision_rate{0.0};
+    double timeout_rate{0.0};
+};
+
+struct ResultsMetrics {
+    SingleCaseResultsMetrics no_wall_metrics;
+    SingleCaseResultsMetrics one_wall_metrics;
+    SingleCaseResultsMetrics two_wall_metrics;
+};
+
 } /* move_forward namespace */
 
 /*----------------------------------------------------------------------------*/
@@ -102,6 +122,8 @@ namespace move_forward
 SingleCaseResult run_single_simulation(const Config& cfg, const maze::Maze& maze,
                                        enum wall_mode mode);
 Result run_simulation(const Config& cfg);
+
+ResultsMetrics compute_results_metrics(const std::vector<Result>& results);
 
 } /* move_forward namespace */
 

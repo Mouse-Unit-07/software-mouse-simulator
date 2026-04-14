@@ -137,6 +137,32 @@ bool are_results_equivalent(const Result& r1, const Result& r2)
     return true;
 }
 
+SingleCaseResult create_single_case_result(double time, double angle, double horizontal_translation,
+                                           double vertical_translation, bool collision = false,
+                                           bool timeout = false)
+{
+    SingleCaseResult out;
+    out.total_time = time;
+    out.total_angle_error = angle;
+    out.total_horizontal_translation = horizontal_translation;
+    out.final_vertical_translation = vertical_translation;
+    out.collision = collision;
+    out.timeout = timeout;
+
+    return out;
+}
+
+Result create_result(const SingleCaseResult& no, const SingleCaseResult& one,
+                     const SingleCaseResult& two)
+{
+    Result out;
+    out.no_wall = no;
+    out.one_wall = one;
+    out.two_wall = two;
+
+    return out;
+}
+
 /*============================================================================*/
 /*                            Mock Implementations                            */
 /*============================================================================*/
@@ -447,3 +473,97 @@ TEST(MoveForwardTests, WallModesProduceDifferentResults)
     CHECK(!are_single_case_results_equivalent(result.no_wall, result.one_wall));
     CHECK(!are_single_case_results_equivalent(result.one_wall, result.two_wall));
 }
+
+TEST(MoveForwardTests, ComputeResultsMetricsSingleEntry)
+{
+    std::vector<Result> results{
+        create_result(
+            create_single_case_result(1, 2, 3, 4),
+            create_single_case_result(5, 6, 7, 8),
+            create_single_case_result(9, 10, 11, 12)
+        )
+    };
+
+    auto m{compute_results_metrics(results)};
+
+    DOUBLES_EQUAL(1, m.no_wall_metrics.time_stats.mean, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(2, m.no_wall_metrics.angle_error_stats.mean, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(3, m.no_wall_metrics.horizontal_translation_stats.mean, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(4, m.no_wall_metrics.vertical_translation_stats.mean, FLOAT_TOLERANCE);
+
+    DOUBLES_EQUAL(5, m.one_wall_metrics.time_stats.mean, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(9, m.two_wall_metrics.time_stats.mean, FLOAT_TOLERANCE);
+
+    CHECK_EQUAL(0.0, m.no_wall_metrics.collision_rate);
+    CHECK_EQUAL(0.0, m.no_wall_metrics.timeout_rate);
+}
+
+TEST(MoveForwardTests, ComputeResultsMetricsAggregatesCorrectly)
+{
+    std::vector<Result> results{
+        create_result(
+            create_single_case_result(1, 1, 1, 1),
+            create_single_case_result(0,0,0,0),
+            create_single_case_result(0,0,0,0)
+        ),
+        create_result(
+            create_single_case_result(3, 3, 3, 3),
+            create_single_case_result(0,0,0,0),
+            create_single_case_result(0,0,0,0)
+        )
+    };
+
+    auto m{compute_results_metrics(results)};
+    const auto& s{m.no_wall_metrics.time_stats};
+
+    DOUBLES_EQUAL(2.0, s.mean, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(1.0, s.min, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(3.0, s.max, FLOAT_TOLERANCE);
+}
+
+TEST(MoveForwardTests, ComputeResultsMetricsRates)
+{
+    std::vector<Result> results{
+        create_result(
+            create_single_case_result(0,0,0,0, true, false),
+            create_single_case_result(0,0,0,0, false, true),
+            create_single_case_result(0,0,0,0, false, false)
+        ),
+        create_result(
+            create_single_case_result(0,0,0,0, false, false),
+            create_single_case_result(0,0,0,0, false, true),
+            create_single_case_result(0,0,0,0, false, false)
+        )
+    };
+
+    auto m{compute_results_metrics(results)};
+
+    DOUBLES_EQUAL(0.5, m.no_wall_metrics.collision_rate, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, m.no_wall_metrics.timeout_rate, FLOAT_TOLERANCE);
+
+    DOUBLES_EQUAL(0.0, m.one_wall_metrics.collision_rate, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(1.0, m.one_wall_metrics.timeout_rate, FLOAT_TOLERANCE);
+}
+
+TEST(MoveForwardTests, ComputeResultsMetricsModesAreIndependent)
+{
+    std::vector<Result> results{
+        create_result(
+            create_single_case_result(1,0,0,0),
+            create_single_case_result(10,0,0,0),
+            create_single_case_result(100,0,0,0)
+        ),
+        create_result(
+            create_single_case_result(1,0,0,0),
+            create_single_case_result(10,0,0,0),
+            create_single_case_result(100,0,0,0)
+        )
+    };
+
+    auto m{compute_results_metrics(results)};
+
+    DOUBLES_EQUAL(1.0, m.no_wall_metrics.time_stats.mean, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(10.0, m.one_wall_metrics.time_stats.mean, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(100.0, m.two_wall_metrics.time_stats.mean, FLOAT_TOLERANCE);
+}
+
