@@ -28,10 +28,13 @@ struct Config {
     double horizontal_position_variance;
     double vertical_position_variance;
 
+    uint32_t single_wall_target;
     uint8_t motor_speed;
     int32_t kp;
     int32_t kd;
     int32_t pid_shift;
+    int32_t kp_ir;
+    int32_t kd_ir;
 };
 
 class ConfigSweeper {
@@ -49,10 +52,13 @@ public:
     std::vector<double> horizontal_position_variance;
     std::vector<double> vertical_position_variance;
 
+    std::vector<uint32_t> single_wall_target;
     std::vector<uint8_t> motor_speed;
     std::vector<int32_t> kp;
     std::vector<int32_t> kd;
     std::vector<int32_t> pid_shift;
+    std::vector<int32_t> kp_ir;
+    std::vector<int32_t> kd_ir;
 
     bool next(void);
     Config value(void) const;
@@ -62,6 +68,29 @@ private:
     bool initialized_{false};
 };
 
+struct SingleCaseResult {
+    double total_time{0.0};
+    double total_angle_error{0.0};
+    double total_horizontal_translation{0.0};
+    double final_vertical_translation{0.0};
+    bool collision{false};
+    bool timeout{false};
+};
+
+struct Result {
+    SingleCaseResult no_wall;
+    SingleCaseResult one_wall;
+    SingleCaseResult two_wall;
+};
+
+enum wall_mode
+{
+    NO_WALLS,
+    LEFT_WALL_ONLY,
+    RIGHT_WALL_ONLY,
+    BOTH_WALLS
+};
+
 } /* move_forward namespace */
 
 /*----------------------------------------------------------------------------*/
@@ -69,6 +98,10 @@ private:
 /*----------------------------------------------------------------------------*/
 namespace move_forward
 {
+
+SingleCaseResult run_single_simulation(const Config& cfg, const maze::Maze& maze,
+                                       enum wall_mode mode);
+Result run_simulation(const Config& cfg);
 
 } /* move_forward namespace */
 
