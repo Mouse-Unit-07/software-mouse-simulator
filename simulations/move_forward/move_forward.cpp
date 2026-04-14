@@ -45,6 +45,13 @@ using namespace move_forward;
 void prepare_mock_for_move_forward(const Config& cfg, const maze::Maze& maze, mouse::Mouse& mouse);
 mouse_delta update_mock_by_dt(const Config& cfg, mouse::Mouse& mouse);
 
+MetricGlobalMax compute_global_max(const std::vector<Candidate>& candidates);
+SingleCaseScoreBreakdown compute_single_case_score(const SingleCaseResultsMetrics& m,
+                                                   const SingleCaseMetricGlobalMax& g);
+ScoreBreakdown compute_score(const Candidate& c, const MetricGlobalMax& g);
+double compute_total_primary(const ScoreBreakdown& s);
+double compute_total_secondary(const ScoreBreakdown& s);
+
 } /* unnamed namespace*/
 
 /*----------------------------------------------------------------------------*/
@@ -56,6 +63,8 @@ extern "C"
 extern double ENCODER_TICKS_PER_MILLIMETER;
 
 }
+
+constexpr double FLOAT_TOLERANCE{1e-6};
 
 /*----------------------------------------------------------------------------*/
 /*                             Public Definitions                             */
@@ -344,6 +353,58 @@ ResultsMetrics compute_results_metrics(const std::vector<Result>& results)
     return out;
 }
 
+std::vector<Candidate> build_candidates(const std::vector<Trial>& trials)
+{
+    auto grouped = simulation_common::group_by(
+        trials,
+        [](const Trial& t) {
+            return CandidateKey{
+                t.config.single_wall_target,
+                t.config.motor_speed,
+                t.config.kp,
+                t.config.kd,
+                t.config.pid_shift,
+                t.config.kp_ir,
+                t.config.kd_ir};
+        },
+        [](const Trial& t) { return t.result; });
+
+    std::vector<Candidate> out;
+    out.reserve(grouped.size());
+
+    for (const auto& [key, group_results] : grouped) {
+        Candidate c;
+        c.key = key;
+        c.results_metrics = compute_results_metrics(group_results);
+        out.push_back(c);
+    }
+
+    return out;
+}
+
+void score_and_sort_candidates(std::vector<Candidate>& candidates)
+{
+    auto g{compute_global_max(candidates)};
+
+    for (auto& c : candidates) {
+        c.score = compute_score(c, g);
+    }
+
+    std::sort(candidates.begin(), candidates.end(), [](const Candidate& a, const Candidate& b) {
+        double a_primary{compute_total_primary(a.score)};
+        double b_primary{compute_total_primary(b.score)};
+
+        if (std::abs(a_primary - b_primary) >= FLOAT_TOLERANCE) {
+            return a_primary < b_primary;
+        }
+
+        double a_secondary{compute_total_secondary(a.score)};
+        double b_secondary{compute_total_secondary(b.score)};
+
+        return a_secondary < b_secondary;
+    });
+}
+
 } /* move_forward namespace */
 
 /*----------------------------------------------------------------------------*/
@@ -382,6 +443,101 @@ mouse_delta update_mock_by_dt(const Config& cfg, mouse::Mouse& mouse)
     mouse.rotate(delta.dtheta_rad);
 
     return delta;
+}
+
+MetricGlobalMax compute_global_max(const std::vector<Candidate>& candidates)
+{
+    auto compute_single_case_max = [&](auto accessor) {
+        SingleCaseMetricGlobalMax g;
+
+        for (const auto& c : candidates) {
+            const auto& m{accessor(c)};
+
+            g.time = std::max(g.time, simulation_common::collapse_metric(m.time_stats));
+            g.angle = std::max(g.angle, simulation_common::collapse_metric(m.angle_error_stats));
+            g.horizontal_translation =
+                std::max(g.horizontal_translation,
+                         simulation_common::collapse_metric(m.horizontal_translation_stats));
+            g.vertical_translation =
+                std::max(g.vertical_translation,
+                         simulation_common::collapse_metric(m.vertical_translation_stats));
+        }
+
+        return g;
+    };
+
+    MetricGlobalMax g;
+
+    g.no_wall_max = compute_single_case_max(
+        [](const Candidate& c) { return c.results_metrics.no_wall_metrics; });
+
+    g.one_wall_max = compute_single_case_max(
+        [](const Candidate& c) { return c.results_metrics.one_wall_metrics; });
+
+    g.two_wall_max = compute_single_case_max(
+        [](const Candidate& c) { return c.results_metrics.two_wall_metrics; });
+
+    return g;
+}
+
+SingleCaseScoreBreakdown compute_single_case_score(const SingleCaseResultsMetrics& m,
+                                                   const SingleCaseMetricGlobalMax& g)
+{
+    SingleCaseScoreBreakdown s;
+
+    double time{collapse_metric(m.time_stats)};
+    double angle{collapse_metric(m.angle_error_stats)};
+    double horiz{collapse_metric(m.horizontal_translation_stats)};
+    double vert{collapse_metric(m.vertical_translation_stats)};
+
+    s.time = simulation_common::compute_metric_score(time, g.time);
+    s.angle = simulation_common::compute_metric_score(angle, g.angle);
+    s.horizontal_translation =
+        simulation_common::compute_metric_score(horiz, g.horizontal_translation);
+    s.vertical_translation = simulation_common::compute_metric_score(vert, g.vertical_translation);
+
+    s.collision = m.collision_rate;
+    s.timeout = m.timeout_rate;
+
+    /* PRIMARY: prioritize safety + balance */
+    double sum{s.collision + s.timeout};
+    double diff{std::abs(s.collision - s.timeout)};
+    s.primary_total = sum - diff;
+
+    /* SECONDARY: performance metrics */
+    s.secondary_total = s.time + s.angle + s.horizontal_translation + s.vertical_translation;
+
+    return s;
+}
+
+ScoreBreakdown compute_score(const Candidate& c, const MetricGlobalMax& g)
+{
+    ScoreBreakdown s;
+
+    s.no_wall_breakdown =
+        compute_single_case_score(c.results_metrics.no_wall_metrics, g.no_wall_max);
+
+    s.one_wall_breakdown =
+        compute_single_case_score(c.results_metrics.one_wall_metrics, g.one_wall_max);
+
+    s.two_wall_breakdown =
+        compute_single_case_score(c.results_metrics.two_wall_metrics, g.two_wall_max);
+
+    return s;
+}
+
+double compute_total_primary(const ScoreBreakdown& s)
+{
+    return s.no_wall_breakdown.primary_total 
+           + s.one_wall_breakdown.primary_total
+           + s.two_wall_breakdown.primary_total;
+}
+
+double compute_total_secondary(const ScoreBreakdown& s)
+{
+    return s.no_wall_breakdown.secondary_total
+           + s.one_wall_breakdown.secondary_total
+           + s.two_wall_breakdown.secondary_total;
 }
 
 } /* unnamed namespace*/

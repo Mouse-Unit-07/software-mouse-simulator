@@ -111,6 +111,59 @@ struct ResultsMetrics {
     SingleCaseResultsMetrics two_wall_metrics;
 };
 
+struct SingleCaseMetricGlobalMax {
+    double time{0};
+    double angle{0};
+    double horizontal_translation{0};
+    double vertical_translation{0};
+};
+
+struct MetricGlobalMax {
+    SingleCaseMetricGlobalMax no_wall_max;
+    SingleCaseMetricGlobalMax one_wall_max;
+    SingleCaseMetricGlobalMax two_wall_max;
+};
+
+struct SingleCaseScoreBreakdown {
+    double time{0.0};
+    double angle{0.0};
+    double horizontal_translation{0.0};
+    double vertical_translation{0.0};
+    double collision{0.0};
+    double timeout{0.0};
+    double primary_total{0.0};
+    double secondary_total{0.0};
+};
+
+struct ScoreBreakdown {
+    SingleCaseScoreBreakdown no_wall_breakdown;
+    SingleCaseScoreBreakdown one_wall_breakdown;
+    SingleCaseScoreBreakdown two_wall_breakdown;
+};
+
+struct CandidateKey {
+    uint32_t single_wall_target;
+    uint8_t motor_speed;
+    int32_t kp;
+    int32_t kd;
+    int32_t shift;
+    int32_t kp_ir;
+    int32_t kd_ir;
+
+    bool operator<(const CandidateKey& other) const
+    {
+        return std::tie(single_wall_target, motor_speed, kp, kd, shift, kp_ir, kd_ir)
+               < std::tie(other.single_wall_target, other.motor_speed, other.kp, other.kd,
+                          other.shift, other.kp_ir, other.kd_ir);
+    }
+};
+
+struct Candidate {
+    CandidateKey key;
+    ResultsMetrics results_metrics;
+    ScoreBreakdown score;
+};
+
 } /* move_forward namespace */
 
 /*----------------------------------------------------------------------------*/
@@ -124,6 +177,8 @@ SingleCaseResult run_single_simulation(const Config& cfg, const maze::Maze& maze
 Result run_simulation(const Config& cfg);
 
 ResultsMetrics compute_results_metrics(const std::vector<Result>& results);
+std::vector<Candidate> build_candidates(const std::vector<Trial>& trials);
+void score_and_sort_candidates(std::vector<Candidate>& candidates);
 
 } /* move_forward namespace */
 

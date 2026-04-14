@@ -163,6 +163,46 @@ Result create_result(const SingleCaseResult& no, const SingleCaseResult& one,
     return out;
 }
 
+Config create_custom_config(uint32_t target = 100, uint8_t speed = 100, int kp = 1, int kd = 1,
+                            int shift = 0, int kp_ir = 0, int kd_ir = 0)
+{
+    Config c{};
+    c.single_wall_target = target;
+    c.motor_speed = speed;
+    c.kp = kp;
+    c.kd = kd;
+    c.pid_shift = shift;
+    c.kp_ir = kp_ir;
+    c.kd_ir = kd_ir;
+    return c;
+}
+
+Trial create_trial(const Config& cfg, const Result& r)
+{
+    Trial t;
+    t.config = cfg;
+    t.result = r;
+    return t;
+}
+
+Candidate create_custom_candidate(double collision_rate, double timeout_rate, double time_metric)
+{
+    Candidate c;
+
+    auto& m = c.results_metrics.no_wall_metrics;
+    m.time_stats.mean = time_metric;
+    m.angle_error_stats.mean = 0;
+    m.horizontal_translation_stats.mean = 0;
+    m.vertical_translation_stats.mean = 0;
+    m.collision_rate = collision_rate;
+    m.timeout_rate = timeout_rate;
+
+    c.results_metrics.one_wall_metrics = m;
+    c.results_metrics.two_wall_metrics = m;
+
+    return c;
+}
+
 /*============================================================================*/
 /*                            Mock Implementations                            */
 /*============================================================================*/
@@ -476,13 +516,9 @@ TEST(MoveForwardTests, WallModesProduceDifferentResults)
 
 TEST(MoveForwardTests, ComputeResultsMetricsSingleEntry)
 {
-    std::vector<Result> results{
-        create_result(
-            create_single_case_result(1, 2, 3, 4),
-            create_single_case_result(5, 6, 7, 8),
-            create_single_case_result(9, 10, 11, 12)
-        )
-    };
+    std::vector<Result> results{create_result(create_single_case_result(1, 2, 3, 4),
+                                              create_single_case_result(5, 6, 7, 8),
+                                              create_single_case_result(9, 10, 11, 12))};
 
     auto m{compute_results_metrics(results)};
 
@@ -501,17 +537,12 @@ TEST(MoveForwardTests, ComputeResultsMetricsSingleEntry)
 TEST(MoveForwardTests, ComputeResultsMetricsAggregatesCorrectly)
 {
     std::vector<Result> results{
-        create_result(
-            create_single_case_result(1, 1, 1, 1),
-            create_single_case_result(0,0,0,0),
-            create_single_case_result(0,0,0,0)
-        ),
-        create_result(
-            create_single_case_result(3, 3, 3, 3),
-            create_single_case_result(0,0,0,0),
-            create_single_case_result(0,0,0,0)
-        )
-    };
+        create_result(create_single_case_result(1, 1, 1, 1),
+                      create_single_case_result(0, 0, 0, 0),
+                      create_single_case_result(0, 0, 0, 0)),
+        create_result(create_single_case_result(3, 3, 3, 3),
+                      create_single_case_result(0, 0, 0, 0),
+                      create_single_case_result(0, 0, 0, 0))};
 
     auto m{compute_results_metrics(results)};
     const auto& s{m.no_wall_metrics.time_stats};
@@ -523,18 +554,12 @@ TEST(MoveForwardTests, ComputeResultsMetricsAggregatesCorrectly)
 
 TEST(MoveForwardTests, ComputeResultsMetricsRates)
 {
-    std::vector<Result> results{
-        create_result(
-            create_single_case_result(0,0,0,0, true, false),
-            create_single_case_result(0,0,0,0, false, true),
-            create_single_case_result(0,0,0,0, false, false)
-        ),
-        create_result(
-            create_single_case_result(0,0,0,0, false, false),
-            create_single_case_result(0,0,0,0, false, true),
-            create_single_case_result(0,0,0,0, false, false)
-        )
-    };
+    std::vector<Result> results{create_result(create_single_case_result(0, 0, 0, 0, true, false),
+                                              create_single_case_result(0, 0, 0, 0, false, true),
+                                              create_single_case_result(0, 0, 0, 0, false, false)),
+                                create_result(create_single_case_result(0, 0, 0, 0, false, false),
+                                              create_single_case_result(0, 0, 0, 0, false, true),
+                                              create_single_case_result(0, 0, 0, 0, false, false))};
 
     auto m{compute_results_metrics(results)};
 
@@ -548,17 +573,12 @@ TEST(MoveForwardTests, ComputeResultsMetricsRates)
 TEST(MoveForwardTests, ComputeResultsMetricsModesAreIndependent)
 {
     std::vector<Result> results{
-        create_result(
-            create_single_case_result(1,0,0,0),
-            create_single_case_result(10,0,0,0),
-            create_single_case_result(100,0,0,0)
-        ),
-        create_result(
-            create_single_case_result(1,0,0,0),
-            create_single_case_result(10,0,0,0),
-            create_single_case_result(100,0,0,0)
-        )
-    };
+        create_result(create_single_case_result(1, 0, 0, 0),
+                      create_single_case_result(10, 0, 0, 0),
+                      create_single_case_result(100, 0, 0, 0)),
+        create_result(create_single_case_result(1, 0, 0, 0),
+                      create_single_case_result(10, 0, 0, 0),
+                      create_single_case_result(100, 0, 0, 0))};
 
     auto m{compute_results_metrics(results)};
 
@@ -567,3 +587,121 @@ TEST(MoveForwardTests, ComputeResultsMetricsModesAreIndependent)
     DOUBLES_EQUAL(100.0, m.two_wall_metrics.time_stats.mean, FLOAT_TOLERANCE);
 }
 
+TEST(MoveForwardTests, EmptyInputProducesEmptyOutput)
+{
+    std::vector<Trial> trials;
+    auto candidates{build_candidates(trials)};
+
+    CHECK(candidates.empty());
+}
+
+TEST(MoveForwardTests, SingleTrialProducesSingleCandidate)
+{
+    std::vector<Trial> trials{
+        create_trial(create_custom_config(), create_result(create_single_case_result(1, 2, 3, 4),
+                                                           create_single_case_result(1, 2, 3, 4),
+                                                           create_single_case_result(1, 2, 3, 4)))};
+
+    auto candidates{build_candidates(trials)};
+
+    CHECK_EQUAL(1, candidates.size());
+}
+
+TEST(MoveForwardTests, GroupsByKey)
+{
+    Config cfg{create_custom_config()};
+
+    std::vector<Trial> trials{
+        create_trial(cfg, create_result(create_single_case_result(1, 0, 0, 0),
+                                        create_single_case_result(0, 0, 0, 0),
+                                        create_single_case_result(0, 0, 0, 0))),
+        create_trial(cfg, create_result(create_single_case_result(3, 0, 0, 0),
+                                        create_single_case_result(0, 0, 0, 0),
+                                        create_single_case_result(0, 0, 0, 0)))};
+
+    auto candidates{build_candidates(trials)};
+
+    CHECK_EQUAL(1, candidates.size());
+
+    double mean{candidates[0].results_metrics.no_wall_metrics.time_stats.mean};
+    DOUBLES_EQUAL(2.0, mean, FLOAT_TOLERANCE);
+}
+
+TEST(MoveForwardTests, DifferentKeysProduceMultipleCandidates)
+{
+    std::vector<Trial> trials{
+        create_trial(create_custom_config(100),
+                     create_result(create_single_case_result(1, 0, 0, 0), {}, {})),
+        create_trial(create_custom_config(200),
+                     create_result(create_single_case_result(2, 0, 0, 0), {}, {}))};
+
+    auto candidates{build_candidates(trials)};
+
+    CHECK_EQUAL(2, candidates.size());
+}
+
+TEST(MoveForwardTests, AssignsScores)
+{
+    std::vector<Candidate> candidates{create_custom_candidate(0, 0, 1),
+                                      create_custom_candidate(1, 1, 1)};
+
+    score_and_sort_candidates(candidates);
+
+    CHECK(candidates[0].score.no_wall_breakdown.secondary_total >= 0);
+}
+
+TEST(MoveForwardTests, SortsByPrimaryScore)
+{
+    auto best{create_custom_candidate(0, 0, 1)};
+    auto worst{create_custom_candidate(1, 1, 1)};
+
+    std::vector<Candidate> candidates{worst, best};
+
+    score_and_sort_candidates(candidates);
+
+    /* best should come first */
+    CHECK(candidates[0].results_metrics.no_wall_metrics.collision_rate == 0);
+}
+
+TEST(MoveForwardTests, SecondaryBreaksTies)
+{
+    auto a{create_custom_candidate(0, 0, 1)}; /* better time */
+    auto b{create_custom_candidate(0, 0, 10)};
+
+    std::vector<Candidate> candidates{b, a};
+
+    score_and_sort_candidates(candidates);
+
+    CHECK(candidates[0].results_metrics.no_wall_metrics.time_stats.mean == 1);
+}
+
+TEST(MoveForwardTests, FloatToleranceTriggersSecondary)
+{
+    auto a{create_custom_candidate(0.5, 0.5, 1)};
+    auto b{create_custom_candidate(0.5000001, 0.4999999, 10)};
+
+    std::vector<Candidate> candidates{b, a};
+
+    score_and_sort_candidates(candidates);
+
+    /* secondary decides -> lower time wins */
+    CHECK(candidates[0].results_metrics.no_wall_metrics.time_stats.mean == 1);
+}
+
+TEST(MoveForwardTests, HandlesSingleCandidate)
+{
+    std::vector<Candidate> candidates{create_custom_candidate(0, 0, 1)};
+
+    score_and_sort_candidates(candidates);
+
+    CHECK_EQUAL(1, candidates.size());
+}
+
+TEST(MoveForwardTests, HandlesEmptyVector)
+{
+    std::vector<Candidate> candidates;
+
+    score_and_sort_candidates(candidates);
+
+    CHECK(candidates.empty());
+}
