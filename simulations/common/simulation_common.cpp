@@ -108,7 +108,8 @@ MetricStats compute_stats(const std::vector<double>& data)
 
 double collapse_metric(const simulation_common::MetricStats& s)
 {
-    return s.mean + s.stddev + s.min + s.max;
+    /* avoid s.min and s.max to omit outliers */
+    return s.mean + s.stddev;
 }
 
 double safe_norm(double v, double max)
@@ -123,8 +124,8 @@ double compute_metric_score(double collapsed, double global_max)
 {
     double norm{safe_norm(collapsed, global_max)};
 
-    /* 4 fields in MetricStats */
-    return norm / 4.0;
+    /* 2 fields in collapsed */
+    return norm / 2.0;
 }
 
 std::string double_to_filename(double v, int precision)
