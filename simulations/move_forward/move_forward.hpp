@@ -172,6 +172,10 @@ struct Candidate {
 namespace move_forward
 {
 
+void enable_visualization(const std::string& foldername);
+void disable_visualization(void);
+std::string config_to_string(const Config& cfg);
+
 SingleCaseResult run_single_simulation(const Config& cfg, const maze::Maze& maze,
                                        enum wall_mode mode);
 Result run_simulation(const Config& cfg);

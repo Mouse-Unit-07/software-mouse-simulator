@@ -215,12 +215,12 @@ TEST_GROUP(MoveForwardTests)
 {
     void setup() override
     {
-
+        disable_visualization();
     }
 
     void teardown() override
     {
-
+        disable_visualization();
     }
 };
 
@@ -713,6 +713,19 @@ TEST(MoveForwardTests, RunMinimalSampleSimulation)
     const std::string filename{"test_minimal_output.txt"};
 
     run_full_move_forward_experiment(filename, sweeper);
+}
+
+TEST(MoveForwardTests, VisualizationDoesNotAffectResults)
+{
+    Config cfg{create_no_variance_config()};
+
+    disable_visualization();
+    auto r1{run_simulation(cfg)};
+
+    enable_visualization("visualization-does-not-affect-results");
+    auto r2{run_simulation(cfg)};
+
+    CHECK(are_results_equivalent(r1, r2));
 }
 
 IGNORE_TEST(MoveForwardTests, RunFullNoVarianceSimulation)

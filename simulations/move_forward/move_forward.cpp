@@ -23,6 +23,7 @@ extern "C"
 
 #include <algorithm>
 #include <cstdint>
+#include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <map>
@@ -34,6 +35,7 @@ extern "C"
 #include "rectangular_hitbox.hpp"
 #include "mouse.hpp"
 #include "maze.hpp"
+#include "visualizer.hpp"
 #include "simulation_common.hpp"
 #include "move_forward.hpp"
 
@@ -72,6 +74,10 @@ extern double ENCODER_TICKS_PER_MILLIMETER;
 }
 
 constexpr double FLOAT_TOLERANCE{1e-6};
+std::string TEST_OUTPUT_DIRECTORY{"rotation-visualizer"};
+std::string TEST_OUTPUT_SUBDIRECTORY{""};
+bool visualizer_enabled{false};
+visualizer::Visualizer rotation_visualizer;
 
 /*----------------------------------------------------------------------------*/
 /*                             Public Definitions                             */
@@ -139,12 +145,62 @@ Config ConfigSweeper::value(void) const
     return cfg;
 }
 
+void enable_visualization(const std::string& foldername)
+{
+    TEST_OUTPUT_SUBDIRECTORY = foldername;
+    visualizer_enabled = true;
+}
+
+void disable_visualization(void)
+{
+    visualizer_enabled = false;
+    TEST_OUTPUT_SUBDIRECTORY = "";
+}
+
+std::string config_to_string(const Config& cfg)
+{
+    std::ostringstream oss;
+
+    oss << simulation_common::double_to_filename(cfg.dt) << "-"
+        << simulation_common::double_to_filename(cfg.motor_speed_scale) << "-"
+        << simulation_common::double_to_filename(cfg.motor1_variance) << "-"
+        << simulation_common::double_to_filename(cfg.motor2_variance) << "-"
+        << simulation_common::double_to_filename(cfg.slip_factor) << "-"
+        << simulation_common::double_to_filename(cfg.wheel_circumference_scale) << "-"
+        << simulation_common::double_to_filename(cfg.wheel_base_scale) << "-"
+        << simulation_common::double_to_filename(cfg.maze_size_scale) << "-"
+        << simulation_common::double_to_filename(cfg.ir_reading_scale) << "-"
+        << simulation_common::double_to_filename(cfg.mouse_angle) << "-"
+        << simulation_common::double_to_filename(cfg.horizontal_position_variance) << "-"
+        << simulation_common::double_to_filename(cfg.vertical_position_variance) << "-"
+        << static_cast<int>(cfg.single_wall_target) << "-"
+        << static_cast<int>(cfg.motor_speed) << "-"
+        << simulation_common::double_to_filename(static_cast<double>(cfg.kp)) << "-"
+        << simulation_common::double_to_filename(static_cast<double>(cfg.kd)) << "-"
+        << simulation_common::double_to_filename(static_cast<double>(cfg.pid_shift)) << "-"
+        << simulation_common::double_to_filename(static_cast<double>(cfg.kp_ir)) << "-"
+        << simulation_common::double_to_filename(static_cast<double>(cfg.kd_ir));
+
+    return oss.str();
+}
+
 SingleCaseResult run_single_simulation(const Config& cfg, const maze::Maze& maze,
                                        enum wall_mode mode)
 {
+    if (visualizer_enabled) {
+        std::filesystem::create_directories(TEST_OUTPUT_DIRECTORY + "/" + TEST_OUTPUT_SUBDIRECTORY);
+    }
+
     mouse::Mouse mouse;
     prepare_mock_for_move_forward(cfg, maze, mouse);
     const double INITIAL_MOUSE_VERTICAL_POSITION{mouse.hitbox.center.y};
+
+    if (visualizer_enabled) {
+        rotation_visualizer.draw_maze(100.0f, maze);
+        rotation_visualizer.change_mouse_color_to_green();
+        rotation_visualizer.draw_mouse_on_maze(mouse);
+        rotation_visualizer.reset_mouse_color();
+    }
 
     set_wheel_motor_1_direction_forward();
     set_wheel_motor_2_direction_forward();
@@ -236,6 +292,10 @@ SingleCaseResult run_single_simulation(const Config& cfg, const maze::Maze& maze
         total_angle_error += std::abs(delta.dtheta_rad);
         total_time += cfg.dt;
 
+        if (visualizer_enabled) {
+            rotation_visualizer.draw_mouse_on_maze(mouse);
+        }
+
         if (maze::does_hitbox_collide_with_maze(maze, mouse.hitbox)) {
             collision = true;
             break;
@@ -245,6 +305,14 @@ SingleCaseResult run_single_simulation(const Config& cfg, const maze::Maze& maze
             timeout = true;
             break;
         }
+    }
+
+    if (visualizer_enabled) {
+        rotation_visualizer.change_mouse_color_to_blue();
+        rotation_visualizer.draw_mouse_on_maze(mouse);
+        rotation_visualizer.save_to_image_file(
+            TEST_OUTPUT_DIRECTORY + "/" + TEST_OUTPUT_SUBDIRECTORY + "/" + config_to_string(cfg)
+            + "-" + std::to_string(mode) + ".png");
     }
 
     double target_y{INITIAL_MOUSE_VERTICAL_POSITION + (maze.cell_size * MAZE_SQUARE_COUNT)};
