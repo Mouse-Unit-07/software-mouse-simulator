@@ -10,10 +10,16 @@
 /*============================================================================*/
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
+#include <cmath>
 #include <cstdint>
 #include <map>
 #include <string>
 #include <vector>
+#include "point.hpp"
+#include "ray.hpp"
+#include "rectangular_hitbox.hpp"
+#include "mouse.hpp"
+#include "maze.hpp"
 #include "simulation_common.hpp"
 #include "move_forward.hpp"
 
@@ -24,11 +30,39 @@ using namespace move_forward;
 /*============================================================================*/
 constexpr double FLOAT_TOLERANCE{1e-6};
 
+Config create_no_variance_config(void)
+{
+    Config cfg{};
+
+    cfg.dt = {0.001};
+    cfg.motor_speed_scale = {1.0};
+    cfg.motor1_variance = {0.0};
+    cfg.motor2_variance = {0.0};
+    cfg.slip_factor = {1.0};
+    cfg.wheel_circumference_scale = {1.0};
+    cfg.wheel_base_scale = {1.0};
+    cfg.maze_size_scale = {1.0};
+    cfg.ir_reading_scale = {1.0};
+    cfg.mouse_angle = {0.0};
+    cfg.horizontal_position_variance = {0.0};
+    cfg.vertical_position_variance = {0.0};
+
+    cfg.single_wall_target = {407u};
+    cfg.motor_speed = {120u};
+    cfg.kp = {0};
+    cfg.kd = {0};
+    cfg.pid_shift = {0};
+    cfg.kp_ir = {0};
+    cfg.kd_ir = {0};
+
+    return cfg;
+}
+
 ConfigSweeper create_no_variance_sweeper(void)
 {
     ConfigSweeper sweeper;
 
-    sweeper.dt = {0.01};
+    sweeper.dt = {0.001};
     sweeper.motor_speed_scale = {1.0};
     sweeper.motor1_variance = {0.0};
     sweeper.motor2_variance = {0.0};
@@ -40,16 +74,133 @@ ConfigSweeper create_no_variance_sweeper(void)
     sweeper.mouse_angle = {0.0};
     sweeper.horizontal_position_variance = {0.0};
     sweeper.vertical_position_variance = {0.0};
-    sweeper.wall_detection_threshold = {840};
-    sweeper.wall_detection_start_percent = {0.32};
-    sweeper.wall_detection_window_size_percent = {0.2};
 
-    sweeper.motor_speed = {150u};
+    sweeper.single_wall_target = {407u};
+    sweeper.motor_speed = {120u};
     sweeper.kp = {0};
     sweeper.kd = {0};
     sweeper.pid_shift = {0};
+    sweeper.kp_ir = {0};
+    sweeper.kd_ir = {0};
 
     return sweeper;
+}
+
+bool was_there_collision_or_timeout(const Result& result)
+{
+    if (result.no_wall.collision || result.one_wall.collision || result.two_wall.collision
+        || result.no_wall.timeout || result.one_wall.timeout || result.two_wall.timeout) {
+        return true;
+    }
+
+    return false;
+}
+
+bool are_single_case_results_equivalent(const SingleCaseResult& r1, const SingleCaseResult& r2)
+{
+    if (std::abs(r1.total_time - r2.total_time) >= FLOAT_TOLERANCE) {
+        return false;
+    }
+    if (std::abs(r1.total_angle_error - r2.total_angle_error) >= FLOAT_TOLERANCE) {
+        return false;
+    }
+    if (std::abs(r1.total_horizontal_translation - r2.total_horizontal_translation)
+        >= FLOAT_TOLERANCE) {
+        return false;
+    }
+    if (std::abs(r1.final_vertical_translation - r2.final_vertical_translation)
+        >= FLOAT_TOLERANCE) {
+        return false;
+    }
+    if (r1.collision != r2.collision) {
+        return false;
+    }
+    if (r1.timeout != r2.timeout) {
+        return false;
+    }
+
+    return true;
+}
+
+bool are_results_equivalent(const Result& r1, const Result& r2)
+{
+    if (!are_single_case_results_equivalent(r1.no_wall, r2.no_wall)) {
+        return false;
+    }
+    if (!are_single_case_results_equivalent(r1.one_wall, r2.one_wall)) {
+        return false;
+    }
+    if (!are_single_case_results_equivalent(r1.two_wall, r2.two_wall)) {
+        return false;
+    }
+
+    return true;
+}
+
+SingleCaseResult create_single_case_result(double time, double angle, double horizontal_translation,
+                                           double vertical_translation, bool collision = false,
+                                           bool timeout = false)
+{
+    SingleCaseResult out;
+    out.total_time = time;
+    out.total_angle_error = angle;
+    out.total_horizontal_translation = horizontal_translation;
+    out.final_vertical_translation = vertical_translation;
+    out.collision = collision;
+    out.timeout = timeout;
+
+    return out;
+}
+
+Result create_result(const SingleCaseResult& no, const SingleCaseResult& one,
+                     const SingleCaseResult& two)
+{
+    Result out;
+    out.no_wall = no;
+    out.one_wall = one;
+    out.two_wall = two;
+
+    return out;
+}
+
+Config create_custom_config(uint32_t target = 100, uint8_t speed = 100, int kp = 1, int kd = 1,
+                            int shift = 0, int kp_ir = 0, int kd_ir = 0)
+{
+    Config c{};
+    c.single_wall_target = target;
+    c.motor_speed = speed;
+    c.kp = kp;
+    c.kd = kd;
+    c.pid_shift = shift;
+    c.kp_ir = kp_ir;
+    c.kd_ir = kd_ir;
+    return c;
+}
+
+Trial create_trial(const Config& cfg, const Result& r)
+{
+    Trial t;
+    t.config = cfg;
+    t.result = r;
+    return t;
+}
+
+Candidate create_custom_candidate(double collision_rate, double timeout_rate, double time_metric)
+{
+    Candidate c;
+
+    auto& m = c.results_metrics.no_wall_metrics;
+    m.time_stats.mean = time_metric;
+    m.angle_error_stats.mean = 0;
+    m.horizontal_translation_stats.mean = 0;
+    m.vertical_translation_stats.mean = 0;
+    m.collision_rate = collision_rate;
+    m.timeout_rate = timeout_rate;
+
+    c.results_metrics.one_wall_metrics = m;
+    c.results_metrics.two_wall_metrics = m;
+
+    return c;
 }
 
 /*============================================================================*/
@@ -64,12 +215,12 @@ TEST_GROUP(MoveForwardTests)
 {
     void setup() override
     {
-
+        disable_visualization();
     }
 
     void teardown() override
     {
-
+        disable_visualization();
     }
 };
 
@@ -84,9 +235,10 @@ TEST(MoveForwardTests, ConfigSweeperProducesFirstValue)
 
     auto cfg{sweeper.value()};
 
-    CHECK_EQUAL(840, cfg.wall_detection_threshold);
-    DOUBLES_EQUAL(0.32, cfg.wall_detection_start_percent, FLOAT_TOLERANCE);
-    DOUBLES_EQUAL(0.2, cfg.wall_detection_window_size_percent, FLOAT_TOLERANCE);
+    CHECK_EQUAL(120, cfg.motor_speed);
+    CHECK_EQUAL(407u, cfg.single_wall_target);
+    DOUBLES_EQUAL(0.0, cfg.motor1_variance, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(1.0, cfg.ir_reading_scale, FLOAT_TOLERANCE);
 }
 
 TEST(MoveForwardTests, ConfigSweeperIteratesAllCombinations)
@@ -133,4 +285,501 @@ TEST(MoveForwardTests, ConfigSweeperOrderIsStable)
     CHECK(seen.at(1) == std::make_pair(1, 20));
     CHECK(seen.at(2) == std::make_pair(2, 10));
     CHECK(seen.at(3) == std::make_pair(2, 20));
+}
+
+TEST(MoveForwardTests, SimulationIsDeterministic)
+{
+    Config cfg{create_no_variance_config()};
+
+    auto r1{run_simulation(cfg)};
+    auto r2{run_simulation(cfg)};
+
+    CHECK(are_results_equivalent(r1, r2));
+}
+
+TEST(MoveForwardTests, NoVarianceProducesNearPerfectResults)
+{
+    Config cfg{create_no_variance_config()};
+
+    auto result{run_simulation(cfg)};
+
+    CHECK(!was_there_collision_or_timeout(result));
+    DOUBLES_EQUAL(0.0, result.no_wall.total_angle_error, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, result.one_wall.total_angle_error, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, result.two_wall.total_angle_error, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, result.no_wall.total_horizontal_translation, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, result.one_wall.total_horizontal_translation, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, result.two_wall.total_horizontal_translation, FLOAT_TOLERANCE);
+
+    constexpr double VERTICAL_TOLERANCE{5.0};
+    DOUBLES_EQUAL(0.0, result.no_wall.final_vertical_translation, VERTICAL_TOLERANCE);
+    DOUBLES_EQUAL(0.0, result.one_wall.final_vertical_translation, VERTICAL_TOLERANCE);
+    DOUBLES_EQUAL(0.0, result.two_wall.final_vertical_translation, VERTICAL_TOLERANCE);
+}
+
+TEST(MoveForwardTests, DtAffectsResults)
+{
+    Config cfg{create_no_variance_config()};
+
+    cfg.dt = 0.01;
+    auto r1{run_simulation(cfg)};
+
+    cfg.dt = 0.1;
+    auto r2{run_simulation(cfg)};
+
+    CHECK(!are_results_equivalent(r1, r2));
+}
+
+TEST(MoveForwardTests, SpeedScaleAffectsResults)
+{
+    Config cfg{create_no_variance_config()};
+
+    auto no_speed_scale{run_simulation(cfg)};
+
+    cfg.motor_speed_scale = 0.5;
+    auto with_speed_scale{run_simulation(cfg)};
+
+    CHECK(!are_results_equivalent(no_speed_scale, with_speed_scale));
+}
+
+TEST(MoveForwardTests, MotorVarianceAffectsResults)
+{
+    Config cfg{create_no_variance_config()};
+
+    auto no_variance{run_simulation(cfg)};
+
+    cfg.motor1_variance = 0.1;
+    cfg.motor2_variance = -0.1;
+    auto with_variance{run_simulation(cfg)};
+
+    CHECK(!are_results_equivalent(no_variance, with_variance));
+}
+
+TEST(MoveForwardTests, SlipFactorAffectsResults)
+{
+    Config cfg{create_no_variance_config()};
+
+    auto no_slip_factor{run_simulation(cfg)};
+
+    cfg.slip_factor = 0.5;
+    auto with_slip_factor{run_simulation(cfg)};
+
+    CHECK(!are_results_equivalent(no_slip_factor, with_slip_factor));
+}
+
+TEST(MoveForwardTests, WheelCircumferenceScaleAffectsResults)
+{
+    Config cfg{create_no_variance_config()};
+
+    auto no_circumference_scale{run_simulation(cfg)};
+
+    cfg.wheel_circumference_scale = 0.5;
+    auto with_circumference_scale{run_simulation(cfg)};
+
+    CHECK(!are_results_equivalent(no_circumference_scale, with_circumference_scale));
+}
+
+TEST(MoveForwardTests, WheelBaseScaleAffectsResults)
+{
+    Config cfg{create_no_variance_config()};
+    cfg.motor1_variance = 0.1;
+
+    auto no_base_scale{run_simulation(cfg)};
+
+    cfg.wheel_base_scale = 0.5;
+    auto with_base_scale{run_simulation(cfg)};
+
+    CHECK(!are_results_equivalent(no_base_scale, with_base_scale));
+}
+
+TEST(MoveForwardTests, MazeSizeScaleAffectsResults)
+{
+    Config cfg{create_no_variance_config()};
+
+    auto no_size_scale{run_simulation(cfg)};
+
+    cfg.maze_size_scale = 0.5;
+    auto with_size_scale{run_simulation(cfg)};
+
+    CHECK(!are_results_equivalent(no_size_scale, with_size_scale));
+}
+
+TEST(MoveForwardTests, IRReadingScaleAffectsResults)
+{
+    Config cfg{create_no_variance_config()};
+    cfg.mouse_angle = M_PI / 32;
+    cfg.kp_ir = 50;
+
+    cfg.ir_reading_scale = 0.5;
+    auto r1{run_simulation(cfg)};
+
+    cfg.ir_reading_scale = 2.0;
+    auto r2{run_simulation(cfg)};
+
+    CHECK(!are_results_equivalent(r1, r2));
+}
+
+TEST(MoveForwardTests, InitialAngleAffectsResults)
+{
+    Config cfg{create_no_variance_config()};
+
+    auto straight{run_simulation(cfg)};
+
+    cfg.mouse_angle = M_PI / 16;
+    auto angled{run_simulation(cfg)};
+
+    CHECK(!are_results_equivalent(straight, angled));
+}
+
+TEST(MoveForwardTests, HorizontalOffsetAffectsResults)
+{
+    Config cfg{create_no_variance_config()};
+    cfg.kp_ir = 50;
+
+    auto no_offset{run_simulation(cfg)};
+
+    cfg.horizontal_position_variance = 0.5;
+    auto with_offset{run_simulation(cfg)};
+
+    CHECK(!are_results_equivalent(no_offset, with_offset));
+}
+
+TEST(MoveForwardTests, SingleWallTargetAffectsResults)
+{
+    Config cfg{create_no_variance_config()};
+    cfg.mouse_angle = M_PI / 32;
+    cfg.kp_ir = 50;
+
+    cfg.single_wall_target = 300;
+    auto r1{run_simulation(cfg)};
+
+    cfg.single_wall_target = 500;
+    auto r2{run_simulation(cfg)};
+
+    CHECK(!are_single_case_results_equivalent(r1.one_wall, r2.one_wall));
+}
+
+TEST(MoveForwardTests, MotorSpeedAffectsTotalTime)
+{
+    Config cfg{create_no_variance_config()};
+
+    cfg.motor_speed = 80;
+    auto slow{run_simulation(cfg)};
+
+    cfg.motor_speed = 200;
+    auto fast{run_simulation(cfg)};
+
+    CHECK(fast.no_wall.total_time < slow.no_wall.total_time);
+}
+
+TEST(MoveForwardTests, EncoderPDAffectsResults)
+{
+    Config cfg{create_no_variance_config()};
+    cfg.motor1_variance = 0.1;
+
+    auto no_pd{run_simulation(cfg)};
+
+    cfg.kp = 50;
+    cfg.kd = 10;
+    auto with_pd{run_simulation(cfg)};
+
+    CHECK(!are_results_equivalent(no_pd, with_pd));
+}
+
+TEST(MoveForwardTests, IRControlAffectsJustOneAndTwoWallResults)
+{
+    Config cfg{create_no_variance_config()};
+    cfg.mouse_angle = M_PI / 16;
+
+    auto no_ir_control{run_simulation(cfg)};
+
+    cfg.kp_ir = 100;
+    cfg.kd_ir = 50;
+    auto with_ir_control{run_simulation(cfg)};
+
+    CHECK(are_single_case_results_equivalent(no_ir_control.no_wall, with_ir_control.no_wall));
+    CHECK(!are_single_case_results_equivalent(no_ir_control.one_wall, with_ir_control.one_wall));
+    CHECK(!are_single_case_results_equivalent(no_ir_control.two_wall, with_ir_control.two_wall));
+}
+
+TEST(MoveForwardTests, WallModesProduceDifferentResults)
+{
+    Config cfg{create_no_variance_config()};
+    cfg.mouse_angle = M_PI / 32;
+    cfg.kp_ir = 50;
+
+    auto result{run_simulation(cfg)};
+
+    CHECK(!are_single_case_results_equivalent(result.no_wall, result.one_wall));
+    CHECK(!are_single_case_results_equivalent(result.one_wall, result.two_wall));
+}
+
+TEST(MoveForwardTests, ComputeResultsMetricsSingleEntry)
+{
+    std::vector<Result> results{create_result(create_single_case_result(1, 2, 3, 4),
+                                              create_single_case_result(5, 6, 7, 8),
+                                              create_single_case_result(9, 10, 11, 12))};
+
+    auto m{compute_results_metrics(results)};
+
+    DOUBLES_EQUAL(1, m.no_wall_metrics.time_stats.mean, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(2, m.no_wall_metrics.angle_error_stats.mean, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(3, m.no_wall_metrics.horizontal_translation_stats.mean, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(4, m.no_wall_metrics.vertical_translation_stats.mean, FLOAT_TOLERANCE);
+
+    DOUBLES_EQUAL(5, m.one_wall_metrics.time_stats.mean, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(9, m.two_wall_metrics.time_stats.mean, FLOAT_TOLERANCE);
+
+    CHECK_EQUAL(0.0, m.no_wall_metrics.collision_rate);
+    CHECK_EQUAL(0.0, m.no_wall_metrics.timeout_rate);
+}
+
+TEST(MoveForwardTests, ComputeResultsMetricsAggregatesCorrectly)
+{
+    std::vector<Result> results{
+        create_result(create_single_case_result(1, 1, 1, 1),
+                      create_single_case_result(0, 0, 0, 0),
+                      create_single_case_result(0, 0, 0, 0)),
+        create_result(create_single_case_result(3, 3, 3, 3),
+                      create_single_case_result(0, 0, 0, 0),
+                      create_single_case_result(0, 0, 0, 0))};
+
+    auto m{compute_results_metrics(results)};
+    const auto& s{m.no_wall_metrics.time_stats};
+
+    DOUBLES_EQUAL(2.0, s.mean, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(1.0, s.min, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(3.0, s.max, FLOAT_TOLERANCE);
+}
+
+TEST(MoveForwardTests, ComputeResultsMetricsRates)
+{
+    std::vector<Result> results{create_result(create_single_case_result(0, 0, 0, 0, true, false),
+                                              create_single_case_result(0, 0, 0, 0, false, true),
+                                              create_single_case_result(0, 0, 0, 0, false, false)),
+                                create_result(create_single_case_result(0, 0, 0, 0, false, false),
+                                              create_single_case_result(0, 0, 0, 0, false, true),
+                                              create_single_case_result(0, 0, 0, 0, false, false))};
+
+    auto m{compute_results_metrics(results)};
+
+    DOUBLES_EQUAL(0.5, m.no_wall_metrics.collision_rate, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, m.no_wall_metrics.timeout_rate, FLOAT_TOLERANCE);
+
+    DOUBLES_EQUAL(0.0, m.one_wall_metrics.collision_rate, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(1.0, m.one_wall_metrics.timeout_rate, FLOAT_TOLERANCE);
+}
+
+TEST(MoveForwardTests, ComputeResultsMetricsModesAreIndependent)
+{
+    std::vector<Result> results{
+        create_result(create_single_case_result(1, 0, 0, 0),
+                      create_single_case_result(10, 0, 0, 0),
+                      create_single_case_result(100, 0, 0, 0)),
+        create_result(create_single_case_result(1, 0, 0, 0),
+                      create_single_case_result(10, 0, 0, 0),
+                      create_single_case_result(100, 0, 0, 0))};
+
+    auto m{compute_results_metrics(results)};
+
+    DOUBLES_EQUAL(1.0, m.no_wall_metrics.time_stats.mean, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(10.0, m.one_wall_metrics.time_stats.mean, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(100.0, m.two_wall_metrics.time_stats.mean, FLOAT_TOLERANCE);
+}
+
+TEST(MoveForwardTests, EmptyInputProducesEmptyOutput)
+{
+    std::vector<Trial> trials;
+    auto candidates{build_candidates(trials)};
+
+    CHECK(candidates.empty());
+}
+
+TEST(MoveForwardTests, SingleTrialProducesSingleCandidate)
+{
+    std::vector<Trial> trials{
+        create_trial(create_custom_config(), create_result(create_single_case_result(1, 2, 3, 4),
+                                                           create_single_case_result(1, 2, 3, 4),
+                                                           create_single_case_result(1, 2, 3, 4)))};
+
+    auto candidates{build_candidates(trials)};
+
+    CHECK_EQUAL(1, candidates.size());
+}
+
+TEST(MoveForwardTests, GroupsByKey)
+{
+    Config cfg{create_custom_config()};
+
+    std::vector<Trial> trials{
+        create_trial(cfg, create_result(create_single_case_result(1, 0, 0, 0),
+                                        create_single_case_result(0, 0, 0, 0),
+                                        create_single_case_result(0, 0, 0, 0))),
+        create_trial(cfg, create_result(create_single_case_result(3, 0, 0, 0),
+                                        create_single_case_result(0, 0, 0, 0),
+                                        create_single_case_result(0, 0, 0, 0)))};
+
+    auto candidates{build_candidates(trials)};
+
+    CHECK_EQUAL(1, candidates.size());
+
+    double mean{candidates[0].results_metrics.no_wall_metrics.time_stats.mean};
+    DOUBLES_EQUAL(2.0, mean, FLOAT_TOLERANCE);
+}
+
+TEST(MoveForwardTests, DifferentKeysProduceMultipleCandidates)
+{
+    std::vector<Trial> trials{
+        create_trial(create_custom_config(100),
+                     create_result(create_single_case_result(1, 0, 0, 0), {}, {})),
+        create_trial(create_custom_config(200),
+                     create_result(create_single_case_result(2, 0, 0, 0), {}, {}))};
+
+    auto candidates{build_candidates(trials)};
+
+    CHECK_EQUAL(2, candidates.size());
+}
+
+TEST(MoveForwardTests, AssignsScores)
+{
+    std::vector<Candidate> candidates{create_custom_candidate(0, 0, 1),
+                                      create_custom_candidate(1, 1, 1)};
+
+    score_and_sort_candidates(candidates);
+
+    CHECK(candidates[0].score.no_wall_breakdown.secondary_total >= 0);
+}
+
+TEST(MoveForwardTests, SortsByPrimaryScore)
+{
+    auto best{create_custom_candidate(0, 0, 1)};
+    auto worst{create_custom_candidate(1, 1, 1)};
+
+    std::vector<Candidate> candidates{worst, best};
+
+    score_and_sort_candidates(candidates);
+
+    /* best should come first */
+    CHECK(candidates[0].results_metrics.no_wall_metrics.collision_rate == 0);
+}
+
+TEST(MoveForwardTests, SecondaryBreaksTies)
+{
+    auto a{create_custom_candidate(0, 0, 1)}; /* better time */
+    auto b{create_custom_candidate(0, 0, 10)};
+
+    std::vector<Candidate> candidates{b, a};
+
+    score_and_sort_candidates(candidates);
+
+    CHECK(candidates[0].results_metrics.no_wall_metrics.time_stats.mean == 1);
+}
+
+TEST(MoveForwardTests, FloatToleranceTriggersSecondary)
+{
+    auto a{create_custom_candidate(0.5, 0.5, 1)};
+    auto b{create_custom_candidate(0.5000001, 0.4999999, 10)};
+
+    std::vector<Candidate> candidates{b, a};
+
+    score_and_sort_candidates(candidates);
+
+    /* secondary decides -> lower time wins */
+    CHECK(candidates[0].results_metrics.no_wall_metrics.time_stats.mean == 1);
+}
+
+TEST(MoveForwardTests, HandlesSingleCandidate)
+{
+    std::vector<Candidate> candidates{create_custom_candidate(0, 0, 1)};
+
+    score_and_sort_candidates(candidates);
+
+    CHECK_EQUAL(1, candidates.size());
+}
+
+TEST(MoveForwardTests, HandlesEmptyVector)
+{
+    std::vector<Candidate> candidates;
+
+    score_and_sort_candidates(candidates);
+
+    CHECK(candidates.empty());
+}
+
+TEST(MoveForwardTests, RunMinimalSampleSimulation)
+{
+    ConfigSweeper sweeper{create_no_variance_sweeper()};
+
+    const std::string filename{"test_minimal_output.txt"};
+
+    run_full_move_forward_experiment(filename, sweeper);
+}
+
+TEST(MoveForwardTests, VisualizationDoesNotAffectResults)
+{
+    Config cfg{create_no_variance_config()};
+
+    disable_visualization();
+    auto r1{run_simulation(cfg)};
+
+    enable_visualization("visualization-does-not-affect-results");
+    auto r2{run_simulation(cfg)};
+
+    CHECK(are_results_equivalent(r1, r2));
+}
+
+IGNORE_TEST(MoveForwardTests, RunFullNoVarianceSimulation)
+{
+    ConfigSweeper sweeper;
+
+    sweeper.dt = {0.01};
+    sweeper.motor_speed_scale = {1.0};
+    sweeper.motor1_variance = simulation_common::generate_sweep_values(-0.05, 0.05, 9);
+    sweeper.motor2_variance = simulation_common::generate_sweep_values(-0.05, 0.05, 9);
+    sweeper.slip_factor = {1.0};
+    sweeper.wheel_circumference_scale = {1.0};
+    sweeper.wheel_base_scale = {1.0};
+    sweeper.maze_size_scale = {1.0};
+    sweeper.ir_reading_scale = {1.0};
+    sweeper.mouse_angle = {0.0};
+    sweeper.horizontal_position_variance = {0.0};
+    sweeper.vertical_position_variance = {0.0};
+
+    sweeper.single_wall_target = {407u};
+    sweeper.motor_speed = {120u};
+    sweeper.kp = simulation_common::generate_sweep_values(0, 4000, 11);
+    sweeper.kd = simulation_common::generate_sweep_values(0, 2000, 11);
+    sweeper.pid_shift = {8};
+    sweeper.kp_ir = simulation_common::generate_sweep_values(0, 2000, 21);
+    sweeper.kd_ir = simulation_common::generate_sweep_values(0, 2000, 21);
+
+    run_full_move_forward_experiment("test_full_no_variance_output.txt", sweeper);
+}
+
+IGNORE_TEST(MoveForwardTests, RunFullSimulationAndWriteResultsToFile)
+{
+    ConfigSweeper sweeper;
+
+    sweeper.dt = {0.05, 0.1, 0.15};
+    sweeper.motor_speed_scale = simulation_common::generate_sweep_values(0.9, 1.1, 3);
+    sweeper.motor1_variance = simulation_common::generate_sweep_values(-0.2, 0.2, 11);
+    sweeper.motor2_variance = simulation_common::generate_sweep_values(-0.2, 0.2, 11);
+    sweeper.slip_factor = simulation_common::generate_sweep_values(0.9, 1.1, 3);
+    sweeper.wheel_circumference_scale = simulation_common::generate_sweep_values(0.95, 1.05, 3);
+    sweeper.wheel_base_scale = simulation_common::generate_sweep_values(0.95, 1.05, 3);
+    sweeper.maze_size_scale = simulation_common::generate_sweep_values(0.95, 1.05, 3);
+    sweeper.ir_reading_scale = simulation_common::generate_sweep_values(0.95, 1.05, 3);
+    sweeper.mouse_angle = simulation_common::generate_sweep_values(-M_PI / 4, M_PI / 4, 9);
+    sweeper.horizontal_position_variance = simulation_common::generate_sweep_values(-0.9, 0.9, 5);
+    sweeper.vertical_position_variance = {0.0};
+
+    sweeper.single_wall_target = {407u};
+    sweeper.motor_speed = simulation_common::generate_sweep_values<uint8_t>(120, 220, 6);
+    sweeper.kp = simulation_common::generate_sweep_values(0, 2000, 21);
+    sweeper.kd = simulation_common::generate_sweep_values(0, 2000, 21);
+    sweeper.pid_shift = {8};
+    sweeper.kp_ir = simulation_common::generate_sweep_values(0, 2000, 21);
+    sweeper.kd_ir = simulation_common::generate_sweep_values(0, 2000, 21);
+
+    run_full_move_forward_experiment("test_full_output.txt", sweeper);
 }

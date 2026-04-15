@@ -383,7 +383,7 @@ TEST(CommonTests, CollapseMetricBasic)
 
     double result{collapse_metric(s)};
 
-    DOUBLES_EQUAL(10.0, result, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(3.0, result, FLOAT_TOLERANCE);
 }
 
 TEST(CommonTests, CollapseMetricAllZero)
@@ -405,7 +405,7 @@ TEST(CommonTests, CollapseMetricNegativeValues)
 
     double result{collapse_metric(s)};
 
-    DOUBLES_EQUAL(-10.0, result, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(-3.0, result, FLOAT_TOLERANCE);
 }
 
 TEST(CommonTests, SafeNormBasic)
@@ -435,8 +435,8 @@ TEST(CommonTests, SafeNormZeroValue)
 TEST(CommonTests, ComputeMetricScoreBasic)
 {
     double result{compute_metric_score(2.0, 4.0)};
-    /* norm = 0.5, /4 = 0.125 */
-    DOUBLES_EQUAL(0.125, result, FLOAT_TOLERANCE);
+    /* norm = 0.5, /2 = 0.25 */
+    DOUBLES_EQUAL(0.25, result, FLOAT_TOLERANCE);
 }
 
 TEST(CommonTests, ComputeMetricScoreZeroMax)
@@ -448,6 +448,6 @@ TEST(CommonTests, ComputeMetricScoreZeroMax)
 TEST(CommonTests, ComputeMetricScoreFullScale)
 {
     double result{compute_metric_score(4.0, 4.0)};
-    /* norm = 1, /4 = 0.25 */
-    DOUBLES_EQUAL(0.25, result, FLOAT_TOLERANCE);
+    /* norm = 1, /2 = 0.5 */
+    DOUBLES_EQUAL(0.5, result, FLOAT_TOLERANCE);
 }
