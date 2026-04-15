@@ -23,7 +23,10 @@ extern "C"
 
 #include <algorithm>
 #include <cstdint>
+#include <fstream>
+#include <iomanip>
 #include <map>
+#include <sstream>
 #include <string>
 #include <vector>
 #include "point.hpp"
@@ -51,6 +54,10 @@ SingleCaseScoreBreakdown compute_single_case_score(const SingleCaseResultsMetric
 ScoreBreakdown compute_score(const Candidate& c, const MetricGlobalMax& g);
 double compute_total_primary(const ScoreBreakdown& s);
 double compute_total_secondary(const ScoreBreakdown& s);
+
+void write_summary(std::ofstream& out, size_t total_size);
+void write_candidates_banner(std::ofstream& out);
+void write_candidates(std::ofstream& out, const std::vector<Candidate>& candidates);
 
 } /* unnamed namespace*/
 
@@ -405,6 +412,42 @@ void score_and_sort_candidates(std::vector<Candidate>& candidates)
     });
 }
 
+void write_analysis_to_file(const std::string& filename, const std::vector<Candidate>& candidates,
+                            size_t total_size)
+{
+    std::ofstream out(filename);
+    if (!out.is_open()) {
+        throw std::runtime_error("Failed to open output file: " + filename);
+    }
+
+    out << std::fixed << std::setprecision(3);
+
+    write_summary(out, total_size);
+
+    out << "\n=== SORTED CANDIDATES ===\n";
+
+    write_candidates_banner(out);
+    write_candidates(out, candidates);
+}
+
+void run_full_move_forward_experiment(const std::string& filename, ConfigSweeper& sweeper)
+{
+    std::vector<Trial> trials;
+
+    while (sweeper.next()) {
+        Config cfg{sweeper.value()};
+
+        Result result{move_forward::run_simulation(cfg)};
+
+        trials.push_back({cfg, result});
+    }
+
+    auto candidates{build_candidates(trials)};
+    score_and_sort_candidates(candidates);
+
+    write_analysis_to_file(filename, candidates, trials.size());
+}
+
 } /* move_forward namespace */
 
 /*----------------------------------------------------------------------------*/
@@ -499,10 +542,8 @@ SingleCaseScoreBreakdown compute_single_case_score(const SingleCaseResultsMetric
     s.collision = m.collision_rate;
     s.timeout = m.timeout_rate;
 
-    /* PRIMARY: prioritize safety + balance */
-    double sum{s.collision + s.timeout};
-    double diff{std::abs(s.collision - s.timeout)};
-    s.primary_total = sum - diff;
+    /* PRIMARY: prioritize collision and timeout minimization */
+    s.primary_total = s.collision + s.timeout;
 
     /* SECONDARY: performance metrics */
     s.secondary_total = s.time + s.angle + s.horizontal_translation + s.vertical_translation;
@@ -538,6 +579,156 @@ double compute_total_secondary(const ScoreBreakdown& s)
     return s.no_wall_breakdown.secondary_total
            + s.one_wall_breakdown.secondary_total
            + s.two_wall_breakdown.secondary_total;
+}
+
+void write_summary(std::ofstream& out, size_t total_size)
+{
+    out << "=== SUMMARY ===\n";
+    out << "Total Size : " << total_size << "\n";
+}
+
+void write_candidates_banner(std::ofstream& out)
+{
+    out << std::left
+        << std::setw(6)  << "#"
+        << std::setw(6)  << "tg"
+        << std::setw(6)  << "speed"
+        << std::setw(6)  << "kp"
+        << std::setw(6)  << "kd"
+        << std::setw(8)  << "shift"
+        << std::setw(10) << "kpir"
+        << std::setw(10) << "kdir"
+
+        /* GLOBAL TOTALS */
+        << std::setw(12) << "P_tot"
+        << std::setw(12) << "S_tot"
+
+        /* PER CASE TOTALS */
+        << std::setw(10) << "NW_P"
+        << std::setw(10) << "NW_S"
+        << std::setw(10) << "OW_P"
+        << std::setw(10) << "OW_S"
+        << std::setw(10) << "TW_P"
+        << std::setw(10) << "TW_S"
+
+        /* NO WALL */
+        << std::setw(10) << "NW_t"
+        << std::setw(10) << "NW_ang"
+        << std::setw(10) << "NW_h"
+        << std::setw(10) << "NW_v"
+        << std::setw(8)  << "NW_col"
+        << std::setw(8)  << "NW_to"
+
+        /* ONE WALL */
+        << std::setw(10) << "OW_t"
+        << std::setw(10) << "OW_ang"
+        << std::setw(10) << "OW_h"
+        << std::setw(10) << "OW_v"
+        << std::setw(8)  << "OW_col"
+        << std::setw(8)  << "OW_to"
+
+        /* TWO WALL */
+        << std::setw(10) << "TW_t"
+        << std::setw(10) << "TW_ang"
+        << std::setw(10) << "TW_h"
+        << std::setw(10) << "TW_v"
+        << std::setw(8)  << "TW_col"
+        << std::setw(8)  << "TW_to"
+
+        << "\n";
+}
+
+void write_candidates(std::ofstream& out, const std::vector<Candidate>& candidates)
+{
+    auto fmt = [](double v) {
+        std::ostringstream oss;
+        oss << std::setprecision(3) << v;
+        return oss.str();
+    };
+
+    auto pick = [](const SingleCaseResultsMetrics& m) {
+        struct Flat {
+            double t, ang, h, v;
+            double col, to;
+        };
+
+        return Flat{simulation_common::collapse_metric(m.time_stats),
+                    simulation_common::collapse_metric(m.angle_error_stats),
+                    simulation_common::collapse_metric(m.horizontal_translation_stats),
+                    simulation_common::collapse_metric(m.vertical_translation_stats),
+                    m.collision_rate,
+                    m.timeout_rate};
+    };
+
+    for (size_t i{0}; i < candidates.size(); ++i) {
+        const auto& c{candidates[i]};
+
+        const auto& s{c.score};
+
+        /* totals */
+        double p_total{compute_total_primary(s)};
+        double s_total{compute_total_secondary(s)};
+
+        /* per-case */
+        const auto& nw_s{s.no_wall_breakdown};
+        const auto& ow_s{s.one_wall_breakdown};
+        const auto& tw_s{s.two_wall_breakdown};
+
+        /* raw metrics */
+        const auto nw{pick(c.results_metrics.no_wall_metrics)};
+        const auto ow{pick(c.results_metrics.one_wall_metrics)};
+        const auto tw{pick(c.results_metrics.two_wall_metrics)};
+
+        out << std::left
+            << std::setw(6)  << (i + 1)
+
+            /* CONFIG */
+            << std::setw(6)  << static_cast<int>(c.key.single_wall_target)
+            << std::setw(6)  << static_cast<int>(c.key.motor_speed)
+            << std::setw(6)  << c.key.kp
+            << std::setw(6)  << c.key.kd
+            << std::setw(8)  << c.key.pid_shift
+            << std::setw(10) << c.key.kp_ir
+            << std::setw(10) << c.key.kd_ir
+
+            /* GLOBAL TOTALS */
+            << std::setw(12) << fmt(p_total)
+            << std::setw(12) << fmt(s_total)
+
+            /* PER CASE TOTALS */
+            << std::setw(10) << fmt(nw_s.primary_total)
+            << std::setw(10) << fmt(nw_s.secondary_total)
+            << std::setw(10) << fmt(ow_s.primary_total)
+            << std::setw(10) << fmt(ow_s.secondary_total)
+            << std::setw(10) << fmt(tw_s.primary_total)
+            << std::setw(10) << fmt(tw_s.secondary_total)
+
+            /* NO WALL */
+            << std::setw(10) << fmt(nw.t)
+            << std::setw(10) << fmt(nw.ang)
+            << std::setw(10) << fmt(nw.h)
+            << std::setw(10) << fmt(nw.v)
+            << std::setw(8)  << fmt(nw.col)
+            << std::setw(8)  << fmt(nw.to)
+
+            /* ONE WALL */
+            << std::setw(10) << fmt(ow.t)
+            << std::setw(10) << fmt(ow.ang)
+            << std::setw(10) << fmt(ow.h)
+            << std::setw(10) << fmt(ow.v)
+            << std::setw(8)  << fmt(ow.col)
+            << std::setw(8)  << fmt(ow.to)
+
+            /* TWO WALL */
+            << std::setw(10) << fmt(tw.t)
+            << std::setw(10) << fmt(tw.ang)
+            << std::setw(10) << fmt(tw.h)
+            << std::setw(10) << fmt(tw.v)
+            << std::setw(8)  << fmt(tw.col)
+            << std::setw(8)  << fmt(tw.to)
+
+            << "\n";
+    }
 }
 
 } /* unnamed namespace*/

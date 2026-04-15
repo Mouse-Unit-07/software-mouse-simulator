@@ -705,3 +705,68 @@ TEST(MoveForwardTests, HandlesEmptyVector)
 
     CHECK(candidates.empty());
 }
+
+TEST(MoveForwardTests, RunMinimalSampleSimulation)
+{
+    ConfigSweeper sweeper{create_no_variance_sweeper()};
+
+    const std::string filename{"test_minimal_output.txt"};
+
+    run_full_move_forward_experiment(filename, sweeper);
+}
+
+IGNORE_TEST(MoveForwardTests, RunFullNoVarianceSimulation)
+{
+    ConfigSweeper sweeper;
+
+    sweeper.dt = {0.01};
+    sweeper.motor_speed_scale = {1.0};
+    sweeper.motor1_variance = simulation_common::generate_sweep_values(-0.05, 0.05, 9);
+    sweeper.motor2_variance = simulation_common::generate_sweep_values(-0.05, 0.05, 9);
+    sweeper.slip_factor = {1.0};
+    sweeper.wheel_circumference_scale = {1.0};
+    sweeper.wheel_base_scale = {1.0};
+    sweeper.maze_size_scale = {1.0};
+    sweeper.ir_reading_scale = {1.0};
+    sweeper.mouse_angle = {0.0};
+    sweeper.horizontal_position_variance = {0.0};
+    sweeper.vertical_position_variance = {0.0};
+
+    sweeper.single_wall_target = {407u};
+    sweeper.motor_speed = {120u};
+    sweeper.kp = simulation_common::generate_sweep_values(0, 4000, 11);
+    sweeper.kd = simulation_common::generate_sweep_values(0, 2000, 11);
+    sweeper.pid_shift = {8};
+    sweeper.kp_ir = simulation_common::generate_sweep_values(0, 2000, 21);
+    sweeper.kd_ir = simulation_common::generate_sweep_values(0, 2000, 21);
+
+    run_full_move_forward_experiment("test_full_no_variance_output.txt", sweeper);
+}
+
+IGNORE_TEST(MoveForwardTests, RunFullSimulationAndWriteResultsToFile)
+{
+    ConfigSweeper sweeper;
+
+    sweeper.dt = {0.05, 0.1, 0.15};
+    sweeper.motor_speed_scale = simulation_common::generate_sweep_values(0.9, 1.1, 3);
+    sweeper.motor1_variance = simulation_common::generate_sweep_values(-0.2, 0.2, 11);
+    sweeper.motor2_variance = simulation_common::generate_sweep_values(-0.2, 0.2, 11);
+    sweeper.slip_factor = simulation_common::generate_sweep_values(0.9, 1.1, 3);
+    sweeper.wheel_circumference_scale = simulation_common::generate_sweep_values(0.95, 1.05, 3);
+    sweeper.wheel_base_scale = simulation_common::generate_sweep_values(0.95, 1.05, 3);
+    sweeper.maze_size_scale = simulation_common::generate_sweep_values(0.95, 1.05, 3);
+    sweeper.ir_reading_scale = simulation_common::generate_sweep_values(0.95, 1.05, 3);
+    sweeper.mouse_angle = simulation_common::generate_sweep_values(-M_PI / 4, M_PI / 4, 9);
+    sweeper.horizontal_position_variance = simulation_common::generate_sweep_values(-0.9, 0.9, 5);
+    sweeper.vertical_position_variance = {0.0};
+
+    sweeper.single_wall_target = {407u};
+    sweeper.motor_speed = simulation_common::generate_sweep_values<uint8_t>(120, 220, 6);
+    sweeper.kp = simulation_common::generate_sweep_values(0, 2000, 21);
+    sweeper.kd = simulation_common::generate_sweep_values(0, 2000, 21);
+    sweeper.pid_shift = {8};
+    sweeper.kp_ir = simulation_common::generate_sweep_values(0, 2000, 21);
+    sweeper.kd_ir = simulation_common::generate_sweep_values(0, 2000, 21);
+
+    run_full_move_forward_experiment("test_full_output.txt", sweeper);
+}

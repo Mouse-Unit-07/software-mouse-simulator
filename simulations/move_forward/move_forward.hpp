@@ -146,15 +146,15 @@ struct CandidateKey {
     uint8_t motor_speed;
     int32_t kp;
     int32_t kd;
-    int32_t shift;
+    int32_t pid_shift;
     int32_t kp_ir;
     int32_t kd_ir;
 
     bool operator<(const CandidateKey& other) const
     {
-        return std::tie(single_wall_target, motor_speed, kp, kd, shift, kp_ir, kd_ir)
+        return std::tie(single_wall_target, motor_speed, kp, kd, pid_shift, kp_ir, kd_ir)
                < std::tie(other.single_wall_target, other.motor_speed, other.kp, other.kd,
-                          other.shift, other.kp_ir, other.kd_ir);
+                          other.pid_shift, other.kp_ir, other.kd_ir);
     }
 };
 
@@ -179,6 +179,9 @@ Result run_simulation(const Config& cfg);
 ResultsMetrics compute_results_metrics(const std::vector<Result>& results);
 std::vector<Candidate> build_candidates(const std::vector<Trial>& trials);
 void score_and_sort_candidates(std::vector<Candidate>& candidates);
+
+void write_analysis_to_file(const std::string& filename, const std::vector<Candidate>& candidates, size_t total_size);
+void run_full_move_forward_experiment(const std::string& filename, ConfigSweeper& sweeper);
 
 } /* move_forward namespace */
 
