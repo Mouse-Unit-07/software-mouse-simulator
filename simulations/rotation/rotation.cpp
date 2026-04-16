@@ -30,6 +30,7 @@ extern "C"
 #include <iostream>
 #include <map>
 #include <memory>
+#include <random>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -128,6 +129,84 @@ Config ConfigSweeper::value(void) const
     cfg.kp = kp.at(idx.at(i++));
     cfg.kd = kd.at(idx.at(i++));
     cfg.pid_shift = pid_shift.at(idx.at(i++));
+
+    return cfg;
+}
+
+ControlConfig decode_control(const std::vector<double>& x)
+{
+    ControlConfig c{};
+    size_t i{0};
+
+    c.motor_speed = static_cast<uint8_t>(x.at(i++));
+    c.kp = static_cast<int32_t>(x.at(i++));
+    c.kd = static_cast<int32_t>(x.at(i++));
+    c.pid_shift = static_cast<int32_t>(x.at(i++));
+
+    return c;
+}
+
+std::vector<double> encode_control(const ControlConfig& cfg)
+{
+    return {static_cast<double>(cfg.motor_speed),
+            static_cast<double>(cfg.kp),
+            static_cast<double>(cfg.kd),
+            static_cast<double>(cfg.pid_shift)};
+}
+
+std::pair<std::vector<double>, std::vector<double>> get_control_bounds(void)
+{
+    ControlConfig lower_bounds;
+    lower_bounds.motor_speed = 100;
+    lower_bounds.kp = 0;
+    lower_bounds.kd = 0;
+    lower_bounds.pid_shift = 4;
+
+    ControlConfig upper_bounds;
+    upper_bounds.motor_speed = 255;
+    upper_bounds.kp = 2000;
+    upper_bounds.kd = 2000;
+    upper_bounds.pid_shift = 8;
+
+    return {encode_control(lower_bounds), encode_control(upper_bounds)};
+}
+
+EnvironmentConfig generate_random_environment(void)
+{
+    static thread_local std::mt19937 rng(std::random_device{}());
+
+    auto uniform = [&](double a, double b) {
+        return std::uniform_real_distribution<double>(a, b)(rng);
+    };
+
+    EnvironmentConfig e;
+    e.dt = uniform(0.01, 0.1);
+    e.motor_speed_scale = uniform(0.9, 1.1);
+    e.motor1_variance = uniform(-0.2, 0.2);
+    e.motor2_variance = uniform(-0.2, 0.2);
+    e.slip_factor = uniform(0.9, 1.1);
+    e.wheel_circumference_scale = uniform(0.9, 1.1);
+    e.wheel_base_scale = uniform(0.9, 1.1);
+
+    return e;
+}
+
+Config merge_control_and_environment(const ControlConfig& ctrl_cfg,
+                                     const EnvironmentConfig& env_cfg)
+{
+    Config cfg;
+
+    cfg.dt = env_cfg.dt;
+    cfg.motor_speed_scale = env_cfg.motor_speed_scale;
+    cfg.motor1_variance = env_cfg.motor1_variance;
+    cfg.motor2_variance = env_cfg.motor2_variance;
+    cfg.slip_factor = env_cfg.slip_factor;
+    cfg.wheel_circumference_scale = env_cfg.wheel_circumference_scale;
+    cfg.wheel_base_scale = env_cfg.wheel_base_scale;
+    cfg.motor_speed = ctrl_cfg.motor_speed;
+    cfg.kp = ctrl_cfg.kp;
+    cfg.kd = ctrl_cfg.kd;
+    cfg.pid_shift = ctrl_cfg.pid_shift;
 
     return cfg;
 }

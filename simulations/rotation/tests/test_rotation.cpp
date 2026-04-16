@@ -556,3 +556,114 @@ IGNORE_TEST(RotationTests, RunFullSimulationForIdealSpeedAndPid)
     enable_visualization();
     run_full_rotation_experiment("test_full_output.txt", M_PI / 2, sweeper);
 }
+
+TEST(RotationTests, EncodeDecodeControlRoundTrip)
+{
+    ControlConfig original;
+    original.motor_speed = 123u;
+    original.kp = 1000;
+    original.kd = -250;
+    original.pid_shift = 6;
+
+    auto encoded{encode_control(original)};
+    auto decoded{decode_control(encoded)};
+
+    CHECK_EQUAL(original.motor_speed, decoded.motor_speed);
+    CHECK_EQUAL(original.kp, decoded.kp);
+    CHECK_EQUAL(original.kd, decoded.kd);
+    CHECK_EQUAL(original.pid_shift, decoded.pid_shift);
+}
+
+TEST(RotationTests, EncodeControlMaintainsFieldOrder)
+{
+    ControlConfig cfg;
+    cfg.motor_speed = 1;
+    cfg.kp = 2;
+    cfg.kd = 3;
+    cfg.pid_shift = 4;
+
+    auto v{encode_control(cfg)};
+
+    CHECK_EQUAL(1, v.at(0));
+    CHECK_EQUAL(2, v.at(1));
+    CHECK_EQUAL(3, v.at(2));
+    CHECK_EQUAL(4, v.at(3));
+}
+
+TEST(RotationTests, GetControlBoundsHasCorrectSize)
+{
+    auto [low, high] = get_control_bounds();
+
+    CHECK_EQUAL(4, low.size());
+    CHECK_EQUAL(4, high.size());
+}
+
+TEST(RotationTests, GetControlBoundsValuesAreCorrect)
+{
+    auto [low, high] = get_control_bounds();
+
+    CHECK_EQUAL(100, low.at(0));
+    CHECK_EQUAL(0, low.at(1));
+    CHECK_EQUAL(0, low.at(2));
+    CHECK_EQUAL(4, low.at(3));
+
+    CHECK_EQUAL(255, high.at(0));
+    CHECK_EQUAL(2000, high.at(1));
+    CHECK_EQUAL(2000, high.at(2));
+    CHECK_EQUAL(8, high.at(3));
+}
+
+TEST(RotationTests, GetControlBoundsAreDecodeSafe)
+{
+    auto [low, high] = get_control_bounds();
+
+    auto low_cfg{decode_control(low)};
+    auto high_cfg{decode_control(high)};
+
+    CHECK_EQUAL(100, low_cfg.motor_speed);
+    CHECK_EQUAL(255, high_cfg.motor_speed);
+}
+
+TEST(RotationTests, RandomEnvironmentValuesWithinExpectedRanges)
+{
+    for (int i{0}; i < 100; i++) {
+        auto e{generate_random_environment()};
+
+        CHECK((e.dt >= 0.01) && (e.dt <= 0.1));
+        CHECK((e.motor_speed_scale >= 0.9) && (e.motor_speed_scale <= 1.1));
+        CHECK((e.motor1_variance >= -0.2) && (e.motor1_variance <= 0.2));
+        CHECK((e.motor2_variance >= -0.2) && (e.motor2_variance <= 0.2));
+        CHECK((e.slip_factor >= 0.9) && (e.slip_factor <= 1.1));
+        CHECK((e.wheel_circumference_scale >= 0.9) && (e.wheel_circumference_scale <= 1.1));
+        CHECK((e.wheel_base_scale >= 0.9) && (e.wheel_base_scale <= 1.1));
+    }
+}
+
+TEST(RotationTests, MergeControlAndEnvironmentMapsFieldsCorrectly)
+{
+    ControlConfig c;
+    c.motor_speed = 50;
+    c.kp = 100;
+    c.kd = 200;
+    c.pid_shift = 3;
+
+    EnvironmentConfig e;
+    e.dt = 0.02;
+    e.motor_speed_scale = 1.1;
+    e.motor1_variance = -0.1;
+    e.motor2_variance = 0.2;
+    e.slip_factor = 1.0;
+    e.wheel_circumference_scale = 0.95;
+    e.wheel_base_scale = 1.05;
+
+    auto cfg{merge_control_and_environment(c, e)};
+
+    CHECK_EQUAL(50, cfg.motor_speed);
+    CHECK_EQUAL(100, cfg.kp);
+    CHECK_EQUAL(200, cfg.kd);
+    CHECK_EQUAL(3, cfg.pid_shift);
+
+    DOUBLES_EQUAL(0.02, cfg.dt, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(1.1, cfg.motor_speed_scale, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(-0.1, cfg.motor1_variance, FLOAT_TOLERANCE);
+}
