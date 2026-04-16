@@ -26,7 +26,12 @@
 /*----------------------------------------------------------------------------*/
 /*                            Private Declarations                            */
 /*----------------------------------------------------------------------------*/
-/* none */
+namespace
+{
+
+std::ofstream open_output_file(const std::string& filename);
+
+} /* unnamed namespace */
 
 /*----------------------------------------------------------------------------*/
 /*                               Private Globals                              */
@@ -40,6 +45,20 @@ namespace optimizer
 {
 
 using PagmoVec = pagmo::vector_double;
+
+template <typename UDP>
+ParetoResult run_pareto_impl(UDP&& udp, std::size_t population, std::size_t generations)
+{
+    pagmo::problem prob{std::forward<UDP>(udp)};
+    pagmo::algorithm algo{pagmo::nsga2{}};
+    pagmo::population pop{prob, population};
+
+    for (std::size_t i{0}; i < generations; ++i) {
+        pop = algo.evolve(pop);
+    }
+
+    return {pop.get_x(), pop.get_f()};
+}
 
 class RotationUDP {
 public:
@@ -97,31 +116,12 @@ public:
 ParetoResult run_rotation_pareto(std::size_t population, std::size_t generations,
                                  int simulations_per_fitness)
 {
-    RotationUDP udp{simulations_per_fitness};
-
-    pagmo::problem prob{udp};
-
-    pagmo::algorithm algo{pagmo::nsga2{}};
-
-    pagmo::population pop{prob, population};
-
-    for (std::size_t i{0}; i < generations; ++i) {
-        pop = algo.evolve(pop);
-    }
-
-    ParetoResult out;
-    out.X = pop.get_x();
-    out.F = pop.get_f();
-
-    return out;
+    return run_pareto_impl(RotationUDP{simulations_per_fitness}, population, generations);
 }
 
 void write_rotation_pareto_to_file(const std::string& filename, const ParetoResult& result)
 {
-    std::ofstream out(filename);
-    if (!out.is_open()) {
-        throw std::runtime_error("Failed to open file: " + filename);
-    }
+    auto out{open_output_file(filename)};
 
     constexpr int W_IDX{4};
     constexpr int W_SPD{6};
@@ -134,8 +134,6 @@ void write_rotation_pareto_to_file(const std::string& filename, const ParetoResu
     constexpr int W_TIME{12};
     constexpr int W_COLL{12};
     constexpr int W_TO{12};
-
-    out << std::fixed << std::setprecision(6);
 
     out << "===== ROTATION PARETO FRONT =====\n\n";
     out << std::left
@@ -242,31 +240,12 @@ public:
 ParetoResult run_move_forward_pareto(std::size_t population, std::size_t generations,
                                      int simulations_per_fitness)
 {
-    MoveForwardUDP udp{simulations_per_fitness};
-
-    pagmo::problem prob{udp};
-
-    pagmo::algorithm algo{pagmo::nsga2{}};
-
-    pagmo::population pop{prob, population};
-
-    for (std::size_t i{0}; i < generations; ++i) {
-        pop = algo.evolve(pop);
-    }
-
-    ParetoResult out;
-    out.X = pop.get_x();
-    out.F = pop.get_f();
-
-    return out;
+    return run_pareto_impl(MoveForwardUDP{simulations_per_fitness}, population, generations);
 }
 
 void write_move_forward_pareto_to_file(const std::string& filename, const ParetoResult& result)
 {
-    std::ofstream out(filename);
-    if (!out.is_open()) {
-        throw std::runtime_error("Failed to open file: " + filename);
-    }
+    auto out{open_output_file(filename)};
 
     /* column widths */
     constexpr int W_IDX{4};
@@ -284,8 +263,6 @@ void write_move_forward_pareto_to_file(const std::string& filename, const Pareto
     constexpr int W_VERT{12};
     constexpr int W_COLL{12};
     constexpr int W_TO{12};
-
-    out << std::fixed << std::setprecision(6);
 
     /* banner */
     out << "===== MOVE FORWARD PARETO FRONT =====\n\n";
@@ -342,4 +319,17 @@ void write_move_forward_pareto_to_file(const std::string& filename, const Pareto
 /*----------------------------------------------------------------------------*/
 /*                             Private Definitions                            */
 /*----------------------------------------------------------------------------*/
-/* none */
+namespace
+{
+
+std::ofstream open_output_file(const std::string& filename)
+{
+    std::ofstream out(filename);
+    if (!out.is_open()) {
+        throw std::runtime_error("Failed to open file: " + filename);
+    }
+    out << std::fixed << std::setprecision(6);
+    return out;
+}
+
+} /* unnamed namespace */
