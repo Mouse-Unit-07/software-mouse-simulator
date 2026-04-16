@@ -43,18 +43,24 @@ using PagmoVec = pagmo::vector_double;
 
 class RotationUDP {
 public:
+    RotationUDP() = default;
+
+    RotationUDP(int simulations_per_fitness) : sims_(simulations_per_fitness)
+    {
+        /* no additional logic */
+    }
+
     PagmoVec fitness(const PagmoVec& x) const
     {
         const auto control{rotation::decode_control(x)};
 
-        constexpr int N{1000};
         double angle{0.0};
         double translation{0.0};
         double time{0.0};
         double collision{0.0};
         double timeout{0.0};
 
-        for (int i{0}; i < N; ++i) {
+        for (int i{0}; i < sims_; ++i) {
             rotation::Config cfg{control, rotation::generate_random_environment()};
 
             const auto r{rotation::run_simulation(cfg, M_PI / 2)};
@@ -67,11 +73,11 @@ public:
         }
 
         return {
-            angle / N,
-            translation / N,
-            time / N,
-            collision / N,
-            timeout / N
+            angle / sims_,
+            translation / sims_,
+            time / sims_,
+            collision / sims_,
+            timeout / sims_
         };
     }
 
@@ -84,11 +90,14 @@ public:
     {
         return 5;
     }
+
+    int sims_{100};
 };
 
-ParetoResult run_rotation_pareto(std::size_t population, std::size_t generations)
+ParetoResult run_rotation_pareto(std::size_t population, std::size_t generations,
+                                 int simulations_per_fitness)
 {
-    RotationUDP udp;
+    RotationUDP udp{simulations_per_fitness};
 
     pagmo::problem prob{udp};
 
@@ -168,11 +177,16 @@ void write_rotation_pareto_to_file(const std::string& filename, const ParetoResu
 
 class MoveForwardUDP {
 public:
+    MoveForwardUDP() = default;
+
+    MoveForwardUDP(int simulations_per_fitness) : sims_(simulations_per_fitness)
+    {
+        /* no additional logic */
+    }
+
     PagmoVec fitness(const PagmoVec& x) const
     {
         const auto control{move_forward::decode_control(x)};
-
-        constexpr int N{100};
 
         double time{0.0};
         double angle{0.0};
@@ -181,7 +195,7 @@ public:
         double collision{0.0};
         double timeout{0.0};
 
-        for (int i{0}; i < N; ++i) {
+        for (int i{0}; i < sims_; ++i) {
             move_forward::Config cfg{control, move_forward::generate_random_environment()};
 
             const auto r{move_forward::run_simulation(cfg)};
@@ -200,7 +214,7 @@ public:
             accumulate(r.two_wall);
         }
 
-        const double denom = static_cast<double>(N * 3);
+        const double denom{static_cast<double>(sims_ * 3)};
 
         return {
             time / denom,
@@ -221,11 +235,14 @@ public:
     {
         return 6;
     }
+
+    int sims_{100};
 };
 
-ParetoResult run_move_forward_pareto(std::size_t population, std::size_t generations)
+ParetoResult run_move_forward_pareto(std::size_t population, std::size_t generations,
+                                     int simulations_per_fitness)
 {
-    MoveForwardUDP udp;
+    MoveForwardUDP udp{simulations_per_fitness};
 
     pagmo::problem prob{udp};
 
