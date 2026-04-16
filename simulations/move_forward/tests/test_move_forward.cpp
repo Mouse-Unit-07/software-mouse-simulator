@@ -173,6 +173,105 @@ TEST_GROUP(MoveForwardTests)
 /*============================================================================*/
 /*                                    Tests                                   */
 /*============================================================================*/
+TEST(MoveForwardTests, EncodeDecodeControlRoundTrip)
+{
+    ControlConfig original;
+    original.single_wall_target = 456u;
+    original.motor_speed = 123u;
+    original.kp = 1000;
+    original.kd = -250;
+    original.pid_shift = 6;
+    original.kp_ir = 100;
+    original.kd_ir = 200;
+
+    auto encoded{encode_control(original)};
+    auto decoded{decode_control(encoded)};
+
+    CHECK_EQUAL(original.single_wall_target, decoded.single_wall_target);
+    CHECK_EQUAL(original.motor_speed, decoded.motor_speed);
+    CHECK_EQUAL(original.kp, decoded.kp);
+    CHECK_EQUAL(original.kd, decoded.kd);
+    CHECK_EQUAL(original.pid_shift, decoded.pid_shift);
+    CHECK_EQUAL(original.kp_ir, decoded.kp_ir);
+    CHECK_EQUAL(original.kd_ir, decoded.kd_ir);
+}
+
+TEST(MoveForwardTests, EncodeControlMaintainsFieldOrder)
+{
+    ControlConfig cfg;
+    cfg.single_wall_target = 0;
+    cfg.motor_speed = 1;
+    cfg.kp = 2;
+    cfg.kd = 3;
+    cfg.pid_shift = 4;
+    cfg.kp_ir = 5;
+    cfg.kd_ir = 6;
+
+    auto v{encode_control(cfg)};
+
+    CHECK_EQUAL(0, v.at(0));
+    CHECK_EQUAL(1, v.at(1));
+    CHECK_EQUAL(2, v.at(2));
+    CHECK_EQUAL(3, v.at(3));
+    CHECK_EQUAL(4, v.at(4));
+    CHECK_EQUAL(5, v.at(5));
+    CHECK_EQUAL(6, v.at(6));
+}
+
+TEST(MoveForwardTests, GetControlBoundsHasCorrectSize)
+{
+    auto [low, high] = get_control_bounds();
+
+    CHECK_EQUAL(7, low.size());
+    CHECK_EQUAL(7, high.size());
+}
+
+TEST(MoveForwardTests, GetControlBoundsValuesAreCorrect)
+{
+    auto [low, high] = get_control_bounds();
+
+    CHECK_EQUAL(0, low.at(0));
+    CHECK_EQUAL(100, low.at(1));
+    CHECK_EQUAL(0, low.at(2));
+    CHECK_EQUAL(0, low.at(3));
+
+    CHECK_EQUAL(1024, high.at(0));
+    CHECK_EQUAL(255, high.at(1));
+    CHECK_EQUAL(2000, high.at(2));
+    CHECK_EQUAL(2000, high.at(3));
+}
+
+TEST(MoveForwardTests, GetControlBoundsAreDecodeSafe)
+{
+    auto [low, high] = get_control_bounds();
+
+    auto low_cfg{decode_control(low)};
+    auto high_cfg{decode_control(high)};
+
+    CHECK_EQUAL(100, low_cfg.motor_speed);
+    CHECK_EQUAL(255, high_cfg.motor_speed);
+}
+
+TEST(MoveForwardTests, RandomEnvironmentValuesWithinExpectedRanges)
+{
+    for (int i{0}; i < 100; i++) {
+        auto e{generate_random_environment()};
+
+        CHECK((e.dt >= 0.01) && (e.dt <= 0.1));
+        CHECK((e.motor_speed_scale >= 0.9) && (e.motor_speed_scale <= 1.1));
+        CHECK((e.motor1_variance >= -0.2) && (e.motor1_variance <= 0.2));
+        CHECK((e.motor2_variance >= -0.2) && (e.motor2_variance <= 0.2));
+        CHECK((e.slip_factor >= 0.9) && (e.slip_factor <= 1.1));
+        CHECK((e.wheel_circumference_scale >= 0.9) && (e.wheel_circumference_scale <= 1.1));
+        CHECK((e.wheel_base_scale >= 0.9) && (e.wheel_base_scale <= 1.1));
+        CHECK((e.maze_size_scale >= 0.9) && (e.maze_size_scale <= 1.1));
+        CHECK((e.ir_reading_scale >= 0.9) && (e.ir_reading_scale <= 1.1));
+        CHECK((e.mouse_angle >= -(M_PI / 4)) && (e.mouse_angle <= (M_PI / 4)));
+        CHECK((e.horizontal_position_variance >= -0.5) && (e.horizontal_position_variance <= 0.5));
+        CHECK((e.vertical_position_variance >= -0.5) && (e.vertical_position_variance <= 0.5));
+    }
+}
+
 TEST(MoveForwardTests, SimulationIsDeterministic)
 {
     Config cfg{create_no_variance_config()};

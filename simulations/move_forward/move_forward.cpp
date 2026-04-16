@@ -22,9 +22,11 @@ extern "C"
 }
 
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <filesystem>
 #include <map>
+#include <random>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -71,6 +73,81 @@ visualizer::Visualizer rotation_visualizer;
 /*----------------------------------------------------------------------------*/
 namespace move_forward
 {
+
+ControlConfig decode_control(const std::vector<double>& x)
+{
+    ControlConfig c{};
+    size_t i{0};
+
+    c.single_wall_target = static_cast<uint32_t>(x.at(i++));
+    c.motor_speed = static_cast<uint8_t>(x.at(i++));
+    c.kp = static_cast<int32_t>(x.at(i++));
+    c.kd = static_cast<int32_t>(x.at(i++));
+    c.pid_shift = static_cast<int32_t>(x.at(i++));
+    c.kp_ir = static_cast<int32_t>(x.at(i++));
+    c.kd_ir = static_cast<int32_t>(x.at(i++));
+
+    return c;
+}
+
+std::vector<double> encode_control(const ControlConfig& cfg)
+{
+    return {static_cast<double>(cfg.single_wall_target),
+            static_cast<double>(cfg.motor_speed),
+            static_cast<double>(cfg.kp),
+            static_cast<double>(cfg.kd),
+            static_cast<double>(cfg.pid_shift),
+            static_cast<double>(cfg.kp_ir),
+            static_cast<double>(cfg.kd_ir)};
+}
+
+std::pair<std::vector<double>, std::vector<double>> get_control_bounds(void)
+{
+    ControlConfig lower_bounds;
+    lower_bounds.single_wall_target = 0;
+    lower_bounds.motor_speed = 100;
+    lower_bounds.kp = 0;
+    lower_bounds.kd = 0;
+    lower_bounds.pid_shift = 4;
+    lower_bounds.kp_ir = 4;
+    lower_bounds.kd_ir = 4;
+
+    ControlConfig upper_bounds;
+    upper_bounds.single_wall_target = 1024;
+    upper_bounds.motor_speed = 255;
+    upper_bounds.kp = 2000;
+    upper_bounds.kd = 2000;
+    upper_bounds.pid_shift = 8;
+    upper_bounds.kp_ir = 2000;
+    upper_bounds.kd_ir = 2000;
+
+    return {encode_control(lower_bounds), encode_control(upper_bounds)};
+}
+
+EnvironmentConfig generate_random_environment(void)
+{
+    static thread_local std::mt19937 rng(std::random_device{}());
+
+    auto uniform = [&](double a, double b) {
+        return std::uniform_real_distribution<double>(a, b)(rng);
+    };
+
+    EnvironmentConfig e;
+    e.dt = uniform(0.01, 0.1);
+    e.motor_speed_scale = uniform(0.9, 1.1);
+    e.motor1_variance = uniform(-0.2, 0.2);
+    e.motor2_variance = uniform(-0.2, 0.2);
+    e.slip_factor = uniform(0.9, 1.1);
+    e.wheel_circumference_scale = uniform(0.9, 1.1);
+    e.wheel_base_scale = uniform(0.9, 1.1);
+    e.maze_size_scale = uniform(0.9, 1.1);
+    e.ir_reading_scale = uniform(0.9, 1.1);
+    e.mouse_angle = uniform(-(M_PI / 4), M_PI / 4);
+    e.horizontal_position_variance = uniform(-0.5, 0.5);
+    e.vertical_position_variance = uniform(-0.5, 0.5);
+
+    return e;
+}
 
 void enable_visualization(const std::string& foldername)
 {
@@ -173,10 +250,10 @@ SingleCaseResult run_single_simulation(const Config& cfg, const maze::Maze& maze
             update_ir_2_sensor_reading(ir2_dist);
             update_ir_3_sensor_reading(ir3_dist);
 
-            int32_t ir2{static_cast<int32_t>(
-                scale_and_clamp_ir_sensor_reading(read_ir_2_sensor(), cfg.env_cfg.ir_reading_scale))};
-            int32_t ir3{static_cast<int32_t>(
-                scale_and_clamp_ir_sensor_reading(read_ir_3_sensor(), cfg.env_cfg.ir_reading_scale))};
+            int32_t ir2{static_cast<int32_t>(scale_and_clamp_ir_sensor_reading(
+                read_ir_2_sensor(), cfg.env_cfg.ir_reading_scale))};
+            int32_t ir3{static_cast<int32_t>(scale_and_clamp_ir_sensor_reading(
+                read_ir_3_sensor(), cfg.env_cfg.ir_reading_scale))};
 
             const int32_t TARGET_IR_READING{static_cast<int32_t>(cfg.ctrl_cfg.single_wall_target)};
 
@@ -205,8 +282,9 @@ SingleCaseResult run_single_simulation(const Config& cfg, const maze::Maze& maze
 
         /* combined feedback control */
         int64_t control64{enc_control + ir_control};
-        int32_t control{(control64 >= 0) ? static_cast<int32_t>(control64 >> cfg.ctrl_cfg.pid_shift)
-                                         : -(static_cast<int32_t>((-control64) >> cfg.ctrl_cfg.pid_shift))};
+        int32_t control{(control64 >= 0)
+                            ? static_cast<int32_t>(control64 >> cfg.ctrl_cfg.pid_shift)
+                            : -(static_cast<int32_t>((-control64) >> cfg.ctrl_cfg.pid_shift))};
         int32_t base{cfg.ctrl_cfg.motor_speed};
         int32_t speed1{std::clamp(base + control, 0, 255)};
         int32_t speed2{std::clamp(base - control, 0, 255)};
@@ -334,8 +412,9 @@ void prepare_mock_for_move_forward(const Config& cfg, const maze::Maze& maze, mo
     double max_vertical_offset{(maze::OFFICIAL_WALL_LENGTH_SIZE - mouse.hitbox.vertical_size) / 2};
 
     mouse.rotate(cfg.env_cfg.mouse_angle);
-    mouse.translate(maze.mouse_start.x + (max_horizontal_offset * cfg.env_cfg.horizontal_position_variance),
-                    maze.mouse_start.y + (max_vertical_offset * cfg.env_cfg.vertical_position_variance));
+    mouse.translate(
+        maze.mouse_start.x + (max_horizontal_offset * cfg.env_cfg.horizontal_position_variance),
+        maze.mouse_start.y + (max_vertical_offset * cfg.env_cfg.vertical_position_variance));
 }
 
 mouse_delta update_mock_by_dt(const Config& cfg, mouse::Mouse& mouse)
