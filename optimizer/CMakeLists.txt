@@ -14,11 +14,11 @@ target_include_directories(optimizer_lib PUBLIC
 
 include(FetchContent)
 
-set(PAGMO_WITH_TBB OFF CACHE BOOL "" FORCE)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+set(PAGMO_BUILD_STATIC_LIBS ON CACHE BOOL "" FORCE)
 set(PAGMO_ENABLE_TBB OFF CACHE BOOL "" FORCE)
-set(PAGMO_BUILD_WITH_TBB OFF CACHE BOOL "" FORCE)
-set(PAGMO_WITH_BOOST OFF CACHE BOOL "" FORCE)
-set(PAGMO_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(PAGMO_WITH_TBB OFF CACHE BOOL "" FORCE)
+set(PAGMO_WITH_EIGEN3 OFF CACHE BOOL "" FORCE)
 
 FetchContent_Declare(
     pagmo2
@@ -32,4 +32,6 @@ find_package(Threads REQUIRED)
 target_link_libraries(optimizer_lib PUBLIC
     pagmo
     Threads::Threads
+    simulation_common_lib
+    rotation_lib
 )

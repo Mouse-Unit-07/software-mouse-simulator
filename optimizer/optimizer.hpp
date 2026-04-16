@@ -13,6 +13,14 @@
 namespace optimizer
 {
 
+struct ParetoResult {
+    std::vector<std::vector<double>> X;
+    std::vector<std::vector<double>> F;
+};
+
+ParetoResult run_rotation_pareto(std::size_t population, std::size_t generations);
+void write_pareto_to_file(const std::string& filename, const ParetoResult& result);
+
 } /* optimizer namespace */
 
 /*----------------------------------------------------------------------------*/

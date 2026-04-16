@@ -24,3 +24,9 @@ target_link_libraries(test_optimizer PRIVATE
 )
 
 add_test(NAME test_optimizer COMMAND test_optimizer)
+
+add_custom_command(TARGET test_optimizer POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        $<TARGET_FILE:pagmo>
+        $<TARGET_FILE_DIR:test_optimizer>
+)
