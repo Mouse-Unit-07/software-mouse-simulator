@@ -14,21 +14,6 @@
 namespace rotation
 {
 
-struct Config {
-    double dt;
-    double motor_speed_scale;
-    double motor1_variance;
-    double motor2_variance;
-    double slip_factor;
-    double wheel_circumference_scale;
-    double wheel_base_scale;
-
-    uint8_t motor_speed;
-    int32_t kp;
-    int32_t kd;
-    int32_t pid_shift;
-};
-
 struct ControlConfig {
     uint8_t motor_speed;
     int32_t kp;
@@ -44,6 +29,11 @@ struct EnvironmentConfig {
     double slip_factor;
     double wheel_circumference_scale;
     double wheel_base_scale;
+};
+
+struct Config {
+    ControlConfig ctrl_cfg;
+    EnvironmentConfig env_cfg;
 };
 
 struct Result {
@@ -66,7 +56,6 @@ ControlConfig decode_control(const std::vector<double>& x);
 std::vector<double> encode_control(const ControlConfig& cfg);
 std::pair<std::vector<double>, std::vector<double>> get_control_bounds(void);
 EnvironmentConfig generate_random_environment(void);
-Config merge_control_and_environment(const ControlConfig& ctrl_cfg, const EnvironmentConfig& env_cfg);
 
 void enable_visualization(void);
 void disable_visualization(void);

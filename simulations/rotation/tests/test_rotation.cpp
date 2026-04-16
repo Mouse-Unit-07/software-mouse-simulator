@@ -34,17 +34,17 @@ Config create_no_variance_config(void)
 {
     Config cfg;
 
-    cfg.motor_speed = 150u;
-    cfg.motor_speed_scale = 1.0;
-    cfg.dt = 0.01;
-    cfg.motor1_variance = 0.0;
-    cfg.motor2_variance = 0.0;
-    cfg.slip_factor = 1.0;
-    cfg.wheel_circumference_scale = 1.0;
-    cfg.wheel_base_scale = 1.0;
-    cfg.kp = 0;
-    cfg.kd = 0;
-    cfg.pid_shift = 0;
+    cfg.env_cfg.motor_speed_scale = 1.0;
+    cfg.env_cfg.dt = 0.01;
+    cfg.env_cfg.motor1_variance = 0.0;
+    cfg.env_cfg.motor2_variance = 0.0;
+    cfg.env_cfg.slip_factor = 1.0;
+    cfg.env_cfg.wheel_circumference_scale = 1.0;
+    cfg.env_cfg.wheel_base_scale = 1.0;
+    cfg.ctrl_cfg.motor_speed = 150u;
+    cfg.ctrl_cfg.kp = 0;
+    cfg.ctrl_cfg.kd = 0;
+    cfg.ctrl_cfg.pid_shift = 0;
 
     return cfg;
 }
@@ -53,10 +53,10 @@ Config create_config_custom_pid_and_speed(int kp, int kd, int shift, uint8_t mot
 {
     Config cfg{create_no_variance_config()};
 
-    cfg.kp = kp;
-    cfg.kd = kd;
-    cfg.pid_shift = shift;
-    cfg.motor_speed = motor_speed;
+    cfg.ctrl_cfg.motor_speed = motor_speed;
+    cfg.ctrl_cfg.kp = kp;
+    cfg.ctrl_cfg.kd = kd;
+    cfg.ctrl_cfg.pid_shift = shift;
 
     return cfg;
 }
@@ -107,8 +107,6 @@ TEST_GROUP(RotationTests)
 /*============================================================================*/
 /*                                    Tests                                   */
 /*============================================================================*/
-
-
 TEST(RotationTests, EncodeDecodeControlRoundTrip)
 {
     ControlConfig original;
@@ -191,35 +189,6 @@ TEST(RotationTests, RandomEnvironmentValuesWithinExpectedRanges)
     }
 }
 
-TEST(RotationTests, MergeControlAndEnvironmentMapsFieldsCorrectly)
-{
-    ControlConfig c;
-    c.motor_speed = 50;
-    c.kp = 100;
-    c.kd = 200;
-    c.pid_shift = 3;
-
-    EnvironmentConfig e;
-    e.dt = 0.02;
-    e.motor_speed_scale = 1.1;
-    e.motor1_variance = -0.1;
-    e.motor2_variance = 0.2;
-    e.slip_factor = 1.0;
-    e.wheel_circumference_scale = 0.95;
-    e.wheel_base_scale = 1.05;
-
-    auto cfg{merge_control_and_environment(c, e)};
-
-    CHECK_EQUAL(50, cfg.motor_speed);
-    CHECK_EQUAL(100, cfg.kp);
-    CHECK_EQUAL(200, cfg.kd);
-    CHECK_EQUAL(3, cfg.pid_shift);
-
-    DOUBLES_EQUAL(0.02, cfg.dt, FLOAT_TOLERANCE);
-    DOUBLES_EQUAL(1.1, cfg.motor_speed_scale, FLOAT_TOLERANCE);
-    DOUBLES_EQUAL(-0.1, cfg.motor1_variance, FLOAT_TOLERANCE);
-}
-
 TEST(RotationTests, SimulationProducesValidResult)
 {
     Config cfg{create_no_variance_config()};
@@ -234,7 +203,7 @@ TEST(RotationTests, SimulationProducesValidResult)
 TEST(RotationTests, SimulationFailsWhenDtIsZero)
 {
     Config cfg{create_no_variance_config()};
-    cfg.dt = 0.0;
+    cfg.env_cfg.dt = 0.0;
 
     auto r{run_simulation(cfg, M_PI / 2)};
 
@@ -275,8 +244,8 @@ TEST(RotationTests, SimulationCanDetectCollision)
     maze::Maze maze{maze::build_maze_from_ascii(ascii, 0.0)};
 
     Config cfg{create_no_variance_config()};
-    cfg.motor_speed = 255u;
-    cfg.motor1_variance = -1;
+    cfg.ctrl_cfg.motor_speed = 255u;
+    cfg.env_cfg.motor1_variance = -1;
 
     auto r{run_simulation(cfg, M_PI)};
 
@@ -294,8 +263,8 @@ TEST(RotationTests, NoTranslationAndAngleErrorForPerfectTestVariables)
 
     /* slow movement, tiny dt, and no motor variances */
     Config cfg{create_no_variance_config()};
-    cfg.motor_speed = 100;
-    cfg.dt = 0.001;
+    cfg.ctrl_cfg.motor_speed = 100;
+    cfg.env_cfg.dt = 0.001;
 
     auto r{run_simulation(cfg, M_PI)};
 
@@ -310,13 +279,13 @@ TEST(RotationTests, NoTranslationAndAngleErrorForPerfectTestVariables)
 TEST(RotationTests, DerivativeTermAffectsStability)
 {
     Config cfg{create_no_variance_config()};
-    cfg.motor1_variance = -0.2;
-    cfg.kp = 2000;
-    cfg.pid_shift = 8;
+    cfg.env_cfg.motor1_variance = -0.2;
+    cfg.ctrl_cfg.kp = 2000;
+    cfg.ctrl_cfg.pid_shift = 8;
 
     Config no_d{cfg};
     Config with_d{cfg};
-    with_d.kd = 1000;
+    with_d.ctrl_cfg.kd = 1000;
 
     auto r1{run_simulation(no_d, M_PI / 2)};
     auto r2{run_simulation(with_d, M_PI / 2)};
@@ -328,13 +297,13 @@ TEST(RotationTests, DerivativeTermAffectsStability)
 TEST(RotationTests, PDImprovesAccuracyOverNoControl)
 {
     Config cfg{create_no_variance_config()};
-    cfg.motor1_variance = -0.2;
-    cfg.pid_shift = 8;
+    cfg.env_cfg.motor1_variance = -0.2;
+    cfg.ctrl_cfg.pid_shift = 8;
 
     Config no_control{cfg};
     Config pd_control{cfg};
-    pd_control.kp = 2000;
-    pd_control.kd = 1000;
+    pd_control.ctrl_cfg.kp = 2000;
+    pd_control.ctrl_cfg.kd = 1000;
 
     auto r1{run_simulation(no_control, M_PI / 2)};
     auto r2{run_simulation(pd_control, M_PI / 2)};
@@ -345,14 +314,14 @@ TEST(RotationTests, PDImprovesAccuracyOverNoControl)
 TEST(RotationTests, PidShiftAffectsControlStrength)
 {
     Config cfg{create_no_variance_config()};
-    cfg.motor1_variance = -0.2;
-    cfg.kp = 2000;
-    cfg.kd = 1000;
+    cfg.env_cfg.motor1_variance = -0.2;
+    cfg.ctrl_cfg.kp = 2000;
+    cfg.ctrl_cfg.kd = 1000;
 
     Config strong{cfg};
-    strong.pid_shift = 2;
+    strong.ctrl_cfg.pid_shift = 2;
     Config weak{cfg};
-    weak.pid_shift = 8;
+    weak.ctrl_cfg.pid_shift = 8;
 
     auto r1{run_simulation(strong, M_PI / 2)};
     auto r2{run_simulation(weak, M_PI / 2)};

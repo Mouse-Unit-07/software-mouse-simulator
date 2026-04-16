@@ -54,8 +54,7 @@ public:
         double timeout{0.0};
 
         for (int i{0}; i < N; ++i) {
-            rotation::Config cfg{rotation::merge_control_and_environment(
-                control, rotation::generate_random_environment())};
+            rotation::Config cfg{control, rotation::generate_random_environment()};
 
             const auto r{rotation::run_simulation(cfg, M_PI / 2)};
 

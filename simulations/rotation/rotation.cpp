@@ -26,7 +26,6 @@ extern "C"
 #include <filesystem>
 #include <functional>
 #include <map>
-#include <memory>
 #include <random>
 #include <sstream>
 #include <string>
@@ -136,26 +135,6 @@ EnvironmentConfig generate_random_environment(void)
     return e;
 }
 
-Config merge_control_and_environment(const ControlConfig& ctrl_cfg,
-                                     const EnvironmentConfig& env_cfg)
-{
-    Config cfg;
-
-    cfg.dt = env_cfg.dt;
-    cfg.motor_speed_scale = env_cfg.motor_speed_scale;
-    cfg.motor1_variance = env_cfg.motor1_variance;
-    cfg.motor2_variance = env_cfg.motor2_variance;
-    cfg.slip_factor = env_cfg.slip_factor;
-    cfg.wheel_circumference_scale = env_cfg.wheel_circumference_scale;
-    cfg.wheel_base_scale = env_cfg.wheel_base_scale;
-    cfg.motor_speed = ctrl_cfg.motor_speed;
-    cfg.kp = ctrl_cfg.kp;
-    cfg.kd = ctrl_cfg.kd;
-    cfg.pid_shift = ctrl_cfg.pid_shift;
-
-    return cfg;
-}
-
 void enable_visualization(void)
 {
     visualizer_enabled = true;
@@ -170,17 +149,17 @@ std::string config_to_string(const Config& cfg)
 {
     std::ostringstream oss;
 
-    oss << simulation_common::double_to_filename(cfg.dt) << "-"
-        << simulation_common::double_to_filename(cfg.motor_speed_scale) << "-"
-        << simulation_common::double_to_filename(cfg.motor1_variance) << "-"
-        << simulation_common::double_to_filename(cfg.motor2_variance) << "-"
-        << simulation_common::double_to_filename(cfg.slip_factor) << "-"
-        << simulation_common::double_to_filename(cfg.wheel_circumference_scale) << "-"
-        << simulation_common::double_to_filename(cfg.wheel_base_scale) << "-"
-        << static_cast<int>(cfg.motor_speed) << "-"
-        << simulation_common::double_to_filename(static_cast<double>(cfg.kp)) << "-"
-        << simulation_common::double_to_filename(static_cast<double>(cfg.kd)) << "-"
-        << simulation_common::double_to_filename(static_cast<double>(cfg.pid_shift));
+    oss << simulation_common::double_to_filename(cfg.env_cfg.dt) << "-"
+        << simulation_common::double_to_filename(cfg.env_cfg.motor_speed_scale) << "-"
+        << simulation_common::double_to_filename(cfg.env_cfg.motor1_variance) << "-"
+        << simulation_common::double_to_filename(cfg.env_cfg.motor2_variance) << "-"
+        << simulation_common::double_to_filename(cfg.env_cfg.slip_factor) << "-"
+        << simulation_common::double_to_filename(cfg.env_cfg.wheel_circumference_scale) << "-"
+        << simulation_common::double_to_filename(cfg.env_cfg.wheel_base_scale) << "-"
+        << static_cast<int>(cfg.ctrl_cfg.motor_speed) << "-"
+        << simulation_common::double_to_filename(static_cast<double>(cfg.ctrl_cfg.kp)) << "-"
+        << simulation_common::double_to_filename(static_cast<double>(cfg.ctrl_cfg.kd)) << "-"
+        << simulation_common::double_to_filename(static_cast<double>(cfg.ctrl_cfg.pid_shift));
 
     return oss.str();
 }
@@ -235,17 +214,17 @@ Result run_simulation(const Config& cfg, double target_angle)
         int32_t error{enc2 - enc1};
         int32_t derivative{error - prev_error};
         prev_error = error;
-        int64_t p_term{static_cast<int64_t>(cfg.kp) * error};
-        int64_t d_term{static_cast<int64_t>(cfg.kd) * derivative};
+        int64_t p_term{static_cast<int64_t>(cfg.ctrl_cfg.kp) * error};
+        int64_t d_term{static_cast<int64_t>(cfg.ctrl_cfg.kd) * derivative};
         int64_t control64{p_term + d_term};
         int32_t control{0};
         if (control64 >= 0) {
-            control = static_cast<int32_t>(control64 >> cfg.pid_shift);
+            control = static_cast<int32_t>(control64 >> cfg.ctrl_cfg.pid_shift);
         } else {
-            control = -static_cast<int32_t>((-control64) >> cfg.pid_shift);
+            control = -static_cast<int32_t>((-control64) >> cfg.ctrl_cfg.pid_shift);
         }
 
-        int32_t base_speed{static_cast<int32_t>(cfg.motor_speed)};
+        int32_t base_speed{static_cast<int32_t>(cfg.ctrl_cfg.motor_speed)};
         int32_t adjusted_speed_1{base_speed + control};
         int32_t adjusted_speed_2{base_speed - control};
         adjusted_speed_1 = std::clamp(adjusted_speed_1, 0, 255);
@@ -256,7 +235,7 @@ Result run_simulation(const Config& cfg, double target_angle)
         auto delta{update_mock_by_dt(cfg, mouse)};
         total_translation += sqrt((delta.dx * delta.dx) + (delta.dy * delta.dy));
         total_angle_rotation += delta.dtheta_rad;
-        total_time += cfg.dt;
+        total_time += cfg.env_cfg.dt;
 
         if (visualizer_enabled) {
             rotation_visualizer.draw_mouse_on_maze(mouse);
@@ -303,21 +282,21 @@ using namespace rotation;
 void prepare_mock_for_rotation(const Config& cfg, const maze::Maze& maze, mouse::Mouse& mouse)
 {
     reset_mock_device_drivers();
-    set_motor_speed_scale(cfg.motor_speed_scale);
-    set_motor_1_variance(cfg.motor1_variance);
-    set_motor_2_variance(cfg.motor2_variance);
-    set_motor_slip_factor(cfg.slip_factor);
-    set_wheel_circumference_scale(cfg.wheel_circumference_scale);
-    set_wheel_base_scale(cfg.wheel_base_scale);
+    set_motor_speed_scale(cfg.env_cfg.motor_speed_scale);
+    set_motor_1_variance(cfg.env_cfg.motor1_variance);
+    set_motor_2_variance(cfg.env_cfg.motor2_variance);
+    set_motor_slip_factor(cfg.env_cfg.slip_factor);
+    set_wheel_circumference_scale(cfg.env_cfg.wheel_circumference_scale);
+    set_wheel_base_scale(cfg.env_cfg.wheel_base_scale);
 
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
 }
 
 mouse_delta update_mock_by_dt(const Config& cfg, mouse::Mouse& mouse)
 {
-    mouse_delta delta{compute_mouse_delta(mouse.hitbox.angle_rad, cfg.dt)};
-    update_encoder_1_ticks(cfg.dt);
-    update_encoder_2_ticks(cfg.dt);
+    mouse_delta delta{compute_mouse_delta(mouse.hitbox.angle_rad, cfg.env_cfg.dt)};
+    update_encoder_1_ticks(cfg.env_cfg.dt);
+    update_encoder_2_ticks(cfg.env_cfg.dt);
     mouse.translate(delta.dx, delta.dy);
     mouse.rotate(delta.dtheta_rad);
 
