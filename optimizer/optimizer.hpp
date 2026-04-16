@@ -19,7 +19,10 @@ struct ParetoResult {
 };
 
 ParetoResult run_rotation_pareto(std::size_t population, std::size_t generations);
-void write_pareto_to_file(const std::string& filename, const ParetoResult& result);
+void write_rotation_pareto_to_file(const std::string& filename, const ParetoResult& result);
+
+ParetoResult run_move_forward_pareto(std::size_t population, std::size_t generations);
+void write_move_forward_pareto_to_file(const std::string& filename, const ParetoResult& result);
 
 } /* optimizer namespace */
 
