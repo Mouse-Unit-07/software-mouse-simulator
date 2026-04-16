@@ -86,7 +86,7 @@ ControlConfig decode_control(const std::vector<double>& x)
     c.motor_speed = static_cast<uint8_t>(x.at(i++));
     c.kp = static_cast<int32_t>(x.at(i++));
     c.kd = static_cast<int32_t>(x.at(i++));
-    c.pid_shift = static_cast<int32_t>(x.at(i++));
+    c.pid_scale = static_cast<int32_t>(x.at(i++));
 
     return c;
 }
@@ -96,7 +96,7 @@ std::vector<double> encode_control(const ControlConfig& cfg)
     return {static_cast<double>(cfg.motor_speed),
             static_cast<double>(cfg.kp),
             static_cast<double>(cfg.kd),
-            static_cast<double>(cfg.pid_shift)};
+            static_cast<double>(cfg.pid_scale)};
 }
 
 std::pair<std::vector<double>, std::vector<double>> get_control_bounds(void)
@@ -105,13 +105,13 @@ std::pair<std::vector<double>, std::vector<double>> get_control_bounds(void)
     lower_bounds.motor_speed = 100;
     lower_bounds.kp = 0;
     lower_bounds.kd = 0;
-    lower_bounds.pid_shift = 4;
+    lower_bounds.pid_scale = 16;
 
     ControlConfig upper_bounds;
     upper_bounds.motor_speed = 255;
     upper_bounds.kp = 2000;
     upper_bounds.kd = 2000;
-    upper_bounds.pid_shift = 8;
+    upper_bounds.pid_scale = 512;
 
     return {encode_control(lower_bounds), encode_control(upper_bounds)};
 }
@@ -161,7 +161,7 @@ std::string config_to_string(const Config& cfg)
         << static_cast<int>(cfg.ctrl_cfg.motor_speed) << "-"
         << simulation_common::double_to_filename(static_cast<double>(cfg.ctrl_cfg.kp)) << "-"
         << simulation_common::double_to_filename(static_cast<double>(cfg.ctrl_cfg.kd)) << "-"
-        << simulation_common::double_to_filename(static_cast<double>(cfg.ctrl_cfg.pid_shift));
+        << simulation_common::double_to_filename(static_cast<double>(cfg.ctrl_cfg.pid_scale));
 
     return oss.str();
 }
@@ -204,6 +204,8 @@ Result run_simulation(const Config& cfg, double target_angle)
     constexpr int MAX_STEPS{10000};
     int steps{0};
 
+    int32_t prev_enc1{0};
+    int32_t prev_enc2{0};
     int32_t prev_error{0};
     double raw_target{std::abs(ENCODER_TICKS_PER_ROTATION_ANGLE_RADIANS * target_angle)};
     int32_t target_ticks{static_cast<int32_t>(raw_target)};
@@ -213,20 +215,23 @@ Result run_simulation(const Config& cfg, double target_angle)
         int32_t enc1{std::abs(get_encoder_1_ticks())};
         int32_t enc2{std::abs(get_encoder_2_ticks())};
 
-        int32_t error{enc2 - enc1};
+        int32_t vel1{enc1 - prev_enc1};
+        int32_t vel2{enc2 - prev_enc2};
+        int32_t error{vel2 - vel1};
+        prev_enc1 = enc1;
+        prev_enc2 = enc2;
         int32_t derivative{error - prev_error};
         prev_error = error;
+
         int64_t p_term{static_cast<int64_t>(cfg.ctrl_cfg.kp) * error};
         int64_t d_term{static_cast<int64_t>(cfg.ctrl_cfg.kd) * derivative};
         int64_t control64{p_term + d_term};
-        int32_t control{0};
-        if (control64 >= 0) {
-            control = static_cast<int32_t>(control64 >> cfg.ctrl_cfg.pid_shift);
-        } else {
-            control = -static_cast<int32_t>((-control64) >> cfg.ctrl_cfg.pid_shift);
-        }
+        int32_t control{static_cast<int32_t>(control64 / cfg.ctrl_cfg.pid_scale)};
 
-        int32_t base_speed{static_cast<int32_t>(cfg.ctrl_cfg.motor_speed)};
+        int32_t progress{std::max(enc1, enc2)};
+        int32_t remaining{target_ticks - progress};
+        double decay{std::clamp((static_cast<double>(remaining) / target_ticks), 0.2, 1.0)};
+        int32_t base_speed{static_cast<int32_t>(cfg.ctrl_cfg.motor_speed * decay)};
         int32_t adjusted_speed_1{base_speed + control};
         int32_t adjusted_speed_2{base_speed - control};
         adjusted_speed_1 = std::clamp(adjusted_speed_1, 0, 255);

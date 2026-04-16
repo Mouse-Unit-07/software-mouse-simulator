@@ -44,7 +44,7 @@ Config create_no_variance_config(void)
     cfg.ctrl_cfg.motor_speed = 150u;
     cfg.ctrl_cfg.kp = 0;
     cfg.ctrl_cfg.kd = 0;
-    cfg.ctrl_cfg.pid_shift = 0;
+    cfg.ctrl_cfg.pid_scale = 1;
 
     return cfg;
 }
@@ -56,7 +56,7 @@ Config create_config_custom_pid_and_speed(int kp, int kd, int shift, uint8_t mot
     cfg.ctrl_cfg.motor_speed = motor_speed;
     cfg.ctrl_cfg.kp = kp;
     cfg.ctrl_cfg.kd = kd;
-    cfg.ctrl_cfg.pid_shift = shift;
+    cfg.ctrl_cfg.pid_scale = shift;
 
     return cfg;
 }
@@ -113,7 +113,7 @@ TEST(RotationTests, EncodeDecodeControlRoundTrip)
     original.motor_speed = 123u;
     original.kp = 1000;
     original.kd = -250;
-    original.pid_shift = 6;
+    original.pid_scale = 256;
 
     auto encoded{encode_control(original)};
     auto decoded{decode_control(encoded)};
@@ -121,7 +121,7 @@ TEST(RotationTests, EncodeDecodeControlRoundTrip)
     CHECK_EQUAL(original.motor_speed, decoded.motor_speed);
     CHECK_EQUAL(original.kp, decoded.kp);
     CHECK_EQUAL(original.kd, decoded.kd);
-    CHECK_EQUAL(original.pid_shift, decoded.pid_shift);
+    CHECK_EQUAL(original.pid_scale, decoded.pid_scale);
 }
 
 TEST(RotationTests, EncodeControlMaintainsFieldOrder)
@@ -130,7 +130,7 @@ TEST(RotationTests, EncodeControlMaintainsFieldOrder)
     cfg.motor_speed = 1;
     cfg.kp = 2;
     cfg.kd = 3;
-    cfg.pid_shift = 4;
+    cfg.pid_scale = 4;
 
     auto v{encode_control(cfg)};
 
@@ -155,12 +155,12 @@ TEST(RotationTests, GetControlBoundsValuesAreCorrect)
     CHECK_EQUAL(100, low.at(0));
     CHECK_EQUAL(0, low.at(1));
     CHECK_EQUAL(0, low.at(2));
-    CHECK_EQUAL(4, low.at(3));
+    CHECK_EQUAL(16, low.at(3));
 
     CHECK_EQUAL(255, high.at(0));
     CHECK_EQUAL(2000, high.at(1));
     CHECK_EQUAL(2000, high.at(2));
-    CHECK_EQUAL(8, high.at(3));
+    CHECK_EQUAL(512, high.at(3));
 }
 
 TEST(RotationTests, GetControlBoundsAreDecodeSafe)
@@ -281,7 +281,7 @@ TEST(RotationTests, DerivativeTermAffectsStability)
     Config cfg{create_no_variance_config()};
     cfg.env_cfg.motor1_variance = -0.2;
     cfg.ctrl_cfg.kp = 2000;
-    cfg.ctrl_cfg.pid_shift = 8;
+    cfg.ctrl_cfg.pid_scale = 256;
 
     Config no_d{cfg};
     Config with_d{cfg};
@@ -298,7 +298,7 @@ TEST(RotationTests, PDImprovesAccuracyOverNoControl)
 {
     Config cfg{create_no_variance_config()};
     cfg.env_cfg.motor1_variance = -0.2;
-    cfg.ctrl_cfg.pid_shift = 8;
+    cfg.ctrl_cfg.pid_scale = 256;
 
     Config no_control{cfg};
     Config pd_control{cfg};
@@ -319,9 +319,9 @@ TEST(RotationTests, PidShiftAffectsControlStrength)
     cfg.ctrl_cfg.kd = 1000;
 
     Config strong{cfg};
-    strong.ctrl_cfg.pid_shift = 2;
+    strong.ctrl_cfg.pid_scale = 4;
     Config weak{cfg};
-    weak.ctrl_cfg.pid_shift = 8;
+    weak.ctrl_cfg.pid_scale = 256;
 
     auto r1{run_simulation(strong, M_PI / 2)};
     auto r2{run_simulation(weak, M_PI / 2)};

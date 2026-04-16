@@ -127,7 +127,7 @@ void write_rotation_pareto_to_file(const std::string& filename, const ParetoResu
     constexpr int W_SPD{6};
     constexpr int W_KP{6};
     constexpr int W_KD{6};
-    constexpr int W_SH{4};
+    constexpr int W_SC{4};
 
     constexpr int W_ANGLE{12};
     constexpr int W_TRANS{12};
@@ -141,7 +141,7 @@ void write_rotation_pareto_to_file(const std::string& filename, const ParetoResu
         << std::setw(W_SPD)  << "spd"
         << std::setw(W_KP)   << "kp"
         << std::setw(W_KD)   << "kd"
-        << std::setw(W_SH)   << "sh"
+        << std::setw(W_SC)   << "sc"
         << " | "
         << std::setw(W_ANGLE) << "angle"
         << std::setw(W_TRANS) << "translation"
@@ -162,7 +162,7 @@ void write_rotation_pareto_to_file(const std::string& filename, const ParetoResu
             << std::setw(W_SPD) << static_cast<int>(ctrl.motor_speed)
             << std::setw(W_KP)  << ctrl.kp
             << std::setw(W_KD)  << ctrl.kd
-            << std::setw(W_SH)  << ctrl.pid_shift
+            << std::setw(W_SC)  << ctrl.pid_scale
             << " | "
             << std::setw(W_ANGLE) << f.at(0)
             << std::setw(W_TRANS) << f.at(1)
