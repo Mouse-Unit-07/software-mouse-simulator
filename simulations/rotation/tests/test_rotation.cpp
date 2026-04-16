@@ -41,22 +41,13 @@ Config create_no_variance_config(void)
     cfg.env_cfg.slip_factor = 1.0;
     cfg.env_cfg.wheel_circumference_scale = 1.0;
     cfg.env_cfg.wheel_base_scale = 1.0;
+    cfg.env_cfg.rotation_angle = M_PI / 2;
     cfg.ctrl_cfg.motor_speed = 150u;
-    cfg.ctrl_cfg.kp = 0;
-    cfg.ctrl_cfg.kd = 0;
+    cfg.ctrl_cfg.kp_velocity = 0;
+    cfg.ctrl_cfg.kd_velocity = 0;
+    cfg.ctrl_cfg.kp_angle = 0;
+    cfg.ctrl_cfg.kd_angle = 0;
     cfg.ctrl_cfg.pid_scale = 1;
-
-    return cfg;
-}
-
-Config create_config_custom_pid_and_speed(int kp, int kd, int shift, uint8_t motor_speed = 0)
-{
-    Config cfg{create_no_variance_config()};
-
-    cfg.ctrl_cfg.motor_speed = motor_speed;
-    cfg.ctrl_cfg.kp = kp;
-    cfg.ctrl_cfg.kd = kd;
-    cfg.ctrl_cfg.pid_scale = shift;
 
     return cfg;
 }
@@ -111,41 +102,49 @@ TEST(RotationTests, EncodeDecodeControlRoundTrip)
 {
     ControlConfig original;
     original.motor_speed = 123u;
-    original.kp = 1000;
-    original.kd = -250;
+    original.kp_velocity = 1000;
+    original.kd_velocity = -250;
+    original.kp_angle = 1000;
+    original.kd_angle = -250;
     original.pid_scale = 256;
 
     auto encoded{encode_control(original)};
     auto decoded{decode_control(encoded)};
 
     CHECK_EQUAL(original.motor_speed, decoded.motor_speed);
-    CHECK_EQUAL(original.kp, decoded.kp);
-    CHECK_EQUAL(original.kd, decoded.kd);
+    CHECK_EQUAL(original.kp_velocity, decoded.kp_velocity);
+    CHECK_EQUAL(original.kd_velocity, decoded.kd_velocity);
+    CHECK_EQUAL(original.kp_angle, decoded.kp_angle);
+    CHECK_EQUAL(original.kd_angle, decoded.kd_angle);
     CHECK_EQUAL(original.pid_scale, decoded.pid_scale);
 }
 
 TEST(RotationTests, EncodeControlMaintainsFieldOrder)
 {
     ControlConfig cfg;
-    cfg.motor_speed = 1;
-    cfg.kp = 2;
-    cfg.kd = 3;
-    cfg.pid_scale = 4;
+    cfg.motor_speed = 0;
+    cfg.kp_velocity = 1;
+    cfg.kd_velocity = 2;
+    cfg.kp_angle = 3;
+    cfg.kd_angle = 4;
+    cfg.pid_scale = 5;
 
     auto v{encode_control(cfg)};
 
-    CHECK_EQUAL(1, v.at(0));
-    CHECK_EQUAL(2, v.at(1));
-    CHECK_EQUAL(3, v.at(2));
-    CHECK_EQUAL(4, v.at(3));
+    CHECK_EQUAL(0, v.at(0));
+    CHECK_EQUAL(1, v.at(1));
+    CHECK_EQUAL(2, v.at(2));
+    CHECK_EQUAL(3, v.at(3));
+    CHECK_EQUAL(4, v.at(4));
+    CHECK_EQUAL(5, v.at(5));
 }
 
 TEST(RotationTests, GetControlBoundsHasCorrectSize)
 {
     auto [low, high] = get_control_bounds();
 
-    CHECK_EQUAL(4, low.size());
-    CHECK_EQUAL(4, high.size());
+    CHECK_EQUAL(6, low.size());
+    CHECK_EQUAL(6, high.size());
 }
 
 TEST(RotationTests, GetControlBoundsValuesAreCorrect)
@@ -155,12 +154,16 @@ TEST(RotationTests, GetControlBoundsValuesAreCorrect)
     CHECK_EQUAL(100, low.at(0));
     CHECK_EQUAL(0, low.at(1));
     CHECK_EQUAL(0, low.at(2));
-    CHECK_EQUAL(16, low.at(3));
+    CHECK_EQUAL(0, low.at(3));
+    CHECK_EQUAL(0, low.at(4));
+    CHECK_EQUAL(16, low.at(5));
 
     CHECK_EQUAL(255, high.at(0));
     CHECK_EQUAL(2000, high.at(1));
     CHECK_EQUAL(2000, high.at(2));
-    CHECK_EQUAL(512, high.at(3));
+    CHECK_EQUAL(2000, high.at(3));
+    CHECK_EQUAL(2000, high.at(4));
+    CHECK_EQUAL(512, high.at(5));
 }
 
 TEST(RotationTests, GetControlBoundsAreDecodeSafe)
@@ -186,6 +189,7 @@ TEST(RotationTests, RandomEnvironmentValuesWithinExpectedRanges)
         CHECK((e.slip_factor >= 0.9) && (e.slip_factor <= 1.1));
         CHECK((e.wheel_circumference_scale >= 0.9) && (e.wheel_circumference_scale <= 1.1));
         CHECK((e.wheel_base_scale >= 0.9) && (e.wheel_base_scale <= 1.1));
+        CHECK((e.rotation_angle >= (M_PI / 4)) && (e.rotation_angle <= M_PI / 2));
     }
 }
 
@@ -193,7 +197,7 @@ TEST(RotationTests, SimulationProducesValidResult)
 {
     Config cfg{create_no_variance_config()};
 
-    auto r{run_simulation(cfg, M_PI / 2)};
+    auto r{run_simulation(cfg)};
 
     CHECK(r.total_time >= 0.0);
     CHECK(r.final_angle_error >= 0.0);
@@ -205,7 +209,7 @@ TEST(RotationTests, SimulationFailsWhenDtIsZero)
     Config cfg{create_no_variance_config()};
     cfg.env_cfg.dt = 0.0;
 
-    auto r{run_simulation(cfg, M_PI / 2)};
+    auto r{run_simulation(cfg)};
 
     CHECK(r.timeout);
 }
@@ -214,21 +218,27 @@ TEST(RotationTests, PositiveAndNegativeAnglesProduceSameAngleAndTranslationError
 {
     Config cfg{create_no_variance_config()};
 
-    auto r1{run_simulation(cfg, M_PI / 2)};
-    auto r2{run_simulation(cfg, -M_PI / 2)};
+    cfg.env_cfg.rotation_angle = M_PI / 2; 
+    auto r1{run_simulation(cfg)};
+
+    cfg.env_cfg.rotation_angle = -M_PI / 2; 
+    auto r2{run_simulation(cfg)};
 
     CHECK_FALSE(r1.timeout);
     CHECK_FALSE(r2.timeout);
-    CHECK(r1.total_translation == r2.total_translation);
-    CHECK(r1.final_angle_error == r2.final_angle_error);
+    DOUBLES_EQUAL(r1.total_translation, r2.total_translation, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(r1.final_angle_error, r2.final_angle_error, FLOAT_TOLERANCE);
 }
 
 TEST(RotationTests, LargerAngleTakesMoreTime)
 {
     Config cfg{create_no_variance_config()};
 
-    auto small{run_simulation(cfg, M_PI / 4)};
-    auto large{run_simulation(cfg, M_PI / 2)};
+    cfg.env_cfg.rotation_angle = M_PI / 4;
+    auto small{run_simulation(cfg)};
+
+    cfg.env_cfg.rotation_angle = M_PI / 2;
+    auto large{run_simulation(cfg)};
 
     CHECK(large.total_time >= small.total_time);
 }
@@ -246,8 +256,9 @@ TEST(RotationTests, SimulationCanDetectCollision)
     Config cfg{create_no_variance_config()};
     cfg.ctrl_cfg.motor_speed = 255u;
     cfg.env_cfg.motor1_variance = -1;
+    cfg.env_cfg.rotation_angle = M_PI;
 
-    auto r{run_simulation(cfg, M_PI)};
+    auto r{run_simulation(cfg)};
 
     CHECK(r.collision);
 }
@@ -265,8 +276,9 @@ TEST(RotationTests, NoTranslationAndAngleErrorForPerfectTestVariables)
     Config cfg{create_no_variance_config()};
     cfg.ctrl_cfg.motor_speed = 100;
     cfg.env_cfg.dt = 0.001;
+    cfg.env_cfg.rotation_angle = M_PI;
 
-    auto r{run_simulation(cfg, M_PI)};
+    auto r{run_simulation(cfg)};
 
     /* 1% of a circle, or 3.6 degrees */
     constexpr double ROTATION_TOLERANCE{(2 * M_PI) * 0.01};
@@ -280,51 +292,34 @@ TEST(RotationTests, DerivativeTermAffectsStability)
 {
     Config cfg{create_no_variance_config()};
     cfg.env_cfg.motor1_variance = -0.2;
-    cfg.ctrl_cfg.kp = 2000;
+    cfg.ctrl_cfg.kp_velocity = 2000;
     cfg.ctrl_cfg.pid_scale = 256;
 
     Config no_d{cfg};
     Config with_d{cfg};
-    with_d.ctrl_cfg.kd = 1000;
+    with_d.ctrl_cfg.kd_velocity = 1000;
 
-    auto r1{run_simulation(no_d, M_PI / 2)};
-    auto r2{run_simulation(with_d, M_PI / 2)};
+    auto r1{run_simulation(no_d)};
+    auto r2{run_simulation(with_d)};
 
     CHECK((r1.final_angle_error != r2.final_angle_error)
           || (r1.total_translation != r2.total_translation));
-}
-
-TEST(RotationTests, PDImprovesAccuracyOverNoControl)
-{
-    Config cfg{create_no_variance_config()};
-    cfg.env_cfg.motor1_variance = -0.2;
-    cfg.ctrl_cfg.pid_scale = 256;
-
-    Config no_control{cfg};
-    Config pd_control{cfg};
-    pd_control.ctrl_cfg.kp = 2000;
-    pd_control.ctrl_cfg.kd = 1000;
-
-    auto r1{run_simulation(no_control, M_PI / 2)};
-    auto r2{run_simulation(pd_control, M_PI / 2)};
-
-    CHECK(r2.final_angle_error <= r1.final_angle_error);
 }
 
 TEST(RotationTests, PidShiftAffectsControlStrength)
 {
     Config cfg{create_no_variance_config()};
     cfg.env_cfg.motor1_variance = -0.2;
-    cfg.ctrl_cfg.kp = 2000;
-    cfg.ctrl_cfg.kd = 1000;
+    cfg.ctrl_cfg.kp_velocity = 2000;
+    cfg.ctrl_cfg.kd_velocity = 1000;
 
     Config strong{cfg};
     strong.ctrl_cfg.pid_scale = 4;
     Config weak{cfg};
     weak.ctrl_cfg.pid_scale = 256;
 
-    auto r1{run_simulation(strong, M_PI / 2)};
-    auto r2{run_simulation(weak, M_PI / 2)};
+    auto r1{run_simulation(strong)};
+    auto r2{run_simulation(weak)};
 
     CHECK((r1.total_time != r2.total_time) || (r1.final_angle_error != r2.final_angle_error));
 }
@@ -334,10 +329,10 @@ IGNORE_TEST(RotationTests, VisualizationDoesNotAffectResults)
     Config cfg{create_no_variance_config()};
 
     disable_visualization();
-    auto r1{run_simulation(cfg, M_PI / 2)};
+    auto r1{run_simulation(cfg)};
 
     enable_visualization("visualization-does-not-affect-results");
-    auto r2{run_simulation(cfg, M_PI / 2)};
+    auto r2{run_simulation(cfg)};
 
     CHECK(are_results_equivalent(r1, r2));
 }

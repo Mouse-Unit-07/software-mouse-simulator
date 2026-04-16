@@ -84,8 +84,10 @@ ControlConfig decode_control(const std::vector<double>& x)
     size_t i{0};
 
     c.motor_speed = static_cast<uint8_t>(x.at(i++));
-    c.kp = static_cast<int32_t>(x.at(i++));
-    c.kd = static_cast<int32_t>(x.at(i++));
+    c.kp_velocity = static_cast<int32_t>(x.at(i++));
+    c.kd_velocity = static_cast<int32_t>(x.at(i++));
+    c.kp_angle = static_cast<int32_t>(x.at(i++));
+    c.kd_angle = static_cast<int32_t>(x.at(i++));
     c.pid_scale = static_cast<int32_t>(x.at(i++));
 
     return c;
@@ -94,8 +96,10 @@ ControlConfig decode_control(const std::vector<double>& x)
 std::vector<double> encode_control(const ControlConfig& cfg)
 {
     return {static_cast<double>(cfg.motor_speed),
-            static_cast<double>(cfg.kp),
-            static_cast<double>(cfg.kd),
+            static_cast<double>(cfg.kp_velocity),
+            static_cast<double>(cfg.kd_velocity),
+            static_cast<double>(cfg.kp_angle),
+            static_cast<double>(cfg.kd_angle),
             static_cast<double>(cfg.pid_scale)};
 }
 
@@ -103,14 +107,18 @@ std::pair<std::vector<double>, std::vector<double>> get_control_bounds(void)
 {
     ControlConfig lower_bounds;
     lower_bounds.motor_speed = 100;
-    lower_bounds.kp = 0;
-    lower_bounds.kd = 0;
+    lower_bounds.kp_velocity = 0;
+    lower_bounds.kd_velocity = 0;
+    lower_bounds.kp_angle = 0;
+    lower_bounds.kd_angle = 0;
     lower_bounds.pid_scale = 16;
 
     ControlConfig upper_bounds;
     upper_bounds.motor_speed = 255;
-    upper_bounds.kp = 2000;
-    upper_bounds.kd = 2000;
+    upper_bounds.kp_velocity = 2000;
+    upper_bounds.kd_velocity = 2000;
+    upper_bounds.kp_angle = 2000;
+    upper_bounds.kd_angle = 2000;
     upper_bounds.pid_scale = 512;
 
     return {encode_control(lower_bounds), encode_control(upper_bounds)};
@@ -132,6 +140,7 @@ EnvironmentConfig generate_random_environment(void)
     e.slip_factor = uniform(0.9, 1.1);
     e.wheel_circumference_scale = uniform(0.9, 1.1);
     e.wheel_base_scale = uniform(0.9, 1.1);
+    e.rotation_angle = uniform(M_PI / 4, M_PI / 2);
 
     return e;
 }
@@ -159,14 +168,16 @@ std::string config_to_string(const Config& cfg)
         << simulation_common::double_to_filename(cfg.env_cfg.wheel_circumference_scale) << "-"
         << simulation_common::double_to_filename(cfg.env_cfg.wheel_base_scale) << "-"
         << static_cast<int>(cfg.ctrl_cfg.motor_speed) << "-"
-        << simulation_common::double_to_filename(static_cast<double>(cfg.ctrl_cfg.kp)) << "-"
-        << simulation_common::double_to_filename(static_cast<double>(cfg.ctrl_cfg.kd)) << "-"
+        << simulation_common::double_to_filename(static_cast<double>(cfg.ctrl_cfg.kp_velocity)) << "-"
+        << simulation_common::double_to_filename(static_cast<double>(cfg.ctrl_cfg.kd_velocity)) << "-"
+        << simulation_common::double_to_filename(static_cast<double>(cfg.ctrl_cfg.kp_angle)) << "-"
+        << simulation_common::double_to_filename(static_cast<double>(cfg.ctrl_cfg.kd_angle)) << "-"
         << simulation_common::double_to_filename(static_cast<double>(cfg.ctrl_cfg.pid_scale));
 
     return oss.str();
 }
 
-Result run_simulation(const Config& cfg, double target_angle)
+Result run_simulation(const Config& cfg)
 {
     if (visualizer_enabled) {
         std::filesystem::create_directories(TEST_OUTPUT_DIRECTORY + "/" + TEST_OUTPUT_SUBDIRECTORY);
@@ -188,10 +199,13 @@ Result run_simulation(const Config& cfg, double target_angle)
         rotation_visualizer.reset_mouse_color();
     }
 
-    if (target_angle > 0) {
+    int target_angle_sign{0};
+    if (cfg.env_cfg.rotation_angle > 0) {
+        target_angle_sign = 1;
         set_wheel_motor_1_direction_backward();
         set_wheel_motor_2_direction_forward();
     } else {
+        target_angle_sign = -1;
         set_wheel_motor_1_direction_forward();
         set_wheel_motor_2_direction_backward();
     }
@@ -206,34 +220,51 @@ Result run_simulation(const Config& cfg, double target_angle)
 
     int32_t prev_enc1{0};
     int32_t prev_enc2{0};
-    int32_t prev_error{0};
-    double raw_target{std::abs(ENCODER_TICKS_PER_ROTATION_ANGLE_RADIANS * target_angle)};
+    int32_t prev_vel_error{0};
+    int32_t prev_ang_error{0};
+    double target_angle_absolute_value{std::abs(cfg.env_cfg.rotation_angle)};
+    double raw_target{std::abs(ENCODER_TICKS_PER_ROTATION_ANGLE_RADIANS * target_angle_absolute_value)};
     int32_t target_ticks{static_cast<int32_t>(raw_target)};
 
-    while ((std::abs(get_encoder_1_ticks()) < target_ticks)
-           || (std::abs(get_encoder_2_ticks()) < target_ticks)) {
+    while (((std::abs(get_encoder_1_ticks()) + std::abs(get_encoder_2_ticks())) / 2) < target_ticks) {
         int32_t enc1{std::abs(get_encoder_1_ticks())};
         int32_t enc2{std::abs(get_encoder_2_ticks())};
 
         int32_t vel1{enc1 - prev_enc1};
         int32_t vel2{enc2 - prev_enc2};
-        int32_t error{vel2 - vel1};
+        int32_t vel_error{vel2 - vel1};
+        int32_t vel_derivative{vel_error - prev_vel_error};
+        prev_vel_error = vel_error;
+
+        int32_t ang_error{enc2 - enc1};
+        int32_t ang_derivative{ang_error - prev_ang_error};
+        prev_ang_error = ang_error;
+
         prev_enc1 = enc1;
         prev_enc2 = enc2;
-        int32_t derivative{error - prev_error};
-        prev_error = error;
 
-        int64_t p_term{static_cast<int64_t>(cfg.ctrl_cfg.kp) * error};
-        int64_t d_term{static_cast<int64_t>(cfg.ctrl_cfg.kd) * derivative};
-        int64_t control64{p_term + d_term};
+        int64_t p_term_vel{static_cast<int64_t>(cfg.ctrl_cfg.kp_velocity) * vel_error};
+        int64_t d_term_vel{static_cast<int64_t>(cfg.ctrl_cfg.kd_velocity) * vel_derivative};
+        int64_t p_term_ang{static_cast<int64_t>(cfg.ctrl_cfg.kp_angle) * ang_error};
+        int64_t d_term_ang{static_cast<int64_t>(cfg.ctrl_cfg.kd_angle) * ang_derivative};
+        int64_t control64{p_term_vel + d_term_vel + p_term_ang + d_term_ang};
         int32_t control{static_cast<int32_t>(control64 / cfg.ctrl_cfg.pid_scale)};
 
         int32_t progress{std::max(enc1, enc2)};
         int32_t remaining{target_ticks - progress};
         double decay{std::clamp((static_cast<double>(remaining) / target_ticks), 0.2, 1.0)};
         int32_t base_speed{static_cast<int32_t>(cfg.ctrl_cfg.motor_speed * decay)};
-        int32_t adjusted_speed_1{base_speed + control};
-        int32_t adjusted_speed_2{base_speed - control};
+        
+        int32_t adjusted_speed_1{0};
+        int32_t adjusted_speed_2{0};
+        if (target_angle_sign > 0) {
+            adjusted_speed_1 = base_speed + control;
+            adjusted_speed_2 = base_speed - control;
+        } else {
+            adjusted_speed_1 = base_speed - control;
+            adjusted_speed_2 = base_speed + control;
+        }
+        
         adjusted_speed_1 = std::clamp(adjusted_speed_1, 0, 255);
         adjusted_speed_2 = std::clamp(adjusted_speed_2, 0, 255);
         set_wheel_motor_1_speed(static_cast<uint8_t>(adjusted_speed_1));
@@ -270,7 +301,7 @@ Result run_simulation(const Config& cfg, double target_angle)
 
     return Result{
         total_time,
-        std::abs(target_angle - total_angle_rotation),
+        std::abs(target_angle_absolute_value - std::abs(total_angle_rotation)),
         total_translation,
         collision,
         timeout
