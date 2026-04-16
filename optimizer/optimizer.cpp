@@ -74,7 +74,6 @@ public:
 
         double angle{0.0};
         double translation{0.0};
-        double time{0.0};
         double collision{0.0};
         double timeout{0.0};
 
@@ -85,7 +84,6 @@ public:
 
             angle += r.final_angle_error;
             translation += r.total_translation;
-            time += r.total_time;
             collision += r.collision ? 1.0 : 0.0;
             timeout += r.timeout ? 1.0 : 0.0;
         }
@@ -93,7 +91,6 @@ public:
         return {
             angle / sims_,
             translation / sims_,
-            time / sims_,
             collision / sims_,
             timeout / sims_
         };
@@ -106,7 +103,7 @@ public:
 
     pagmo::vector_double::size_type get_nobj() const
     {
-        return 5;
+        return 4;
     }
 
     int sims_{100};
@@ -132,7 +129,6 @@ void write_rotation_pareto_to_file(const std::string& filename, const ParetoResu
 
     constexpr int W_ANGLE{12};
     constexpr int W_TRANS{12};
-    constexpr int W_TIME{12};
     constexpr int W_COLL{12};
     constexpr int W_TO{12};
 
@@ -148,7 +144,6 @@ void write_rotation_pareto_to_file(const std::string& filename, const ParetoResu
         << " | "
         << std::setw(W_ANGLE) << "angle"
         << std::setw(W_TRANS) << "translation"
-        << std::setw(W_TIME) << "time"
         << std::setw(W_COLL) << "collision"
         << std::setw(W_TO) << "timeout"
         << "\n";
@@ -171,9 +166,8 @@ void write_rotation_pareto_to_file(const std::string& filename, const ParetoResu
             << " | "
             << std::setw(W_ANGLE) << f.at(0)
             << std::setw(W_TRANS) << f.at(1)
-            << std::setw(W_TIME) << f.at(2)
-            << std::setw(W_COLL) << f.at(3)
-            << std::setw(W_TO) << f.at(4)
+            << std::setw(W_COLL) << f.at(2)
+            << std::setw(W_TO) << f.at(3)
             << "\n";
     }
 }
