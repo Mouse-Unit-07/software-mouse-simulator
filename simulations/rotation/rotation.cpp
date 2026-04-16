@@ -24,15 +24,11 @@ extern "C"
 #include <cmath>
 #include <cstdint>
 #include <filesystem>
-#include <fstream>
 #include <functional>
-#include <iomanip>
-#include <iostream>
 #include <map>
 #include <memory>
 #include <random>
 #include <sstream>
-#include <stdexcept>
 #include <string>
 #include <vector>
 #include "point.hpp"
@@ -54,13 +50,6 @@ using namespace rotation;
 
 void prepare_mock_for_rotation(const Config& cfg, const maze::Maze& maze, mouse::Mouse& mouse);
 mouse_delta update_mock_by_dt(const Config& cfg, mouse::Mouse& mouse);
-
-MetricGlobalMax compute_global_max(const std::vector<Candidate>& candidates);
-ScoreBreakdown compute_score_breakdown(const Candidate& c, const MetricGlobalMax& g);
-
-void write_summary(std::ofstream& out, const ResultsMetrics& overall_metrics, size_t total_size);
-void write_candidates_banner(std::ofstream& out);
-void write_candidates(std::ofstream& out, const std::vector<Candidate>& candidates);
 
 } /* unnamed namespace */
 
@@ -88,50 +77,6 @@ visualizer::Visualizer rotation_visualizer;
 /*----------------------------------------------------------------------------*/
 namespace rotation
 {
-
-bool ConfigSweeper::next(void)
-{
-    if (!initialized_) {
-        sweeper.init_sizes({
-            dt.size(),
-            motor_speed_scale.size(),
-            motor1_variance.size(),
-            motor2_variance.size(),
-            slip_factor.size(),
-            wheel_circumference_scale.size(),
-            wheel_base_scale.size(),
-            motor_speed.size(),
-            kp.size(),
-            kd.size(),
-            pid_shift.size()
-        });
-
-        initialized_ = true;
-    }
-    return sweeper.next();
-}
-
-Config ConfigSweeper::value(void) const
-{
-    const auto& idx{sweeper.get_indices()};
-    int i{0};
-
-    Config cfg{};
-
-    cfg.dt = dt.at(idx.at(i++));
-    cfg.motor_speed_scale = motor_speed_scale.at(idx.at(i++));
-    cfg.motor1_variance = motor1_variance.at(idx.at(i++));
-    cfg.motor2_variance = motor2_variance.at(idx.at(i++));
-    cfg.slip_factor = slip_factor.at(idx.at(i++));
-    cfg.wheel_circumference_scale = wheel_circumference_scale.at(idx.at(i++));
-    cfg.wheel_base_scale = wheel_base_scale.at(idx.at(i++));
-    cfg.motor_speed = motor_speed.at(idx.at(i++));
-    cfg.kp = kp.at(idx.at(i++));
-    cfg.kd = kd.at(idx.at(i++));
-    cfg.pid_shift = pid_shift.at(idx.at(i++));
-
-    return cfg;
-}
 
 ControlConfig decode_control(const std::vector<double>& x)
 {
@@ -345,104 +290,6 @@ Result run_simulation(const Config& cfg, double target_angle)
     };
 }
 
-ResultsMetrics compute_results_metrics(const std::vector<Result>& results)
-{
-    ResultsMetrics a;
-
-    auto time{simulation_common::extract_metric(
-        results, [](const Result& r) { return r.total_time; })};
-    auto angle{simulation_common::extract_metric(
-        results, [](const Result& r) { return r.final_angle_error; })};
-    auto translation{simulation_common::extract_metric(
-        results, [](const Result& r) { return r.total_translation; })};
-
-    a.time_stats = simulation_common::compute_stats(time);
-    a.angle_error_stats = simulation_common::compute_stats(angle);
-    a.translation_stats = simulation_common::compute_stats(translation);
-    a.timeout_rate =
-        simulation_common::compute_rate(results, [](const Result& r) { return r.timeout; });
-    a.collision_rate =
-        simulation_common::compute_rate(results, [](const Result& r) { return r.collision; });
-
-    return a;
-}
-
-std::vector<Candidate> build_candidates(const std::vector<Trial>& trials)
-{
-    auto grouped = simulation_common::group_by(
-        trials,
-        [](const Trial& t) {
-            return CandidateKey{t.config.kp, t.config.kd, t.config.pid_shift, t.config.motor_speed};
-        },
-        [](const Trial& t) { return t.result; });
-
-    std::vector<Candidate> out;
-    out.reserve(grouped.size());
-
-    for (const auto& [key, group_results] : grouped) {
-        Candidate c;
-        c.key = key;
-
-        auto a{compute_results_metrics(group_results)};
-
-        c.results_metrics = a;
-
-        out.push_back(c);
-    }
-
-    return out;
-}
-
-void score_and_sort_candidates(std::vector<Candidate>& candidates)
-{
-    auto g{compute_global_max(candidates)};
-
-    for (auto& c : candidates) {
-        c.score = compute_score_breakdown(c, g);
-    }
-
-    std::sort(candidates.begin(), candidates.end(),
-              [](const Candidate& a, const Candidate& b) { return a.score.total < b.score.total; });
-}
-
-void write_analysis_to_file(const std::string& filename, const std::vector<Candidate>& candidates,
-                            const ResultsMetrics& overall_metrics, size_t total_size)
-{
-    std::ofstream out(filename);
-    if (!out.is_open()) {
-        throw std::runtime_error("Failed to open output file: " + filename);
-    }
-    out << std::fixed << std::setprecision(3);
-
-    write_summary(out, overall_metrics, total_size);
-
-    out << "\n=== SORTED CANDIDATES ===\n";
-    write_candidates_banner(out);
-    write_candidates(out, candidates);
-}
-
-void run_full_rotation_experiment(const std::string& filename, double target_angle,
-                                  ConfigSweeper& sweeper)
-{
-    std::vector<Trial> trials;
-    std::vector<Result> all_results;
-
-    while (sweeper.next()) {
-        Config cfg{sweeper.value()};
-
-        auto result{rotation::run_simulation(cfg, target_angle)};
-
-        trials.push_back({cfg, result});
-        all_results.push_back(result);
-    }
-
-    auto overall_metrics{compute_results_metrics(all_results)};
-    auto candidates{build_candidates(trials)};
-    score_and_sort_candidates(candidates);
-
-    write_analysis_to_file(filename, candidates, overall_metrics, all_results.size());
-}
-
 } /* rotation namespace */
 
 /*----------------------------------------------------------------------------*/
@@ -475,117 +322,6 @@ mouse_delta update_mock_by_dt(const Config& cfg, mouse::Mouse& mouse)
     mouse.rotate(delta.dtheta_rad);
 
     return delta;
-}
-
-MetricGlobalMax compute_global_max(const std::vector<Candidate>& candidates)
-{
-    MetricGlobalMax g;
-
-    for (const auto& c : candidates) {
-        g.time = std::max(g.time, simulation_common::collapse_metric(c.results_metrics.time_stats));
-        g.angle = std::max(g.angle,
-                           simulation_common::collapse_metric(c.results_metrics.angle_error_stats));
-        g.translation = std::max(
-            g.translation, simulation_common::collapse_metric(c.results_metrics.translation_stats));
-    }
-
-    return g;
-}
-
-ScoreBreakdown compute_score_breakdown(const Candidate& c, const MetricGlobalMax& g)
-{
-    const auto& m{c.results_metrics};
-
-    ScoreBreakdown s;
-
-    s.angle = simulation_common::compute_metric_score(
-        simulation_common::collapse_metric(m.angle_error_stats), g.angle);
-    s.translation = simulation_common::compute_metric_score(
-        simulation_common::collapse_metric(m.translation_stats), g.translation);
-    s.time = simulation_common::compute_metric_score(
-        simulation_common::collapse_metric(m.time_stats), g.time);
-    s.collision = m.collision_rate;
-    s.timeout = m.timeout_rate;
-
-    s.total = s.angle + s.translation + s.time + s.collision + s.timeout;
-
-    return s;
-}
-
-void write_summary(std::ofstream& out, const ResultsMetrics& overall_metrics, size_t total_size)
-{
-    out << "=== SUMMARY ===\n";
-    out << "Total Size     : " << total_size << "\n";
-    out << "Timeout Rate   : " << overall_metrics.timeout_rate << "\n";
-    out << "Collision Rate : " << overall_metrics.collision_rate << "\n";
-
-    out << "\nTime:\n";
-    out << "  mean=" << overall_metrics.time_stats.mean
-        << " std=" << overall_metrics.time_stats.stddev
-        << " min=" << overall_metrics.time_stats.min
-        << " max=" << overall_metrics.time_stats.max << "\n";
-
-    out << "\nAngle Error:\n";
-    out << "  mean=" << overall_metrics.angle_error_stats.mean
-        << " std=" << overall_metrics.angle_error_stats.stddev
-        << " min=" << overall_metrics.angle_error_stats.min
-        << " max=" << overall_metrics.angle_error_stats.max << "\n";
-
-    out << "\nTranslation:\n";
-    out << "  mean=" << overall_metrics.translation_stats.mean
-        << " std=" << overall_metrics.translation_stats.stddev
-        << " min=" << overall_metrics.translation_stats.min
-        << " max=" << overall_metrics.translation_stats.max << "\n";
-}
-
-void write_candidates_banner(std::ofstream& out)
-{
-    out << std::left
-        << std::setw(6)  << "#"
-        << std::setw(6)  << "kp"
-        << std::setw(6)  << "kd"
-        << std::setw(6)  << "sh"
-        << std::setw(8)  << "speed"
-        << std::setw(10) << "Timeout"
-        << std::setw(10) << "Coll"
-        << std::setw(10) << "Angle"
-        << std::setw(10) << "Trsln"
-        << std::setw(10) << "Time"
-        << std::setw(10) << "Score"
-        << std::setw(26) << "Angle(m/sd/min/max)"
-        << std::setw(26) << "Trans(m/sd/min/max)"
-        << std::setw(26) << "Time(m/sd/min/max)"
-        << "\n";
-}
-
-void write_candidates(std::ofstream& out, const std::vector<Candidate>& candidates)
-{
-    auto fmt_stats = [](const simulation_common::MetricStats& s) {
-        std::ostringstream oss;
-        oss << std::setprecision(3) << s.mean << "|" << s.stddev << "|" << s.min << "|" << s.max;
-        return oss.str();
-    };
-
-    for (size_t i{0}; i < candidates.size(); ++i) {
-        const auto& c{candidates.at(i)};
-
-        out << std::left
-            << std::setw(6)  << (i + 1)
-            << std::setw(6)  << c.key.kp
-            << std::setw(6)  << c.key.kd
-            << std::setw(6)  << c.key.shift
-            << std::setw(8)  << static_cast<int>(c.key.motor_speed)
-            << std::setw(10) << c.results_metrics.timeout_rate
-            << std::setw(10) << c.results_metrics.collision_rate
-            << std::setw(10) << c.score.angle
-            << std::setw(10) << c.score.translation
-            << std::setw(10) << c.score.time
-            << std::setw(10) << c.score.total
-            << std::setw(26) << fmt_stats(c.results_metrics.angle_error_stats)
-            << std::setw(26) << fmt_stats(c.results_metrics.translation_stats)
-            << std::setw(26) << fmt_stats(c.results_metrics.time_stats)
-            << "\n";
-    }
 }
 
 } /* unnamed namespace */

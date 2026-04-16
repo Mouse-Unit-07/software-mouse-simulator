@@ -29,84 +29,6 @@ struct Config {
     int32_t pid_shift;
 };
 
-class ConfigSweeper {
-public:
-    std::vector<double> dt;
-    std::vector<double> motor_speed_scale;
-    std::vector<double> motor1_variance;
-    std::vector<double> motor2_variance;
-    std::vector<double> slip_factor;
-    std::vector<double> wheel_circumference_scale;
-    std::vector<double> wheel_base_scale;
-
-    std::vector<uint8_t> motor_speed;
-    std::vector<int32_t> kp;
-    std::vector<int32_t> kd;
-    std::vector<int32_t> pid_shift;
-
-    bool next(void);
-    Config value(void) const;
-
-private:
-    simulation_common::CommonConfigSweeper sweeper;
-    bool initialized_{false};
-};
-
-struct Result {
-    double total_time{0.0};
-    double final_angle_error{0.0};
-    double total_translation{0.0};
-    bool collision{false};
-    bool timeout{false};
-};
-
-struct Trial {
-    Config config;
-    Result result;
-};
-
-struct ResultsMetrics {
-    simulation_common::MetricStats time_stats;
-    simulation_common::MetricStats angle_error_stats;
-    simulation_common::MetricStats translation_stats;
-    double collision_rate{0.0};
-    double timeout_rate{0.0};
-};
-
-struct MetricGlobalMax {
-    double time{0};
-    double angle{0};
-    double translation{0};
-};
-
-struct ScoreBreakdown {
-    double angle{0.0};
-    double translation{0.0};
-    double time{0.0};
-    double collision{0.0};
-    double timeout{0.0};
-    double total{0.0};
-};
-
-struct CandidateKey {
-    int32_t kp;
-    int32_t kd;
-    int32_t shift;
-    uint8_t motor_speed;
-
-    bool operator<(const CandidateKey& other) const
-    {
-        return std::tie(kp, kd, shift, motor_speed)
-               < std::tie(other.kp, other.kd, other.shift, other.motor_speed);
-    }
-};
-
-struct Candidate {
-    CandidateKey key;
-    ResultsMetrics results_metrics;
-    ScoreBreakdown score;
-};
-
 struct ControlConfig {
     uint8_t motor_speed;
     int32_t kp;
@@ -122,6 +44,14 @@ struct EnvironmentConfig {
     double slip_factor;
     double wheel_circumference_scale;
     double wheel_base_scale;
+};
+
+struct Result {
+    double total_time{0.0};
+    double final_angle_error{0.0};
+    double total_translation{0.0};
+    bool collision{false};
+    bool timeout{false};
 };
 
 } /* rotation namespace */
@@ -143,15 +73,6 @@ void disable_visualization(void);
 std::string config_to_string(const Config& cfg);
 
 Result run_simulation(const Config& cfg, double target_angle);
-
-ResultsMetrics compute_results_metrics(const std::vector<Result>& results);
-std::vector<Candidate> build_candidates(const std::vector<Trial>& trials);
-void score_and_sort_candidates(std::vector<Candidate>& candidates);
-
-void write_analysis_to_file(const std::string& filename, const std::vector<Candidate>& candidates,
-                            const ResultsMetrics& overall_metrics, size_t total_size);
-void run_full_rotation_experiment(const std::string& filename, double target_angle,
-                                  ConfigSweeper& sweeper);
 
 } /* rotation namespace */
 
