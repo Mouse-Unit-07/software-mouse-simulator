@@ -26,7 +26,12 @@
 /*----------------------------------------------------------------------------*/
 /*                            Private Declarations                            */
 /*----------------------------------------------------------------------------*/
-/* none */
+namespace
+{
+
+std::ofstream open_output_file(const std::string& filename);
+
+} /* unnamed namespace */
 
 /*----------------------------------------------------------------------------*/
 /*                               Private Globals                              */
@@ -41,20 +46,40 @@ namespace optimizer
 
 using PagmoVec = pagmo::vector_double;
 
+template <typename UDP>
+ParetoResult run_pareto_impl(UDP&& udp, std::size_t population, std::size_t generations)
+{
+    pagmo::problem prob{std::forward<UDP>(udp)};
+    pagmo::algorithm algo{pagmo::nsga2{}};
+    pagmo::population pop{prob, population};
+
+    for (std::size_t i{0}; i < generations; ++i) {
+        pop = algo.evolve(pop);
+    }
+
+    return {pop.get_x(), pop.get_f()};
+}
+
 class RotationUDP {
 public:
+    RotationUDP() = default;
+
+    RotationUDP(int simulations_per_fitness) : sims_(simulations_per_fitness)
+    {
+        /* no additional logic */
+    }
+
     PagmoVec fitness(const PagmoVec& x) const
     {
         const auto control{rotation::decode_control(x)};
 
-        constexpr int N{1000};
         double angle{0.0};
         double translation{0.0};
         double time{0.0};
         double collision{0.0};
         double timeout{0.0};
 
-        for (int i{0}; i < N; ++i) {
+        for (int i{0}; i < sims_; ++i) {
             rotation::Config cfg{control, rotation::generate_random_environment()};
 
             const auto r{rotation::run_simulation(cfg, M_PI / 2)};
@@ -67,11 +92,11 @@ public:
         }
 
         return {
-            angle / N,
-            translation / N,
-            time / N,
-            collision / N,
-            timeout / N
+            angle / sims_,
+            translation / sims_,
+            time / sims_,
+            collision / sims_,
+            timeout / sims_
         };
     }
 
@@ -84,35 +109,19 @@ public:
     {
         return 5;
     }
+
+    int sims_{100};
 };
 
-ParetoResult run_rotation_pareto(std::size_t population, std::size_t generations)
+ParetoResult run_rotation_pareto(std::size_t population, std::size_t generations,
+                                 int simulations_per_fitness)
 {
-    RotationUDP udp;
-
-    pagmo::problem prob{udp};
-
-    pagmo::algorithm algo{pagmo::nsga2{}};
-
-    pagmo::population pop{prob, population};
-
-    for (std::size_t i{0}; i < generations; ++i) {
-        pop = algo.evolve(pop);
-    }
-
-    ParetoResult out;
-    out.X = pop.get_x();
-    out.F = pop.get_f();
-
-    return out;
+    return run_pareto_impl(RotationUDP{simulations_per_fitness}, population, generations);
 }
 
 void write_rotation_pareto_to_file(const std::string& filename, const ParetoResult& result)
 {
-    std::ofstream out(filename);
-    if (!out.is_open()) {
-        throw std::runtime_error("Failed to open file: " + filename);
-    }
+    auto out{open_output_file(filename)};
 
     constexpr int W_IDX{4};
     constexpr int W_SPD{6};
@@ -125,8 +134,6 @@ void write_rotation_pareto_to_file(const std::string& filename, const ParetoResu
     constexpr int W_TIME{12};
     constexpr int W_COLL{12};
     constexpr int W_TO{12};
-
-    out << std::fixed << std::setprecision(6);
 
     out << "===== ROTATION PARETO FRONT =====\n\n";
     out << std::left
@@ -168,11 +175,16 @@ void write_rotation_pareto_to_file(const std::string& filename, const ParetoResu
 
 class MoveForwardUDP {
 public:
+    MoveForwardUDP() = default;
+
+    MoveForwardUDP(int simulations_per_fitness) : sims_(simulations_per_fitness)
+    {
+        /* no additional logic */
+    }
+
     PagmoVec fitness(const PagmoVec& x) const
     {
         const auto control{move_forward::decode_control(x)};
-
-        constexpr int N{100};
 
         double time{0.0};
         double angle{0.0};
@@ -181,7 +193,7 @@ public:
         double collision{0.0};
         double timeout{0.0};
 
-        for (int i{0}; i < N; ++i) {
+        for (int i{0}; i < sims_; ++i) {
             move_forward::Config cfg{control, move_forward::generate_random_environment()};
 
             const auto r{move_forward::run_simulation(cfg)};
@@ -200,7 +212,7 @@ public:
             accumulate(r.two_wall);
         }
 
-        const double denom = static_cast<double>(N * 3);
+        const double denom{static_cast<double>(sims_ * 3)};
 
         return {
             time / denom,
@@ -221,35 +233,19 @@ public:
     {
         return 6;
     }
+
+    int sims_{100};
 };
 
-ParetoResult run_move_forward_pareto(std::size_t population, std::size_t generations)
+ParetoResult run_move_forward_pareto(std::size_t population, std::size_t generations,
+                                     int simulations_per_fitness)
 {
-    MoveForwardUDP udp;
-
-    pagmo::problem prob{udp};
-
-    pagmo::algorithm algo{pagmo::nsga2{}};
-
-    pagmo::population pop{prob, population};
-
-    for (std::size_t i{0}; i < generations; ++i) {
-        pop = algo.evolve(pop);
-    }
-
-    ParetoResult out;
-    out.X = pop.get_x();
-    out.F = pop.get_f();
-
-    return out;
+    return run_pareto_impl(MoveForwardUDP{simulations_per_fitness}, population, generations);
 }
 
 void write_move_forward_pareto_to_file(const std::string& filename, const ParetoResult& result)
 {
-    std::ofstream out(filename);
-    if (!out.is_open()) {
-        throw std::runtime_error("Failed to open file: " + filename);
-    }
+    auto out{open_output_file(filename)};
 
     /* column widths */
     constexpr int W_IDX{4};
@@ -267,8 +263,6 @@ void write_move_forward_pareto_to_file(const std::string& filename, const Pareto
     constexpr int W_VERT{12};
     constexpr int W_COLL{12};
     constexpr int W_TO{12};
-
-    out << std::fixed << std::setprecision(6);
 
     /* banner */
     out << "===== MOVE FORWARD PARETO FRONT =====\n\n";
@@ -325,4 +319,17 @@ void write_move_forward_pareto_to_file(const std::string& filename, const Pareto
 /*----------------------------------------------------------------------------*/
 /*                             Private Definitions                            */
 /*----------------------------------------------------------------------------*/
-/* none */
+namespace
+{
+
+std::ofstream open_output_file(const std::string& filename)
+{
+    std::ofstream out(filename);
+    if (!out.is_open()) {
+        throw std::runtime_error("Failed to open file: " + filename);
+    }
+    out << std::fixed << std::setprecision(6);
+    return out;
+}
+
+} /* unnamed namespace */

@@ -51,9 +51,9 @@ TEST_GROUP(OptimizerTests)
 /*============================================================================*/
 /*                                    Tests                                   */
 /*============================================================================*/
-IGNORE_TEST(OptimizerTests, RotationParetoStructureIsValid)
+TEST(OptimizerTests, RotationParetoStructureIsValid)
 {
-    auto result{run_rotation_pareto(8, 5)};
+    auto result{run_rotation_pareto(8, 5, 10)};
 
     CHECK_EQUAL(8, result.X.size());
     CHECK_EQUAL(8, result.F.size());
@@ -64,9 +64,9 @@ IGNORE_TEST(OptimizerTests, RotationParetoStructureIsValid)
     }
 }
 
-IGNORE_TEST(OptimizerTests, RotationParetoHasNoNaNOrInf)
+TEST(OptimizerTests, RotationParetoHasNoNaNOrInf)
 {
-    auto result{run_rotation_pareto(8, 5)};
+    auto result{run_rotation_pareto(8, 5, 10)};
 
     for (const auto& f : result.F) {
         for (double v : f) {
@@ -81,9 +81,9 @@ IGNORE_TEST(OptimizerTests, RotationParetoHasNoNaNOrInf)
     }
 }
 
-IGNORE_TEST(OptimizerTests, RotationControlWithinBounds)
+TEST(OptimizerTests, RotationControlWithinBounds)
 {
-    auto result{run_rotation_pareto(8, 5)};
+    auto result{run_rotation_pareto(8, 5, 10)};
 
     auto bounds{rotation::get_control_bounds()};
     const auto& lb{bounds.first};
@@ -97,9 +97,9 @@ IGNORE_TEST(OptimizerTests, RotationControlWithinBounds)
     }
 }
 
-IGNORE_TEST(OptimizerTests, RotationObjectivesAreInValidRanges)
+TEST(OptimizerTests, RotationObjectivesAreInValidRanges)
 {
-    auto result{run_rotation_pareto(8, 5)};
+    auto result{run_rotation_pareto(8, 5, 10)};
 
     for (const auto& f : result.F) {
         double angle{f.at(0)};
@@ -117,10 +117,10 @@ IGNORE_TEST(OptimizerTests, RotationObjectivesAreInValidRanges)
     }
 }
 
-IGNORE_TEST(OptimizerTests, RotationParetoSizeIsStable)
+TEST(OptimizerTests, RotationParetoSizeIsStable)
 {
-    auto a{run_rotation_pareto(8, 10)};
-    auto b{run_rotation_pareto(8, 10)};
+    auto a{run_rotation_pareto(8, 10, 10)};
+    auto b{run_rotation_pareto(8, 10, 10)};
 
     CHECK_EQUAL(a.X.size(), b.X.size());
     CHECK_EQUAL(a.F.size(), b.F.size());
@@ -129,14 +129,14 @@ IGNORE_TEST(OptimizerTests, RotationParetoSizeIsStable)
 IGNORE_TEST(OptimizerTests, DumpRotationPareto)
 {
     /* takes ~5min */
-    auto result{run_rotation_pareto(64, 300)};
+    auto result{run_rotation_pareto(64, 300, 1000)};
 
     write_rotation_pareto_to_file("rotation_test_output.txt", result);
 }
 
-IGNORE_TEST(OptimizerTests, MoveForwardParetoStructureIsValid)
+TEST(OptimizerTests, MoveForwardParetoStructureIsValid)
 {
-    auto result{run_move_forward_pareto(8, 5)};
+    auto result{run_move_forward_pareto(8, 5, 10)};
 
     CHECK_EQUAL(8, result.X.size());
     CHECK_EQUAL(8, result.F.size());
@@ -147,9 +147,9 @@ IGNORE_TEST(OptimizerTests, MoveForwardParetoStructureIsValid)
     }
 }
 
-IGNORE_TEST(OptimizerTests, MoveForwardParetoHasNoNaNOrInf)
+TEST(OptimizerTests, MoveForwardParetoHasNoNaNOrInf)
 {
-    auto result{run_move_forward_pareto(8, 5)};
+    auto result{run_move_forward_pareto(8, 5, 10)};
 
     for (const auto& f : result.F) {
         for (double v : f) {
@@ -164,9 +164,9 @@ IGNORE_TEST(OptimizerTests, MoveForwardParetoHasNoNaNOrInf)
     }
 }
 
-IGNORE_TEST(OptimizerTests, MoveForwardControlWithinBounds)
+TEST(OptimizerTests, MoveForwardControlWithinBounds)
 {
-    auto result{run_move_forward_pareto(8, 5)};
+    auto result{run_move_forward_pareto(8, 5, 10)};
 
     auto bounds{move_forward::get_control_bounds()};
     const auto& lb{bounds.first};
@@ -180,9 +180,9 @@ IGNORE_TEST(OptimizerTests, MoveForwardControlWithinBounds)
     }
 }
 
-IGNORE_TEST(OptimizerTests, MoveForwardObjectivesAreInValidRanges)
+TEST(OptimizerTests, MoveForwardObjectivesAreInValidRanges)
 {
-    auto result{run_move_forward_pareto(8, 5)};
+    auto result{run_move_forward_pareto(8, 5, 10)};
 
     for (const auto& f : result.F) {
         double time{f.at(0)};
@@ -202,10 +202,10 @@ IGNORE_TEST(OptimizerTests, MoveForwardObjectivesAreInValidRanges)
     }
 }
 
-IGNORE_TEST(OptimizerTests, MoveForwardParetoSizeIsStable)
+TEST(OptimizerTests, MoveForwardParetoSizeIsStable)
 {
-    auto a{run_move_forward_pareto(8, 10)};
-    auto b{run_move_forward_pareto(8, 10)};
+    auto a{run_move_forward_pareto(8, 10, 10)};
+    auto b{run_move_forward_pareto(8, 10, 10)};
 
     CHECK_EQUAL(a.X.size(), b.X.size());
     CHECK_EQUAL(a.F.size(), b.F.size());
@@ -214,7 +214,7 @@ IGNORE_TEST(OptimizerTests, MoveForwardParetoSizeIsStable)
 IGNORE_TEST(OptimizerTests, DumpMoveForwardPareto)
 {
     /* takes ~5min */
-    auto result{run_move_forward_pareto(64, 300)};
+    auto result{run_move_forward_pareto(64, 300, 100)};
 
     write_move_forward_pareto_to_file("move_forward_test_output.txt", result);
 }
