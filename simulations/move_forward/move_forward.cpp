@@ -88,25 +88,25 @@ std::string config_to_string(const Config& cfg)
 {
     std::ostringstream oss;
 
-    oss << simulation_common::double_to_filename(cfg.dt) << "-"
-        << simulation_common::double_to_filename(cfg.motor_speed_scale) << "-"
-        << simulation_common::double_to_filename(cfg.motor1_variance) << "-"
-        << simulation_common::double_to_filename(cfg.motor2_variance) << "-"
-        << simulation_common::double_to_filename(cfg.slip_factor) << "-"
-        << simulation_common::double_to_filename(cfg.wheel_circumference_scale) << "-"
-        << simulation_common::double_to_filename(cfg.wheel_base_scale) << "-"
-        << simulation_common::double_to_filename(cfg.maze_size_scale) << "-"
-        << simulation_common::double_to_filename(cfg.ir_reading_scale) << "-"
-        << simulation_common::double_to_filename(cfg.mouse_angle) << "-"
-        << simulation_common::double_to_filename(cfg.horizontal_position_variance) << "-"
-        << simulation_common::double_to_filename(cfg.vertical_position_variance) << "-"
-        << static_cast<int>(cfg.single_wall_target) << "-"
-        << static_cast<int>(cfg.motor_speed) << "-"
-        << simulation_common::double_to_filename(static_cast<double>(cfg.kp)) << "-"
-        << simulation_common::double_to_filename(static_cast<double>(cfg.kd)) << "-"
-        << simulation_common::double_to_filename(static_cast<double>(cfg.pid_shift)) << "-"
-        << simulation_common::double_to_filename(static_cast<double>(cfg.kp_ir)) << "-"
-        << simulation_common::double_to_filename(static_cast<double>(cfg.kd_ir));
+    oss << simulation_common::double_to_filename(cfg.env_cfg.dt) << "-"
+        << simulation_common::double_to_filename(cfg.env_cfg.motor_speed_scale) << "-"
+        << simulation_common::double_to_filename(cfg.env_cfg.motor1_variance) << "-"
+        << simulation_common::double_to_filename(cfg.env_cfg.motor2_variance) << "-"
+        << simulation_common::double_to_filename(cfg.env_cfg.slip_factor) << "-"
+        << simulation_common::double_to_filename(cfg.env_cfg.wheel_circumference_scale) << "-"
+        << simulation_common::double_to_filename(cfg.env_cfg.wheel_base_scale) << "-"
+        << simulation_common::double_to_filename(cfg.env_cfg.maze_size_scale) << "-"
+        << simulation_common::double_to_filename(cfg.env_cfg.ir_reading_scale) << "-"
+        << simulation_common::double_to_filename(cfg.env_cfg.mouse_angle) << "-"
+        << simulation_common::double_to_filename(cfg.env_cfg.horizontal_position_variance) << "-"
+        << simulation_common::double_to_filename(cfg.env_cfg.vertical_position_variance) << "-"
+        << static_cast<int>(cfg.ctrl_cfg.single_wall_target) << "-"
+        << static_cast<int>(cfg.ctrl_cfg.motor_speed) << "-"
+        << simulation_common::double_to_filename(static_cast<double>(cfg.ctrl_cfg.kp)) << "-"
+        << simulation_common::double_to_filename(static_cast<double>(cfg.ctrl_cfg.kd)) << "-"
+        << simulation_common::double_to_filename(static_cast<double>(cfg.ctrl_cfg.pid_shift)) << "-"
+        << simulation_common::double_to_filename(static_cast<double>(cfg.ctrl_cfg.kp_ir)) << "-"
+        << simulation_common::double_to_filename(static_cast<double>(cfg.ctrl_cfg.kd_ir));
 
     return oss.str();
 }
@@ -174,11 +174,11 @@ SingleCaseResult run_single_simulation(const Config& cfg, const maze::Maze& maze
             update_ir_3_sensor_reading(ir3_dist);
 
             int32_t ir2{static_cast<int32_t>(
-                scale_and_clamp_ir_sensor_reading(read_ir_2_sensor(), cfg.ir_reading_scale))};
+                scale_and_clamp_ir_sensor_reading(read_ir_2_sensor(), cfg.env_cfg.ir_reading_scale))};
             int32_t ir3{static_cast<int32_t>(
-                scale_and_clamp_ir_sensor_reading(read_ir_3_sensor(), cfg.ir_reading_scale))};
+                scale_and_clamp_ir_sensor_reading(read_ir_3_sensor(), cfg.env_cfg.ir_reading_scale))};
 
-            const int32_t TARGET_IR_READING{static_cast<int32_t>(cfg.single_wall_target)};
+            const int32_t TARGET_IR_READING{static_cast<int32_t>(cfg.ctrl_cfg.single_wall_target)};
 
             if (mode == LEFT_WALL_ONLY) {
                 ir_error = (TARGET_IR_READING - ir2);
@@ -193,21 +193,21 @@ SingleCaseResult run_single_simulation(const Config& cfg, const maze::Maze& maze
         int32_t enc_derivative{encoder_error - prev_encoder_error};
         prev_encoder_error = encoder_error;
 
-        int64_t enc_control{(static_cast<int64_t>(cfg.kp) * encoder_error)
-                            + (static_cast<int64_t>(cfg.kd) * enc_derivative)};
+        int64_t enc_control{(static_cast<int64_t>(cfg.ctrl_cfg.kp) * encoder_error)
+                            + (static_cast<int64_t>(cfg.ctrl_cfg.kd) * enc_derivative)};
 
         /* IR PD */
         int32_t ir_derivative{ir_error - prev_ir_error};
         prev_ir_error = ir_error;
 
-        int64_t ir_control{(static_cast<int64_t>(cfg.kp_ir) * ir_error)
-                           + (static_cast<int64_t>(cfg.kd_ir) * ir_derivative)};
+        int64_t ir_control{(static_cast<int64_t>(cfg.ctrl_cfg.kp_ir) * ir_error)
+                           + (static_cast<int64_t>(cfg.ctrl_cfg.kd_ir) * ir_derivative)};
 
         /* combined feedback control */
         int64_t control64{enc_control + ir_control};
-        int32_t control{(control64 >= 0) ? static_cast<int32_t>(control64 >> cfg.pid_shift)
-                                         : -(static_cast<int32_t>((-control64) >> cfg.pid_shift))};
-        int32_t base{cfg.motor_speed};
+        int32_t control{(control64 >= 0) ? static_cast<int32_t>(control64 >> cfg.ctrl_cfg.pid_shift)
+                                         : -(static_cast<int32_t>((-control64) >> cfg.ctrl_cfg.pid_shift))};
+        int32_t base{cfg.ctrl_cfg.motor_speed};
         int32_t speed1{std::clamp(base + control, 0, 255)};
         int32_t speed2{std::clamp(base - control, 0, 255)};
 
@@ -217,7 +217,7 @@ SingleCaseResult run_single_simulation(const Config& cfg, const maze::Maze& maze
         auto delta{update_mock_by_dt(cfg, mouse)};
         total_horizontal_translation += std::abs(delta.dx);
         total_angle_error += std::abs(delta.dtheta_rad);
-        total_time += cfg.dt;
+        total_time += cfg.env_cfg.dt;
 
         if (visualizer_enabled) {
             rotation_visualizer.draw_mouse_on_maze(mouse);
@@ -294,11 +294,11 @@ Result run_simulation(const Config& cfg)
     };
 
     maze::Maze maze_none{maze::build_maze_from_ascii(
-        ascii_no_walls, maze::OFFICIAL_POST_SIZE * (cfg.maze_size_scale - 1))};
+        ascii_no_walls, maze::OFFICIAL_POST_SIZE * (cfg.env_cfg.maze_size_scale - 1))};
     maze::Maze maze_left{maze::build_maze_from_ascii(
-        ascii_left_wall, maze::OFFICIAL_POST_SIZE * (cfg.maze_size_scale - 1))};
+        ascii_left_wall, maze::OFFICIAL_POST_SIZE * (cfg.env_cfg.maze_size_scale - 1))};
     maze::Maze maze_both{maze::build_maze_from_ascii(
-        ascii_both_walls, maze::OFFICIAL_POST_SIZE * (cfg.maze_size_scale - 1))};
+        ascii_both_walls, maze::OFFICIAL_POST_SIZE * (cfg.env_cfg.maze_size_scale - 1))};
 
     Result out;
 
@@ -322,27 +322,27 @@ using namespace move_forward;
 void prepare_mock_for_move_forward(const Config& cfg, const maze::Maze& maze, mouse::Mouse& mouse)
 {
     reset_mock_device_drivers();
-    set_motor_speed_scale(cfg.motor_speed_scale);
-    set_motor_1_variance(cfg.motor1_variance);
-    set_motor_2_variance(cfg.motor2_variance);
-    set_motor_slip_factor(cfg.slip_factor);
-    set_wheel_circumference_scale(cfg.wheel_circumference_scale);
-    set_wheel_base_scale(cfg.wheel_base_scale);
+    set_motor_speed_scale(cfg.env_cfg.motor_speed_scale);
+    set_motor_1_variance(cfg.env_cfg.motor1_variance);
+    set_motor_2_variance(cfg.env_cfg.motor2_variance);
+    set_motor_slip_factor(cfg.env_cfg.slip_factor);
+    set_wheel_circumference_scale(cfg.env_cfg.wheel_circumference_scale);
+    set_wheel_base_scale(cfg.env_cfg.wheel_base_scale);
 
     double max_horizontal_offset{(maze::OFFICIAL_WALL_LENGTH_SIZE - mouse.hitbox.horizontal_size)
                                  / 2};
     double max_vertical_offset{(maze::OFFICIAL_WALL_LENGTH_SIZE - mouse.hitbox.vertical_size) / 2};
 
-    mouse.rotate(cfg.mouse_angle);
-    mouse.translate(maze.mouse_start.x + (max_horizontal_offset * cfg.horizontal_position_variance),
-                    maze.mouse_start.y + (max_vertical_offset * cfg.vertical_position_variance));
+    mouse.rotate(cfg.env_cfg.mouse_angle);
+    mouse.translate(maze.mouse_start.x + (max_horizontal_offset * cfg.env_cfg.horizontal_position_variance),
+                    maze.mouse_start.y + (max_vertical_offset * cfg.env_cfg.vertical_position_variance));
 }
 
 mouse_delta update_mock_by_dt(const Config& cfg, mouse::Mouse& mouse)
 {
-    mouse_delta delta{compute_mouse_delta(mouse.hitbox.angle_rad, cfg.dt)};
-    update_encoder_1_ticks(cfg.dt);
-    update_encoder_2_ticks(cfg.dt);
+    mouse_delta delta{compute_mouse_delta(mouse.hitbox.angle_rad, cfg.env_cfg.dt)};
+    update_encoder_1_ticks(cfg.env_cfg.dt);
+    update_encoder_2_ticks(cfg.env_cfg.dt);
     mouse.translate(delta.dx, delta.dy);
     mouse.rotate(delta.dtheta_rad);
 

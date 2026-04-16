@@ -34,26 +34,26 @@ Config create_no_variance_config(void)
 {
     Config cfg{};
 
-    cfg.dt = {0.001};
-    cfg.motor_speed_scale = {1.0};
-    cfg.motor1_variance = {0.0};
-    cfg.motor2_variance = {0.0};
-    cfg.slip_factor = {1.0};
-    cfg.wheel_circumference_scale = {1.0};
-    cfg.wheel_base_scale = {1.0};
-    cfg.maze_size_scale = {1.0};
-    cfg.ir_reading_scale = {1.0};
-    cfg.mouse_angle = {0.0};
-    cfg.horizontal_position_variance = {0.0};
-    cfg.vertical_position_variance = {0.0};
+    cfg.env_cfg.dt = {0.001};
+    cfg.env_cfg.motor_speed_scale = {1.0};
+    cfg.env_cfg.motor1_variance = {0.0};
+    cfg.env_cfg.motor2_variance = {0.0};
+    cfg.env_cfg.slip_factor = {1.0};
+    cfg.env_cfg.wheel_circumference_scale = {1.0};
+    cfg.env_cfg.wheel_base_scale = {1.0};
+    cfg.env_cfg.maze_size_scale = {1.0};
+    cfg.env_cfg.ir_reading_scale = {1.0};
+    cfg.env_cfg.mouse_angle = {0.0};
+    cfg.env_cfg.horizontal_position_variance = {0.0};
+    cfg.env_cfg.vertical_position_variance = {0.0};
 
-    cfg.single_wall_target = {407u};
-    cfg.motor_speed = {120u};
-    cfg.kp = {0};
-    cfg.kd = {0};
-    cfg.pid_shift = {0};
-    cfg.kp_ir = {0};
-    cfg.kd_ir = {0};
+    cfg.ctrl_cfg.single_wall_target = {407u};
+    cfg.ctrl_cfg.motor_speed = {120u};
+    cfg.ctrl_cfg.kp = {0};
+    cfg.ctrl_cfg.kd = {0};
+    cfg.ctrl_cfg.pid_shift = {0};
+    cfg.ctrl_cfg.kp_ir = {0};
+    cfg.ctrl_cfg.kd_ir = {0};
 
     return cfg;
 }
@@ -139,13 +139,13 @@ Config create_custom_config(uint32_t target = 100, uint8_t speed = 100, int kp =
                             int shift = 0, int kp_ir = 0, int kd_ir = 0)
 {
     Config c{};
-    c.single_wall_target = target;
-    c.motor_speed = speed;
-    c.kp = kp;
-    c.kd = kd;
-    c.pid_shift = shift;
-    c.kp_ir = kp_ir;
-    c.kd_ir = kd_ir;
+    c.ctrl_cfg.single_wall_target = target;
+    c.ctrl_cfg.motor_speed = speed;
+    c.ctrl_cfg.kp = kp;
+    c.ctrl_cfg.kd = kd;
+    c.ctrl_cfg.pid_shift = shift;
+    c.ctrl_cfg.kp_ir = kp_ir;
+    c.ctrl_cfg.kd_ir = kd_ir;
     return c;
 }
 
@@ -207,10 +207,10 @@ TEST(MoveForwardTests, DtAffectsResults)
 {
     Config cfg{create_no_variance_config()};
 
-    cfg.dt = 0.01;
+    cfg.env_cfg.dt = 0.01;
     auto r1{run_simulation(cfg)};
 
-    cfg.dt = 0.1;
+    cfg.env_cfg.dt = 0.1;
     auto r2{run_simulation(cfg)};
 
     CHECK(!are_results_equivalent(r1, r2));
@@ -222,7 +222,7 @@ TEST(MoveForwardTests, SpeedScaleAffectsResults)
 
     auto no_speed_scale{run_simulation(cfg)};
 
-    cfg.motor_speed_scale = 0.5;
+    cfg.env_cfg.motor_speed_scale = 0.5;
     auto with_speed_scale{run_simulation(cfg)};
 
     CHECK(!are_results_equivalent(no_speed_scale, with_speed_scale));
@@ -234,8 +234,8 @@ TEST(MoveForwardTests, MotorVarianceAffectsResults)
 
     auto no_variance{run_simulation(cfg)};
 
-    cfg.motor1_variance = 0.1;
-    cfg.motor2_variance = -0.1;
+    cfg.env_cfg.motor1_variance = 0.1;
+    cfg.env_cfg.motor2_variance = -0.1;
     auto with_variance{run_simulation(cfg)};
 
     CHECK(!are_results_equivalent(no_variance, with_variance));
@@ -247,7 +247,7 @@ TEST(MoveForwardTests, SlipFactorAffectsResults)
 
     auto no_slip_factor{run_simulation(cfg)};
 
-    cfg.slip_factor = 0.5;
+    cfg.env_cfg.slip_factor = 0.5;
     auto with_slip_factor{run_simulation(cfg)};
 
     CHECK(!are_results_equivalent(no_slip_factor, with_slip_factor));
@@ -259,7 +259,7 @@ TEST(MoveForwardTests, WheelCircumferenceScaleAffectsResults)
 
     auto no_circumference_scale{run_simulation(cfg)};
 
-    cfg.wheel_circumference_scale = 0.5;
+    cfg.env_cfg.wheel_circumference_scale = 0.5;
     auto with_circumference_scale{run_simulation(cfg)};
 
     CHECK(!are_results_equivalent(no_circumference_scale, with_circumference_scale));
@@ -268,11 +268,11 @@ TEST(MoveForwardTests, WheelCircumferenceScaleAffectsResults)
 TEST(MoveForwardTests, WheelBaseScaleAffectsResults)
 {
     Config cfg{create_no_variance_config()};
-    cfg.motor1_variance = 0.1;
+    cfg.env_cfg.motor1_variance = 0.1;
 
     auto no_base_scale{run_simulation(cfg)};
 
-    cfg.wheel_base_scale = 0.5;
+    cfg.env_cfg.wheel_base_scale = 0.5;
     auto with_base_scale{run_simulation(cfg)};
 
     CHECK(!are_results_equivalent(no_base_scale, with_base_scale));
@@ -284,7 +284,7 @@ TEST(MoveForwardTests, MazeSizeScaleAffectsResults)
 
     auto no_size_scale{run_simulation(cfg)};
 
-    cfg.maze_size_scale = 0.5;
+    cfg.env_cfg.maze_size_scale = 0.5;
     auto with_size_scale{run_simulation(cfg)};
 
     CHECK(!are_results_equivalent(no_size_scale, with_size_scale));
@@ -293,13 +293,13 @@ TEST(MoveForwardTests, MazeSizeScaleAffectsResults)
 TEST(MoveForwardTests, IRReadingScaleAffectsResults)
 {
     Config cfg{create_no_variance_config()};
-    cfg.mouse_angle = M_PI / 32;
-    cfg.kp_ir = 50;
+    cfg.env_cfg.mouse_angle = M_PI / 32;
+    cfg.ctrl_cfg.kp_ir = 50;
 
-    cfg.ir_reading_scale = 0.5;
+    cfg.env_cfg.ir_reading_scale = 0.5;
     auto r1{run_simulation(cfg)};
 
-    cfg.ir_reading_scale = 2.0;
+    cfg.env_cfg.ir_reading_scale = 2.0;
     auto r2{run_simulation(cfg)};
 
     CHECK(!are_results_equivalent(r1, r2));
@@ -311,7 +311,7 @@ TEST(MoveForwardTests, InitialAngleAffectsResults)
 
     auto straight{run_simulation(cfg)};
 
-    cfg.mouse_angle = M_PI / 16;
+    cfg.env_cfg.mouse_angle = M_PI / 16;
     auto angled{run_simulation(cfg)};
 
     CHECK(!are_results_equivalent(straight, angled));
@@ -320,11 +320,11 @@ TEST(MoveForwardTests, InitialAngleAffectsResults)
 TEST(MoveForwardTests, HorizontalOffsetAffectsResults)
 {
     Config cfg{create_no_variance_config()};
-    cfg.kp_ir = 50;
+    cfg.ctrl_cfg.kp_ir = 50;
 
     auto no_offset{run_simulation(cfg)};
 
-    cfg.horizontal_position_variance = 0.5;
+    cfg.env_cfg.horizontal_position_variance = 0.5;
     auto with_offset{run_simulation(cfg)};
 
     CHECK(!are_results_equivalent(no_offset, with_offset));
@@ -333,13 +333,13 @@ TEST(MoveForwardTests, HorizontalOffsetAffectsResults)
 TEST(MoveForwardTests, SingleWallTargetAffectsResults)
 {
     Config cfg{create_no_variance_config()};
-    cfg.mouse_angle = M_PI / 32;
-    cfg.kp_ir = 50;
+    cfg.env_cfg.mouse_angle = M_PI / 32;
+    cfg.ctrl_cfg.kp_ir = 50;
 
-    cfg.single_wall_target = 300;
+    cfg.ctrl_cfg.single_wall_target = 300;
     auto r1{run_simulation(cfg)};
 
-    cfg.single_wall_target = 500;
+    cfg.ctrl_cfg.single_wall_target = 500;
     auto r2{run_simulation(cfg)};
 
     CHECK(!are_single_case_results_equivalent(r1.one_wall, r2.one_wall));
@@ -349,10 +349,10 @@ TEST(MoveForwardTests, MotorSpeedAffectsTotalTime)
 {
     Config cfg{create_no_variance_config()};
 
-    cfg.motor_speed = 80;
+    cfg.ctrl_cfg.motor_speed = 80;
     auto slow{run_simulation(cfg)};
 
-    cfg.motor_speed = 200;
+    cfg.ctrl_cfg.motor_speed = 200;
     auto fast{run_simulation(cfg)};
 
     CHECK(fast.no_wall.total_time < slow.no_wall.total_time);
@@ -361,12 +361,12 @@ TEST(MoveForwardTests, MotorSpeedAffectsTotalTime)
 TEST(MoveForwardTests, EncoderPDAffectsResults)
 {
     Config cfg{create_no_variance_config()};
-    cfg.motor1_variance = 0.1;
+    cfg.env_cfg.motor1_variance = 0.1;
 
     auto no_pd{run_simulation(cfg)};
 
-    cfg.kp = 50;
-    cfg.kd = 10;
+    cfg.ctrl_cfg.kp = 50;
+    cfg.ctrl_cfg.kd = 10;
     auto with_pd{run_simulation(cfg)};
 
     CHECK(!are_results_equivalent(no_pd, with_pd));
@@ -375,12 +375,12 @@ TEST(MoveForwardTests, EncoderPDAffectsResults)
 TEST(MoveForwardTests, IRControlAffectsJustOneAndTwoWallResults)
 {
     Config cfg{create_no_variance_config()};
-    cfg.mouse_angle = M_PI / 16;
+    cfg.env_cfg.mouse_angle = M_PI / 16;
 
     auto no_ir_control{run_simulation(cfg)};
 
-    cfg.kp_ir = 100;
-    cfg.kd_ir = 50;
+    cfg.ctrl_cfg.kp_ir = 100;
+    cfg.ctrl_cfg.kd_ir = 50;
     auto with_ir_control{run_simulation(cfg)};
 
     CHECK(are_single_case_results_equivalent(no_ir_control.no_wall, with_ir_control.no_wall));
@@ -391,8 +391,8 @@ TEST(MoveForwardTests, IRControlAffectsJustOneAndTwoWallResults)
 TEST(MoveForwardTests, WallModesProduceDifferentResults)
 {
     Config cfg{create_no_variance_config()};
-    cfg.mouse_angle = M_PI / 32;
-    cfg.kp_ir = 50;
+    cfg.env_cfg.mouse_angle = M_PI / 32;
+    cfg.ctrl_cfg.kp_ir = 50;
 
     auto result{run_simulation(cfg)};
 

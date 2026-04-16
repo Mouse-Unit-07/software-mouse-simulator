@@ -14,7 +14,17 @@
 namespace move_forward
 {
 
-struct Config {
+struct ControlConfig {
+    uint32_t single_wall_target;
+    uint8_t motor_speed;
+    int32_t kp;
+    int32_t kd;
+    int32_t pid_shift;
+    int32_t kp_ir;
+    int32_t kd_ir;
+};
+
+struct EnvironmentConfig {
     double dt;
     double motor_speed_scale;
     double motor1_variance;
@@ -27,14 +37,11 @@ struct Config {
     double mouse_angle;
     double horizontal_position_variance;
     double vertical_position_variance;
+};
 
-    uint32_t single_wall_target;
-    uint8_t motor_speed;
-    int32_t kp;
-    int32_t kd;
-    int32_t pid_shift;
-    int32_t kp_ir;
-    int32_t kd_ir;
+struct Config {
+    ControlConfig ctrl_cfg;
+    EnvironmentConfig env_cfg;
 };
 
 struct SingleCaseResult {
