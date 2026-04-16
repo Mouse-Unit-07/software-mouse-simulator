@@ -49,6 +49,8 @@ using namespace move_forward;
 
 void prepare_mock_for_move_forward(const Config& cfg, const maze::Maze& maze, mouse::Mouse& mouse);
 mouse_delta update_mock_by_dt(const Config& cfg, mouse::Mouse& mouse);
+SingleCaseResult run_single_simulation(const Config& cfg, const maze::Maze& maze,
+                                       enum wall_mode mode);
 
 } /* unnamed namespace*/
 
@@ -188,6 +190,101 @@ std::string config_to_string(const Config& cfg)
     return oss.str();
 }
 
+Result run_simulation(const Config& cfg)
+{
+    std::vector<std::string> ascii_no_walls{
+        "+-+",
+        " S ",
+        "   ",
+        "   ",
+        "   ",
+        "   ",
+        "   ",
+        "   ",
+        "   "
+    };
+
+    std::vector<std::string> ascii_left_wall{
+        "+-+",
+        " S|",
+        "  +",
+        "  |",
+        "  +",
+        "  |",
+        "  +",
+        "  |",
+        "  +"
+    };
+
+    std::vector<std::string> ascii_both_walls{
+        "+-+",
+        "|S|",
+        "+ +",
+        "| |",
+        "+ +",
+        "| |",
+        "+ +",
+        "| |",
+        "+ +"
+    };
+
+    maze::Maze maze_none{maze::build_maze_from_ascii(
+        ascii_no_walls, maze::OFFICIAL_POST_SIZE * (cfg.env_cfg.maze_size_scale - 1))};
+    maze::Maze maze_left{maze::build_maze_from_ascii(
+        ascii_left_wall, maze::OFFICIAL_POST_SIZE * (cfg.env_cfg.maze_size_scale - 1))};
+    maze::Maze maze_both{maze::build_maze_from_ascii(
+        ascii_both_walls, maze::OFFICIAL_POST_SIZE * (cfg.env_cfg.maze_size_scale - 1))};
+
+    Result out;
+
+    out.no_wall = run_single_simulation(cfg, maze_none, NO_WALLS);
+    out.one_wall = run_single_simulation(cfg, maze_left, LEFT_WALL_ONLY);
+    out.two_wall = run_single_simulation(cfg, maze_both, BOTH_WALLS);
+
+    return out;
+}
+
+} /* move_forward namespace */
+
+/*----------------------------------------------------------------------------*/
+/*                             Private Definitions                            */
+/*----------------------------------------------------------------------------*/
+namespace
+{
+
+using namespace move_forward;
+
+void prepare_mock_for_move_forward(const Config& cfg, const maze::Maze& maze, mouse::Mouse& mouse)
+{
+    reset_mock_device_drivers();
+    set_motor_speed_scale(cfg.env_cfg.motor_speed_scale);
+    set_motor_1_variance(cfg.env_cfg.motor1_variance);
+    set_motor_2_variance(cfg.env_cfg.motor2_variance);
+    set_motor_slip_factor(cfg.env_cfg.slip_factor);
+    set_wheel_circumference_scale(cfg.env_cfg.wheel_circumference_scale);
+    set_wheel_base_scale(cfg.env_cfg.wheel_base_scale);
+
+    double max_horizontal_offset{(maze::OFFICIAL_WALL_LENGTH_SIZE - mouse.hitbox.horizontal_size)
+                                 / 2};
+    double max_vertical_offset{(maze::OFFICIAL_WALL_LENGTH_SIZE - mouse.hitbox.vertical_size) / 2};
+
+    mouse.rotate(cfg.env_cfg.mouse_angle);
+    mouse.translate(
+        maze.mouse_start.x + (max_horizontal_offset * cfg.env_cfg.horizontal_position_variance),
+        maze.mouse_start.y + (max_vertical_offset * cfg.env_cfg.vertical_position_variance));
+}
+
+mouse_delta update_mock_by_dt(const Config& cfg, mouse::Mouse& mouse)
+{
+    mouse_delta delta{compute_mouse_delta(mouse.hitbox.angle_rad, cfg.env_cfg.dt)};
+    update_encoder_1_ticks(cfg.env_cfg.dt);
+    update_encoder_2_ticks(cfg.env_cfg.dt);
+    mouse.translate(delta.dx, delta.dy);
+    mouse.rotate(delta.dtheta_rad);
+
+    return delta;
+}
+
 SingleCaseResult run_single_simulation(const Config& cfg, const maze::Maze& maze,
                                        enum wall_mode mode)
 {
@@ -323,109 +420,12 @@ SingleCaseResult run_single_simulation(const Config& cfg, const maze::Maze& maze
     double target_y{INITIAL_MOUSE_VERTICAL_POSITION + (maze.cell_size * MAZE_SQUARE_COUNT)};
     double final_vertical_translation{std::abs(target_y - mouse.hitbox.center.y)};
 
-    return SingleCaseResult{
-        total_time,
-        total_angle_error,
-        total_horizontal_translation,
-        final_vertical_translation,
-        collision,
-        timeout
-    };
-}
-
-Result run_simulation(const Config& cfg)
-{
-    std::vector<std::string> ascii_no_walls{
-        "+-+",
-        " S ",
-        "   ",
-        "   ",
-        "   ",
-        "   ",
-        "   ",
-        "   ",
-        "   "
-    };
-
-    std::vector<std::string> ascii_left_wall{
-        "+-+",
-        " S|",
-        "  +",
-        "  |",
-        "  +",
-        "  |",
-        "  +",
-        "  |",
-        "  +"
-    };
-
-    std::vector<std::string> ascii_both_walls{
-        "+-+",
-        "|S|",
-        "+ +",
-        "| |",
-        "+ +",
-        "| |",
-        "+ +",
-        "| |",
-        "+ +"
-    };
-
-    maze::Maze maze_none{maze::build_maze_from_ascii(
-        ascii_no_walls, maze::OFFICIAL_POST_SIZE * (cfg.env_cfg.maze_size_scale - 1))};
-    maze::Maze maze_left{maze::build_maze_from_ascii(
-        ascii_left_wall, maze::OFFICIAL_POST_SIZE * (cfg.env_cfg.maze_size_scale - 1))};
-    maze::Maze maze_both{maze::build_maze_from_ascii(
-        ascii_both_walls, maze::OFFICIAL_POST_SIZE * (cfg.env_cfg.maze_size_scale - 1))};
-
-    Result out;
-
-    out.no_wall = run_single_simulation(cfg, maze_none, NO_WALLS);
-    out.one_wall = run_single_simulation(cfg, maze_left, LEFT_WALL_ONLY);
-    out.two_wall = run_single_simulation(cfg, maze_both, BOTH_WALLS);
-
-    return out;
-}
-
-} /* move_forward namespace */
-
-/*----------------------------------------------------------------------------*/
-/*                             Private Definitions                            */
-/*----------------------------------------------------------------------------*/
-namespace
-{
-
-using namespace move_forward;
-
-void prepare_mock_for_move_forward(const Config& cfg, const maze::Maze& maze, mouse::Mouse& mouse)
-{
-    reset_mock_device_drivers();
-    set_motor_speed_scale(cfg.env_cfg.motor_speed_scale);
-    set_motor_1_variance(cfg.env_cfg.motor1_variance);
-    set_motor_2_variance(cfg.env_cfg.motor2_variance);
-    set_motor_slip_factor(cfg.env_cfg.slip_factor);
-    set_wheel_circumference_scale(cfg.env_cfg.wheel_circumference_scale);
-    set_wheel_base_scale(cfg.env_cfg.wheel_base_scale);
-
-    double max_horizontal_offset{(maze::OFFICIAL_WALL_LENGTH_SIZE - mouse.hitbox.horizontal_size)
-                                 / 2};
-    double max_vertical_offset{(maze::OFFICIAL_WALL_LENGTH_SIZE - mouse.hitbox.vertical_size) / 2};
-
-    mouse.rotate(cfg.env_cfg.mouse_angle);
-    mouse.translate(
-        maze.mouse_start.x + (max_horizontal_offset * cfg.env_cfg.horizontal_position_variance),
-        maze.mouse_start.y + (max_vertical_offset * cfg.env_cfg.vertical_position_variance));
-}
-
-mouse_delta update_mock_by_dt(const Config& cfg, mouse::Mouse& mouse)
-{
-    mouse_delta delta{compute_mouse_delta(mouse.hitbox.angle_rad, cfg.env_cfg.dt)};
-    update_encoder_1_ticks(cfg.env_cfg.dt);
-    update_encoder_2_ticks(cfg.env_cfg.dt);
-    mouse.translate(delta.dx, delta.dy);
-    mouse.rotate(delta.dtheta_rad);
-
-    return delta;
+    return SingleCaseResult{total_time,
+                            total_angle_error,
+                            total_horizontal_translation,
+                            final_vertical_translation,
+                            collision,
+                            timeout};
 }
 
 } /* unnamed namespace*/

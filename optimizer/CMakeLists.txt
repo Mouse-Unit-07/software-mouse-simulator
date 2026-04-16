@@ -34,4 +34,5 @@ target_link_libraries(optimizer_lib PUBLIC
     Threads::Threads
     simulation_common_lib
     rotation_lib
+    move_forward_lib
 )

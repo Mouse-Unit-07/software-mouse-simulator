@@ -13,10 +13,11 @@
 #include <cmath>
 #include <cstdint>
 #include <iostream>
-#include <vector>
 #include <map>
+#include <vector>
 #include "simulation_common.hpp"
 #include "rotation.hpp"
+#include "move_forward.hpp"
 #include "optimizer.hpp"
 
 using namespace optimizer;
@@ -58,8 +59,8 @@ IGNORE_TEST(OptimizerTests, RotationParetoStructureIsValid)
     CHECK_EQUAL(8, result.F.size());
 
     for (size_t i{0}; i < result.X.size(); ++i) {
-        CHECK_EQUAL(4, result.X.at(i).size());  /* control space */
-        CHECK_EQUAL(5, result.F.at(i).size());  /* objective space */
+        CHECK_EQUAL(4, result.X.at(i).size()); /* control space */
+        CHECK_EQUAL(5, result.F.at(i).size()); /* objective space */
     }
 }
 
@@ -130,5 +131,90 @@ IGNORE_TEST(OptimizerTests, DumpRotationPareto)
     /* takes ~5min */
     auto result{run_rotation_pareto(64, 300)};
 
-    write_pareto_to_file("test_output.txt", result);
+    write_rotation_pareto_to_file("rotation_test_output.txt", result);
+}
+
+IGNORE_TEST(OptimizerTests, MoveForwardParetoStructureIsValid)
+{
+    auto result{run_move_forward_pareto(8, 5)};
+
+    CHECK_EQUAL(8, result.X.size());
+    CHECK_EQUAL(8, result.F.size());
+
+    for (size_t i{0}; i < result.X.size(); ++i) {
+        CHECK_EQUAL(7, result.X.at(i).size()); /* control space */
+        CHECK_EQUAL(6, result.F.at(i).size()); /* objective space */
+    }
+}
+
+IGNORE_TEST(OptimizerTests, MoveForwardParetoHasNoNaNOrInf)
+{
+    auto result{run_move_forward_pareto(8, 5)};
+
+    for (const auto& f : result.F) {
+        for (double v : f) {
+            CHECK(std::isfinite(v));
+        }
+    }
+
+    for (const auto& x : result.X) {
+        for (double v : x) {
+            CHECK(std::isfinite(v));
+        }
+    }
+}
+
+IGNORE_TEST(OptimizerTests, MoveForwardControlWithinBounds)
+{
+    auto result{run_move_forward_pareto(8, 5)};
+
+    auto bounds{move_forward::get_control_bounds()};
+    const auto& lb{bounds.first};
+    const auto& ub{bounds.second};
+
+    for (const auto& x : result.X) {
+        for (size_t i{0}; i < x.size(); ++i) {
+            CHECK(x.at(i) >= lb.at(i));
+            CHECK(x.at(i) <= ub.at(i));
+        }
+    }
+}
+
+IGNORE_TEST(OptimizerTests, MoveForwardObjectivesAreInValidRanges)
+{
+    auto result{run_move_forward_pareto(8, 5)};
+
+    for (const auto& f : result.F) {
+        double time{f.at(0)};
+        double angle{f.at(1)};
+        double horizontal_translation{f.at(2)};
+        double vertical_translation{f.at(3)};
+        double collision{f.at(4)};
+        double timeout{f.at(5)};
+
+        CHECK(time >= 0.0);
+        CHECK(angle >= 0.0);
+        CHECK(horizontal_translation >= 0.0);
+        CHECK(vertical_translation >= 0.0);
+
+        CHECK(collision >= 0.0 && collision <= 1.0);
+        CHECK(timeout >= 0.0 && timeout <= 1.0);
+    }
+}
+
+IGNORE_TEST(OptimizerTests, MoveForwardParetoSizeIsStable)
+{
+    auto a{run_move_forward_pareto(8, 10)};
+    auto b{run_move_forward_pareto(8, 10)};
+
+    CHECK_EQUAL(a.X.size(), b.X.size());
+    CHECK_EQUAL(a.F.size(), b.F.size());
+}
+
+IGNORE_TEST(OptimizerTests, DumpMoveForwardPareto)
+{
+    /* takes ~5min */
+    auto result{run_move_forward_pareto(64, 300)};
+
+    write_move_forward_pareto_to_file("move_forward_test_output.txt", result);
 }
