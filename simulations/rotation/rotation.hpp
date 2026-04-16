@@ -57,7 +57,7 @@ std::vector<double> encode_control(const ControlConfig& cfg);
 std::pair<std::vector<double>, std::vector<double>> get_control_bounds(void);
 EnvironmentConfig generate_random_environment(void);
 
-void enable_visualization(void);
+void enable_visualization(const std::string& foldername);
 void disable_visualization(void);
 std::string config_to_string(const Config& cfg);
 

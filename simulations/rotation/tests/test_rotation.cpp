@@ -336,7 +336,7 @@ IGNORE_TEST(RotationTests, VisualizationDoesNotAffectResults)
     disable_visualization();
     auto r1{run_simulation(cfg, M_PI / 2)};
 
-    enable_visualization();
+    enable_visualization("visualization-does-not-affect-results");
     auto r2{run_simulation(cfg, M_PI / 2)};
 
     CHECK(are_results_equivalent(r1, r2));

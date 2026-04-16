@@ -66,6 +66,7 @@ namespace
 {
 
 const std::string TEST_OUTPUT_DIRECTORY{"rotation-visualizer"};
+std::string TEST_OUTPUT_SUBDIRECTORY{""};
 bool visualizer_enabled{false};
 visualizer::Visualizer rotation_visualizer;
 
@@ -135,8 +136,9 @@ EnvironmentConfig generate_random_environment(void)
     return e;
 }
 
-void enable_visualization(void)
+void enable_visualization(const std::string& foldername)
 {
+    TEST_OUTPUT_SUBDIRECTORY = foldername;
     visualizer_enabled = true;
 }
 
@@ -167,7 +169,7 @@ std::string config_to_string(const Config& cfg)
 Result run_simulation(const Config& cfg, double target_angle)
 {
     if (visualizer_enabled) {
-        std::filesystem::create_directories(TEST_OUTPUT_DIRECTORY);
+        std::filesystem::create_directories(TEST_OUTPUT_DIRECTORY + "/" + TEST_OUTPUT_SUBDIRECTORY);
     }
     std::vector<std::string> ascii{
         "+-+",
@@ -256,8 +258,9 @@ Result run_simulation(const Config& cfg, double target_angle)
     if (visualizer_enabled) {
         rotation_visualizer.change_mouse_color_to_blue();
         rotation_visualizer.draw_mouse_on_maze(mouse);
-        rotation_visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/" + config_to_string(cfg)
-                                               + ".png");
+        rotation_visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/"
+                                               + TEST_OUTPUT_SUBDIRECTORY + "/"
+                                               + config_to_string(cfg) + ".png");
     }
 
     return Result{
