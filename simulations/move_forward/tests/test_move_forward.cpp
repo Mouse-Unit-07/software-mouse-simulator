@@ -257,7 +257,7 @@ TEST(MoveForwardTests, RandomEnvironmentValuesWithinExpectedRanges)
     for (int i{0}; i < 100; i++) {
         auto e{generate_random_environment()};
 
-        CHECK((e.dt >= 0.01) && (e.dt <= 0.1));
+        CHECK((e.dt >= 0.005) && (e.dt <= 0.01));
         CHECK((e.motor_speed_scale >= 0.9) && (e.motor_speed_scale <= 1.1));
         CHECK((e.motor1_variance >= -0.2) && (e.motor1_variance <= 0.2));
         CHECK((e.motor2_variance >= -0.2) && (e.motor2_variance <= 0.2));

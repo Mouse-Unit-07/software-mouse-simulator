@@ -135,7 +135,7 @@ EnvironmentConfig generate_random_environment(void)
     };
 
     EnvironmentConfig e;
-    e.dt = uniform(0.01, 0.1);
+    e.dt = uniform(0.005, 0.01);
     e.motor_speed_scale = uniform(0.9, 1.1);
     e.motor1_variance = uniform(-0.2, 0.2);
     e.motor2_variance = uniform(-0.2, 0.2);
