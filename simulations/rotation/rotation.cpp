@@ -223,10 +223,12 @@ Result run_simulation(const Config& cfg)
     int32_t prev_vel_error{0};
     int32_t prev_ang_error{0};
     double target_angle_absolute_value{std::abs(cfg.env_cfg.rotation_angle)};
-    double raw_target{std::abs(ENCODER_TICKS_PER_ROTATION_ANGLE_RADIANS * target_angle_absolute_value)};
+    double raw_target{
+        std::abs(ENCODER_TICKS_PER_ROTATION_ANGLE_RADIANS * target_angle_absolute_value)};
     int32_t target_ticks{static_cast<int32_t>(raw_target)};
 
-    while (((std::abs(get_encoder_1_ticks()) + std::abs(get_encoder_2_ticks())) / 2) < target_ticks) {
+    while (((std::abs(get_encoder_1_ticks()) + std::abs(get_encoder_2_ticks())) / 2)
+           < target_ticks) {
         int32_t enc1{std::abs(get_encoder_1_ticks())};
         int32_t enc2{std::abs(get_encoder_2_ticks())};
 
@@ -254,7 +256,7 @@ Result run_simulation(const Config& cfg)
         int32_t remaining{target_ticks - progress};
         double decay{std::clamp((static_cast<double>(remaining) / target_ticks), 0.2, 1.0)};
         int32_t base_speed{static_cast<int32_t>(cfg.ctrl_cfg.motor_speed * decay)};
-        
+
         int32_t adjusted_speed_1{0};
         int32_t adjusted_speed_2{0};
         if (target_angle_sign > 0) {
@@ -264,7 +266,7 @@ Result run_simulation(const Config& cfg)
             adjusted_speed_1 = base_speed - control;
             adjusted_speed_2 = base_speed + control;
         }
-        
+
         adjusted_speed_1 = std::clamp(adjusted_speed_1, 140, 255);
         adjusted_speed_2 = std::clamp(adjusted_speed_2, 140, 255);
         set_wheel_motor_1_speed(static_cast<uint8_t>(adjusted_speed_1));

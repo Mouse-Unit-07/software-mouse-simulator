@@ -218,10 +218,10 @@ TEST(RotationTests, PositiveAndNegativeAnglesProduceSameAngleAndTranslationError
 {
     Config cfg{create_no_variance_config()};
 
-    cfg.env_cfg.rotation_angle = M_PI / 2; 
+    cfg.env_cfg.rotation_angle = M_PI / 2;
     auto r1{run_simulation(cfg)};
 
-    cfg.env_cfg.rotation_angle = -M_PI / 2; 
+    cfg.env_cfg.rotation_angle = -M_PI / 2;
     auto r2{run_simulation(cfg)};
 
     CHECK_FALSE(r1.timeout);
