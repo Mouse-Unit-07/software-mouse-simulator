@@ -191,7 +191,7 @@ TEST(MoveForwardTests, GetControlBoundsValuesAreCorrect)
     auto [low, high] = get_control_bounds();
 
     CHECK_EQUAL(0, low.at(0));
-    CHECK_EQUAL(100, low.at(1));
+    CHECK_EQUAL(140, low.at(1));
     CHECK_EQUAL(0, low.at(2));
     CHECK_EQUAL(0, low.at(3));
 
@@ -208,7 +208,7 @@ TEST(MoveForwardTests, GetControlBoundsAreDecodeSafe)
     auto low_cfg{decode_control(low)};
     auto high_cfg{decode_control(high)};
 
-    CHECK_EQUAL(100, low_cfg.motor_speed);
+    CHECK_EQUAL(140, low_cfg.motor_speed);
     CHECK_EQUAL(255, high_cfg.motor_speed);
 }
 

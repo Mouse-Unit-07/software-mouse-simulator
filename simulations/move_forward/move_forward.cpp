@@ -107,7 +107,7 @@ std::pair<std::vector<double>, std::vector<double>> get_control_bounds(void)
 {
     ControlConfig lower_bounds;
     lower_bounds.single_wall_target = 0;
-    lower_bounds.motor_speed = 100;
+    lower_bounds.motor_speed = 140;
     lower_bounds.kp = 0;
     lower_bounds.kd = 0;
     lower_bounds.pid_scale = 16;
@@ -381,8 +381,8 @@ SingleCaseResult run_single_simulation(const Config& cfg, const maze::Maze& maze
         int64_t control64{enc_control + ir_control};
         int32_t control{static_cast<int32_t>(control64 / cfg.ctrl_cfg.pid_scale)};
         int32_t base{cfg.ctrl_cfg.motor_speed};
-        int32_t speed1{std::clamp(base + control, 0, 255)};
-        int32_t speed2{std::clamp(base - control, 0, 255)};
+        int32_t speed1{std::clamp(base + control, 140, 255)};
+        int32_t speed2{std::clamp(base - control, 140, 255)};
 
         set_wheel_motor_1_speed((uint8_t)speed1);
         set_wheel_motor_2_speed((uint8_t)speed2);
