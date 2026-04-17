@@ -49,8 +49,7 @@ using namespace move_forward;
 
 void prepare_mock_for_move_forward(const Config& cfg, const maze::Maze& maze, mouse::Mouse& mouse);
 mouse_delta update_mock_by_dt(const Config& cfg, mouse::Mouse& mouse);
-SingleCaseResult run_single_simulation(const Config& cfg, const maze::Maze& maze,
-                                       enum wall_mode mode);
+Result run_single_simulation(const Config& cfg, const maze::Maze& maze, enum WallMode mode);
 
 } /* unnamed namespace*/
 
@@ -200,7 +199,21 @@ std::string config_to_string(const Config& cfg)
     return oss.str();
 }
 
-Result run_simulation(const Config& cfg)
+std::string wall_mode_to_string(WallMode mode)
+{
+    switch (mode) {
+        case WallMode::NO_WALLS:
+            return "no-walls";
+        case WallMode::LEFT_WALL_ONLY:
+            return "left-wall";
+        case WallMode::BOTH_WALLS:
+            return "both-walls";
+        default:
+            return "unknown";
+    }
+}
+
+Result run_simulation(const Config& cfg, enum WallMode mode)
 {
     std::vector<std::string> ascii_no_walls{
         "+-+",
@@ -213,6 +226,8 @@ Result run_simulation(const Config& cfg)
         "   ",
         "   "
     };
+    maze::Maze maze_none{maze::build_maze_from_ascii(
+        ascii_no_walls, maze::OFFICIAL_POST_SIZE * (cfg.env_cfg.maze_size_scale - 1))};
 
     std::vector<std::string> ascii_left_wall{
         "+-+",
@@ -225,6 +240,8 @@ Result run_simulation(const Config& cfg)
         "  |",
         "  +"
     };
+    maze::Maze maze_left{maze::build_maze_from_ascii(
+        ascii_left_wall, maze::OFFICIAL_POST_SIZE * (cfg.env_cfg.maze_size_scale - 1))};
 
     std::vector<std::string> ascii_both_walls{
         "+-+",
@@ -237,19 +254,17 @@ Result run_simulation(const Config& cfg)
         "| |",
         "+ +"
     };
-
-    maze::Maze maze_none{maze::build_maze_from_ascii(
-        ascii_no_walls, maze::OFFICIAL_POST_SIZE * (cfg.env_cfg.maze_size_scale - 1))};
-    maze::Maze maze_left{maze::build_maze_from_ascii(
-        ascii_left_wall, maze::OFFICIAL_POST_SIZE * (cfg.env_cfg.maze_size_scale - 1))};
     maze::Maze maze_both{maze::build_maze_from_ascii(
         ascii_both_walls, maze::OFFICIAL_POST_SIZE * (cfg.env_cfg.maze_size_scale - 1))};
 
     Result out;
-
-    out.no_wall = run_single_simulation(cfg, maze_none, NO_WALLS);
-    out.one_wall = run_single_simulation(cfg, maze_left, LEFT_WALL_ONLY);
-    out.two_wall = run_single_simulation(cfg, maze_both, BOTH_WALLS);
+    if (mode == WallMode::NO_WALLS) {
+        out = run_single_simulation(cfg, maze_none, mode);
+    } else if (mode == WallMode::LEFT_WALL_ONLY) {
+        out = run_single_simulation(cfg, maze_left, mode);
+    } else if (mode == WallMode::BOTH_WALLS) {
+        out = run_single_simulation(cfg, maze_both, mode);
+    }
 
     return out;
 }
@@ -295,8 +310,7 @@ mouse_delta update_mock_by_dt(const Config& cfg, mouse::Mouse& mouse)
     return delta;
 }
 
-SingleCaseResult run_single_simulation(const Config& cfg, const maze::Maze& maze,
-                                       enum wall_mode mode)
+Result run_single_simulation(const Config& cfg, const maze::Maze& maze, enum WallMode mode)
 {
     if (visualizer_enabled) {
         std::filesystem::create_directories(TEST_OUTPUT_DIRECTORY + "/" + TEST_OUTPUT_SUBDIRECTORY);
@@ -359,7 +373,7 @@ SingleCaseResult run_single_simulation(const Config& cfg, const maze::Maze& maze
 
         int32_t ir_error{0};
 
-        if (mode != NO_WALLS) {
+        if (mode != WallMode::NO_WALLS) {
             double ir2_dist{maze::compute_ray_distance_in_open_space(maze, mouse.hitbox.center,
                                                                      mouse.ir_2_sensor)};
             double ir3_dist{maze::compute_ray_distance_in_open_space(maze, mouse.hitbox.center,
@@ -375,11 +389,11 @@ SingleCaseResult run_single_simulation(const Config& cfg, const maze::Maze& maze
 
             const int32_t TARGET_IR_READING{static_cast<int32_t>(cfg.ctrl_cfg.single_wall_target)};
 
-            if (mode == LEFT_WALL_ONLY) {
+            if (mode == WallMode::LEFT_WALL_ONLY) {
                 ir_error = (TARGET_IR_READING - ir2);
-            } else if (mode == RIGHT_WALL_ONLY) {
+            } else if (mode == WallMode::RIGHT_WALL_ONLY) {
                 ir_error = -(TARGET_IR_READING - ir3);
-            } else if (mode == BOTH_WALLS) {
+            } else if (mode == WallMode::BOTH_WALLS) {
                 ir_error = (ir3 - ir2);
             }
         }
@@ -433,18 +447,18 @@ SingleCaseResult run_single_simulation(const Config& cfg, const maze::Maze& maze
         rotation_visualizer.draw_mouse_on_maze(mouse);
         rotation_visualizer.save_to_image_file(
             TEST_OUTPUT_DIRECTORY + "/" + TEST_OUTPUT_SUBDIRECTORY + "/" + config_to_string(cfg)
-            + "-" + std::to_string(mode) + ".png");
+            + "-" + wall_mode_to_string(mode) + ".png");
     }
 
     double target_y{INITIAL_MOUSE_VERTICAL_POSITION + (maze.cell_size * MAZE_SQUARE_COUNT)};
     double final_vertical_translation{std::abs(target_y - mouse.hitbox.center.y)};
 
-    return SingleCaseResult{total_time,
-                            total_angle_error,
-                            total_horizontal_translation,
-                            final_vertical_translation,
-                            collision,
-                            timeout};
+    return Result{total_time,
+                  total_angle_error,
+                  total_horizontal_translation,
+                  final_vertical_translation,
+                  collision,
+                  timeout};
 }
 
 } /* unnamed namespace*/

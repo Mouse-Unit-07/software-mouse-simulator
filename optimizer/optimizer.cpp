@@ -176,7 +176,8 @@ class MoveForwardUDP {
 public:
     MoveForwardUDP() = default;
 
-    MoveForwardUDP(int simulations_per_fitness) : sims_(simulations_per_fitness)
+    MoveForwardUDP(int simulations_per_fitness, move_forward::WallMode mode)
+        : sims_(simulations_per_fitness), mode_(mode)
     {
         /* no additional logic */
     }
@@ -194,29 +195,21 @@ public:
         for (int i{0}; i < sims_; ++i) {
             move_forward::Config cfg{control, move_forward::generate_random_environment()};
 
-            const auto r{move_forward::run_simulation(cfg)};
+            const auto r{move_forward::run_simulation(cfg, mode_)};
 
-            const auto accumulate = [&](const move_forward::SingleCaseResult& s) {
-                angle += s.total_angle_error;
-                horizontal += s.total_horizontal_translation;
-                vertical += s.final_vertical_translation;
-                collision += s.collision ? 1.0 : 0.0;
-                timeout += s.timeout ? 1.0 : 0.0;
-            };
-
-            accumulate(r.no_wall);
-            accumulate(r.one_wall);
-            accumulate(r.two_wall);
+            angle += r.total_angle_error;
+            horizontal += r.total_horizontal_translation;
+            vertical += r.final_vertical_translation;
+            collision += r.collision ? 1.0 : 0.0;
+            timeout += r.timeout ? 1.0 : 0.0;
         }
 
-        const double denom{static_cast<double>(sims_ * 3)};
-
         return {
-            angle / denom,
-            horizontal / denom,
-            vertical / denom,
-            collision / denom,
-            timeout / denom
+            angle / sims_,
+            horizontal / sims_,
+            vertical / sims_,
+            collision / sims_,
+            timeout / sims_
         };
     }
 
@@ -231,12 +224,13 @@ public:
     }
 
     int sims_{100};
+    move_forward::WallMode mode_{move_forward::WallMode::NO_WALLS};
 };
 
 ParetoResult run_move_forward_pareto(std::size_t population, std::size_t generations,
-                                     int simulations_per_fitness)
+                                     int simulations_per_fitness, move_forward::WallMode mode)
 {
-    return run_pareto_impl(MoveForwardUDP{simulations_per_fitness}, population, generations);
+    return run_pareto_impl(MoveForwardUDP{simulations_per_fitness, mode}, population, generations);
 }
 
 void write_move_forward_pareto_to_file(const std::string& filename, const ParetoResult& result)

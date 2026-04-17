@@ -46,7 +46,7 @@ struct Config {
     EnvironmentConfig env_cfg;
 };
 
-struct SingleCaseResult {
+struct Result {
     double total_time{0.0};
     double total_angle_error{0.0};
     double total_horizontal_translation{0.0};
@@ -55,19 +55,16 @@ struct SingleCaseResult {
     bool timeout{false};
 };
 
-struct Result {
-    SingleCaseResult no_wall;
-    SingleCaseResult one_wall;
-    SingleCaseResult two_wall;
-};
-
-enum wall_mode
+enum class WallMode
 {
     NO_WALLS,
     LEFT_WALL_ONLY,
     RIGHT_WALL_ONLY,
     BOTH_WALLS
 };
+
+const std::vector<WallMode> WALL_MODES{WallMode::NO_WALLS, WallMode::LEFT_WALL_ONLY,
+                                       WallMode::BOTH_WALLS};
 
 } /* move_forward namespace */
 
@@ -85,8 +82,9 @@ EnvironmentConfig generate_random_environment(void);
 void enable_visualization(const std::string& foldername);
 void disable_visualization(void);
 std::string config_to_string(const Config& cfg);
+std::string wall_mode_to_string(WallMode mode);
 
-Result run_simulation(const Config& cfg);
+Result run_simulation(const Config& cfg, enum WallMode mode);
 
 } /* move_forward namespace */
 

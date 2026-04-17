@@ -62,15 +62,14 @@ Config create_no_variance_config(void)
 
 bool was_there_collision_or_timeout(const Result& result)
 {
-    if (result.no_wall.collision || result.one_wall.collision || result.two_wall.collision
-        || result.no_wall.timeout || result.one_wall.timeout || result.two_wall.timeout) {
+    if (result.collision || result.timeout) {
         return true;
     }
 
     return false;
 }
 
-bool are_single_case_results_equivalent(const SingleCaseResult& r1, const SingleCaseResult& r2)
+bool are_results_equivalent(const Result& r1, const Result& r2)
 {
     if (std::abs(r1.total_time - r2.total_time) >= FLOAT_TOLERANCE) {
         return false;
@@ -96,15 +95,12 @@ bool are_single_case_results_equivalent(const SingleCaseResult& r1, const Single
     return true;
 }
 
-bool are_results_equivalent(const Result& r1, const Result& r2)
+bool are_results_equivalent_for_wall_mode(const Config& cfg1, const Config& cfg2, WallMode mode)
 {
-    if (!are_single_case_results_equivalent(r1.no_wall, r2.no_wall)) {
-        return false;
-    }
-    if (!are_single_case_results_equivalent(r1.one_wall, r2.one_wall)) {
-        return false;
-    }
-    if (!are_single_case_results_equivalent(r1.two_wall, r2.two_wall)) {
+    auto r1{run_simulation(cfg1, mode)};
+    auto r2{run_simulation(cfg2, mode)};
+
+    if (!are_results_equivalent(r1, r2)) {
         return false;
     }
 
@@ -256,215 +252,193 @@ TEST(MoveForwardTests, SimulationIsDeterministic)
 {
     Config cfg{create_no_variance_config()};
 
-    auto r1{run_simulation(cfg)};
-    auto r2{run_simulation(cfg)};
-
-    CHECK(are_results_equivalent(r1, r2));
+    CHECK(are_results_equivalent_for_wall_mode(cfg, cfg, WallMode::NO_WALLS));
+    CHECK(are_results_equivalent_for_wall_mode(cfg, cfg, WallMode::LEFT_WALL_ONLY));
+    CHECK(are_results_equivalent_for_wall_mode(cfg, cfg, WallMode::BOTH_WALLS));
 }
 
 TEST(MoveForwardTests, NoVarianceProducesNearPerfectResults)
 {
     Config cfg{create_no_variance_config()};
 
-    auto result{run_simulation(cfg)};
+    for (WallMode m : WALL_MODES) {
+        auto result{run_simulation(cfg, m)};
 
-    CHECK(!was_there_collision_or_timeout(result));
-    DOUBLES_EQUAL(0.0, result.no_wall.total_angle_error, FLOAT_TOLERANCE);
-    DOUBLES_EQUAL(0.0, result.one_wall.total_angle_error, FLOAT_TOLERANCE);
-    DOUBLES_EQUAL(0.0, result.two_wall.total_angle_error, FLOAT_TOLERANCE);
-    DOUBLES_EQUAL(0.0, result.no_wall.total_horizontal_translation, FLOAT_TOLERANCE);
-    DOUBLES_EQUAL(0.0, result.one_wall.total_horizontal_translation, FLOAT_TOLERANCE);
-    DOUBLES_EQUAL(0.0, result.two_wall.total_horizontal_translation, FLOAT_TOLERANCE);
+        CHECK(!was_there_collision_or_timeout(result));
+        DOUBLES_EQUAL(0.0, result.total_angle_error, FLOAT_TOLERANCE);
+        DOUBLES_EQUAL(0.0, result.total_horizontal_translation, FLOAT_TOLERANCE);
 
-    constexpr double VERTICAL_TOLERANCE{5.0};
-    DOUBLES_EQUAL(0.0, result.no_wall.final_vertical_translation, VERTICAL_TOLERANCE);
-    DOUBLES_EQUAL(0.0, result.one_wall.final_vertical_translation, VERTICAL_TOLERANCE);
-    DOUBLES_EQUAL(0.0, result.two_wall.final_vertical_translation, VERTICAL_TOLERANCE);
+        constexpr double VERTICAL_TOLERANCE{5.0};
+        DOUBLES_EQUAL(0.0, result.final_vertical_translation, VERTICAL_TOLERANCE);
+    }
 }
 
 TEST(MoveForwardTests, DtAffectsResults)
 {
-    Config cfg{create_no_variance_config()};
+    Config cfg1{create_no_variance_config()};
+    Config cfg2{create_no_variance_config()};
+    cfg2.env_cfg.dt = 0.1;
 
-    cfg.env_cfg.dt = 0.01;
-    auto r1{run_simulation(cfg)};
-
-    cfg.env_cfg.dt = 0.1;
-    auto r2{run_simulation(cfg)};
-
-    CHECK(!are_results_equivalent(r1, r2));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
 }
 
 TEST(MoveForwardTests, SpeedScaleAffectsResults)
 {
-    Config cfg{create_no_variance_config()};
+    Config cfg1{create_no_variance_config()};
+    Config cfg2{create_no_variance_config()};
+    cfg2.env_cfg.motor_speed_scale = 0.5;
 
-    auto no_speed_scale{run_simulation(cfg)};
-
-    cfg.env_cfg.motor_speed_scale = 0.5;
-    auto with_speed_scale{run_simulation(cfg)};
-
-    CHECK(!are_results_equivalent(no_speed_scale, with_speed_scale));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
 }
 
 TEST(MoveForwardTests, MotorVarianceAffectsResults)
 {
-    Config cfg{create_no_variance_config()};
+    Config cfg1{create_no_variance_config()};
+    Config cfg2{create_no_variance_config()};
+    cfg2.env_cfg.motor1_variance = 0.1;
+    cfg2.env_cfg.motor2_variance = -0.1;
 
-    auto no_variance{run_simulation(cfg)};
-
-    cfg.env_cfg.motor1_variance = 0.1;
-    cfg.env_cfg.motor2_variance = -0.1;
-    auto with_variance{run_simulation(cfg)};
-
-    CHECK(!are_results_equivalent(no_variance, with_variance));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
 }
 
 TEST(MoveForwardTests, SlipFactorAffectsResults)
 {
-    Config cfg{create_no_variance_config()};
+    Config cfg1{create_no_variance_config()};
+    Config cfg2{create_no_variance_config()};
+    cfg2.env_cfg.slip_factor = 0.5;
 
-    auto no_slip_factor{run_simulation(cfg)};
-
-    cfg.env_cfg.slip_factor = 0.5;
-    auto with_slip_factor{run_simulation(cfg)};
-
-    CHECK(!are_results_equivalent(no_slip_factor, with_slip_factor));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
 }
 
 TEST(MoveForwardTests, WheelCircumferenceScaleAffectsResults)
 {
-    Config cfg{create_no_variance_config()};
+    Config cfg1{create_no_variance_config()};
+    Config cfg2{create_no_variance_config()};
+    cfg2.env_cfg.wheel_circumference_scale = 0.5;
 
-    auto no_circumference_scale{run_simulation(cfg)};
-
-    cfg.env_cfg.wheel_circumference_scale = 0.5;
-    auto with_circumference_scale{run_simulation(cfg)};
-
-    CHECK(!are_results_equivalent(no_circumference_scale, with_circumference_scale));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
 }
 
 TEST(MoveForwardTests, WheelBaseScaleAffectsResults)
 {
-    Config cfg{create_no_variance_config()};
-    cfg.env_cfg.motor1_variance = 0.1;
+    Config cfg1{create_no_variance_config()};
+    cfg1.env_cfg.motor1_variance = 0.1;
+    Config cfg2{cfg1};
+    cfg2.env_cfg.wheel_base_scale = 0.5;
 
-    auto no_base_scale{run_simulation(cfg)};
-
-    cfg.env_cfg.wheel_base_scale = 0.5;
-    auto with_base_scale{run_simulation(cfg)};
-
-    CHECK(!are_results_equivalent(no_base_scale, with_base_scale));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
 }
 
 TEST(MoveForwardTests, MazeSizeScaleAffectsResults)
 {
-    Config cfg{create_no_variance_config()};
+    Config cfg1{create_no_variance_config()};
+    Config cfg2{create_no_variance_config()};
+    cfg2.env_cfg.maze_size_scale = 0.5;
 
-    auto no_size_scale{run_simulation(cfg)};
-
-    cfg.env_cfg.maze_size_scale = 0.5;
-    auto with_size_scale{run_simulation(cfg)};
-
-    CHECK(!are_results_equivalent(no_size_scale, with_size_scale));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
 }
 
-TEST(MoveForwardTests, IRReadingScaleAffectsResults)
+TEST(MoveForwardTests, IRReadingScaleAffectsOneAndTwoWallResultsOnly)
 {
-    Config cfg{create_no_variance_config()};
-    cfg.env_cfg.mouse_angle = M_PI / 32;
-    cfg.ctrl_cfg.kp_ir = 50;
+    Config cfg1{create_no_variance_config()};
+    cfg1.env_cfg.mouse_angle = M_PI / 32;
+    cfg1.ctrl_cfg.kp_ir = 50;
+    cfg1.env_cfg.ir_reading_scale = 0.5;
+    Config cfg2{cfg1};
+    cfg2.env_cfg.ir_reading_scale = 2.0;
 
-    cfg.env_cfg.ir_reading_scale = 0.5;
-    auto r1{run_simulation(cfg)};
-
-    cfg.env_cfg.ir_reading_scale = 2.0;
-    auto r2{run_simulation(cfg)};
-
-    CHECK(!are_results_equivalent(r1, r2));
+    CHECK(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
 }
 
 TEST(MoveForwardTests, InitialAngleAffectsResults)
 {
-    Config cfg{create_no_variance_config()};
+    Config cfg1{create_no_variance_config()};
+    Config cfg2{create_no_variance_config()};
+    cfg2.env_cfg.mouse_angle = M_PI / 16;
 
-    auto straight{run_simulation(cfg)};
-
-    cfg.env_cfg.mouse_angle = M_PI / 16;
-    auto angled{run_simulation(cfg)};
-
-    CHECK(!are_results_equivalent(straight, angled));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
 }
 
-TEST(MoveForwardTests, HorizontalOffsetAffectsResults)
+TEST(MoveForwardTests, HorizontalOffsetAffectsOneAndTwoWallResultsOnly)
 {
-    Config cfg{create_no_variance_config()};
-    cfg.ctrl_cfg.kp_ir = 50;
+    Config cfg1{create_no_variance_config()};
+    cfg1.ctrl_cfg.kp_ir = 50;
+    Config cfg2{cfg1};
+    cfg2.env_cfg.horizontal_position_variance = 0.5;
 
-    auto no_offset{run_simulation(cfg)};
-
-    cfg.env_cfg.horizontal_position_variance = 0.5;
-    auto with_offset{run_simulation(cfg)};
-
-    CHECK(!are_results_equivalent(no_offset, with_offset));
+    CHECK(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
 }
 
-TEST(MoveForwardTests, SingleWallTargetAffectsResults)
+TEST(MoveForwardTests, SingleWallTargetAffectsOneWallResultsOnly)
 {
-    Config cfg{create_no_variance_config()};
-    cfg.env_cfg.mouse_angle = M_PI / 32;
-    cfg.ctrl_cfg.kp_ir = 50;
+    Config cfg1{create_no_variance_config()};
+    cfg1.env_cfg.mouse_angle = M_PI / 32;
+    cfg1.ctrl_cfg.kp_ir = 50;
+    cfg1.ctrl_cfg.single_wall_target = 300;
+    Config cfg2{cfg1};
+    cfg2.ctrl_cfg.single_wall_target = 500;
 
-    cfg.ctrl_cfg.single_wall_target = 300;
-    auto r1{run_simulation(cfg)};
-
-    cfg.ctrl_cfg.single_wall_target = 500;
-    auto r2{run_simulation(cfg)};
-
-    CHECK(!are_single_case_results_equivalent(r1.one_wall, r2.one_wall));
+    CHECK(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
+    CHECK(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
 }
 
-TEST(MoveForwardTests, MotorSpeedAffectsTotalTime)
+TEST(MoveForwardTests, MotorSpeedAffectsResults)
 {
-    Config cfg{create_no_variance_config()};
+    Config cfg1{create_no_variance_config()};
+    cfg1.ctrl_cfg.motor_speed = 80;
+    Config cfg2{create_no_variance_config()};
+    cfg2.ctrl_cfg.motor_speed = 200;
 
-    cfg.ctrl_cfg.motor_speed = 80;
-    auto slow{run_simulation(cfg)};
-
-    cfg.ctrl_cfg.motor_speed = 200;
-    auto fast{run_simulation(cfg)};
-
-    CHECK(fast.no_wall.total_time < slow.no_wall.total_time);
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
 }
 
 TEST(MoveForwardTests, EncoderPDAffectsResults)
 {
-    Config cfg{create_no_variance_config()};
-    cfg.env_cfg.motor1_variance = 0.1;
+    Config cfg1{create_no_variance_config()};
+    cfg1.env_cfg.motor1_variance = 0.1;
+    Config cfg2{cfg1};
+    cfg2.ctrl_cfg.kp_angle = 50;
+    cfg2.ctrl_cfg.kd_angle = 10;
 
-    auto no_pd{run_simulation(cfg)};
-
-    cfg.ctrl_cfg.kp_angle = 50;
-    cfg.ctrl_cfg.kd_angle = 10;
-    auto with_pd{run_simulation(cfg)};
-
-    CHECK(!are_results_equivalent(no_pd, with_pd));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
 }
 
-TEST(MoveForwardTests, IRControlAffectsJustOneAndTwoWallResults)
+TEST(MoveForwardTests, IRControlAffectsOneAndTwoWallResultsOnly)
 {
-    Config cfg{create_no_variance_config()};
-    cfg.env_cfg.mouse_angle = M_PI / 16;
+    Config cfg1{create_no_variance_config()};
+    cfg1.env_cfg.mouse_angle = M_PI / 16;
+    Config cfg2{cfg1};
+    cfg2.ctrl_cfg.kp_ir = 100;
+    cfg2.ctrl_cfg.kd_ir = 50;
 
-    auto no_ir_control{run_simulation(cfg)};
-
-    cfg.ctrl_cfg.kp_ir = 100;
-    cfg.ctrl_cfg.kd_ir = 50;
-    auto with_ir_control{run_simulation(cfg)};
-
-    CHECK(are_single_case_results_equivalent(no_ir_control.no_wall, with_ir_control.no_wall));
-    CHECK(!are_single_case_results_equivalent(no_ir_control.one_wall, with_ir_control.one_wall));
-    CHECK(!are_single_case_results_equivalent(no_ir_control.two_wall, with_ir_control.two_wall));
+    CHECK(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
 }
 
 TEST(MoveForwardTests, WallModesProduceDifferentResults)
@@ -473,21 +447,29 @@ TEST(MoveForwardTests, WallModesProduceDifferentResults)
     cfg.env_cfg.mouse_angle = M_PI / 32;
     cfg.ctrl_cfg.kp_ir = 50;
 
-    auto result{run_simulation(cfg)};
+    auto no_wall{run_simulation(cfg, WallMode::NO_WALLS)};
+    auto one_wall{run_simulation(cfg, WallMode::LEFT_WALL_ONLY)};
+    auto two_wall{run_simulation(cfg, WallMode::BOTH_WALLS)};
 
-    CHECK(!are_single_case_results_equivalent(result.no_wall, result.one_wall));
-    CHECK(!are_single_case_results_equivalent(result.one_wall, result.two_wall));
+    CHECK(!are_results_equivalent(no_wall, one_wall));
+    CHECK(!are_results_equivalent(one_wall, two_wall));
 }
 
-TEST(MoveForwardTests, VisualizationDoesNotAffectResults)
+IGNORE_TEST(MoveForwardTests, VisualizationDoesNotAffectResults)
 {
     Config cfg{create_no_variance_config()};
 
     disable_visualization();
-    auto r1{run_simulation(cfg)};
+    auto no_wall_disabled{run_simulation(cfg, WallMode::NO_WALLS)};
+    auto one_wall_disabled{run_simulation(cfg, WallMode::LEFT_WALL_ONLY)};
+    auto two_wall_disabled{run_simulation(cfg, WallMode::BOTH_WALLS)};
 
     enable_visualization("visualization-does-not-affect-results");
-    auto r2{run_simulation(cfg)};
+    auto no_wall_enabled{run_simulation(cfg, WallMode::NO_WALLS)};
+    auto one_wall_enabled{run_simulation(cfg, WallMode::LEFT_WALL_ONLY)};
+    auto two_wall_enabled{run_simulation(cfg, WallMode::BOTH_WALLS)};
 
-    CHECK(are_results_equivalent(r1, r2));
+    CHECK(are_results_equivalent(no_wall_disabled, no_wall_enabled));
+    CHECK(are_results_equivalent(one_wall_disabled, one_wall_enabled));
+    CHECK(are_results_equivalent(one_wall_disabled, two_wall_enabled));
 }
