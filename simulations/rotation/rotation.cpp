@@ -252,11 +252,7 @@ Result run_simulation(const Config& cfg)
         int64_t control64{p_term_vel + d_term_vel + p_term_ang + d_term_ang};
         int32_t control{static_cast<int32_t>(control64 / cfg.ctrl_cfg.pid_scale)};
 
-        int32_t progress{std::max(enc1, enc2)};
-        int32_t remaining{target_ticks - progress};
-        double decay{std::clamp((static_cast<double>(remaining) / target_ticks), 0.2, 1.0)};
-        int32_t base_speed{static_cast<int32_t>(cfg.ctrl_cfg.motor_speed * decay)};
-
+        int32_t base_speed{static_cast<int32_t>(cfg.ctrl_cfg.motor_speed)};
         int32_t adjusted_speed_1{0};
         int32_t adjusted_speed_2{0};
         if (target_angle_sign > 0) {
