@@ -106,7 +106,7 @@ std::vector<double> encode_control(const ControlConfig& cfg)
 std::pair<std::vector<double>, std::vector<double>> get_control_bounds(void)
 {
     ControlConfig lower_bounds;
-    lower_bounds.motor_speed = 100;
+    lower_bounds.motor_speed = 140;
     lower_bounds.kp_velocity = 0;
     lower_bounds.kd_velocity = 0;
     lower_bounds.kp_angle = 0;
@@ -265,8 +265,8 @@ Result run_simulation(const Config& cfg)
             adjusted_speed_2 = base_speed + control;
         }
         
-        adjusted_speed_1 = std::clamp(adjusted_speed_1, 0, 255);
-        adjusted_speed_2 = std::clamp(adjusted_speed_2, 0, 255);
+        adjusted_speed_1 = std::clamp(adjusted_speed_1, 140, 255);
+        adjusted_speed_2 = std::clamp(adjusted_speed_2, 140, 255);
         set_wheel_motor_1_speed(static_cast<uint8_t>(adjusted_speed_1));
         set_wheel_motor_2_speed(static_cast<uint8_t>(adjusted_speed_2));
 
