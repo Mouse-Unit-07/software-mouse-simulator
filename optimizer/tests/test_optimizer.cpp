@@ -210,7 +210,7 @@ TEST(OptimizerTests, MoveForwardParetoSizeIsStable)
 IGNORE_TEST(OptimizerTests, DumpMoveForwardPareto)
 {
     /* takes ~5min */
-    auto result{run_move_forward_pareto(64, 300, 100)};
+    auto result{run_move_forward_pareto(64, 300, 50)};
 
     write_move_forward_pareto_to_file("move_forward_test_output.txt", result);
 }

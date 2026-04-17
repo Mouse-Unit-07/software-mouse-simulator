@@ -326,14 +326,10 @@ SingleCaseResult run_single_simulation(const Config& cfg, const maze::Maze& maze
     const int32_t TARGET_TICKS{
         static_cast<int32_t>(TARGET_DISTANCE_MM * ENCODER_TICKS_PER_MILLIMETER)};
 
-    while (true) {
+    while (((std::abs(get_encoder_1_ticks()) + std::abs(get_encoder_2_ticks())) / 2)
+           < TARGET_TICKS) {
         int32_t enc1{get_encoder_1_ticks()};
         int32_t enc2{get_encoder_2_ticks()};
-        int32_t avg_ticks{(enc1 + enc2) / 2};
-
-        if (avg_ticks >= TARGET_TICKS) {
-            break;
-        }
 
         int32_t encoder_error{enc2 - enc1};
         int32_t ir_error{0};
