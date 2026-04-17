@@ -221,11 +221,11 @@ IGNORE_TEST(OptimizerTests, DumpMoveForwardPareto)
 {
     /* takes ~5min */
     auto no_walls{run_move_forward_pareto(64, 300, 50, move_forward::WallMode::NO_WALLS)};
-    write_move_forward_pareto_to_file("move_forward_test_no_walls.txt", no_walls);
+    write_move_forward_pareto_to_file("mf_no_walls.txt", no_walls);
 
     auto one_wall{run_move_forward_pareto(64, 300, 50, move_forward::WallMode::LEFT_WALL_ONLY)};
-    write_move_forward_pareto_to_file("move_forward_test_one_wall.txt", one_wall);
+    write_move_forward_pareto_to_file("mf_one_wall.txt", one_wall);
 
     auto both_walls{run_move_forward_pareto(64, 300, 50, move_forward::WallMode::BOTH_WALLS)};
-    write_move_forward_pareto_to_file("move_forward_test_both_walls.txt", both_walls);
+    write_move_forward_pareto_to_file("mf_both_walls.txt", both_walls);
 }
