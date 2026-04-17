@@ -140,7 +140,7 @@ TEST(OptimizerTests, MoveForwardParetoStructureIsValid)
     CHECK_EQUAL(8, result.F.size());
 
     for (size_t i{0}; i < result.X.size(); ++i) {
-        CHECK_EQUAL(7, result.X.at(i).size()); /* control space */
+        CHECK_EQUAL(9, result.X.at(i).size()); /* control space */
         CHECK_EQUAL(5, result.F.at(i).size()); /* objective space */
     }
 }

@@ -83,8 +83,10 @@ ControlConfig decode_control(const std::vector<double>& x)
 
     c.single_wall_target = static_cast<uint32_t>(x.at(i++));
     c.motor_speed = static_cast<uint8_t>(x.at(i++));
-    c.kp = static_cast<int32_t>(x.at(i++));
-    c.kd = static_cast<int32_t>(x.at(i++));
+    c.kp_velocity = static_cast<int32_t>(x.at(i++));
+    c.kd_velocity = static_cast<int32_t>(x.at(i++));
+    c.kp_angle = static_cast<int32_t>(x.at(i++));
+    c.kd_angle = static_cast<int32_t>(x.at(i++));
     c.pid_scale = static_cast<int32_t>(x.at(i++));
     c.kp_ir = static_cast<int32_t>(x.at(i++));
     c.kd_ir = static_cast<int32_t>(x.at(i++));
@@ -96,8 +98,10 @@ std::vector<double> encode_control(const ControlConfig& cfg)
 {
     return {static_cast<double>(cfg.single_wall_target),
             static_cast<double>(cfg.motor_speed),
-            static_cast<double>(cfg.kp),
-            static_cast<double>(cfg.kd),
+            static_cast<double>(cfg.kp_velocity),
+            static_cast<double>(cfg.kd_velocity),
+            static_cast<double>(cfg.kp_angle),
+            static_cast<double>(cfg.kd_angle),
             static_cast<double>(cfg.pid_scale),
             static_cast<double>(cfg.kp_ir),
             static_cast<double>(cfg.kd_ir)};
@@ -108,17 +112,21 @@ std::pair<std::vector<double>, std::vector<double>> get_control_bounds(void)
     ControlConfig lower_bounds;
     lower_bounds.single_wall_target = 0;
     lower_bounds.motor_speed = 140;
-    lower_bounds.kp = 0;
-    lower_bounds.kd = 0;
+    lower_bounds.kp_velocity = 0;
+    lower_bounds.kd_velocity = 0;
+    lower_bounds.kp_angle = 0;
+    lower_bounds.kd_angle = 0;
     lower_bounds.pid_scale = 16;
-    lower_bounds.kp_ir = 4;
-    lower_bounds.kd_ir = 4;
+    lower_bounds.kp_ir = 0;
+    lower_bounds.kd_ir = 0;
 
     ControlConfig upper_bounds;
     upper_bounds.single_wall_target = 1024;
     upper_bounds.motor_speed = 255;
-    upper_bounds.kp = 2000;
-    upper_bounds.kd = 2000;
+    upper_bounds.kp_velocity = 2000;
+    upper_bounds.kd_velocity = 2000;
+    upper_bounds.kp_angle = 2000;
+    upper_bounds.kd_angle = 2000;
     upper_bounds.pid_scale = 512;
     upper_bounds.kp_ir = 2000;
     upper_bounds.kd_ir = 2000;
@@ -181,8 +189,10 @@ std::string config_to_string(const Config& cfg)
         << simulation_common::double_to_filename(cfg.env_cfg.vertical_position_variance) << "-"
         << static_cast<int>(cfg.ctrl_cfg.single_wall_target) << "-"
         << static_cast<int>(cfg.ctrl_cfg.motor_speed) << "-"
-        << simulation_common::double_to_filename(static_cast<double>(cfg.ctrl_cfg.kp)) << "-"
-        << simulation_common::double_to_filename(static_cast<double>(cfg.ctrl_cfg.kd)) << "-"
+        << simulation_common::double_to_filename(static_cast<double>(cfg.ctrl_cfg.kp_velocity)) << "-"
+        << simulation_common::double_to_filename(static_cast<double>(cfg.ctrl_cfg.kd_velocity)) << "-"
+        << simulation_common::double_to_filename(static_cast<double>(cfg.ctrl_cfg.kp_angle)) << "-"
+        << simulation_common::double_to_filename(static_cast<double>(cfg.ctrl_cfg.kd_angle)) << "-"
         << simulation_common::double_to_filename(static_cast<double>(cfg.ctrl_cfg.pid_scale)) << "-"
         << simulation_common::double_to_filename(static_cast<double>(cfg.ctrl_cfg.kp_ir)) << "-"
         << simulation_common::double_to_filename(static_cast<double>(cfg.ctrl_cfg.kd_ir));
@@ -319,7 +329,10 @@ SingleCaseResult run_single_simulation(const Config& cfg, const maze::Maze& maze
     bool collision{false};
     bool timeout{false};
 
-    int32_t prev_encoder_error{0};
+    int32_t prev_enc1{0};
+    int32_t prev_enc2{0};
+    int32_t prev_vel_error{0};
+    int32_t prev_ang_error{0};
     int32_t prev_ir_error{0};
 
     const double TARGET_DISTANCE_MM{maze.cell_size * MAZE_SQUARE_COUNT};
@@ -331,7 +344,19 @@ SingleCaseResult run_single_simulation(const Config& cfg, const maze::Maze& maze
         int32_t enc1{get_encoder_1_ticks()};
         int32_t enc2{get_encoder_2_ticks()};
 
-        int32_t encoder_error{enc2 - enc1};
+        int32_t vel1{enc1 - prev_enc1};
+        int32_t vel2{enc2 - prev_enc2};
+        int32_t vel_error{vel2 - vel1};
+        int32_t vel_derivative{vel_error - prev_vel_error};
+        prev_vel_error = vel_error;
+
+        int32_t ang_error{enc2 - enc1};
+        int32_t ang_derivative{ang_error - prev_ang_error};
+        prev_ang_error = ang_error;
+
+        prev_enc1 = enc1;
+        prev_enc2 = enc2;
+
         int32_t ir_error{0};
 
         if (mode != NO_WALLS) {
@@ -358,20 +383,20 @@ SingleCaseResult run_single_simulation(const Config& cfg, const maze::Maze& maze
                 ir_error = (ir3 - ir2);
             }
         }
-
-        /* encoder PD */
-        int32_t enc_derivative{encoder_error - prev_encoder_error};
-        prev_encoder_error = encoder_error;
-
-        int64_t enc_control{(static_cast<int64_t>(cfg.ctrl_cfg.kp) * encoder_error)
-                            + (static_cast<int64_t>(cfg.ctrl_cfg.kd) * enc_derivative)};
-
-        /* IR PD */
         int32_t ir_derivative{ir_error - prev_ir_error};
         prev_ir_error = ir_error;
 
-        int64_t ir_control{(static_cast<int64_t>(cfg.ctrl_cfg.kp_ir) * ir_error)
-                           + (static_cast<int64_t>(cfg.ctrl_cfg.kd_ir) * ir_derivative)};
+        /* encoder PD */
+        int64_t p_term_vel{static_cast<int64_t>(cfg.ctrl_cfg.kp_velocity) * vel_error};
+        int64_t d_term_vel{static_cast<int64_t>(cfg.ctrl_cfg.kd_velocity) * vel_derivative};
+        int64_t p_term_ang{static_cast<int64_t>(cfg.ctrl_cfg.kp_angle) * ang_error};
+        int64_t d_term_ang{static_cast<int64_t>(cfg.ctrl_cfg.kd_angle) * ang_derivative};
+        int64_t enc_control{p_term_vel + d_term_vel + p_term_ang + d_term_ang};
+
+        /* IR PD */
+        int64_t p_term_ir{static_cast<int64_t>(cfg.ctrl_cfg.kp_ir) * ir_error};
+        int64_t d_term_ir{static_cast<int64_t>(cfg.ctrl_cfg.kd_ir) * ir_derivative};
+        int64_t ir_control{p_term_ir + d_term_ir};
 
         /* combined feedback control */
         int64_t control64{enc_control + ir_control};
@@ -380,8 +405,8 @@ SingleCaseResult run_single_simulation(const Config& cfg, const maze::Maze& maze
         int32_t speed1{std::clamp(base + control, 140, 255)};
         int32_t speed2{std::clamp(base - control, 140, 255)};
 
-        set_wheel_motor_1_speed((uint8_t)speed1);
-        set_wheel_motor_2_speed((uint8_t)speed2);
+        set_wheel_motor_1_speed(static_cast<uint8_t>(speed1));
+        set_wheel_motor_2_speed(static_cast<uint8_t>(speed2));
 
         auto delta{update_mock_by_dt(cfg, mouse)};
         total_horizontal_translation += std::abs(delta.dx);

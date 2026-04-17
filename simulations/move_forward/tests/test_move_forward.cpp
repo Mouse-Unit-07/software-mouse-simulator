@@ -34,26 +34,28 @@ Config create_no_variance_config(void)
 {
     Config cfg{};
 
-    cfg.env_cfg.dt = {0.001};
-    cfg.env_cfg.motor_speed_scale = {1.0};
-    cfg.env_cfg.motor1_variance = {0.0};
-    cfg.env_cfg.motor2_variance = {0.0};
-    cfg.env_cfg.slip_factor = {1.0};
-    cfg.env_cfg.wheel_circumference_scale = {1.0};
-    cfg.env_cfg.wheel_base_scale = {1.0};
-    cfg.env_cfg.maze_size_scale = {1.0};
-    cfg.env_cfg.ir_reading_scale = {1.0};
-    cfg.env_cfg.mouse_angle = {0.0};
-    cfg.env_cfg.horizontal_position_variance = {0.0};
-    cfg.env_cfg.vertical_position_variance = {0.0};
+    cfg.env_cfg.dt = 0.001;
+    cfg.env_cfg.motor_speed_scale = 1.0;
+    cfg.env_cfg.motor1_variance = 0.0;
+    cfg.env_cfg.motor2_variance = 0.0;
+    cfg.env_cfg.slip_factor = 1.0;
+    cfg.env_cfg.wheel_circumference_scale = 1.0;
+    cfg.env_cfg.wheel_base_scale = 1.0;
+    cfg.env_cfg.maze_size_scale = 1.0;
+    cfg.env_cfg.ir_reading_scale = 1.0;
+    cfg.env_cfg.mouse_angle = 0.0;
+    cfg.env_cfg.horizontal_position_variance = 0.0;
+    cfg.env_cfg.vertical_position_variance = 0.0;
 
-    cfg.ctrl_cfg.single_wall_target = {407u};
-    cfg.ctrl_cfg.motor_speed = {120u};
-    cfg.ctrl_cfg.kp = {0};
-    cfg.ctrl_cfg.kd = {0};
-    cfg.ctrl_cfg.pid_scale = {1};
-    cfg.ctrl_cfg.kp_ir = {0};
-    cfg.ctrl_cfg.kd_ir = {0};
+    cfg.ctrl_cfg.single_wall_target = 407u;
+    cfg.ctrl_cfg.motor_speed = 120u;
+    cfg.ctrl_cfg.kp_velocity = 0;
+    cfg.ctrl_cfg.kd_velocity = 0;
+    cfg.ctrl_cfg.kp_angle = 0;
+    cfg.ctrl_cfg.kd_angle = 0;
+    cfg.ctrl_cfg.pid_scale = 1;
+    cfg.ctrl_cfg.kp_ir = 0;
+    cfg.ctrl_cfg.kd_ir = 0;
 
     return cfg;
 }
@@ -138,8 +140,10 @@ TEST(MoveForwardTests, EncodeDecodeControlRoundTrip)
     ControlConfig original;
     original.single_wall_target = 456u;
     original.motor_speed = 123u;
-    original.kp = 1000;
-    original.kd = -250;
+    original.kp_velocity = 1000;
+    original.kd_velocity = -250;
+    original.kp_angle = 1000;
+    original.kd_angle = -250;
     original.pid_scale = 6;
     original.kp_ir = 100;
     original.kd_ir = 200;
@@ -149,8 +153,10 @@ TEST(MoveForwardTests, EncodeDecodeControlRoundTrip)
 
     CHECK_EQUAL(original.single_wall_target, decoded.single_wall_target);
     CHECK_EQUAL(original.motor_speed, decoded.motor_speed);
-    CHECK_EQUAL(original.kp, decoded.kp);
-    CHECK_EQUAL(original.kd, decoded.kd);
+    CHECK_EQUAL(original.kp_velocity, decoded.kp_velocity);
+    CHECK_EQUAL(original.kd_velocity, decoded.kd_velocity);
+    CHECK_EQUAL(original.kp_angle, decoded.kp_angle);
+    CHECK_EQUAL(original.kd_angle, decoded.kd_angle);
     CHECK_EQUAL(original.pid_scale, decoded.pid_scale);
     CHECK_EQUAL(original.kp_ir, decoded.kp_ir);
     CHECK_EQUAL(original.kd_ir, decoded.kd_ir);
@@ -161,11 +167,13 @@ TEST(MoveForwardTests, EncodeControlMaintainsFieldOrder)
     ControlConfig cfg;
     cfg.single_wall_target = 0;
     cfg.motor_speed = 1;
-    cfg.kp = 2;
-    cfg.kd = 3;
-    cfg.pid_scale = 4;
-    cfg.kp_ir = 5;
-    cfg.kd_ir = 6;
+    cfg.kp_velocity = 2;
+    cfg.kd_velocity = 3;
+    cfg.kp_angle = 4;
+    cfg.kd_angle = 5;
+    cfg.pid_scale = 6;
+    cfg.kp_ir = 7;
+    cfg.kd_ir = 8;
 
     auto v{encode_control(cfg)};
 
@@ -176,14 +184,16 @@ TEST(MoveForwardTests, EncodeControlMaintainsFieldOrder)
     CHECK_EQUAL(4, v.at(4));
     CHECK_EQUAL(5, v.at(5));
     CHECK_EQUAL(6, v.at(6));
+    CHECK_EQUAL(7, v.at(7));
+    CHECK_EQUAL(8, v.at(8));
 }
 
 TEST(MoveForwardTests, GetControlBoundsHasCorrectSize)
 {
     auto [low, high] = get_control_bounds();
 
-    CHECK_EQUAL(7, low.size());
-    CHECK_EQUAL(7, high.size());
+    CHECK_EQUAL(9, low.size());
+    CHECK_EQUAL(9, high.size());
 }
 
 TEST(MoveForwardTests, GetControlBoundsValuesAreCorrect)
@@ -194,11 +204,21 @@ TEST(MoveForwardTests, GetControlBoundsValuesAreCorrect)
     CHECK_EQUAL(140, low.at(1));
     CHECK_EQUAL(0, low.at(2));
     CHECK_EQUAL(0, low.at(3));
+    CHECK_EQUAL(0, low.at(4));
+    CHECK_EQUAL(0, low.at(5));
+    CHECK_EQUAL(16, low.at(6));
+    CHECK_EQUAL(0, low.at(7));
+    CHECK_EQUAL(0, low.at(8));
 
     CHECK_EQUAL(1024, high.at(0));
     CHECK_EQUAL(255, high.at(1));
     CHECK_EQUAL(2000, high.at(2));
     CHECK_EQUAL(2000, high.at(3));
+    CHECK_EQUAL(2000, high.at(4));
+    CHECK_EQUAL(2000, high.at(5));
+    CHECK_EQUAL(512, high.at(6));
+    CHECK_EQUAL(2000, high.at(7));
+    CHECK_EQUAL(2000, high.at(8));
 }
 
 TEST(MoveForwardTests, GetControlBoundsAreDecodeSafe)
@@ -424,8 +444,8 @@ TEST(MoveForwardTests, EncoderPDAffectsResults)
 
     auto no_pd{run_simulation(cfg)};
 
-    cfg.ctrl_cfg.kp = 50;
-    cfg.ctrl_cfg.kd = 10;
+    cfg.ctrl_cfg.kp_angle = 50;
+    cfg.ctrl_cfg.kd_angle = 10;
     auto with_pd{run_simulation(cfg)};
 
     CHECK(!are_results_equivalent(no_pd, with_pd));

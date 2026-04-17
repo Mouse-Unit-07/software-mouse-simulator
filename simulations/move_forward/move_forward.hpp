@@ -17,8 +17,10 @@ namespace move_forward
 struct ControlConfig {
     uint32_t single_wall_target;
     uint8_t motor_speed;
-    int32_t kp;
-    int32_t kd;
+    int32_t kp_velocity;
+    int32_t kd_velocity;
+    int32_t kp_angle;
+    int32_t kd_angle;
     int32_t pid_scale;
     int32_t kp_ir;
     int32_t kd_ir;

@@ -247,8 +247,10 @@ void write_move_forward_pareto_to_file(const std::string& filename, const Pareto
     constexpr int W_IDX{4};
     constexpr int W_TGT{6};
     constexpr int W_SPD{6};
-    constexpr int W_KP{6};
-    constexpr int W_KD{6};
+    constexpr int W_KP_V{6};
+    constexpr int W_KD_V{6};
+    constexpr int W_KP_A{6};
+    constexpr int W_KD_A{6};
     constexpr int W_SC{4};
     constexpr int W_KP_IR{8};
     constexpr int W_KD_IR{8};
@@ -267,8 +269,10 @@ void write_move_forward_pareto_to_file(const std::string& filename, const Pareto
         << std::setw(W_IDX)   << "#"
         << std::setw(W_TGT)   << "tgt"
         << std::setw(W_SPD)   << "spd"
-        << std::setw(W_KP)    << "kp"
-        << std::setw(W_KD)    << "kd"
+        << std::setw(W_KP_V) << "kp_v"
+        << std::setw(W_KD_V) << "kd_v"
+        << std::setw(W_KP_A) << "kp_a"
+        << std::setw(W_KD_A) << "kd_a"
         << std::setw(W_SC)    << "sc"
         << std::setw(W_KP_IR) << "kp_ir"
         << std::setw(W_KD_IR) << "kd_ir"
@@ -280,7 +284,7 @@ void write_move_forward_pareto_to_file(const std::string& filename, const Pareto
         << std::setw(W_TO)    << "timeout"
         << "\n";
 
-    out << std::string(110, '-') << "\n";
+    out << std::string(130, '-') << "\n";
 
     /* rows */
     for (size_t i{0}; i < result.X.size(); ++i) {
@@ -292,8 +296,10 @@ void write_move_forward_pareto_to_file(const std::string& filename, const Pareto
             << std::setw(W_IDX)   << i
             << std::setw(W_TGT)   << ctrl.single_wall_target
             << std::setw(W_SPD)   << static_cast<int>(ctrl.motor_speed)
-            << std::setw(W_KP)    << ctrl.kp
-            << std::setw(W_KD)    << ctrl.kd
+            << std::setw(W_KP_V) << ctrl.kp_velocity
+            << std::setw(W_KD_V) << ctrl.kd_velocity
+            << std::setw(W_KP_A) << ctrl.kp_angle
+            << std::setw(W_KD_A) << ctrl.kd_angle
             << std::setw(W_SC)    << ctrl.pid_scale
             << std::setw(W_KP_IR) << ctrl.kp_ir
             << std::setw(W_KD_IR) << ctrl.kd_ir
