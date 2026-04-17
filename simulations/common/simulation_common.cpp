@@ -131,9 +131,28 @@ double compute_metric_score(double collapsed, double global_max)
 std::string double_to_filename(double v, int precision)
 {
     std::ostringstream oss;
-    oss << std::fixed << std::setprecision(precision) << v;
+
+    /* Treat near-integers as integers (handles floating point noise) */
+    double rounded = std::round(v);
+    if (std::abs(v - rounded) < 1e-9) {
+        oss << static_cast<int>(rounded);
+    } else {
+        oss << std::fixed << std::setprecision(precision) << v;
+    }
 
     std::string s{oss.str()};
+
+    /* Trim trailing zeros for floats */
+    if (s.find('.') != std::string::npos) {
+        while (!s.empty() && s.back() == '0') {
+            s.pop_back();
+        }
+        if (!s.empty() && s.back() == '.') {
+            s.pop_back();
+        }
+    }
+
+    /* Replace characters for filename safety */
     for (char& c : s) {
         if (c == '.') {
             c = 'p';
@@ -141,6 +160,7 @@ std::string double_to_filename(double v, int precision)
             c = 'n';
         }
     }
+
     return s;
 }
 
