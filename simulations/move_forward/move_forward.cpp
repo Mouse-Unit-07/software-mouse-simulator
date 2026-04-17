@@ -64,10 +64,10 @@ extern double ENCODER_TICKS_PER_MILLIMETER;
 }
 
 constexpr double FLOAT_TOLERANCE{1e-6};
-std::string TEST_OUTPUT_DIRECTORY{"rotation-visualizer"};
+std::string TEST_OUTPUT_DIRECTORY{"visualizer"};
 std::string TEST_OUTPUT_SUBDIRECTORY{""};
 bool visualizer_enabled{false};
-visualizer::Visualizer rotation_visualizer;
+visualizer::Visualizer move_forward_visualizer;
 
 /*----------------------------------------------------------------------------*/
 /*                             Public Definitions                             */
@@ -321,10 +321,10 @@ Result run_single_simulation(const Config& cfg, const maze::Maze& maze, enum Wal
     const double INITIAL_MOUSE_VERTICAL_POSITION{mouse.hitbox.center.y};
 
     if (visualizer_enabled) {
-        rotation_visualizer.draw_maze(100.0f, maze);
-        rotation_visualizer.change_mouse_color_to_green();
-        rotation_visualizer.draw_mouse_on_maze(mouse);
-        rotation_visualizer.reset_mouse_color();
+        move_forward_visualizer.draw_maze(100.0f, maze);
+        move_forward_visualizer.change_mouse_color_to_green();
+        move_forward_visualizer.draw_mouse_on_maze(mouse);
+        move_forward_visualizer.reset_mouse_color();
     }
 
     set_wheel_motor_1_direction_forward();
@@ -428,7 +428,7 @@ Result run_single_simulation(const Config& cfg, const maze::Maze& maze, enum Wal
         total_time += cfg.env_cfg.dt;
 
         if (visualizer_enabled) {
-            rotation_visualizer.draw_mouse_on_maze(mouse);
+            move_forward_visualizer.draw_mouse_on_maze(mouse);
         }
 
         if (maze::does_hitbox_collide_with_maze(maze, mouse.hitbox)) {
@@ -443,9 +443,9 @@ Result run_single_simulation(const Config& cfg, const maze::Maze& maze, enum Wal
     }
 
     if (visualizer_enabled) {
-        rotation_visualizer.change_mouse_color_to_blue();
-        rotation_visualizer.draw_mouse_on_maze(mouse);
-        rotation_visualizer.save_to_image_file(
+        move_forward_visualizer.change_mouse_color_to_blue();
+        move_forward_visualizer.draw_mouse_on_maze(mouse);
+        move_forward_visualizer.save_to_image_file(
             TEST_OUTPUT_DIRECTORY + "/" + TEST_OUTPUT_SUBDIRECTORY + "/" + config_to_string(cfg)
             + "-" + wall_mode_to_string(mode) + ".png");
     }
