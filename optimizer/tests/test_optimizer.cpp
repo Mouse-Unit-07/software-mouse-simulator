@@ -59,8 +59,8 @@ TEST(OptimizerTests, RotationParetoStructureIsValid)
     CHECK_EQUAL(8, result.F.size());
 
     for (size_t i{0}; i < result.X.size(); ++i) {
-        CHECK_EQUAL(4, result.X.at(i).size()); /* control space */
-        CHECK_EQUAL(5, result.F.at(i).size()); /* objective space */
+        CHECK_EQUAL(6, result.X.at(i).size()); /* control space */
+        CHECK_EQUAL(4, result.F.at(i).size()); /* objective space */
     }
 }
 
@@ -104,13 +104,11 @@ TEST(OptimizerTests, RotationObjectivesAreInValidRanges)
     for (const auto& f : result.F) {
         double angle{f.at(0)};
         double translation{f.at(1)};
-        double time{f.at(2)};
-        double collision{f.at(3)};
-        double timeout{f.at(4)};
+        double collision{f.at(2)};
+        double timeout{f.at(3)};
 
         CHECK(angle >= 0.0);
         CHECK(translation >= 0.0);
-        CHECK(time >= 0.0);
 
         CHECK(collision >= 0.0 && collision <= 1.0);
         CHECK(timeout >= 0.0 && timeout <= 1.0);

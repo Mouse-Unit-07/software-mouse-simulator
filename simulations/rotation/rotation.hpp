@@ -16,9 +16,11 @@ namespace rotation
 
 struct ControlConfig {
     uint8_t motor_speed;
-    int32_t kp;
-    int32_t kd;
-    int32_t pid_shift;
+    int32_t kp_velocity;
+    int32_t kd_velocity;
+    int32_t kp_angle;
+    int32_t kd_angle;
+    int32_t pid_scale;
 };
 
 struct EnvironmentConfig {
@@ -29,6 +31,7 @@ struct EnvironmentConfig {
     double slip_factor;
     double wheel_circumference_scale;
     double wheel_base_scale;
+    double rotation_angle;
 };
 
 struct Config {
@@ -61,7 +64,7 @@ void enable_visualization(const std::string& foldername);
 void disable_visualization(void);
 std::string config_to_string(const Config& cfg);
 
-Result run_simulation(const Config& cfg, double target_angle);
+Result run_simulation(const Config& cfg);
 
 } /* rotation namespace */
 

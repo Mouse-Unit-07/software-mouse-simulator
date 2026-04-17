@@ -12,7 +12,6 @@
 #include <pagmo/population.hpp>
 #include <pagmo/problem.hpp>
 #include <pagmo/types.hpp>
-#include <cmath>
 #include <cstdint>
 #include <fstream>
 #include <iomanip>
@@ -75,18 +74,16 @@ public:
 
         double angle{0.0};
         double translation{0.0};
-        double time{0.0};
         double collision{0.0};
         double timeout{0.0};
 
         for (int i{0}; i < sims_; ++i) {
             rotation::Config cfg{control, rotation::generate_random_environment()};
 
-            const auto r{rotation::run_simulation(cfg, M_PI / 2)};
+            const auto r{rotation::run_simulation(cfg)};
 
             angle += r.final_angle_error;
             translation += r.total_translation;
-            time += r.total_time;
             collision += r.collision ? 1.0 : 0.0;
             timeout += r.timeout ? 1.0 : 0.0;
         }
@@ -94,7 +91,6 @@ public:
         return {
             angle / sims_,
             translation / sims_,
-            time / sims_,
             collision / sims_,
             timeout / sims_
         };
@@ -107,7 +103,7 @@ public:
 
     pagmo::vector_double::size_type get_nobj() const
     {
-        return 5;
+        return 4;
     }
 
     int sims_{100};
@@ -125,32 +121,34 @@ void write_rotation_pareto_to_file(const std::string& filename, const ParetoResu
 
     constexpr int W_IDX{4};
     constexpr int W_SPD{6};
-    constexpr int W_KP{6};
-    constexpr int W_KD{6};
-    constexpr int W_SH{4};
+    constexpr int W_KP_V{6};
+    constexpr int W_KD_V{6};
+    constexpr int W_KP_A{6};
+    constexpr int W_KD_A{6};
+    constexpr int W_SC{4};
 
     constexpr int W_ANGLE{12};
     constexpr int W_TRANS{12};
-    constexpr int W_TIME{12};
     constexpr int W_COLL{12};
     constexpr int W_TO{12};
 
     out << "===== ROTATION PARETO FRONT =====\n\n";
     out << std::left
-        << std::setw(W_IDX)  << "#"
-        << std::setw(W_SPD)  << "spd"
-        << std::setw(W_KP)   << "kp"
-        << std::setw(W_KD)   << "kd"
-        << std::setw(W_SH)   << "sh"
+        << std::setw(W_IDX) << "#"
+        << std::setw(W_SPD) << "spd"
+        << std::setw(W_KP_V) << "kp_v"
+        << std::setw(W_KD_V) << "kd_v"
+        << std::setw(W_KP_A) << "kp_a"
+        << std::setw(W_KD_A) << "kd_a"
+        << std::setw(W_SC) << "sc"
         << " | "
         << std::setw(W_ANGLE) << "angle"
         << std::setw(W_TRANS) << "translation"
-        << std::setw(W_TIME)  << "time"
-        << std::setw(W_COLL)  << "collision"
-        << std::setw(W_TO)    << "timeout"
+        << std::setw(W_COLL) << "collision"
+        << std::setw(W_TO) << "timeout"
         << "\n";
 
-    out << std::string(80, '-') << "\n";
+    out << std::string(100, '-') << "\n";
 
     for (size_t i{0}; i < result.X.size(); ++i) {
         const auto& x{result.X.at(i)};
@@ -160,15 +158,16 @@ void write_rotation_pareto_to_file(const std::string& filename, const ParetoResu
         out << std::left
             << std::setw(W_IDX) << i
             << std::setw(W_SPD) << static_cast<int>(ctrl.motor_speed)
-            << std::setw(W_KP)  << ctrl.kp
-            << std::setw(W_KD)  << ctrl.kd
-            << std::setw(W_SH)  << ctrl.pid_shift
+            << std::setw(W_KP_V) << ctrl.kp_velocity
+            << std::setw(W_KD_V) << ctrl.kd_velocity
+            << std::setw(W_KP_A) << ctrl.kp_angle
+            << std::setw(W_KD_A) << ctrl.kd_angle
+            << std::setw(W_SC) << ctrl.pid_scale
             << " | "
             << std::setw(W_ANGLE) << f.at(0)
             << std::setw(W_TRANS) << f.at(1)
-            << std::setw(W_TIME)  << f.at(2)
-            << std::setw(W_COLL)  << f.at(3)
-            << std::setw(W_TO)    << f.at(4)
+            << std::setw(W_COLL) << f.at(2)
+            << std::setw(W_TO) << f.at(3)
             << "\n";
     }
 }
