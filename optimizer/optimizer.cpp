@@ -185,7 +185,6 @@ public:
     {
         const auto control{move_forward::decode_control(x)};
 
-        double time{0.0};
         double angle{0.0};
         double horizontal{0.0};
         double vertical{0.0};
@@ -198,7 +197,6 @@ public:
             const auto r{move_forward::run_simulation(cfg)};
 
             const auto accumulate = [&](const move_forward::SingleCaseResult& s) {
-                time += s.total_time;
                 angle += s.total_angle_error;
                 horizontal += s.total_horizontal_translation;
                 vertical += s.final_vertical_translation;
@@ -214,7 +212,6 @@ public:
         const double denom{static_cast<double>(sims_ * 3)};
 
         return {
-            time / denom,
             angle / denom,
             horizontal / denom,
             vertical / denom,
@@ -230,7 +227,7 @@ public:
 
     pagmo::vector_double::size_type get_nobj() const
     {
-        return 6;
+        return 5;
     }
 
     int sims_{100};
@@ -256,7 +253,6 @@ void write_move_forward_pareto_to_file(const std::string& filename, const Pareto
     constexpr int W_KP_IR{8};
     constexpr int W_KD_IR{8};
 
-    constexpr int W_TIME{12};
     constexpr int W_ANGLE{12};
     constexpr int W_HORIZ{12};
     constexpr int W_VERT{12};
@@ -277,7 +273,6 @@ void write_move_forward_pareto_to_file(const std::string& filename, const Pareto
         << std::setw(W_KP_IR) << "kp_ir"
         << std::setw(W_KD_IR) << "kd_ir"
         << " | "
-        << std::setw(W_TIME)  << "time"
         << std::setw(W_ANGLE) << "angle"
         << std::setw(W_HORIZ) << "horiz"
         << std::setw(W_VERT)  << "vert"
@@ -303,12 +298,11 @@ void write_move_forward_pareto_to_file(const std::string& filename, const Pareto
             << std::setw(W_KP_IR) << ctrl.kp_ir
             << std::setw(W_KD_IR) << ctrl.kd_ir
             << " | "
-            << std::setw(W_TIME)  << f.at(0)
-            << std::setw(W_ANGLE) << f.at(1)
-            << std::setw(W_HORIZ) << f.at(2)
-            << std::setw(W_VERT)  << f.at(3)
-            << std::setw(W_COLL)  << f.at(4)
-            << std::setw(W_TO)    << f.at(5)
+            << std::setw(W_ANGLE) << f.at(0)
+            << std::setw(W_HORIZ) << f.at(1)
+            << std::setw(W_VERT)  << f.at(2)
+            << std::setw(W_COLL)  << f.at(3)
+            << std::setw(W_TO)    << f.at(4)
             << "\n";
     }
 }

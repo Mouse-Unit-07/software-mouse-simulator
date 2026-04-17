@@ -141,7 +141,7 @@ TEST(OptimizerTests, MoveForwardParetoStructureIsValid)
 
     for (size_t i{0}; i < result.X.size(); ++i) {
         CHECK_EQUAL(7, result.X.at(i).size()); /* control space */
-        CHECK_EQUAL(6, result.F.at(i).size()); /* objective space */
+        CHECK_EQUAL(5, result.F.at(i).size()); /* objective space */
     }
 }
 
@@ -183,14 +183,12 @@ TEST(OptimizerTests, MoveForwardObjectivesAreInValidRanges)
     auto result{run_move_forward_pareto(8, 5, 10)};
 
     for (const auto& f : result.F) {
-        double time{f.at(0)};
-        double angle{f.at(1)};
-        double horizontal_translation{f.at(2)};
-        double vertical_translation{f.at(3)};
-        double collision{f.at(4)};
-        double timeout{f.at(5)};
+        double angle{f.at(0)};
+        double horizontal_translation{f.at(1)};
+        double vertical_translation{f.at(2)};
+        double collision{f.at(3)};
+        double timeout{f.at(4)};
 
-        CHECK(time >= 0.0);
         CHECK(angle >= 0.0);
         CHECK(horizontal_translation >= 0.0);
         CHECK(vertical_translation >= 0.0);
