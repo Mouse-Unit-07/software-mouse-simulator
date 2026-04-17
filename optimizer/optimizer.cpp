@@ -249,7 +249,7 @@ void write_move_forward_pareto_to_file(const std::string& filename, const Pareto
     constexpr int W_SPD{6};
     constexpr int W_KP{6};
     constexpr int W_KD{6};
-    constexpr int W_SH{4};
+    constexpr int W_SC{4};
     constexpr int W_KP_IR{8};
     constexpr int W_KD_IR{8};
 
@@ -269,7 +269,7 @@ void write_move_forward_pareto_to_file(const std::string& filename, const Pareto
         << std::setw(W_SPD)   << "spd"
         << std::setw(W_KP)    << "kp"
         << std::setw(W_KD)    << "kd"
-        << std::setw(W_SH)    << "sh"
+        << std::setw(W_SC)    << "sc"
         << std::setw(W_KP_IR) << "kp_ir"
         << std::setw(W_KD_IR) << "kd_ir"
         << " | "
@@ -294,7 +294,7 @@ void write_move_forward_pareto_to_file(const std::string& filename, const Pareto
             << std::setw(W_SPD)   << static_cast<int>(ctrl.motor_speed)
             << std::setw(W_KP)    << ctrl.kp
             << std::setw(W_KD)    << ctrl.kd
-            << std::setw(W_SH)    << ctrl.pid_shift
+            << std::setw(W_SC)    << ctrl.pid_scale
             << std::setw(W_KP_IR) << ctrl.kp_ir
             << std::setw(W_KD_IR) << ctrl.kd_ir
             << " | "

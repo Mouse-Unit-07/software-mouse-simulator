@@ -85,7 +85,7 @@ ControlConfig decode_control(const std::vector<double>& x)
     c.motor_speed = static_cast<uint8_t>(x.at(i++));
     c.kp = static_cast<int32_t>(x.at(i++));
     c.kd = static_cast<int32_t>(x.at(i++));
-    c.pid_shift = static_cast<int32_t>(x.at(i++));
+    c.pid_scale = static_cast<int32_t>(x.at(i++));
     c.kp_ir = static_cast<int32_t>(x.at(i++));
     c.kd_ir = static_cast<int32_t>(x.at(i++));
 
@@ -98,7 +98,7 @@ std::vector<double> encode_control(const ControlConfig& cfg)
             static_cast<double>(cfg.motor_speed),
             static_cast<double>(cfg.kp),
             static_cast<double>(cfg.kd),
-            static_cast<double>(cfg.pid_shift),
+            static_cast<double>(cfg.pid_scale),
             static_cast<double>(cfg.kp_ir),
             static_cast<double>(cfg.kd_ir)};
 }
@@ -110,7 +110,7 @@ std::pair<std::vector<double>, std::vector<double>> get_control_bounds(void)
     lower_bounds.motor_speed = 100;
     lower_bounds.kp = 0;
     lower_bounds.kd = 0;
-    lower_bounds.pid_shift = 4;
+    lower_bounds.pid_scale = 16;
     lower_bounds.kp_ir = 4;
     lower_bounds.kd_ir = 4;
 
@@ -119,7 +119,7 @@ std::pair<std::vector<double>, std::vector<double>> get_control_bounds(void)
     upper_bounds.motor_speed = 255;
     upper_bounds.kp = 2000;
     upper_bounds.kd = 2000;
-    upper_bounds.pid_shift = 8;
+    upper_bounds.pid_scale = 512;
     upper_bounds.kp_ir = 2000;
     upper_bounds.kd_ir = 2000;
 
@@ -183,7 +183,7 @@ std::string config_to_string(const Config& cfg)
         << static_cast<int>(cfg.ctrl_cfg.motor_speed) << "-"
         << simulation_common::double_to_filename(static_cast<double>(cfg.ctrl_cfg.kp)) << "-"
         << simulation_common::double_to_filename(static_cast<double>(cfg.ctrl_cfg.kd)) << "-"
-        << simulation_common::double_to_filename(static_cast<double>(cfg.ctrl_cfg.pid_shift)) << "-"
+        << simulation_common::double_to_filename(static_cast<double>(cfg.ctrl_cfg.pid_scale)) << "-"
         << simulation_common::double_to_filename(static_cast<double>(cfg.ctrl_cfg.kp_ir)) << "-"
         << simulation_common::double_to_filename(static_cast<double>(cfg.ctrl_cfg.kd_ir));
 
@@ -379,9 +379,7 @@ SingleCaseResult run_single_simulation(const Config& cfg, const maze::Maze& maze
 
         /* combined feedback control */
         int64_t control64{enc_control + ir_control};
-        int32_t control{(control64 >= 0)
-                            ? static_cast<int32_t>(control64 >> cfg.ctrl_cfg.pid_shift)
-                            : -(static_cast<int32_t>((-control64) >> cfg.ctrl_cfg.pid_shift))};
+        int32_t control{static_cast<int32_t>(control64 / cfg.ctrl_cfg.pid_scale)};
         int32_t base{cfg.ctrl_cfg.motor_speed};
         int32_t speed1{std::clamp(base + control, 0, 255)};
         int32_t speed2{std::clamp(base - control, 0, 255)};

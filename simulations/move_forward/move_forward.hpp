@@ -19,7 +19,7 @@ struct ControlConfig {
     uint8_t motor_speed;
     int32_t kp;
     int32_t kd;
-    int32_t pid_shift;
+    int32_t pid_scale;
     int32_t kp_ir;
     int32_t kd_ir;
 };

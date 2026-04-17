@@ -51,7 +51,7 @@ Config create_no_variance_config(void)
     cfg.ctrl_cfg.motor_speed = {120u};
     cfg.ctrl_cfg.kp = {0};
     cfg.ctrl_cfg.kd = {0};
-    cfg.ctrl_cfg.pid_shift = {0};
+    cfg.ctrl_cfg.pid_scale = {1};
     cfg.ctrl_cfg.kp_ir = {0};
     cfg.ctrl_cfg.kd_ir = {0};
 
@@ -109,46 +109,6 @@ bool are_results_equivalent(const Result& r1, const Result& r2)
     return true;
 }
 
-SingleCaseResult create_single_case_result(double time, double angle, double horizontal_translation,
-                                           double vertical_translation, bool collision = false,
-                                           bool timeout = false)
-{
-    SingleCaseResult out;
-    out.total_time = time;
-    out.total_angle_error = angle;
-    out.total_horizontal_translation = horizontal_translation;
-    out.final_vertical_translation = vertical_translation;
-    out.collision = collision;
-    out.timeout = timeout;
-
-    return out;
-}
-
-Result create_result(const SingleCaseResult& no, const SingleCaseResult& one,
-                     const SingleCaseResult& two)
-{
-    Result out;
-    out.no_wall = no;
-    out.one_wall = one;
-    out.two_wall = two;
-
-    return out;
-}
-
-Config create_custom_config(uint32_t target = 100, uint8_t speed = 100, int kp = 1, int kd = 1,
-                            int shift = 0, int kp_ir = 0, int kd_ir = 0)
-{
-    Config c{};
-    c.ctrl_cfg.single_wall_target = target;
-    c.ctrl_cfg.motor_speed = speed;
-    c.ctrl_cfg.kp = kp;
-    c.ctrl_cfg.kd = kd;
-    c.ctrl_cfg.pid_shift = shift;
-    c.ctrl_cfg.kp_ir = kp_ir;
-    c.ctrl_cfg.kd_ir = kd_ir;
-    return c;
-}
-
 /*============================================================================*/
 /*                            Mock Implementations                            */
 /*============================================================================*/
@@ -180,7 +140,7 @@ TEST(MoveForwardTests, EncodeDecodeControlRoundTrip)
     original.motor_speed = 123u;
     original.kp = 1000;
     original.kd = -250;
-    original.pid_shift = 6;
+    original.pid_scale = 6;
     original.kp_ir = 100;
     original.kd_ir = 200;
 
@@ -191,7 +151,7 @@ TEST(MoveForwardTests, EncodeDecodeControlRoundTrip)
     CHECK_EQUAL(original.motor_speed, decoded.motor_speed);
     CHECK_EQUAL(original.kp, decoded.kp);
     CHECK_EQUAL(original.kd, decoded.kd);
-    CHECK_EQUAL(original.pid_shift, decoded.pid_shift);
+    CHECK_EQUAL(original.pid_scale, decoded.pid_scale);
     CHECK_EQUAL(original.kp_ir, decoded.kp_ir);
     CHECK_EQUAL(original.kd_ir, decoded.kd_ir);
 }
@@ -203,7 +163,7 @@ TEST(MoveForwardTests, EncodeControlMaintainsFieldOrder)
     cfg.motor_speed = 1;
     cfg.kp = 2;
     cfg.kd = 3;
-    cfg.pid_shift = 4;
+    cfg.pid_scale = 4;
     cfg.kp_ir = 5;
     cfg.kd_ir = 6;
 
