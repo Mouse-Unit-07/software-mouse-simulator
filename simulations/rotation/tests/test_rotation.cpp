@@ -336,3 +336,25 @@ IGNORE_TEST(RotationTests, VisualizationDoesNotAffectResults)
 
     CHECK(are_results_equivalent(r1, r2));
 }
+
+IGNORE_TEST(RotationTests, VisualizeWithIdealParameters)
+{
+    Config cfg;
+    cfg.ctrl_cfg.motor_speed = 142u;
+    cfg.ctrl_cfg.kp_velocity = 300;
+    cfg.ctrl_cfg.kd_velocity = 151;
+    cfg.ctrl_cfg.kp_angle = 1975;
+    cfg.ctrl_cfg.kd_angle = 16;
+    cfg.ctrl_cfg.pid_scale = 210;
+    cfg.env_cfg.dt = 0.01;
+    cfg.env_cfg.motor_speed_scale = 1.0;
+    cfg.env_cfg.motor1_variance = 0.0;
+    cfg.env_cfg.motor2_variance = 0.0;
+    cfg.env_cfg.slip_factor = 1.0;
+    cfg.env_cfg.wheel_circumference_scale = 1.0;
+    cfg.env_cfg.wheel_base_scale = 1.0;
+    cfg.env_cfg.rotation_angle = M_PI / 2;
+
+    enable_visualization("ideal-parameters");
+    auto r2{run_simulation(cfg)};
+}
