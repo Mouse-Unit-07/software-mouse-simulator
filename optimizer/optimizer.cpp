@@ -28,7 +28,10 @@
 namespace
 {
 
+using PagmoVec = pagmo::vector_double;
+
 std::ofstream open_output_file(const std::string& filename);
+std::vector<size_t> get_best_feasible_indices(const std::vector<PagmoVec>& F, size_t keep_n);
 
 } /* unnamed namespace */
 
@@ -42,8 +45,6 @@ std::ofstream open_output_file(const std::string& filename);
 /*----------------------------------------------------------------------------*/
 namespace optimizer
 {
-
-using PagmoVec = pagmo::vector_double;
 
 template <typename UDP>
 ParetoResult run_pareto_impl(UDP&& udp, std::size_t population, std::size_t generations)
@@ -172,6 +173,55 @@ void write_rotation_pareto_to_file(const std::string& filename, const ParetoResu
     }
 }
 
+class MoveForwardFeasibilityUDP {
+public:
+    MoveForwardFeasibilityUDP() = default;
+
+    MoveForwardFeasibilityUDP(int sims, move_forward::WallMode mode) : sims_(sims), mode_(mode)
+    {
+        /* no additional logic */
+    }
+
+    PagmoVec fitness(const PagmoVec& x) const
+    {
+        const auto control{move_forward::decode_control(x)};
+
+        double collision{0.0};
+        double horizontal{0.0};
+        double timeout{0.0};
+
+        for (int i{0}; i < sims_; ++i) {
+            move_forward::Config cfg{control, move_forward::generate_random_environment()};
+
+            const auto r{move_forward::run_simulation(cfg, mode_)};
+
+            collision += r.collision ? 1.0 : 0.0;
+            horizontal += r.total_horizontal_translation;
+            timeout += r.timeout ? 1.0 : 0.0;
+        }
+
+        return {
+            collision / sims_,
+            horizontal / sims_,
+            timeout / sims_
+        };
+    }
+
+    std::pair<PagmoVec, PagmoVec> get_bounds() const
+    {
+        return move_forward::get_control_bounds();
+    }
+
+    pagmo::vector_double::size_type get_nobj() const
+    {
+        return 3;
+    }
+
+private:
+    int sims_{100};
+    move_forward::WallMode mode_;
+};
+
 class MoveForwardUDP {
 public:
     MoveForwardUDP() = default;
@@ -186,30 +236,30 @@ public:
     {
         const auto control{move_forward::decode_control(x)};
 
-        double angle{0.0};
-        double horizontal{0.0};
-        double vertical{0.0};
         double collision{0.0};
+        double horizontal{0.0};
         double timeout{0.0};
+        double vertical{0.0};
+        double angle{0.0};
 
         for (int i{0}; i < sims_; ++i) {
             move_forward::Config cfg{control, move_forward::generate_random_environment()};
 
             const auto r{move_forward::run_simulation(cfg, mode_)};
 
-            angle += r.total_angle_error;
-            horizontal += r.total_horizontal_translation;
-            vertical += r.final_vertical_translation;
             collision += r.collision ? 1.0 : 0.0;
+            horizontal += r.total_horizontal_translation;
             timeout += r.timeout ? 1.0 : 0.0;
+            vertical += r.final_vertical_translation;
+            angle += r.total_angle_error;
         }
 
         return {
-            angle / sims_,
-            horizontal / sims_,
-            vertical / sims_,
             collision / sims_,
-            timeout / sims_
+            horizontal / sims_,
+            timeout / sims_,
+            vertical / sims_,
+            angle / sims_
         };
     }
 
@@ -224,13 +274,54 @@ public:
     }
 
     int sims_{100};
-    move_forward::WallMode mode_{move_forward::WallMode::NO_WALLS};
+    move_forward::WallMode mode_;
 };
 
 ParetoResult run_move_forward_pareto(std::size_t population, std::size_t generations,
                                      int simulations_per_fitness, move_forward::WallMode mode)
 {
     return run_pareto_impl(MoveForwardUDP{simulations_per_fitness, mode}, population, generations);
+}
+
+ParetoResult run_move_forward_staged(size_t population, size_t gen_stage1, size_t gen_stage2,
+                                     int sims_stage1, int sims_stage2, move_forward::WallMode mode)
+{
+    /* Stage 1: Feasibility */
+    auto stage1{
+        run_pareto_impl(MoveForwardFeasibilityUDP{sims_stage1, mode}, population, gen_stage1)};
+
+    /* Extract non-dominated solutions */
+    auto best_indices{get_best_feasible_indices(stage1.F, population)};
+
+    std::vector<PagmoVec> seeds;
+    for (auto idx : best_indices) {
+        seeds.push_back(stage1.X[idx]);
+    }
+
+    /* Stage 2: Full optimization */
+    pagmo::problem prob{MoveForwardUDP{sims_stage2, mode}};
+    pagmo::population pop(prob, 0);
+
+    /* Inject seeds */
+    for (auto& x : seeds) {
+        pop.push_back(x);
+    }
+
+    /* Fill remaining population */
+    size_t i{0};
+    while (pop.size() < population) {
+        pop.push_back(seeds[i % seeds.size()]);
+        ++i;
+    }
+
+    /* Evolve */
+    pagmo::algorithm algo{pagmo::nsga2{}};
+
+    for (size_t i{0}; i < gen_stage2; ++i) {
+        pop = algo.evolve(pop);
+    }
+
+    return {pop.get_x(), pop.get_f()};
 }
 
 void write_move_forward_pareto_to_file(const std::string& filename, const ParetoResult& result)
@@ -249,11 +340,11 @@ void write_move_forward_pareto_to_file(const std::string& filename, const Pareto
     constexpr int W_KP_IR{8};
     constexpr int W_KD_IR{8};
 
-    constexpr int W_ANGLE{12};
-    constexpr int W_HORIZ{12};
-    constexpr int W_VERT{12};
     constexpr int W_COLL{12};
+    constexpr int W_HORIZ{12};
     constexpr int W_TO{12};
+    constexpr int W_VERT{12};
+    constexpr int W_ANGLE{12};
 
     /* banner */
     out << "===== MOVE FORWARD PARETO FRONT =====\n\n";
@@ -271,11 +362,11 @@ void write_move_forward_pareto_to_file(const std::string& filename, const Pareto
         << std::setw(W_KP_IR) << "kp_ir"
         << std::setw(W_KD_IR) << "kd_ir"
         << " | "
-        << std::setw(W_ANGLE) << "angle"
-        << std::setw(W_HORIZ) << "horiz"
-        << std::setw(W_VERT)  << "vert"
         << std::setw(W_COLL)  << "collision"
+        << std::setw(W_HORIZ) << "horiz"
         << std::setw(W_TO)    << "timeout"
+        << std::setw(W_VERT)  << "vert"
+        << std::setw(W_ANGLE) << "angle"
         << "\n";
 
     out << std::string(130, '-') << "\n";
@@ -298,11 +389,11 @@ void write_move_forward_pareto_to_file(const std::string& filename, const Pareto
             << std::setw(W_KP_IR) << ctrl.kp_ir
             << std::setw(W_KD_IR) << ctrl.kd_ir
             << " | "
-            << std::setw(W_ANGLE) << f.at(0)
+            << std::setw(W_COLL)  << f.at(0)
             << std::setw(W_HORIZ) << f.at(1)
-            << std::setw(W_VERT)  << f.at(2)
-            << std::setw(W_COLL)  << f.at(3)
-            << std::setw(W_TO)    << f.at(4)
+            << std::setw(W_TO)    << f.at(2)
+            << std::setw(W_VERT)  << f.at(3)
+            << std::setw(W_ANGLE) << f.at(4)
             << "\n";
     }
 }
@@ -323,6 +414,32 @@ std::ofstream open_output_file(const std::string& filename)
     }
     out << std::fixed << std::setprecision(6);
     return out;
+}
+
+std::vector<size_t> get_best_feasible_indices(const std::vector<PagmoVec>& F, size_t keep_n)
+{
+    std::vector<size_t> indices(F.size());
+    std::iota(indices.begin(), indices.end(), 0);
+
+    constexpr double FLOAT_TOLERANCE{1e-3};
+
+    std::sort(indices.begin(), indices.end(), [&](size_t a, size_t b) {
+        /* Primary: collision */
+        if (std::abs(F.at(a).at(0) - F.at(b).at(0)) > FLOAT_TOLERANCE) {
+            return F.at(a).at(0) < F.at(b).at(0);
+        }
+
+        /* Secondary: horizontal (stability proxy) */
+        if (std::abs(F.at(a).at(1) - F.at(b).at(1)) > FLOAT_TOLERANCE) {
+            return F.at(a).at(1) < F.at(b).at(1);
+        }
+
+        /* Tertiary: timeout */
+        return F.at(a).at(2) < F.at(b).at(2);
+    });
+
+    indices.resize(std::min(keep_n, indices.size()));
+    return indices;
 }
 
 } /* unnamed namespace */

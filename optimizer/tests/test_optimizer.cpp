@@ -190,11 +190,11 @@ TEST(OptimizerTests, MoveForwardObjectivesAreInValidRanges)
         auto result{run_move_forward_pareto(8, 5, 10, m)};
 
         for (const auto& f : result.F) {
-            double angle{f.at(0)};
+            double collision{f.at(0)};
             double horizontal_translation{f.at(1)};
-            double vertical_translation{f.at(2)};
-            double collision{f.at(3)};
-            double timeout{f.at(4)};
+            double timeout{f.at(2)};
+            double vertical_translation{f.at(3)};
+            double angle{f.at(4)};
 
             CHECK(angle >= 0.0);
             CHECK(horizontal_translation >= 0.0);
@@ -219,13 +219,13 @@ TEST(OptimizerTests, MoveForwardParetoSizeIsStable)
 
 IGNORE_TEST(OptimizerTests, DumpMoveForwardPareto)
 {
-    /* takes ~5min */
-    auto no_walls{run_move_forward_pareto(64, 300, 50, move_forward::WallMode::NO_WALLS)};
+    /* takes ~21min */
+    auto no_walls{run_move_forward_staged(64, 150, 500, 200, 50, move_forward::WallMode::NO_WALLS)};
     write_move_forward_pareto_to_file("mf_no_walls.txt", no_walls);
 
-    auto one_wall{run_move_forward_pareto(64, 300, 50, move_forward::WallMode::LEFT_WALL_ONLY)};
+    auto one_wall{run_move_forward_staged(64, 150, 500, 200, 50, move_forward::WallMode::LEFT_WALL_ONLY)};
     write_move_forward_pareto_to_file("mf_one_wall.txt", one_wall);
 
-    auto both_walls{run_move_forward_pareto(64, 300, 50, move_forward::WallMode::BOTH_WALLS)};
+    auto both_walls{run_move_forward_staged(64, 150, 500, 200, 50, move_forward::WallMode::BOTH_WALLS)};
     write_move_forward_pareto_to_file("mf_both_walls.txt", both_walls);
 }
