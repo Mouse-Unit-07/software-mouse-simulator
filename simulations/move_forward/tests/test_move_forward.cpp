@@ -473,3 +473,80 @@ IGNORE_TEST(MoveForwardTests, VisualizationDoesNotAffectResults)
     CHECK(are_results_equivalent(one_wall_disabled, one_wall_enabled));
     CHECK(are_results_equivalent(one_wall_disabled, two_wall_enabled));
 }
+
+IGNORE_TEST(MoveForwardTests, VisualizeWithIdealParameters)
+{
+    Config cfg_no_walls;
+    cfg_no_walls.ctrl_cfg.single_wall_target = 0u;
+    cfg_no_walls.ctrl_cfg.motor_speed = 238u;
+    cfg_no_walls.ctrl_cfg.kp_velocity = 134;
+    cfg_no_walls.ctrl_cfg.kd_velocity = 882;
+    cfg_no_walls.ctrl_cfg.kp_angle = 587;
+    cfg_no_walls.ctrl_cfg.kd_angle = 294;
+    cfg_no_walls.ctrl_cfg.pid_scale = 213;
+    cfg_no_walls.ctrl_cfg.kp_ir = 0;
+    cfg_no_walls.ctrl_cfg.kd_ir = 0;
+    cfg_no_walls.env_cfg.dt = 0.01;
+    cfg_no_walls.env_cfg.motor_speed_scale = 1.0;
+    cfg_no_walls.env_cfg.motor1_variance = 0.1;
+    cfg_no_walls.env_cfg.motor2_variance = 0.0;
+    cfg_no_walls.env_cfg.slip_factor = 1.0;
+    cfg_no_walls.env_cfg.wheel_circumference_scale = 1.0;
+    cfg_no_walls.env_cfg.wheel_base_scale = 1.0;
+    cfg_no_walls.env_cfg.maze_size_scale = 1.0;
+    cfg_no_walls.env_cfg.ir_reading_scale = 1.0;
+    cfg_no_walls.env_cfg.mouse_angle = 0.0;
+    cfg_no_walls.env_cfg.horizontal_position_variance = 0.0;
+    cfg_no_walls.env_cfg.vertical_position_variance = 0.0;
+
+    Config cfg_one_wall;
+    cfg_one_wall.ctrl_cfg.single_wall_target = 276u;
+    cfg_one_wall.ctrl_cfg.motor_speed = 250u;
+    cfg_one_wall.ctrl_cfg.kp_velocity = 471;
+    cfg_one_wall.ctrl_cfg.kd_velocity = 327;
+    cfg_one_wall.ctrl_cfg.kp_angle = 1401;
+    cfg_one_wall.ctrl_cfg.kd_angle = 1086;
+    cfg_one_wall.ctrl_cfg.pid_scale = 511;
+    cfg_one_wall.ctrl_cfg.kp_ir = 1082;
+    cfg_one_wall.ctrl_cfg.kd_ir = 279;
+    cfg_one_wall.env_cfg.dt = 0.01;
+    cfg_one_wall.env_cfg.motor_speed_scale = 1.0;
+    cfg_one_wall.env_cfg.motor1_variance = 0.1;
+    cfg_one_wall.env_cfg.motor2_variance = 0.0;
+    cfg_one_wall.env_cfg.slip_factor = 1.0;
+    cfg_one_wall.env_cfg.wheel_circumference_scale = 1.0;
+    cfg_one_wall.env_cfg.wheel_base_scale = 1.0;
+    cfg_one_wall.env_cfg.maze_size_scale = 1.0;
+    cfg_one_wall.env_cfg.ir_reading_scale = 1.0;
+    cfg_one_wall.env_cfg.mouse_angle = 0.0;
+    cfg_one_wall.env_cfg.horizontal_position_variance = 0.0;
+    cfg_one_wall.env_cfg.vertical_position_variance = 0.0;
+
+    Config cfg_two_walls;
+    cfg_two_walls.ctrl_cfg.single_wall_target = 0u;
+    cfg_two_walls.ctrl_cfg.motor_speed = 142u;
+    cfg_two_walls.ctrl_cfg.kp_velocity = 129;
+    cfg_two_walls.ctrl_cfg.kd_velocity = 152;
+    cfg_two_walls.ctrl_cfg.kp_angle = 439;
+    cfg_two_walls.ctrl_cfg.kd_angle = 319;
+    cfg_two_walls.ctrl_cfg.pid_scale = 507;
+    cfg_two_walls.ctrl_cfg.kp_ir = 588;
+    cfg_two_walls.ctrl_cfg.kd_ir = 26;
+    cfg_two_walls.env_cfg.dt = 0.01;
+    cfg_two_walls.env_cfg.motor_speed_scale = 1.0;
+    cfg_two_walls.env_cfg.motor1_variance = 0.1;
+    cfg_two_walls.env_cfg.motor2_variance = 0.0;
+    cfg_two_walls.env_cfg.slip_factor = 1.0;
+    cfg_two_walls.env_cfg.wheel_circumference_scale = 1.0;
+    cfg_two_walls.env_cfg.wheel_base_scale = 1.0;
+    cfg_two_walls.env_cfg.maze_size_scale = 1.0;
+    cfg_two_walls.env_cfg.ir_reading_scale = 1.0;
+    cfg_two_walls.env_cfg.mouse_angle = 0.0;
+    cfg_two_walls.env_cfg.horizontal_position_variance = 0.0;
+    cfg_two_walls.env_cfg.vertical_position_variance = 0.0;
+
+    enable_visualization("ideal-parameters");
+    auto r1{run_simulation(cfg_no_walls, WallMode::NO_WALLS)};
+    auto r2{run_simulation(cfg_one_wall, WallMode::LEFT_WALL_ONLY)};
+    auto r3{run_simulation(cfg_two_walls, WallMode::BOTH_WALLS)};
+}
