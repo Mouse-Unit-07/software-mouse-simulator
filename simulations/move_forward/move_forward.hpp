@@ -74,6 +74,9 @@ const std::vector<WallMode> WALL_MODES{WallMode::NO_WALLS, WallMode::LEFT_WALL_O
 namespace move_forward
 {
 
+void reset_all_config_bounds(void);
+void set_ctr_config_bounds(const ControlConfig& lower, const ControlConfig& upper);
+void set_env_config_bounds(const EnvironmentConfig& lower, const EnvironmentConfig& upper);
 ControlConfig decode_control(const std::vector<double>& x);
 std::vector<double> encode_control(const ControlConfig& cfg);
 std::pair<std::vector<double>, std::vector<double>> get_control_bounds(void);

@@ -25,7 +25,77 @@ using namespace optimizer;
 /*============================================================================*/
 /*                             Public Definitions                             */
 /*============================================================================*/
-/* none */
+move_forward::ControlConfig ctr_lower{};
+move_forward::ControlConfig ctr_upper{};
+move_forward::EnvironmentConfig env_lower{};
+move_forward::EnvironmentConfig env_upper{};
+
+void set_local_ctr_bound_variables(void)
+{
+    ctr_lower.single_wall_target = 0;
+    ctr_lower.motor_speed = 140;
+    ctr_lower.kp_velocity = 0;
+    ctr_lower.kd_velocity = 0;
+    ctr_lower.kp_angle = 0;
+    ctr_lower.kd_angle = 0;
+    ctr_lower.pid_scale = 16;
+    ctr_lower.kp_ir = 0;
+    ctr_lower.kd_ir = 0;
+
+    ctr_upper.single_wall_target = 1024;
+    ctr_upper.motor_speed = 255;
+    ctr_upper.kp_velocity = 2000;
+    ctr_upper.kd_velocity = 2000;
+    ctr_upper.kp_angle = 2000;
+    ctr_upper.kd_angle = 2000;
+    ctr_upper.pid_scale = 512;
+    ctr_upper.kp_ir = 2000;
+    ctr_upper.kd_ir = 2000;
+}
+
+void set_local_env_bound_variables(void)
+{
+    env_lower.dt = 0.005;
+    env_lower.motor_speed_scale = 0.9;
+    env_lower.motor1_variance = -0.2;
+    env_lower.motor2_variance = -0.2;
+    env_lower.slip_factor = 0.9;
+    env_lower.wheel_circumference_scale = 0.9;
+    env_lower.wheel_base_scale = 0.9;
+    env_lower.maze_size_scale = 0.9;
+    env_lower.ir_reading_scale = 0.9;
+    env_lower.mouse_angle = -(M_PI / 4);
+    env_lower.horizontal_position_variance = -0.5;
+    env_lower.vertical_position_variance = -0.5;
+
+    env_upper.dt = 0.01;
+    env_upper.motor_speed_scale = 1.1;
+    env_upper.motor1_variance = 0.2;
+    env_upper.motor2_variance = 0.2;
+    env_upper.slip_factor = 1.1;
+    env_upper.wheel_circumference_scale = 1.1;
+    env_upper.wheel_base_scale = 1.1;
+    env_upper.maze_size_scale = 1.1;
+    env_upper.ir_reading_scale = 1.1;
+    env_upper.mouse_angle = M_PI / 4;
+    env_upper.horizontal_position_variance = 0.5;
+    env_upper.vertical_position_variance = 0.5;
+}
+
+void set_config_bounds(void)
+{
+    move_forward::set_ctr_config_bounds(ctr_lower, ctr_upper);
+    move_forward::set_env_config_bounds(env_lower, env_upper);
+}
+
+void reset_local_and_assigned_config_bounds(void)
+{
+    ctr_lower = {};
+    ctr_upper = {};
+    env_lower = {};
+    env_upper = {};
+    move_forward::reset_all_config_bounds();
+}
 
 /*============================================================================*/
 /*                            Mock Implementations                            */
@@ -39,12 +109,12 @@ TEST_GROUP(OptimizerTests)
 {
     void setup() override
     {
-
+        reset_local_and_assigned_config_bounds();
     }
 
     void teardown() override
     {
-
+        reset_local_and_assigned_config_bounds();
     }
 };
 
@@ -134,6 +204,10 @@ IGNORE_TEST(OptimizerTests, DumpRotationPareto)
 
 TEST(OptimizerTests, MoveForwardParetoStructureIsValid)
 {
+    set_local_ctr_bound_variables();
+    set_local_env_bound_variables();
+    set_config_bounds();
+
     for (move_forward::WallMode m : move_forward::WALL_MODES) {
         auto result{run_move_forward_pareto(8, 5, 10, m)};
 
@@ -149,6 +223,10 @@ TEST(OptimizerTests, MoveForwardParetoStructureIsValid)
 
 TEST(OptimizerTests, MoveForwardParetoHasNoNaNOrInf)
 {
+    set_local_ctr_bound_variables();
+    set_local_env_bound_variables();
+    set_config_bounds();
+
     for (move_forward::WallMode m : move_forward::WALL_MODES) {
         auto result{run_move_forward_pareto(8, 5, 10, m)};
 
@@ -168,6 +246,10 @@ TEST(OptimizerTests, MoveForwardParetoHasNoNaNOrInf)
 
 TEST(OptimizerTests, MoveForwardControlWithinBounds)
 {
+    set_local_ctr_bound_variables();
+    set_local_env_bound_variables();
+    set_config_bounds();
+
     for (move_forward::WallMode m : move_forward::WALL_MODES) {
         auto result{run_move_forward_pareto(8, 5, 10, m)};
 
@@ -186,6 +268,10 @@ TEST(OptimizerTests, MoveForwardControlWithinBounds)
 
 TEST(OptimizerTests, MoveForwardObjectivesAreInValidRanges)
 {
+    set_local_ctr_bound_variables();
+    set_local_env_bound_variables();
+    set_config_bounds();
+
     for (move_forward::WallMode m : move_forward::WALL_MODES) {
         auto result{run_move_forward_pareto(8, 5, 10, m)};
 
@@ -208,6 +294,10 @@ TEST(OptimizerTests, MoveForwardObjectivesAreInValidRanges)
 
 TEST(OptimizerTests, MoveForwardParetoSizeIsStable)
 {
+    set_local_ctr_bound_variables();
+    set_local_env_bound_variables();
+    set_config_bounds();
+
     for (move_forward::WallMode m : move_forward::WALL_MODES) {
         auto a{run_move_forward_pareto(8, 10, 10, m)};
         auto b{run_move_forward_pareto(8, 10, 10, m)};
@@ -217,15 +307,38 @@ TEST(OptimizerTests, MoveForwardParetoSizeIsStable)
     }
 }
 
-IGNORE_TEST(OptimizerTests, DumpMoveForwardPareto)
+IGNORE_TEST(OptimizerTests, DumpMoveForwardParetoNoWalls)
 {
-    /* takes ~21min */
+    set_local_ctr_bound_variables();
+    set_local_env_bound_variables();
+    env_lower.mouse_angle = 0.0;
+    env_upper.mouse_angle = 0.0;
+
+    set_config_bounds();
+
     auto no_walls{run_move_forward_staged(64, 150, 500, 200, 50, move_forward::WallMode::NO_WALLS)};
     write_move_forward_pareto_to_file("mf_no_walls.txt", no_walls);
+}
 
-    auto one_wall{run_move_forward_staged(64, 150, 500, 200, 50, move_forward::WallMode::LEFT_WALL_ONLY)};
+IGNORE_TEST(OptimizerTests, DumpMoveForwardParetoOneWall)
+{
+    set_local_ctr_bound_variables();
+    set_local_env_bound_variables();
+    set_config_bounds();
+
+    auto one_wall{
+        run_move_forward_staged(64, 150, 500, 200, 50, move_forward::WallMode::LEFT_WALL_ONLY)};
     write_move_forward_pareto_to_file("mf_one_wall.txt", one_wall);
+}
 
-    auto both_walls{run_move_forward_staged(64, 150, 500, 200, 50, move_forward::WallMode::BOTH_WALLS)};
+IGNORE_TEST(OptimizerTests, DumpMoveForwardParetoBothWalls)
+{
+    set_local_ctr_bound_variables();
+    set_local_env_bound_variables();
+    set_config_bounds();
+
+    /* takes ~11min */
+    auto both_walls{
+        run_move_forward_staged(64, 150, 500, 200, 50, move_forward::WallMode::BOTH_WALLS)};
     write_move_forward_pareto_to_file("mf_both_walls.txt", both_walls);
 }

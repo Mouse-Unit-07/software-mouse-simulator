@@ -30,6 +30,78 @@ using namespace move_forward;
 /*============================================================================*/
 constexpr double FLOAT_TOLERANCE{1e-6};
 
+ControlConfig ctr_lower{};
+ControlConfig ctr_upper{};
+EnvironmentConfig env_lower{};
+EnvironmentConfig env_upper{};
+
+void set_local_ctr_bound_variables(void)
+{
+    ctr_lower.single_wall_target = 0;
+    ctr_lower.motor_speed = 140;
+    ctr_lower.kp_velocity = 0;
+    ctr_lower.kd_velocity = 0;
+    ctr_lower.kp_angle = 0;
+    ctr_lower.kd_angle = 0;
+    ctr_lower.pid_scale = 16;
+    ctr_lower.kp_ir = 0;
+    ctr_lower.kd_ir = 0;
+
+    ctr_upper.single_wall_target = 1024;
+    ctr_upper.motor_speed = 255;
+    ctr_upper.kp_velocity = 2000;
+    ctr_upper.kd_velocity = 2000;
+    ctr_upper.kp_angle = 2000;
+    ctr_upper.kd_angle = 2000;
+    ctr_upper.pid_scale = 512;
+    ctr_upper.kp_ir = 2000;
+    ctr_upper.kd_ir = 2000;
+}
+
+void set_local_env_bound_variables(void)
+{
+    env_lower.dt = 0.005;
+    env_lower.motor_speed_scale = 0.9;
+    env_lower.motor1_variance = -0.2;
+    env_lower.motor2_variance = -0.2;
+    env_lower.slip_factor = 0.9;
+    env_lower.wheel_circumference_scale = 0.9;
+    env_lower.wheel_base_scale = 0.9;
+    env_lower.maze_size_scale = 0.9;
+    env_lower.ir_reading_scale = 0.9;
+    env_lower.mouse_angle = -(M_PI / 4);
+    env_lower.horizontal_position_variance = -0.5;
+    env_lower.vertical_position_variance = -0.5;
+
+    env_upper.dt = 0.01;
+    env_upper.motor_speed_scale = 1.1;
+    env_upper.motor1_variance = 0.2;
+    env_upper.motor2_variance = 0.2;
+    env_upper.slip_factor = 1.1;
+    env_upper.wheel_circumference_scale = 1.1;
+    env_upper.wheel_base_scale = 1.1;
+    env_upper.maze_size_scale = 1.1;
+    env_upper.ir_reading_scale = 1.1;
+    env_upper.mouse_angle = M_PI / 4;
+    env_upper.horizontal_position_variance = 0.5;
+    env_upper.vertical_position_variance = 0.5;
+}
+
+void set_config_bounds(void)
+{
+    set_ctr_config_bounds(ctr_lower, ctr_upper);
+    set_env_config_bounds(env_lower, env_upper);
+}
+
+void reset_local_and_assigned_config_bounds(void)
+{
+    ctr_lower = {};
+    ctr_upper = {};
+    env_lower = {};
+    env_upper = {};
+    reset_all_config_bounds();
+}
+
 Config create_no_variance_config(void)
 {
     Config cfg{};
@@ -119,12 +191,14 @@ TEST_GROUP(MoveForwardTests)
 {
     void setup() override
     {
+        reset_local_and_assigned_config_bounds();
         disable_visualization();
     }
 
     void teardown() override
     {
         disable_visualization();
+        reset_local_and_assigned_config_bounds();
     }
 };
 
@@ -194,6 +268,9 @@ TEST(MoveForwardTests, GetControlBoundsHasCorrectSize)
 
 TEST(MoveForwardTests, GetControlBoundsValuesAreCorrect)
 {
+    set_local_ctr_bound_variables();
+    set_config_bounds();
+
     auto [low, high] = get_control_bounds();
 
     CHECK_EQUAL(0, low.at(0));
@@ -219,6 +296,9 @@ TEST(MoveForwardTests, GetControlBoundsValuesAreCorrect)
 
 TEST(MoveForwardTests, GetControlBoundsAreDecodeSafe)
 {
+    set_local_ctr_bound_variables();
+    set_config_bounds();
+
     auto [low, high] = get_control_bounds();
 
     auto low_cfg{decode_control(low)};
@@ -230,6 +310,9 @@ TEST(MoveForwardTests, GetControlBoundsAreDecodeSafe)
 
 TEST(MoveForwardTests, RandomEnvironmentValuesWithinExpectedRanges)
 {
+    set_local_env_bound_variables();
+    set_config_bounds();
+
     for (int i{0}; i < 100; i++) {
         auto e{generate_random_environment()};
 
@@ -478,12 +561,12 @@ IGNORE_TEST(MoveForwardTests, VisualizeWithIdealParameters)
 {
     Config cfg_no_walls;
     cfg_no_walls.ctrl_cfg.single_wall_target = 0u;
-    cfg_no_walls.ctrl_cfg.motor_speed = 238u;
-    cfg_no_walls.ctrl_cfg.kp_velocity = 134;
-    cfg_no_walls.ctrl_cfg.kd_velocity = 882;
-    cfg_no_walls.ctrl_cfg.kp_angle = 587;
-    cfg_no_walls.ctrl_cfg.kd_angle = 294;
-    cfg_no_walls.ctrl_cfg.pid_scale = 213;
+    cfg_no_walls.ctrl_cfg.motor_speed = 160u;
+    cfg_no_walls.ctrl_cfg.kp_velocity = 251;
+    cfg_no_walls.ctrl_cfg.kd_velocity = 4;
+    cfg_no_walls.ctrl_cfg.kp_angle = 1961;
+    cfg_no_walls.ctrl_cfg.kd_angle = 4;
+    cfg_no_walls.ctrl_cfg.pid_scale = 169;
     cfg_no_walls.ctrl_cfg.kp_ir = 0;
     cfg_no_walls.ctrl_cfg.kd_ir = 0;
     cfg_no_walls.env_cfg.dt = 0.01;

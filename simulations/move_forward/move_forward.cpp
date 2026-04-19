@@ -63,17 +63,46 @@ extern double ENCODER_TICKS_PER_MILLIMETER;
 
 }
 
+namespace
+{
+
 constexpr double FLOAT_TOLERANCE{1e-6};
 std::string TEST_OUTPUT_DIRECTORY{"visualizer"};
 std::string TEST_OUTPUT_SUBDIRECTORY{""};
 bool visualizer_enabled{false};
 visualizer::Visualizer move_forward_visualizer;
+ControlConfig ctr_lower_bounds{};
+ControlConfig ctr_upper_bounds{};
+EnvironmentConfig env_lower_bounds{};
+EnvironmentConfig env_upper_bounds{};
+
+} /* unnamed namespace*/
 
 /*----------------------------------------------------------------------------*/
 /*                             Public Definitions                             */
 /*----------------------------------------------------------------------------*/
 namespace move_forward
 {
+
+void reset_all_config_bounds(void)
+{
+    ctr_lower_bounds = {};
+    ctr_upper_bounds = {};
+    env_lower_bounds = {};
+    env_upper_bounds = {};
+}
+
+void set_ctr_config_bounds(const ControlConfig& lower, const ControlConfig& upper)
+{
+    ctr_lower_bounds = lower;
+    ctr_upper_bounds = upper;
+}
+
+void set_env_config_bounds(const EnvironmentConfig& lower, const EnvironmentConfig& upper)
+{
+    env_lower_bounds = lower;
+    env_upper_bounds = upper;
+}
 
 ControlConfig decode_control(const std::vector<double>& x)
 {
@@ -108,29 +137,7 @@ std::vector<double> encode_control(const ControlConfig& cfg)
 
 std::pair<std::vector<double>, std::vector<double>> get_control_bounds(void)
 {
-    ControlConfig lower_bounds;
-    lower_bounds.single_wall_target = 0;
-    lower_bounds.motor_speed = 140;
-    lower_bounds.kp_velocity = 0;
-    lower_bounds.kd_velocity = 0;
-    lower_bounds.kp_angle = 0;
-    lower_bounds.kd_angle = 0;
-    lower_bounds.pid_scale = 16;
-    lower_bounds.kp_ir = 0;
-    lower_bounds.kd_ir = 0;
-
-    ControlConfig upper_bounds;
-    upper_bounds.single_wall_target = 1024;
-    upper_bounds.motor_speed = 255;
-    upper_bounds.kp_velocity = 2000;
-    upper_bounds.kd_velocity = 2000;
-    upper_bounds.kp_angle = 2000;
-    upper_bounds.kd_angle = 2000;
-    upper_bounds.pid_scale = 512;
-    upper_bounds.kp_ir = 2000;
-    upper_bounds.kd_ir = 2000;
-
-    return {encode_control(lower_bounds), encode_control(upper_bounds)};
+    return {encode_control(ctr_lower_bounds), encode_control(ctr_upper_bounds)};
 }
 
 EnvironmentConfig generate_random_environment(void)
@@ -142,18 +149,30 @@ EnvironmentConfig generate_random_environment(void)
     };
 
     EnvironmentConfig e;
-    e.dt = uniform(0.005, 0.01);
-    e.motor_speed_scale = uniform(0.9, 1.1);
-    e.motor1_variance = uniform(-0.2, 0.2);
-    e.motor2_variance = uniform(-0.2, 0.2);
-    e.slip_factor = uniform(0.9, 1.1);
-    e.wheel_circumference_scale = uniform(0.9, 1.1);
-    e.wheel_base_scale = uniform(0.9, 1.1);
-    e.maze_size_scale = uniform(0.9, 1.1);
-    e.ir_reading_scale = uniform(0.9, 1.1);
-    e.mouse_angle = uniform(-(M_PI / 4), M_PI / 4);
-    e.horizontal_position_variance = uniform(-0.5, 0.5);
-    e.vertical_position_variance = uniform(-0.5, 0.5);
+    e.dt =
+        uniform(env_lower_bounds.dt, env_upper_bounds.dt);
+    e.motor_speed_scale =
+        uniform(env_lower_bounds.motor_speed_scale, env_upper_bounds.motor_speed_scale);
+    e.motor1_variance =
+        uniform(env_lower_bounds.motor1_variance, env_upper_bounds.motor1_variance);
+    e.motor2_variance =
+        uniform(env_lower_bounds.motor2_variance, env_upper_bounds.motor2_variance);
+    e.slip_factor =
+        uniform(env_lower_bounds.slip_factor, env_upper_bounds.slip_factor);
+    e.wheel_circumference_scale =
+        uniform(env_lower_bounds.wheel_circumference_scale, env_upper_bounds.wheel_circumference_scale);
+    e.wheel_base_scale =
+        uniform(env_lower_bounds.wheel_base_scale, env_upper_bounds.wheel_base_scale);
+    e.maze_size_scale =
+        uniform(env_lower_bounds.maze_size_scale, env_upper_bounds.maze_size_scale);
+    e.ir_reading_scale =
+        uniform(env_lower_bounds.ir_reading_scale, env_upper_bounds.ir_reading_scale);
+    e.mouse_angle =
+        uniform(env_lower_bounds.mouse_angle, env_upper_bounds.mouse_angle);
+    e.horizontal_position_variance =
+        uniform(env_lower_bounds.horizontal_position_variance, env_upper_bounds.horizontal_position_variance);
+    e.vertical_position_variance =
+        uniform(env_lower_bounds.vertical_position_variance, env_upper_bounds.vertical_position_variance);
 
     return e;
 }
