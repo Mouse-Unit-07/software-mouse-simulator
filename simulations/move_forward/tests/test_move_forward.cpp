@@ -205,6 +205,22 @@ TEST_GROUP(MoveForwardTests)
 /*============================================================================*/
 /*                                    Tests                                   */
 /*============================================================================*/
+TEST(MoveForwardTests, ResetAllConfigBoundsClearsBounds)
+{
+    set_local_ctr_bound_variables();
+    set_local_env_bound_variables();
+    set_config_bounds();
+
+    reset_all_config_bounds();
+
+    auto [low, high] = get_control_bounds();
+
+    for (size_t i{0}; i < low.size(); ++i) {
+        CHECK_EQUAL(0.0, low.at(i));
+        CHECK_EQUAL(0.0, high.at(i));
+    }
+}
+
 TEST(MoveForwardTests, EncodeDecodeControlRoundTrip)
 {
     ControlConfig original;
@@ -498,7 +514,20 @@ TEST(MoveForwardTests, MotorSpeedAffectsResults)
     CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
 }
 
-TEST(MoveForwardTests, EncoderPDAffectsResults)
+TEST(MoveForwardTests, EncoderVelocityPdAffectResults)
+{
+    Config cfg1{create_no_variance_config()};
+    cfg1.env_cfg.motor1_variance = 0.1;
+    Config cfg2{cfg1};
+    cfg2.ctrl_cfg.kp_velocity = 50;
+    cfg2.ctrl_cfg.kd_velocity = 10;
+
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
+}
+
+TEST(MoveForwardTests, EncoderAnglePdAffectResults)
 {
     Config cfg1{create_no_variance_config()};
     cfg1.env_cfg.motor1_variance = 0.1;
@@ -511,7 +540,7 @@ TEST(MoveForwardTests, EncoderPDAffectsResults)
     CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
 }
 
-TEST(MoveForwardTests, IRControlAffectsOneAndTwoWallResultsOnly)
+TEST(MoveForwardTests, IrPdAffectOneAndTwoWallResultsOnly)
 {
     Config cfg1{create_no_variance_config()};
     cfg1.env_cfg.mouse_angle = M_PI / 16;
