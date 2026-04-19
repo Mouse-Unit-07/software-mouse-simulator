@@ -46,20 +46,6 @@ std::vector<size_t> get_best_feasible_indices(const std::vector<PagmoVec>& F, si
 namespace optimizer
 {
 
-template <typename UDP>
-ParetoResult run_pareto_impl(UDP&& udp, std::size_t population, std::size_t generations)
-{
-    pagmo::problem prob{std::forward<UDP>(udp)};
-    pagmo::algorithm algo{pagmo::nsga2{}};
-    pagmo::population pop{prob, population};
-
-    for (std::size_t i{0}; i < generations; ++i) {
-        pop = algo.evolve(pop);
-    }
-
-    return {pop.get_x(), pop.get_f()};
-}
-
 /* -------------------------------------------------------------------------- */
 /* rotation */
 class RotationUDP {
@@ -115,7 +101,15 @@ public:
 ParetoResult run_rotation_pareto(std::size_t population, std::size_t generations,
                                  int simulations_per_fitness)
 {
-    return run_pareto_impl(RotationUDP{simulations_per_fitness}, population, generations);
+    pagmo::problem prob{RotationUDP{simulations_per_fitness}};
+    pagmo::algorithm algo{pagmo::nsga2{}};
+    pagmo::population pop{prob, population};
+
+    for (std::size_t i{0}; i < generations; ++i) {
+        pop = algo.evolve(pop);
+    }
+
+    return {pop.get_x(), pop.get_f()};
 }
 
 void write_rotation_pareto_to_file(const std::string& filename, const ParetoResult& result)
@@ -331,8 +325,14 @@ ParetoResult run_move_forward_staged(size_t population, size_t gen_stage1, size_
                                      int sims_stage1, int sims_stage2, move_forward::WallMode mode)
 {
     /* Stage 1: Feasibility */
-    auto stage1{
-        run_pareto_impl(MoveForwardFeasibilityUDP{sims_stage1, mode}, population, gen_stage1)};
+    pagmo::problem prob1{MoveForwardFeasibilityUDP{sims_stage1, mode}};
+    pagmo::algorithm algo{pagmo::nsga2{}};
+    pagmo::population pop1{prob1, population};
+
+    for (std::size_t i{0}; i < gen_stage1; ++i) {
+        pop1 = algo.evolve(pop1);
+    }
+    ParetoResult stage1{pop1.get_x(), pop1.get_f()};
 
     /* Extract non-dominated solutions */
     auto best_indices{get_best_feasible_indices(stage1.F, population)};
@@ -359,8 +359,6 @@ ParetoResult run_move_forward_staged(size_t population, size_t gen_stage1, size_
     }
 
     /* Evolve */
-    pagmo::algorithm algo{pagmo::nsga2{}};
-
     for (size_t i{0}; i < gen_stage2; ++i) {
         pop = algo.evolve(pop);
     }
