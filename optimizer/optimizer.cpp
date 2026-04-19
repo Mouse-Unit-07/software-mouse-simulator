@@ -327,12 +327,6 @@ public:
     move_forward::WallMode mode_;
 };
 
-ParetoResult run_move_forward_pareto(std::size_t population, std::size_t generations,
-                                     int simulations_per_fitness, move_forward::WallMode mode)
-{
-    return run_pareto_impl(MoveForwardUDP{simulations_per_fitness, mode}, population, generations);
-}
-
 ParetoResult run_move_forward_staged(size_t population, size_t gen_stage1, size_t gen_stage2,
                                      int sims_stage1, int sims_stage2, move_forward::WallMode mode)
 {

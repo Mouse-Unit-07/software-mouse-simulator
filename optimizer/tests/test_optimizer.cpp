@@ -209,7 +209,7 @@ TEST(OptimizerTests, MoveForwardParetoStructureIsValid)
     set_config_bounds();
 
     for (move_forward::WallMode m : move_forward::WALL_MODES) {
-        auto result{run_move_forward_pareto(8, 5, 10, m)};
+        auto result{run_move_forward_staged(8, 3, 3, 2, 2, m)};
 
         CHECK_EQUAL(8, result.X.size());
         CHECK_EQUAL(8, result.F.size());
@@ -228,7 +228,7 @@ TEST(OptimizerTests, MoveForwardParetoHasNoNaNOrInf)
     set_config_bounds();
 
     for (move_forward::WallMode m : move_forward::WALL_MODES) {
-        auto result{run_move_forward_pareto(8, 5, 10, m)};
+        auto result{run_move_forward_staged(8, 3, 3, 2, 2, m)};
 
         for (const auto& f : result.F) {
             for (double v : f) {
@@ -251,7 +251,7 @@ TEST(OptimizerTests, MoveForwardControlWithinBounds)
     set_config_bounds();
 
     for (move_forward::WallMode m : move_forward::WALL_MODES) {
-        auto result{run_move_forward_pareto(8, 5, 10, m)};
+        auto result{run_move_forward_staged(8, 3, 3, 2, 2, m)};
 
         auto bounds{move_forward::get_control_bounds()};
         const auto& lb{bounds.first};
@@ -273,7 +273,7 @@ TEST(OptimizerTests, MoveForwardObjectivesAreInValidRanges)
     set_config_bounds();
 
     for (move_forward::WallMode m : move_forward::WALL_MODES) {
-        auto result{run_move_forward_pareto(8, 5, 10, m)};
+        auto result{run_move_forward_staged(8, 3, 3, 2, 2, m)};
 
         for (const auto& f : result.F) {
             double collision{f.at(0)};
@@ -299,8 +299,8 @@ TEST(OptimizerTests, MoveForwardParetoSizeIsStable)
     set_config_bounds();
 
     for (move_forward::WallMode m : move_forward::WALL_MODES) {
-        auto a{run_move_forward_pareto(8, 10, 10, m)};
-        auto b{run_move_forward_pareto(8, 10, 10, m)};
+        auto a{run_move_forward_staged(8, 3, 3, 2, 2, m)};
+        auto b{run_move_forward_staged(8, 3, 3, 2, 2, m)};
 
         CHECK_EQUAL(a.X.size(), b.X.size());
         CHECK_EQUAL(a.F.size(), b.F.size());
