@@ -1,7 +1,7 @@
 /*================================ FILE INFO =================================*/
-/* Filename           : test_visualizer.cpp                                   */
+/* Filename           : test_move_forward_optimizer.cpp                       */
 /*                                                                            */
-/* Test implementation for visualizer.cpp                                     */
+/* Test implementation for move_forward_optimizer.cpp                         */
 /*                                                                            */
 /*============================================================================*/
 
@@ -16,11 +16,11 @@
 #include <map>
 #include <vector>
 #include "simulation_common.hpp"
-#include "rotation.hpp"
+#include "optimizer_common.hpp"
 #include "move_forward.hpp"
-#include "optimizer.hpp"
+#include "move_forward_optimizer.hpp"
 
-using namespace optimizer;
+using namespace move_forward_optimizer;
 
 /*============================================================================*/
 /*                             Public Definitions                             */
@@ -105,7 +105,7 @@ void reset_local_and_assigned_config_bounds(void)
 /*============================================================================*/
 /*                                 Test Group                                 */
 /*============================================================================*/
-TEST_GROUP(OptimizerTests)
+TEST_GROUP(MoveForwardOptimizerTests)
 {
     void setup() override
     {
@@ -121,88 +121,7 @@ TEST_GROUP(OptimizerTests)
 /*============================================================================*/
 /*                                    Tests                                   */
 /*============================================================================*/
-TEST(OptimizerTests, RotationParetoStructureIsValid)
-{
-    auto result{run_rotation_pareto(8, 5, 10)};
-
-    CHECK_EQUAL(8, result.X.size());
-    CHECK_EQUAL(8, result.F.size());
-
-    for (size_t i{0}; i < result.X.size(); ++i) {
-        CHECK_EQUAL(6, result.X.at(i).size()); /* control space */
-        CHECK_EQUAL(4, result.F.at(i).size()); /* objective space */
-    }
-}
-
-TEST(OptimizerTests, RotationParetoHasNoNaNOrInf)
-{
-    auto result{run_rotation_pareto(8, 5, 10)};
-
-    for (const auto& f : result.F) {
-        for (double v : f) {
-            CHECK(std::isfinite(v));
-        }
-    }
-
-    for (const auto& x : result.X) {
-        for (double v : x) {
-            CHECK(std::isfinite(v));
-        }
-    }
-}
-
-TEST(OptimizerTests, RotationControlWithinBounds)
-{
-    auto result{run_rotation_pareto(8, 5, 10)};
-
-    auto bounds{rotation::get_control_bounds()};
-    const auto& lb{bounds.first};
-    const auto& ub{bounds.second};
-
-    for (const auto& x : result.X) {
-        for (size_t i{0}; i < x.size(); ++i) {
-            CHECK(x.at(i) >= lb.at(i));
-            CHECK(x.at(i) <= ub.at(i));
-        }
-    }
-}
-
-TEST(OptimizerTests, RotationObjectivesAreInValidRanges)
-{
-    auto result{run_rotation_pareto(8, 5, 10)};
-
-    for (const auto& f : result.F) {
-        double angle{f.at(0)};
-        double translation{f.at(1)};
-        double collision{f.at(2)};
-        double timeout{f.at(3)};
-
-        CHECK(angle >= 0.0);
-        CHECK(translation >= 0.0);
-
-        CHECK(collision >= 0.0 && collision <= 1.0);
-        CHECK(timeout >= 0.0 && timeout <= 1.0);
-    }
-}
-
-TEST(OptimizerTests, RotationParetoSizeIsStable)
-{
-    auto a{run_rotation_pareto(8, 10, 10)};
-    auto b{run_rotation_pareto(8, 10, 10)};
-
-    CHECK_EQUAL(a.X.size(), b.X.size());
-    CHECK_EQUAL(a.F.size(), b.F.size());
-}
-
-IGNORE_TEST(OptimizerTests, DumpRotationPareto)
-{
-    /* takes ~5min */
-    auto result{run_rotation_pareto(64, 300, 1000)};
-
-    write_rotation_pareto_to_file("rotation_test_output.txt", result);
-}
-
-TEST(OptimizerTests, MoveForwardParetoStructureIsValid)
+TEST(MoveForwardOptimizerTests, MoveForwardParetoStructureIsValid)
 {
     set_local_ctr_bound_variables();
     set_local_env_bound_variables();
@@ -221,7 +140,7 @@ TEST(OptimizerTests, MoveForwardParetoStructureIsValid)
     }
 }
 
-TEST(OptimizerTests, MoveForwardParetoHasNoNaNOrInf)
+TEST(MoveForwardOptimizerTests, MoveForwardParetoHasNoNaNOrInf)
 {
     set_local_ctr_bound_variables();
     set_local_env_bound_variables();
@@ -244,7 +163,7 @@ TEST(OptimizerTests, MoveForwardParetoHasNoNaNOrInf)
     }
 }
 
-TEST(OptimizerTests, MoveForwardControlWithinBounds)
+TEST(MoveForwardOptimizerTests, MoveForwardControlWithinBounds)
 {
     set_local_ctr_bound_variables();
     set_local_env_bound_variables();
@@ -266,7 +185,7 @@ TEST(OptimizerTests, MoveForwardControlWithinBounds)
     }
 }
 
-TEST(OptimizerTests, MoveForwardObjectivesAreInValidRanges)
+TEST(MoveForwardOptimizerTests, MoveForwardObjectivesAreInValidRanges)
 {
     set_local_ctr_bound_variables();
     set_local_env_bound_variables();
@@ -292,7 +211,7 @@ TEST(OptimizerTests, MoveForwardObjectivesAreInValidRanges)
     }
 }
 
-TEST(OptimizerTests, MoveForwardParetoSizeIsStable)
+TEST(MoveForwardOptimizerTests, MoveForwardParetoSizeIsStable)
 {
     set_local_ctr_bound_variables();
     set_local_env_bound_variables();
@@ -307,7 +226,7 @@ TEST(OptimizerTests, MoveForwardParetoSizeIsStable)
     }
 }
 
-IGNORE_TEST(OptimizerTests, DumpMoveForwardParetoNoWalls)
+IGNORE_TEST(MoveForwardOptimizerTests, DumpMoveForwardParetoNoWalls)
 {
     set_local_ctr_bound_variables();
     set_local_env_bound_variables();
@@ -320,7 +239,7 @@ IGNORE_TEST(OptimizerTests, DumpMoveForwardParetoNoWalls)
     write_move_forward_pareto_to_file("mf_no_walls.txt", no_walls);
 }
 
-IGNORE_TEST(OptimizerTests, DumpMoveForwardParetoOneWall)
+IGNORE_TEST(MoveForwardOptimizerTests, DumpMoveForwardParetoOneWall)
 {
     set_local_ctr_bound_variables();
     set_local_env_bound_variables();
@@ -331,7 +250,7 @@ IGNORE_TEST(OptimizerTests, DumpMoveForwardParetoOneWall)
     write_move_forward_pareto_to_file("mf_one_wall.txt", one_wall);
 }
 
-IGNORE_TEST(OptimizerTests, DumpMoveForwardParetoBothWalls)
+IGNORE_TEST(MoveForwardOptimizerTests, DumpMoveForwardParetoBothWalls)
 {
     set_local_ctr_bound_variables();
     set_local_env_bound_variables();
