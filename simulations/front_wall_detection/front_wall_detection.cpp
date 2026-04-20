@@ -23,9 +23,8 @@ extern "C"
 #include <cmath>
 #include <cstdint>
 #include <filesystem>
-#include <fstream>
-#include <iomanip>
 #include <map>
+#include <random>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -61,6 +60,10 @@ const std::string TEST_OUTPUT_DIRECTORY{"front-wall-detection-visualizer"};
 bool visualizer_enabled{false};
 visualizer::Visualizer wall_absent_visualizer;
 visualizer::Visualizer wall_present_visualizer;
+ControlConfig ctr_lower_bounds{};
+ControlConfig ctr_upper_bounds{};
+EnvironmentConfig env_lower_bounds{};
+EnvironmentConfig env_upper_bounds{};
 
 } /* unnamed namespace */
 
@@ -69,6 +72,67 @@ visualizer::Visualizer wall_present_visualizer;
 /*----------------------------------------------------------------------------*/
 namespace front_wall_detection
 {
+
+void reset_all_config_bounds(void)
+{
+    ctr_lower_bounds = {};
+    ctr_upper_bounds = {};
+    env_lower_bounds = {};
+    env_upper_bounds = {};
+}
+
+void set_ctr_config_bounds(const ControlConfig& lower, const ControlConfig& upper)
+{
+    ctr_lower_bounds = lower;
+    ctr_upper_bounds = upper;
+}
+
+void set_env_config_bounds(const EnvironmentConfig& lower, const EnvironmentConfig& upper)
+{
+    env_lower_bounds = lower;
+    env_upper_bounds = upper;
+}
+
+ControlConfig decode_control(const std::vector<double>& x)
+{
+    ControlConfig c{};
+    size_t i{0};
+
+    c.reading_threshold = static_cast<uint32_t>(x.at(i++));
+
+    return c;
+}
+
+std::vector<double> encode_control(const ControlConfig& cfg)
+{
+    return {static_cast<double>(cfg.reading_threshold)};
+}
+
+std::pair<std::vector<double>, std::vector<double>> get_control_bounds(void)
+{
+    return {encode_control(ctr_lower_bounds), encode_control(ctr_upper_bounds)};
+}
+
+EnvironmentConfig generate_random_environment(void)
+{
+    static thread_local std::mt19937 rng(std::random_device{}());
+
+    auto uniform = [&](double a, double b) {
+        return std::uniform_real_distribution<double>(a, b)(rng);
+    };
+
+    EnvironmentConfig e;
+    e.ir_reading_scale =
+        uniform(env_lower_bounds.ir_reading_scale, env_upper_bounds.ir_reading_scale);
+    e.mouse_angle =
+        uniform(env_lower_bounds.mouse_angle, env_upper_bounds.mouse_angle);
+    e.horizontal_position_variance =
+        uniform(env_lower_bounds.horizontal_position_variance, env_upper_bounds.horizontal_position_variance);
+    e.vertical_position_variance =
+        uniform(env_lower_bounds.vertical_position_variance, env_upper_bounds.vertical_position_variance);
+
+    return e;
+}
 
 void enable_visualization(void)
 {
@@ -208,8 +272,9 @@ void prepare_mock_for_front_wall_detection(const Config& cfg, const maze::Maze& 
     double max_vertical_offset{(maze::OFFICIAL_WALL_LENGTH_SIZE - mouse.hitbox.vertical_size) / 2};
 
     mouse.rotate(cfg.env_cfg.mouse_angle);
-    mouse.translate(maze.mouse_start.x + (max_horizontal_offset * cfg.env_cfg.horizontal_position_variance),
-                    maze.mouse_start.y + (max_vertical_offset * cfg.env_cfg.vertical_position_variance));
+    mouse.translate(
+        maze.mouse_start.x + (max_horizontal_offset * cfg.env_cfg.horizontal_position_variance),
+        maze.mouse_start.y + (max_vertical_offset * cfg.env_cfg.vertical_position_variance));
 }
 
 } /* unnamed namespace */
