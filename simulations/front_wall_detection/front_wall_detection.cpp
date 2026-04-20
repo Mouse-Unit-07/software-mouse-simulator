@@ -84,11 +84,11 @@ std::string config_to_string(const Config& cfg)
 {
     std::ostringstream oss;
 
-    oss << simulation_common::double_to_filename(cfg.ir_reading_scale) << "-"
-        << simulation_common::double_to_filename(cfg.mouse_angle) << "-"
-        << simulation_common::double_to_filename(cfg.horizontal_position_variance) << "-"
-        << simulation_common::double_to_filename(cfg.vertical_position_variance) << "-"
-        << simulation_common::double_to_filename(cfg.reading_threshold);
+    oss << simulation_common::double_to_filename(cfg.env_cfg.ir_reading_scale) << "-"
+        << simulation_common::double_to_filename(cfg.env_cfg.mouse_angle) << "-"
+        << simulation_common::double_to_filename(cfg.env_cfg.horizontal_position_variance) << "-"
+        << simulation_common::double_to_filename(cfg.env_cfg.vertical_position_variance) << "-"
+        << simulation_common::double_to_filename(cfg.ctrl_cfg.reading_threshold);
 
     return oss.str();
 }
@@ -141,11 +141,11 @@ Result run_simulation(const Config& cfg)
     update_ir_1_sensor_reading(ir_1_distance);
     update_ir_4_sensor_reading(ir_4_distance);
     ir_1_reading = read_ir_1_sensor();
-    ir_1_reading = scale_and_clamp_ir_sensor_reading(ir_1_reading, cfg.ir_reading_scale);
+    ir_1_reading = scale_and_clamp_ir_sensor_reading(ir_1_reading, cfg.env_cfg.ir_reading_scale);
     ir_4_reading = read_ir_4_sensor();
-    ir_4_reading = scale_and_clamp_ir_sensor_reading(ir_4_reading, cfg.ir_reading_scale);
+    ir_4_reading = scale_and_clamp_ir_sensor_reading(ir_4_reading, cfg.env_cfg.ir_reading_scale);
     average_reading = (ir_1_reading + ir_4_reading) / 2;
-    identified_absent_wall = (average_reading < cfg.reading_threshold) ? true : false;
+    identified_absent_wall = (average_reading < cfg.ctrl_cfg.reading_threshold) ? true : false;
 
     if (visualizer_enabled) {
         if (identified_absent_wall) {
@@ -163,11 +163,11 @@ Result run_simulation(const Config& cfg)
     update_ir_1_sensor_reading(ir_1_distance);
     update_ir_4_sensor_reading(ir_4_distance);
     ir_1_reading = read_ir_1_sensor();
-    ir_1_reading = scale_and_clamp_ir_sensor_reading(ir_1_reading, cfg.ir_reading_scale);
+    ir_1_reading = scale_and_clamp_ir_sensor_reading(ir_1_reading, cfg.env_cfg.ir_reading_scale);
     ir_4_reading = read_ir_4_sensor();
-    ir_4_reading = scale_and_clamp_ir_sensor_reading(ir_4_reading, cfg.ir_reading_scale);
+    ir_4_reading = scale_and_clamp_ir_sensor_reading(ir_4_reading, cfg.env_cfg.ir_reading_scale);
     average_reading = (ir_1_reading + ir_4_reading) / 2;
-    identified_present_wall = (average_reading >= cfg.reading_threshold) ? true : false;
+    identified_present_wall = (average_reading >= cfg.ctrl_cfg.reading_threshold) ? true : false;
 
     if (visualizer_enabled) {
         if (identified_present_wall) {
@@ -207,9 +207,9 @@ void prepare_mock_for_front_wall_detection(const Config& cfg, const maze::Maze& 
                                  / 2};
     double max_vertical_offset{(maze::OFFICIAL_WALL_LENGTH_SIZE - mouse.hitbox.vertical_size) / 2};
 
-    mouse.rotate(cfg.mouse_angle);
-    mouse.translate(maze.mouse_start.x + (max_horizontal_offset * cfg.horizontal_position_variance),
-                    maze.mouse_start.y + (max_vertical_offset * cfg.vertical_position_variance));
+    mouse.rotate(cfg.env_cfg.mouse_angle);
+    mouse.translate(maze.mouse_start.x + (max_horizontal_offset * cfg.env_cfg.horizontal_position_variance),
+                    maze.mouse_start.y + (max_vertical_offset * cfg.env_cfg.vertical_position_variance));
 }
 
 } /* unnamed namespace */
