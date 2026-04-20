@@ -1,16 +1,16 @@
 /*-------------------------------- FILE INFO ---------------------------------*/
-/* Filename           : optimizer.hpp                                         */
+/* Filename           : rotation_optimizer.hpp                                */
 /*                                                                            */
-/* Interface to a micromouse simulation optimizer                             */
+/* Interface to a micromouse simulation rotation_optimizer                    */
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
-#ifndef OPTIMIZER_HPP_
-#define OPTIMIZER_HPP_
+#ifndef ROTATION_OPTIMIZER_HPP_
+#define ROTATION_OPTIMIZER_HPP_
 
 /*----------------------------------------------------------------------------*/
 /*                             Public Definitions                             */
 /*----------------------------------------------------------------------------*/
-namespace optimizer
+namespace rotation_optimizer
 {
 
 struct ParetoResult {
@@ -22,15 +22,11 @@ ParetoResult run_rotation_pareto(std::size_t population, std::size_t generations
                                  int simulations_per_fitness);
 void write_rotation_pareto_to_file(const std::string& filename, const ParetoResult& result);
 
-ParetoResult run_move_forward_pareto(std::size_t population, std::size_t generations,
-                                     int simulations_per_fitness);
-void write_move_forward_pareto_to_file(const std::string& filename, const ParetoResult& result);
-
-} /* optimizer namespace */
+} /* rotation_optimizer namespace */
 
 /*----------------------------------------------------------------------------*/
 /*                             Public Declarations                            */
 /*----------------------------------------------------------------------------*/
 /* none */
 
-#endif /* OPTIMIZER_HPP_ */
+#endif /* ROTATION_OPTIMIZER_HPP_ */

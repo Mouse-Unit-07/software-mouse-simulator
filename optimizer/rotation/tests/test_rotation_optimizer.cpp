@@ -1,7 +1,7 @@
 /*================================ FILE INFO =================================*/
-/* Filename           : test_visualizer.cpp                                   */
+/* Filename           : test_rotation_optimizer.cpp                           */
 /*                                                                            */
-/* Test implementation for visualizer.cpp                                     */
+/* Test implementation for rotation_optimizer.cpp                             */
 /*                                                                            */
 /*============================================================================*/
 
@@ -16,16 +16,16 @@
 #include <map>
 #include <vector>
 #include "simulation_common.hpp"
+#include "optimizer_common.hpp"
 #include "rotation.hpp"
-#include "move_forward.hpp"
-#include "optimizer.hpp"
+#include "rotation_optimizer.hpp"
 
-using namespace optimizer;
+using namespace rotation_optimizer;
 
 /*============================================================================*/
 /*                             Public Definitions                             */
 /*============================================================================*/
-
+/* none */
 
 /*============================================================================*/
 /*                            Mock Implementations                            */
@@ -35,7 +35,7 @@ using namespace optimizer;
 /*============================================================================*/
 /*                                 Test Group                                 */
 /*============================================================================*/
-TEST_GROUP(OptimizerTests)
+TEST_GROUP(RotationOptimizerTests)
 {
     void setup() override
     {
@@ -51,7 +51,7 @@ TEST_GROUP(OptimizerTests)
 /*============================================================================*/
 /*                                    Tests                                   */
 /*============================================================================*/
-TEST(OptimizerTests, RotationParetoStructureIsValid)
+TEST(RotationOptimizerTests, RotationParetoStructureIsValid)
 {
     auto result{run_rotation_pareto(8, 5, 10)};
 
@@ -64,7 +64,7 @@ TEST(OptimizerTests, RotationParetoStructureIsValid)
     }
 }
 
-TEST(OptimizerTests, RotationParetoHasNoNaNOrInf)
+TEST(RotationOptimizerTests, RotationParetoHasNoNaNOrInf)
 {
     auto result{run_rotation_pareto(8, 5, 10)};
 
@@ -81,7 +81,7 @@ TEST(OptimizerTests, RotationParetoHasNoNaNOrInf)
     }
 }
 
-TEST(OptimizerTests, RotationControlWithinBounds)
+TEST(RotationOptimizerTests, RotationControlWithinBounds)
 {
     auto result{run_rotation_pareto(8, 5, 10)};
 
@@ -97,7 +97,7 @@ TEST(OptimizerTests, RotationControlWithinBounds)
     }
 }
 
-TEST(OptimizerTests, RotationObjectivesAreInValidRanges)
+TEST(RotationOptimizerTests, RotationObjectivesAreInValidRanges)
 {
     auto result{run_rotation_pareto(8, 5, 10)};
 
@@ -115,7 +115,7 @@ TEST(OptimizerTests, RotationObjectivesAreInValidRanges)
     }
 }
 
-TEST(OptimizerTests, RotationParetoSizeIsStable)
+TEST(RotationOptimizerTests, RotationParetoSizeIsStable)
 {
     auto a{run_rotation_pareto(8, 10, 10)};
     auto b{run_rotation_pareto(8, 10, 10)};
@@ -124,95 +124,10 @@ TEST(OptimizerTests, RotationParetoSizeIsStable)
     CHECK_EQUAL(a.F.size(), b.F.size());
 }
 
-IGNORE_TEST(OptimizerTests, DumpRotationPareto)
+IGNORE_TEST(RotationOptimizerTests, DumpRotationPareto)
 {
     /* takes ~5min */
     auto result{run_rotation_pareto(64, 300, 1000)};
 
     write_rotation_pareto_to_file("rotation_test_output.txt", result);
-}
-
-TEST(OptimizerTests, MoveForwardParetoStructureIsValid)
-{
-    auto result{run_move_forward_pareto(8, 5, 10)};
-
-    CHECK_EQUAL(8, result.X.size());
-    CHECK_EQUAL(8, result.F.size());
-
-    for (size_t i{0}; i < result.X.size(); ++i) {
-        CHECK_EQUAL(7, result.X.at(i).size()); /* control space */
-        CHECK_EQUAL(6, result.F.at(i).size()); /* objective space */
-    }
-}
-
-TEST(OptimizerTests, MoveForwardParetoHasNoNaNOrInf)
-{
-    auto result{run_move_forward_pareto(8, 5, 10)};
-
-    for (const auto& f : result.F) {
-        for (double v : f) {
-            CHECK(std::isfinite(v));
-        }
-    }
-
-    for (const auto& x : result.X) {
-        for (double v : x) {
-            CHECK(std::isfinite(v));
-        }
-    }
-}
-
-TEST(OptimizerTests, MoveForwardControlWithinBounds)
-{
-    auto result{run_move_forward_pareto(8, 5, 10)};
-
-    auto bounds{move_forward::get_control_bounds()};
-    const auto& lb{bounds.first};
-    const auto& ub{bounds.second};
-
-    for (const auto& x : result.X) {
-        for (size_t i{0}; i < x.size(); ++i) {
-            CHECK(x.at(i) >= lb.at(i));
-            CHECK(x.at(i) <= ub.at(i));
-        }
-    }
-}
-
-TEST(OptimizerTests, MoveForwardObjectivesAreInValidRanges)
-{
-    auto result{run_move_forward_pareto(8, 5, 10)};
-
-    for (const auto& f : result.F) {
-        double time{f.at(0)};
-        double angle{f.at(1)};
-        double horizontal_translation{f.at(2)};
-        double vertical_translation{f.at(3)};
-        double collision{f.at(4)};
-        double timeout{f.at(5)};
-
-        CHECK(time >= 0.0);
-        CHECK(angle >= 0.0);
-        CHECK(horizontal_translation >= 0.0);
-        CHECK(vertical_translation >= 0.0);
-
-        CHECK(collision >= 0.0 && collision <= 1.0);
-        CHECK(timeout >= 0.0 && timeout <= 1.0);
-    }
-}
-
-TEST(OptimizerTests, MoveForwardParetoSizeIsStable)
-{
-    auto a{run_move_forward_pareto(8, 10, 10)};
-    auto b{run_move_forward_pareto(8, 10, 10)};
-
-    CHECK_EQUAL(a.X.size(), b.X.size());
-    CHECK_EQUAL(a.F.size(), b.F.size());
-}
-
-IGNORE_TEST(OptimizerTests, DumpMoveForwardPareto)
-{
-    /* takes ~5min */
-    auto result{run_move_forward_pareto(64, 300, 100)};
-
-    write_move_forward_pareto_to_file("move_forward_test_output.txt", result);
 }
