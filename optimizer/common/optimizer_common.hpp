@@ -19,6 +19,7 @@ struct ParetoResult {
 };
 
 std::ofstream open_output_file(const std::string& filename);
+std::string control_to_key(const std::vector<double>& x);
 
 } /* optimizer_common namespace */
 

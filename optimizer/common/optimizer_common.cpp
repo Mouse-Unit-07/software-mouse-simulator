@@ -10,6 +10,7 @@
 /*----------------------------------------------------------------------------*/
 #include <fstream>
 #include <iomanip>
+#include <sstream>
 #include <vector>
 #include "optimizer_common.hpp"
 
@@ -37,6 +38,16 @@ std::ofstream open_output_file(const std::string& filename)
     }
     out << std::fixed << std::setprecision(6);
     return out;
+}
+
+std::string control_to_key(const std::vector<double>& x)
+{
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(6);
+    for (double v : x) {
+        oss << v << ",";
+    }
+    return oss.str();
 }
 
 } /* optimizer_common namespace */

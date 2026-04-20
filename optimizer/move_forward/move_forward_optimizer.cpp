@@ -30,6 +30,8 @@ namespace
 
 using PagmoVec = pagmo::vector_double;
 
+std::unordered_map<std::string, double> time_cache;
+
 std::vector<size_t> get_best_feasible_indices(const std::vector<PagmoVec>& F, size_t keep_n);
 
 } /* unnamed namespace */
@@ -158,6 +160,7 @@ public:
         double timeout{0.0};
         double vertical{0.0};
         double angle{0.0};
+        double total_time{0.0};
 
         for (int i{0}; i < sims_; ++i) {
             move_forward::Config cfg{control, move_forward::generate_random_environment()};
@@ -169,7 +172,11 @@ public:
             timeout += r.timeout ? 1.0 : 0.0;
             vertical += r.final_vertical_translation;
             angle += r.final_angle_error;
+            total_time += r.total_time;
         }
+
+        /* metadata */
+        time_cache[optimizer_common::control_to_key(x)] = total_time / sims_;
 
         Stage2Objectives obj;
         obj.collision = collision / sims_;
@@ -261,6 +268,7 @@ void write_move_forward_pareto_to_file(const std::string& filename, const Pareto
     constexpr int W_TO{12};
     constexpr int W_VERT{12};
     constexpr int W_ANGLE{12};
+    constexpr int W_TIME{12};
 
     /* banner */
     out << "===== MOVE FORWARD PARETO FRONT =====\n\n";
@@ -283,9 +291,10 @@ void write_move_forward_pareto_to_file(const std::string& filename, const Pareto
         << std::setw(W_TO)    << "timeout"
         << std::setw(W_VERT)  << "vert"
         << std::setw(W_ANGLE) << "angle"
+        << std::setw(W_TIME)  << "time"
         << "\n";
 
-    out << std::string(130, '-') << "\n";
+    out << std::string(150, '-') << "\n";
 
     /* rows */
     for (size_t i{0}; i < result.X.size(); ++i) {
@@ -293,6 +302,13 @@ void write_move_forward_pareto_to_file(const std::string& filename, const Pareto
         const auto& f{result.F.at(i)};
         const auto ctrl{move_forward::decode_control(x)};
         const auto obj{Stage2Objectives::from_vec(f)};
+        
+        const std::string key{optimizer_common::control_to_key(x)};
+        double time{0.0};
+        auto it{time_cache.find(key)};
+        if (it != time_cache.end()) {
+            time = it->second;
+        }
 
         out << std::left
             << std::setw(W_IDX)   << i
@@ -311,6 +327,7 @@ void write_move_forward_pareto_to_file(const std::string& filename, const Pareto
             << std::setw(W_TO)    << obj.timeout
             << std::setw(W_VERT)  << obj.vertical
             << std::setw(W_ANGLE) << obj.angle
+            << std::setw(W_TIME)  << time
             << "\n";
     }
 }

@@ -72,3 +72,44 @@ TEST(OptimizerCommonTests, OpenOutputFile_ThrowsOnInvalidPath)
 
     CHECK_THROWS(std::runtime_error, open_output_file(bad_path));
 }
+
+TEST(OptimizerCommonTests, ControlToKeyBasicFormatting)
+{
+    const std::vector<double> x{1.0, 2.5, 3.123456789};
+
+    const auto key{control_to_key(x)};
+
+    CHECK_EQUAL("1.000000,2.500000,3.123457,", key);
+}
+
+TEST(OptimizerCommonTests, ControlToKeyDifferentInputsProduceDifferentKeys)
+{
+    const std::vector<double> a{1.0, 2.0, 3.0};
+    const std::vector<double> b{1.0, 2.0, 3.000001};
+
+    const auto key_a{control_to_key(a)};
+    const auto key_b{control_to_key(b)};
+
+    CHECK(key_a != key_b);
+}
+
+TEST(OptimizerCommonTests, ControlToKeyEmptyVector)
+{
+    const std::vector<double> x{};
+
+    const auto key{control_to_key(x)};
+
+    CHECK_EQUAL("", key);
+}
+
+TEST(OptimizerCommonTests, ControlToKeyRoundingBehavior)
+{
+    const std::vector<double> x{1.1234564};
+    const std::vector<double> y{1.1234565};
+
+    const auto key_x{control_to_key(x)};
+    const auto key_y{control_to_key(y)};
+
+    /* 6th decimal rounding */
+    CHECK(key_x != key_y);
+}
