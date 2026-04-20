@@ -49,9 +49,6 @@ using namespace front_wall_detection;
 void prepare_mock_for_front_wall_detection(const Config& cfg, const maze::Maze& maze,
                                            mouse::Mouse& mouse);
 
-void write_summary(std::ofstream& out, const std::vector<Candidate>& candidates, size_t total_size);
-void write_candidates(std::ofstream& out, const std::vector<Candidate>& candidates);
-
 } /* unnamed namespace */
 
 /*----------------------------------------------------------------------------*/
@@ -72,38 +69,6 @@ visualizer::Visualizer wall_present_visualizer;
 /*----------------------------------------------------------------------------*/
 namespace front_wall_detection
 {
-
-bool ConfigSweeper::next()
-{
-    if (!initialized_) {
-        sweeper.init_sizes({
-            ir_reading_scale.size(),
-            mouse_angle.size(),
-            horizontal_position_variance.size(),
-            vertical_position_variance.size(),
-            reading_threshold.size()
-        });
-
-        initialized_ = true;
-    }
-    return sweeper.next();
-}
-
-Config ConfigSweeper::value() const
-{
-    const auto& idx{sweeper.get_indices()};
-    int i{0};
-
-    Config cfg{};
-
-    cfg.ir_reading_scale = ir_reading_scale.at(idx.at(i++));
-    cfg.mouse_angle = mouse_angle.at(idx.at(i++));
-    cfg.horizontal_position_variance = horizontal_position_variance.at(idx.at(i++));
-    cfg.vertical_position_variance = vertical_position_variance.at(idx.at(i++));
-    cfg.reading_threshold = reading_threshold.at(idx.at(i++));
-
-    return cfg;
-}
 
 void enable_visualization(void)
 {
@@ -223,101 +188,6 @@ Result run_simulation(const Config& cfg)
     return Result{identified_absent_wall, identified_present_wall};
 }
 
-ResultsMetrics compute_results_metrics(const std::vector<Result>& results)
-{
-    ResultsMetrics a;
-
-    a.absent_wall_identification_rate = simulation_common::compute_rate(
-        results, [](const Result& r) { return r.identified_absent_wall; });
-    a.present_wall_identification_rate = simulation_common::compute_rate(
-        results, [](const Result& r) { return r.identified_present_wall; });
-
-    return a;
-}
-
-std::vector<Candidate> build_candidates(const std::vector<Trial>& trials)
-{
-    auto grouped = simulation_common::group_by(
-        trials,
-        [](const Trial& t) { return CandidateKey{t.config.reading_threshold}; },
-        [](const Trial& t) { return t.result; });
-
-    std::vector<Candidate> out;
-    out.reserve(grouped.size());
-
-    for (const auto& [key, group_results] : grouped) {
-        Candidate c;
-        c.key = key;
-        c.results_metrics = compute_results_metrics(group_results);
-        out.push_back(c);
-    }
-
-    return out;
-}
-
-std::vector<Candidate> sort_candidates_by_rate(const std::vector<Candidate>& candidates)
-{
-    constexpr double FLOAT_TOLERANCE{1e-6};
-    std::vector<Candidate> out{candidates};
-
-    auto score = [](const Candidate& c) {
-        double absent{c.results_metrics.absent_wall_identification_rate};
-        double present{c.results_metrics.present_wall_identification_rate};
-
-        double average{(absent + present) / 2.0};
-        double diff{std::abs(absent - present)};
-
-        return average - diff;
-    };
-
-    std::sort(out.begin(), out.end(), [&](const Candidate& a, const Candidate& b) {
-        double sa{score(a)};
-        double sb{score(b)};
-
-        if (std::abs(sa - sb) > FLOAT_TOLERANCE) {
-            return sa > sb;
-        }
-
-        return a.key.threshold < b.key.threshold;
-    });
-
-    return out;
-}
-
-void write_analysis_to_file(const std::string& filename, const std::vector<Candidate>& candidates,
-                            size_t total_size)
-{
-    std::ofstream out(filename);
-    if (!out.is_open()) {
-        throw std::runtime_error("Failed to open output file: " + filename);
-    }
-    out << std::fixed << std::setprecision(3);
-
-    write_summary(out, candidates, total_size);
-
-    out << "\n=== ALL CANDIDATES ===\n";
-    write_candidates(out, candidates);
-}
-
-void run_full_front_wall_detection_experiment(const std::string& filename, ConfigSweeper& sweeper)
-{
-    std::vector<Trial> trials;
-    std::vector<Result> all_results;
-
-    while (sweeper.next()) {
-        Config cfg{sweeper.value()};
-
-        auto result{run_simulation(cfg)};
-
-        trials.push_back({cfg, result});
-        all_results.push_back(result);
-    }
-
-    auto sorted_candidates{sort_candidates_by_rate(build_candidates(trials))};
-
-    write_analysis_to_file(filename, sorted_candidates, all_results.size());
-}
-
 } /* front_wall_detection namespace */
 
 /*----------------------------------------------------------------------------*/
@@ -340,30 +210,6 @@ void prepare_mock_for_front_wall_detection(const Config& cfg, const maze::Maze& 
     mouse.rotate(cfg.mouse_angle);
     mouse.translate(maze.mouse_start.x + (max_horizontal_offset * cfg.horizontal_position_variance),
                     maze.mouse_start.y + (max_vertical_offset * cfg.vertical_position_variance));
-}
-
-void write_summary(std::ofstream& out, const std::vector<Candidate>& candidates, size_t total_size)
-{
-    out << "=== SUMMARY ===\n";
-    out << "Total Trials : " << total_size << "\n";
-    out << "Candidates   : " << candidates.size() << "\n\n";
-}
-
-void write_candidates(std::ofstream& out, const std::vector<Candidate>& candidates)
-{
-    out << std::left
-        << std::setw(12) << "Threshold"
-        << std::setw(10) << "Absent"
-        << std::setw(10) << "Present"
-        << "\n";
-
-    for (const auto& c : candidates) {
-        out << std::left
-            << std::setw(12) << c.key.threshold
-            << std::setw(10) << c.results_metrics.absent_wall_identification_rate
-            << std::setw(10) << c.results_metrics.present_wall_identification_rate
-            << "\n";
-    }
 }
 
 } /* unnamed namespace */
