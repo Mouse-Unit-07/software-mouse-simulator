@@ -67,7 +67,7 @@ public:
             const auto r{rotation::run_simulation(cfg)};
 
             angle += r.final_angle_error;
-            translation += r.total_translation;
+            translation += r.final_translation;
             collision += r.collision ? 1.0 : 0.0;
             timeout += r.timeout ? 1.0 : 0.0;
         }

@@ -118,7 +118,7 @@ bool are_results_equivalent(const Result& r1, const Result& r2)
     if (std::abs(r1.final_angle_error - r2.final_angle_error) >= FLOAT_TOLERANCE) {
         return false;
     }
-    if (std::abs(r1.total_translation - r2.total_translation) >= FLOAT_TOLERANCE) {
+    if (std::abs(r1.final_translation - r2.final_translation) >= FLOAT_TOLERANCE) {
         return false;
     }
 
@@ -286,7 +286,7 @@ TEST(RotationTests, SimulationProducesValidResult)
 
     CHECK(r.total_time >= 0.0);
     CHECK(r.final_angle_error >= 0.0);
-    CHECK(r.total_translation >= 0.0);
+    CHECK(r.final_translation >= 0.0);
 }
 
 TEST(RotationTests, SimulationFailsWhenDtIsZero)
@@ -311,7 +311,7 @@ TEST(RotationTests, PositiveAndNegativeAnglesProduceSameAngleAndTranslationError
 
     CHECK_FALSE(r1.timeout);
     CHECK_FALSE(r2.timeout);
-    DOUBLES_EQUAL(r1.total_translation, r2.total_translation, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(r1.final_translation, r2.final_translation, FLOAT_TOLERANCE);
     DOUBLES_EQUAL(r1.final_angle_error, r2.final_angle_error, FLOAT_TOLERANCE);
 }
 
@@ -370,7 +370,7 @@ TEST(RotationTests, NoTranslationAndAngleErrorForPerfectTestVariables)
 
     CHECK_FALSE(r.timeout);
     DOUBLES_EQUAL(0.0, r.final_angle_error, ROTATION_TOLERANCE);
-    DOUBLES_EQUAL(0.0, r.total_translation, 0.01);
+    DOUBLES_EQUAL(0.0, r.final_translation, 0.01);
 }
 
 TEST(RotationTests, DerivativeTermAffectsStability)
@@ -388,7 +388,7 @@ TEST(RotationTests, DerivativeTermAffectsStability)
     auto r2{run_simulation(with_d)};
 
     CHECK((r1.final_angle_error != r2.final_angle_error)
-          || (r1.total_translation != r2.total_translation));
+          || (r1.final_translation != r2.final_translation));
 }
 
 TEST(RotationTests, PidShiftAffectsControlStrength)

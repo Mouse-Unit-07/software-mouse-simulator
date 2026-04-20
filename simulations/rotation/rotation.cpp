@@ -226,7 +226,6 @@ Result run_simulation(const Config& cfg)
         set_wheel_motor_2_direction_backward();
     }
 
-    double total_translation{0.0};
     double total_angle_rotation{0.0};
     double total_time{0.0};
     bool collision{false};
@@ -285,7 +284,6 @@ Result run_simulation(const Config& cfg)
         set_wheel_motor_2_speed(static_cast<uint8_t>(adjusted_speed_2));
 
         auto delta{update_mock_by_dt(cfg, mouse)};
-        total_translation += sqrt((delta.dx * delta.dx) + (delta.dy * delta.dy));
         total_angle_rotation += delta.dtheta_rad;
         total_time += cfg.env_cfg.dt;
 
@@ -313,10 +311,14 @@ Result run_simulation(const Config& cfg)
                                                + config_to_string(cfg) + ".png");
     }
 
+    double dx{std::abs(maze.mouse_start.x - mouse.hitbox.center.x)};
+    double dy{std::abs(maze.mouse_start.y - mouse.hitbox.center.y)};
+    double final_translation{sqrt((dx * dx) + (dy * dy))};
+
     return Result{
         total_time,
         std::abs(target_angle_absolute_value - std::abs(total_angle_rotation)),
-        total_translation,
+        final_translation,
         collision,
         timeout
     };

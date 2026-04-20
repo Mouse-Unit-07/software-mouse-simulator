@@ -42,7 +42,7 @@ struct Config {
 struct Result {
     double total_time{0.0};
     double final_angle_error{0.0};
-    double total_translation{0.0};
+    double final_translation{0.0};
     bool collision{false};
     bool timeout{false};
 };
