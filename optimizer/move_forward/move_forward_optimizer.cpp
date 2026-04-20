@@ -112,7 +112,7 @@ public:
             const auto r{move_forward::run_simulation(cfg, mode_)};
 
             collision += r.collision ? 1.0 : 0.0;
-            horizontal += r.total_horizontal_translation;
+            horizontal += r.final_horizontal_translation;
             timeout += r.timeout ? 1.0 : 0.0;
         }
 
@@ -165,7 +165,7 @@ public:
             const auto r{move_forward::run_simulation(cfg, mode_)};
 
             collision += r.collision ? 1.0 : 0.0;
-            horizontal += r.total_horizontal_translation;
+            horizontal += r.final_horizontal_translation;
             timeout += r.timeout ? 1.0 : 0.0;
             vertical += r.final_vertical_translation;
             angle += r.final_angle_error;

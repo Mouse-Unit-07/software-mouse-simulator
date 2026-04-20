@@ -149,7 +149,7 @@ bool are_results_equivalent(const Result& r1, const Result& r2)
     if (std::abs(r1.final_angle_error - r2.final_angle_error) >= FLOAT_TOLERANCE) {
         return false;
     }
-    if (std::abs(r1.total_horizontal_translation - r2.total_horizontal_translation)
+    if (std::abs(r1.final_horizontal_translation - r2.final_horizontal_translation)
         >= FLOAT_TOLERANCE) {
         return false;
     }
@@ -365,7 +365,7 @@ TEST(MoveForwardTests, NoVarianceProducesNearPerfectResults)
 
         CHECK(!was_there_collision_or_timeout(result));
         DOUBLES_EQUAL(0.0, result.final_angle_error, FLOAT_TOLERANCE);
-        DOUBLES_EQUAL(0.0, result.total_horizontal_translation, FLOAT_TOLERANCE);
+        DOUBLES_EQUAL(0.0, result.final_horizontal_translation, FLOAT_TOLERANCE);
 
         constexpr double VERTICAL_TOLERANCE{5.0};
         DOUBLES_EQUAL(0.0, result.final_vertical_translation, VERTICAL_TOLERANCE);
@@ -476,14 +476,14 @@ TEST(MoveForwardTests, InitialAngleAffectsResults)
     CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
 }
 
-TEST(MoveForwardTests, HorizontalOffsetAffectsOneAndTwoWallResultsOnly)
+TEST(MoveForwardTests, HorizontalOffsetAffectsResults)
 {
     Config cfg1{create_no_variance_config()};
     cfg1.ctrl_cfg.kp_ir = 50;
     Config cfg2{cfg1};
     cfg2.env_cfg.horizontal_position_variance = 0.5;
 
-    CHECK(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
     CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
     CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
 }
@@ -612,15 +612,15 @@ IGNORE_TEST(MoveForwardTests, VisualizeWithIdealParameters)
     cfg_no_walls.env_cfg.vertical_position_variance = 0.0;
 
     Config cfg_one_wall;
-    cfg_one_wall.ctrl_cfg.single_wall_target = 303u;
-    cfg_one_wall.ctrl_cfg.motor_speed = 175u;
-    cfg_one_wall.ctrl_cfg.kp_velocity = 200;
-    cfg_one_wall.ctrl_cfg.kd_velocity = 292;
-    cfg_one_wall.ctrl_cfg.kp_angle = 3938;
-    cfg_one_wall.ctrl_cfg.kd_angle = 920;
-    cfg_one_wall.ctrl_cfg.pid_scale = 1555;
-    cfg_one_wall.ctrl_cfg.kp_ir = 688;
-    cfg_one_wall.ctrl_cfg.kd_ir = 203;
+    cfg_one_wall.ctrl_cfg.single_wall_target = 249u;
+    cfg_one_wall.ctrl_cfg.motor_speed = 171u;
+    cfg_one_wall.ctrl_cfg.kp_velocity = 54;
+    cfg_one_wall.ctrl_cfg.kd_velocity = 1388;
+    cfg_one_wall.ctrl_cfg.kp_angle = 1895;
+    cfg_one_wall.ctrl_cfg.kd_angle = 451;
+    cfg_one_wall.ctrl_cfg.pid_scale = 2525;
+    cfg_one_wall.ctrl_cfg.kp_ir = 1726;
+    cfg_one_wall.ctrl_cfg.kd_ir = 1747;
     cfg_one_wall.env_cfg.dt = 0.01;
     cfg_one_wall.env_cfg.motor_speed_scale = 1.0;
     cfg_one_wall.env_cfg.motor1_variance = 0.1;
@@ -636,14 +636,14 @@ IGNORE_TEST(MoveForwardTests, VisualizeWithIdealParameters)
 
     Config cfg_two_walls;
     cfg_two_walls.ctrl_cfg.single_wall_target = 0u;
-    cfg_two_walls.ctrl_cfg.motor_speed = 162u;
-    cfg_two_walls.ctrl_cfg.kp_velocity = 810;
-    cfg_two_walls.ctrl_cfg.kd_velocity = 344;
-    cfg_two_walls.ctrl_cfg.kp_angle = 9314;
-    cfg_two_walls.ctrl_cfg.kd_angle = 706;
-    cfg_two_walls.ctrl_cfg.pid_scale = 4613;
-    cfg_two_walls.ctrl_cfg.kp_ir = 1980;
-    cfg_two_walls.ctrl_cfg.kd_ir = 425;
+    cfg_two_walls.ctrl_cfg.motor_speed = 159u;
+    cfg_two_walls.ctrl_cfg.kp_velocity = 1391;
+    cfg_two_walls.ctrl_cfg.kd_velocity = 1582;
+    cfg_two_walls.ctrl_cfg.kp_angle = 468;
+    cfg_two_walls.ctrl_cfg.kd_angle = 1865;
+    cfg_two_walls.ctrl_cfg.pid_scale = 2305;
+    cfg_two_walls.ctrl_cfg.kp_ir = 1728;
+    cfg_two_walls.ctrl_cfg.kd_ir = 66;
     cfg_two_walls.env_cfg.dt = 0.01;
     cfg_two_walls.env_cfg.motor_speed_scale = 1.0;
     cfg_two_walls.env_cfg.motor1_variance = 0.1;
