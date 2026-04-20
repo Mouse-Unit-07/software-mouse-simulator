@@ -49,7 +49,7 @@ void set_local_ctr_bound_variables(void)
 
 void set_local_env_bound_variables(void)
 {
-    env_lower.dt = 0.005;
+    env_lower.dt = 0.01;
     env_lower.motor_speed_scale = 0.9;
     env_lower.motor1_variance = -0.2;
     env_lower.motor2_variance = -0.2;
@@ -113,7 +113,7 @@ TEST(RotationOptimizerTests, RotationParetoStructureIsValid)
     set_local_env_bound_variables();
     set_config_bounds();
 
-    auto result{run_rotation_pareto(8, 3, 2)};
+    auto result{run_rotation_staged(8, 3, 3, 2, 2)};
 
     CHECK_EQUAL(8, result.X.size());
     CHECK_EQUAL(8, result.F.size());
@@ -130,7 +130,7 @@ TEST(RotationOptimizerTests, RotationParetoHasNoNaNOrInf)
     set_local_env_bound_variables();
     set_config_bounds();
 
-    auto result{run_rotation_pareto(8, 3, 2)};
+    auto result{run_rotation_staged(8, 3, 3, 2, 2)};
 
     for (const auto& f : result.F) {
         for (double v : f) {
@@ -151,7 +151,7 @@ TEST(RotationOptimizerTests, RotationControlWithinBounds)
     set_local_env_bound_variables();
     set_config_bounds();
 
-    auto result{run_rotation_pareto(8, 3, 2)};
+    auto result{run_rotation_staged(8, 3, 3, 2, 2)};
 
     auto bounds{rotation::get_control_bounds()};
     const auto& lb{bounds.first};
@@ -171,13 +171,13 @@ TEST(RotationOptimizerTests, RotationObjectivesAreInValidRanges)
     set_local_env_bound_variables();
     set_config_bounds();
 
-    auto result{run_rotation_pareto(8, 3, 2)};
+    auto result{run_rotation_staged(8, 3, 3, 2, 2)};
 
     for (const auto& f : result.F) {
-        double angle{f.at(0)};
-        double translation{f.at(1)};
-        double collision{f.at(2)};
-        double timeout{f.at(3)};
+        double collision{f.at(0)};
+        double timeout{f.at(1)};
+        double angle{f.at(2)};
+        double translation{f.at(3)};
 
         CHECK(angle >= 0.0);
         CHECK(translation >= 0.0);
@@ -193,8 +193,8 @@ TEST(RotationOptimizerTests, RotationParetoSizeIsStable)
     set_local_env_bound_variables();
     set_config_bounds();
 
-    auto a{run_rotation_pareto(8, 3, 2)};
-    auto b{run_rotation_pareto(8, 3, 2)};
+    auto a{run_rotation_staged(8, 3, 3, 2, 2)};
+    auto b{run_rotation_staged(8, 3, 3, 2, 2)};
 
     CHECK_EQUAL(a.X.size(), b.X.size());
     CHECK_EQUAL(a.F.size(), b.F.size());
@@ -202,8 +202,12 @@ TEST(RotationOptimizerTests, RotationParetoSizeIsStable)
 
 IGNORE_TEST(RotationOptimizerTests, DumpRotationPareto)
 {
-    /* takes ~5min */
-    auto result{run_rotation_pareto(64, 300, 1000)};
+    set_local_ctr_bound_variables();
+    set_local_env_bound_variables();
+    set_config_bounds();
 
-    write_rotation_pareto_to_file("rotation_test_output.txt", result);
+    /* takes ~2min */
+    auto result{run_rotation_staged(64, 150, 500, 200, 50)};
+
+    write_rotation_pareto_to_file("rotation.txt", result);
 }

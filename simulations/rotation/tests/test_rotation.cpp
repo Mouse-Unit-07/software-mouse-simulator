@@ -425,12 +425,12 @@ IGNORE_TEST(RotationTests, VisualizationDoesNotAffectResults)
 IGNORE_TEST(RotationTests, VisualizeWithIdealParameters)
 {
     Config cfg;
-    cfg.ctrl_cfg.motor_speed = 142u;
-    cfg.ctrl_cfg.kp_velocity = 300;
-    cfg.ctrl_cfg.kd_velocity = 151;
-    cfg.ctrl_cfg.kp_angle = 1975;
-    cfg.ctrl_cfg.kd_angle = 16;
-    cfg.ctrl_cfg.pid_scale = 210;
+    cfg.ctrl_cfg.motor_speed = 141u;
+    cfg.ctrl_cfg.kp_velocity = 1874;
+    cfg.ctrl_cfg.kd_velocity = 912;
+    cfg.ctrl_cfg.kp_angle = 95294;
+    cfg.ctrl_cfg.kd_angle = 1306;
+    cfg.ctrl_cfg.pid_scale = 4011;
     cfg.env_cfg.dt = 0.01;
     cfg.env_cfg.motor_speed_scale = 1.0;
     cfg.env_cfg.motor1_variance = 0.0;
