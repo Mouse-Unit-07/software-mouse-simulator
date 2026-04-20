@@ -30,6 +30,64 @@ using namespace rotation;
 /*============================================================================*/
 constexpr double FLOAT_TOLERANCE{1e-6};
 
+ControlConfig ctr_lower{};
+ControlConfig ctr_upper{};
+EnvironmentConfig env_lower{};
+EnvironmentConfig env_upper{};
+
+void set_local_ctr_bound_variables(void)
+{
+    ctr_lower.motor_speed = 140;
+    ctr_lower.kp_velocity = 0;
+    ctr_lower.kd_velocity = 0;
+    ctr_lower.kp_angle = 0;
+    ctr_lower.kd_angle = 0;
+    ctr_lower.pid_scale = 16;
+
+    ctr_upper.motor_speed = 255;
+    ctr_upper.kp_velocity = 2000;
+    ctr_upper.kd_velocity = 2000;
+    ctr_upper.kp_angle = 2000;
+    ctr_upper.kd_angle = 2000;
+    ctr_upper.pid_scale = 512;
+}
+
+void set_local_env_bound_variables(void)
+{
+    env_lower.dt = 0.005;
+    env_lower.motor_speed_scale = 0.9;
+    env_lower.motor1_variance = -0.2;
+    env_lower.motor2_variance = -0.2;
+    env_lower.slip_factor = 0.9;
+    env_lower.wheel_circumference_scale = 0.9;
+    env_lower.wheel_base_scale = 0.9;
+    env_lower.rotation_angle = M_PI / 4;
+
+    env_upper.dt = 0.01;
+    env_upper.motor_speed_scale = 1.1;
+    env_upper.motor1_variance = 0.2;
+    env_upper.motor2_variance = 0.2;
+    env_upper.slip_factor = 1.1;
+    env_upper.wheel_circumference_scale = 1.1;
+    env_upper.wheel_base_scale = 1.1;
+    env_upper.rotation_angle = M_PI / 2;
+}
+
+void set_config_bounds(void)
+{
+    set_ctr_config_bounds(ctr_lower, ctr_upper);
+    set_env_config_bounds(env_lower, env_upper);
+}
+
+void reset_local_and_assigned_config_bounds(void)
+{
+    ctr_lower = {};
+    ctr_upper = {};
+    env_lower = {};
+    env_upper = {};
+    reset_all_config_bounds();
+}
+
 Config create_no_variance_config(void)
 {
     Config cfg;
@@ -60,7 +118,7 @@ bool are_results_equivalent(const Result& r1, const Result& r2)
     if (std::abs(r1.final_angle_error - r2.final_angle_error) >= FLOAT_TOLERANCE) {
         return false;
     }
-    if (std::abs(r1.total_translation - r2.total_translation) >= FLOAT_TOLERANCE) {
+    if (std::abs(r1.final_translation - r2.final_translation) >= FLOAT_TOLERANCE) {
         return false;
     }
 
@@ -86,18 +144,36 @@ TEST_GROUP(RotationTests)
 {
     void setup() override
     {
+        reset_local_and_assigned_config_bounds();
         disable_visualization();
     }
 
     void teardown() override
     {
         disable_visualization();
+        reset_local_and_assigned_config_bounds();
     }
 };
 
 /*============================================================================*/
 /*                                    Tests                                   */
 /*============================================================================*/
+TEST(RotationTests, ResetAllConfigBoundsClearsBounds)
+{
+    set_local_ctr_bound_variables();
+    set_local_env_bound_variables();
+    set_config_bounds();
+
+    reset_all_config_bounds();
+
+    auto [low, high] = get_control_bounds();
+
+    for (size_t i{0}; i < low.size(); ++i) {
+        CHECK_EQUAL(0.0, low.at(i));
+        CHECK_EQUAL(0.0, high.at(i));
+    }
+}
+
 TEST(RotationTests, EncodeDecodeControlRoundTrip)
 {
     ControlConfig original;
@@ -149,6 +225,9 @@ TEST(RotationTests, GetControlBoundsHasCorrectSize)
 
 TEST(RotationTests, GetControlBoundsValuesAreCorrect)
 {
+    set_local_ctr_bound_variables();
+    set_config_bounds();
+
     auto [low, high] = get_control_bounds();
 
     CHECK_EQUAL(140, low.at(0));
@@ -168,6 +247,9 @@ TEST(RotationTests, GetControlBoundsValuesAreCorrect)
 
 TEST(RotationTests, GetControlBoundsAreDecodeSafe)
 {
+    set_local_ctr_bound_variables();
+    set_config_bounds();
+
     auto [low, high] = get_control_bounds();
 
     auto low_cfg{decode_control(low)};
@@ -179,6 +261,9 @@ TEST(RotationTests, GetControlBoundsAreDecodeSafe)
 
 TEST(RotationTests, RandomEnvironmentValuesWithinExpectedRanges)
 {
+    set_local_env_bound_variables();
+    set_config_bounds();
+
     for (int i{0}; i < 100; i++) {
         auto e{generate_random_environment()};
 
@@ -201,7 +286,7 @@ TEST(RotationTests, SimulationProducesValidResult)
 
     CHECK(r.total_time >= 0.0);
     CHECK(r.final_angle_error >= 0.0);
-    CHECK(r.total_translation >= 0.0);
+    CHECK(r.final_translation >= 0.0);
 }
 
 TEST(RotationTests, SimulationFailsWhenDtIsZero)
@@ -226,7 +311,7 @@ TEST(RotationTests, PositiveAndNegativeAnglesProduceSameAngleAndTranslationError
 
     CHECK_FALSE(r1.timeout);
     CHECK_FALSE(r2.timeout);
-    DOUBLES_EQUAL(r1.total_translation, r2.total_translation, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(r1.final_translation, r2.final_translation, FLOAT_TOLERANCE);
     DOUBLES_EQUAL(r1.final_angle_error, r2.final_angle_error, FLOAT_TOLERANCE);
 }
 
@@ -285,7 +370,7 @@ TEST(RotationTests, NoTranslationAndAngleErrorForPerfectTestVariables)
 
     CHECK_FALSE(r.timeout);
     DOUBLES_EQUAL(0.0, r.final_angle_error, ROTATION_TOLERANCE);
-    DOUBLES_EQUAL(0.0, r.total_translation, 0.01);
+    DOUBLES_EQUAL(0.0, r.final_translation, 0.01);
 }
 
 TEST(RotationTests, DerivativeTermAffectsStability)
@@ -303,7 +388,7 @@ TEST(RotationTests, DerivativeTermAffectsStability)
     auto r2{run_simulation(with_d)};
 
     CHECK((r1.final_angle_error != r2.final_angle_error)
-          || (r1.total_translation != r2.total_translation));
+          || (r1.final_translation != r2.final_translation));
 }
 
 TEST(RotationTests, PidShiftAffectsControlStrength)
@@ -340,12 +425,12 @@ IGNORE_TEST(RotationTests, VisualizationDoesNotAffectResults)
 IGNORE_TEST(RotationTests, VisualizeWithIdealParameters)
 {
     Config cfg;
-    cfg.ctrl_cfg.motor_speed = 142u;
-    cfg.ctrl_cfg.kp_velocity = 300;
-    cfg.ctrl_cfg.kd_velocity = 151;
-    cfg.ctrl_cfg.kp_angle = 1975;
-    cfg.ctrl_cfg.kd_angle = 16;
-    cfg.ctrl_cfg.pid_scale = 210;
+    cfg.ctrl_cfg.motor_speed = 141u;
+    cfg.ctrl_cfg.kp_velocity = 1874;
+    cfg.ctrl_cfg.kd_velocity = 912;
+    cfg.ctrl_cfg.kp_angle = 95294;
+    cfg.ctrl_cfg.kd_angle = 1306;
+    cfg.ctrl_cfg.pid_scale = 4011;
     cfg.env_cfg.dt = 0.01;
     cfg.env_cfg.motor_speed_scale = 1.0;
     cfg.env_cfg.motor1_variance = 0.0;

@@ -69,6 +69,10 @@ const std::string TEST_OUTPUT_DIRECTORY{"rotation-visualizer"};
 std::string TEST_OUTPUT_SUBDIRECTORY{""};
 bool visualizer_enabled{false};
 visualizer::Visualizer rotation_visualizer;
+ControlConfig ctr_lower_bounds{};
+ControlConfig ctr_upper_bounds{};
+EnvironmentConfig env_lower_bounds{};
+EnvironmentConfig env_upper_bounds{};
 
 } /* unnamed namespace */
 
@@ -77,6 +81,26 @@ visualizer::Visualizer rotation_visualizer;
 /*----------------------------------------------------------------------------*/
 namespace rotation
 {
+
+void reset_all_config_bounds(void)
+{
+    ctr_lower_bounds = {};
+    ctr_upper_bounds = {};
+    env_lower_bounds = {};
+    env_upper_bounds = {};
+}
+
+void set_ctr_config_bounds(const ControlConfig& lower, const ControlConfig& upper)
+{
+    ctr_lower_bounds = lower;
+    ctr_upper_bounds = upper;
+}
+
+void set_env_config_bounds(const EnvironmentConfig& lower, const EnvironmentConfig& upper)
+{
+    env_lower_bounds = lower;
+    env_upper_bounds = upper;
+}
 
 ControlConfig decode_control(const std::vector<double>& x)
 {
@@ -105,23 +129,7 @@ std::vector<double> encode_control(const ControlConfig& cfg)
 
 std::pair<std::vector<double>, std::vector<double>> get_control_bounds(void)
 {
-    ControlConfig lower_bounds;
-    lower_bounds.motor_speed = 140;
-    lower_bounds.kp_velocity = 0;
-    lower_bounds.kd_velocity = 0;
-    lower_bounds.kp_angle = 0;
-    lower_bounds.kd_angle = 0;
-    lower_bounds.pid_scale = 16;
-
-    ControlConfig upper_bounds;
-    upper_bounds.motor_speed = 255;
-    upper_bounds.kp_velocity = 2000;
-    upper_bounds.kd_velocity = 2000;
-    upper_bounds.kp_angle = 2000;
-    upper_bounds.kd_angle = 2000;
-    upper_bounds.pid_scale = 512;
-
-    return {encode_control(lower_bounds), encode_control(upper_bounds)};
+    return {encode_control(ctr_lower_bounds), encode_control(ctr_upper_bounds)};
 }
 
 EnvironmentConfig generate_random_environment(void)
@@ -133,14 +141,22 @@ EnvironmentConfig generate_random_environment(void)
     };
 
     EnvironmentConfig e;
-    e.dt = uniform(0.005, 0.02);
-    e.motor_speed_scale = uniform(0.9, 1.1);
-    e.motor1_variance = uniform(-0.2, 0.2);
-    e.motor2_variance = uniform(-0.2, 0.2);
-    e.slip_factor = uniform(0.9, 1.1);
-    e.wheel_circumference_scale = uniform(0.9, 1.1);
-    e.wheel_base_scale = uniform(0.9, 1.1);
-    e.rotation_angle = uniform(M_PI / 4, M_PI / 2);
+    e.dt =
+        uniform(env_lower_bounds.dt, env_upper_bounds.dt);
+    e.motor_speed_scale =
+        uniform(env_lower_bounds.motor_speed_scale, env_upper_bounds.motor_speed_scale);
+    e.motor1_variance =
+        uniform(env_lower_bounds.motor1_variance, env_upper_bounds.motor1_variance);
+    e.motor2_variance =
+        uniform(env_lower_bounds.motor2_variance, env_upper_bounds.motor2_variance);
+    e.slip_factor =
+        uniform(env_lower_bounds.slip_factor, env_upper_bounds.slip_factor);
+    e.wheel_circumference_scale =
+        uniform(env_lower_bounds.wheel_circumference_scale, env_upper_bounds.wheel_circumference_scale);
+    e.wheel_base_scale =
+        uniform(env_lower_bounds.wheel_base_scale, env_upper_bounds.wheel_base_scale);
+    e.rotation_angle =
+        uniform(env_lower_bounds.rotation_angle, env_upper_bounds.rotation_angle);
 
     return e;
 }
@@ -210,7 +226,6 @@ Result run_simulation(const Config& cfg)
         set_wheel_motor_2_direction_backward();
     }
 
-    double total_translation{0.0};
     double total_angle_rotation{0.0};
     double total_time{0.0};
     bool collision{false};
@@ -269,7 +284,6 @@ Result run_simulation(const Config& cfg)
         set_wheel_motor_2_speed(static_cast<uint8_t>(adjusted_speed_2));
 
         auto delta{update_mock_by_dt(cfg, mouse)};
-        total_translation += sqrt((delta.dx * delta.dx) + (delta.dy * delta.dy));
         total_angle_rotation += delta.dtheta_rad;
         total_time += cfg.env_cfg.dt;
 
@@ -297,10 +311,14 @@ Result run_simulation(const Config& cfg)
                                                + config_to_string(cfg) + ".png");
     }
 
+    double dx{std::abs(maze.mouse_start.x - mouse.hitbox.center.x)};
+    double dy{std::abs(maze.mouse_start.y - mouse.hitbox.center.y)};
+    double final_translation{sqrt((dx * dx) + (dy * dy))};
+
     return Result{
         total_time,
         std::abs(target_angle_absolute_value - std::abs(total_angle_rotation)),
-        total_translation,
+        final_translation,
         collision,
         timeout
     };

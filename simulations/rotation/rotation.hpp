@@ -42,7 +42,7 @@ struct Config {
 struct Result {
     double total_time{0.0};
     double final_angle_error{0.0};
-    double total_translation{0.0};
+    double final_translation{0.0};
     bool collision{false};
     bool timeout{false};
 };
@@ -55,6 +55,9 @@ struct Result {
 namespace rotation
 {
 
+void reset_all_config_bounds(void);
+void set_ctr_config_bounds(const ControlConfig& lower, const ControlConfig& upper);
+void set_env_config_bounds(const EnvironmentConfig& lower, const EnvironmentConfig& upper);
 ControlConfig decode_control(const std::vector<double>& x);
 std::vector<double> encode_control(const ControlConfig& cfg);
 std::pair<std::vector<double>, std::vector<double>> get_control_bounds(void);
