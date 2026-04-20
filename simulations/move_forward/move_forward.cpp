@@ -336,6 +336,7 @@ Result run_single_simulation(const Config& cfg, const maze::Maze& maze, enum Wal
     }
 
     mouse::Mouse mouse;
+    const double IDEAL_MOUSE_ANGLE{mouse.hitbox.angle_rad};
     prepare_mock_for_move_forward(cfg, maze, mouse);
     const double INITIAL_MOUSE_VERTICAL_POSITION{mouse.hitbox.center.y};
 
@@ -357,7 +358,6 @@ Result run_single_simulation(const Config& cfg, const maze::Maze& maze, enum Wal
     constexpr int MAZE_SQUARE_COUNT{2};
 
     double total_time{0.0};
-    double total_angle_error{0.0};
     double total_horizontal_translation{0.0};
     bool collision{false};
     bool timeout{false};
@@ -443,7 +443,6 @@ Result run_single_simulation(const Config& cfg, const maze::Maze& maze, enum Wal
 
         auto delta{update_mock_by_dt(cfg, mouse)};
         total_horizontal_translation += std::abs(delta.dx);
-        total_angle_error += std::abs(delta.dtheta_rad);
         total_time += cfg.env_cfg.dt;
 
         if (visualizer_enabled) {
@@ -472,8 +471,10 @@ Result run_single_simulation(const Config& cfg, const maze::Maze& maze, enum Wal
     double target_y{INITIAL_MOUSE_VERTICAL_POSITION + (maze.cell_size * MAZE_SQUARE_COUNT)};
     double final_vertical_translation{std::abs(target_y - mouse.hitbox.center.y)};
 
+    double final_angle_error{std::abs(IDEAL_MOUSE_ANGLE - std::abs(mouse.hitbox.angle_rad))};
+
     return Result{total_time,
-                  total_angle_error,
+                  final_angle_error,
                   total_horizontal_translation,
                   final_vertical_translation,
                   collision,

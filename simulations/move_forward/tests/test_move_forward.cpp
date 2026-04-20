@@ -146,7 +146,7 @@ bool are_results_equivalent(const Result& r1, const Result& r2)
     if (std::abs(r1.total_time - r2.total_time) >= FLOAT_TOLERANCE) {
         return false;
     }
-    if (std::abs(r1.total_angle_error - r2.total_angle_error) >= FLOAT_TOLERANCE) {
+    if (std::abs(r1.final_angle_error - r2.final_angle_error) >= FLOAT_TOLERANCE) {
         return false;
     }
     if (std::abs(r1.total_horizontal_translation - r2.total_horizontal_translation)
@@ -364,7 +364,7 @@ TEST(MoveForwardTests, NoVarianceProducesNearPerfectResults)
         auto result{run_simulation(cfg, m)};
 
         CHECK(!was_there_collision_or_timeout(result));
-        DOUBLES_EQUAL(0.0, result.total_angle_error, FLOAT_TOLERANCE);
+        DOUBLES_EQUAL(0.0, result.final_angle_error, FLOAT_TOLERANCE);
         DOUBLES_EQUAL(0.0, result.total_horizontal_translation, FLOAT_TOLERANCE);
 
         constexpr double VERTICAL_TOLERANCE{5.0};

@@ -168,7 +168,7 @@ public:
             horizontal += r.total_horizontal_translation;
             timeout += r.timeout ? 1.0 : 0.0;
             vertical += r.final_vertical_translation;
-            angle += r.total_angle_error;
+            angle += r.final_angle_error;
         }
 
         Stage2Objectives obj;
