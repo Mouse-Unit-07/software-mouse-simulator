@@ -250,9 +250,9 @@ void write_move_forward_pareto_to_file(const std::string& filename, const Pareto
     constexpr int W_SPD{6};
     constexpr int W_KP_V{6};
     constexpr int W_KD_V{6};
-    constexpr int W_KP_A{6};
+    constexpr int W_KP_A{10};
     constexpr int W_KD_A{6};
-    constexpr int W_SC{4};
+    constexpr int W_SC{10};
     constexpr int W_KP_IR{8};
     constexpr int W_KD_IR{8};
 

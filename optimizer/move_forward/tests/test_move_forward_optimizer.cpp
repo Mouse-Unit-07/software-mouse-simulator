@@ -42,13 +42,13 @@ void set_local_ctr_bound_variables(void)
     ctr_lower.kp_ir = 0;
     ctr_lower.kd_ir = 0;
 
-    ctr_upper.single_wall_target = 1024;
+    ctr_upper.single_wall_target = 500;
     ctr_upper.motor_speed = 255;
     ctr_upper.kp_velocity = 2000;
     ctr_upper.kd_velocity = 2000;
-    ctr_upper.kp_angle = 2000;
+    ctr_upper.kp_angle = 100000;
     ctr_upper.kd_angle = 2000;
-    ctr_upper.pid_scale = 512;
+    ctr_upper.pid_scale = 10000;
     ctr_upper.kp_ir = 2000;
     ctr_upper.kd_ir = 2000;
 }
@@ -228,6 +228,7 @@ TEST(MoveForwardOptimizerTests, MoveForwardParetoSizeIsStable)
 
 IGNORE_TEST(MoveForwardOptimizerTests, DumpMoveForwardParetoNoWalls)
 {
+    /* takes ~5min */
     set_local_ctr_bound_variables();
     set_local_env_bound_variables();
     env_lower.mouse_angle = 0.0;
@@ -241,6 +242,7 @@ IGNORE_TEST(MoveForwardOptimizerTests, DumpMoveForwardParetoNoWalls)
 
 IGNORE_TEST(MoveForwardOptimizerTests, DumpMoveForwardParetoOneWall)
 {
+    /* takes ~10min */
     set_local_ctr_bound_variables();
     set_local_env_bound_variables();
     set_config_bounds();

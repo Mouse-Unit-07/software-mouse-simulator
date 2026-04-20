@@ -590,12 +590,12 @@ IGNORE_TEST(MoveForwardTests, VisualizeWithIdealParameters)
 {
     Config cfg_no_walls;
     cfg_no_walls.ctrl_cfg.single_wall_target = 0u;
-    cfg_no_walls.ctrl_cfg.motor_speed = 160u;
-    cfg_no_walls.ctrl_cfg.kp_velocity = 251;
-    cfg_no_walls.ctrl_cfg.kd_velocity = 4;
-    cfg_no_walls.ctrl_cfg.kp_angle = 1961;
-    cfg_no_walls.ctrl_cfg.kd_angle = 4;
-    cfg_no_walls.ctrl_cfg.pid_scale = 169;
+    cfg_no_walls.ctrl_cfg.motor_speed = 147u;
+    cfg_no_walls.ctrl_cfg.kp_velocity = 89;
+    cfg_no_walls.ctrl_cfg.kd_velocity = 499;
+    cfg_no_walls.ctrl_cfg.kp_angle = 76631;
+    cfg_no_walls.ctrl_cfg.kd_angle = 170;
+    cfg_no_walls.ctrl_cfg.pid_scale = 2770;
     cfg_no_walls.ctrl_cfg.kp_ir = 0;
     cfg_no_walls.ctrl_cfg.kd_ir = 0;
     cfg_no_walls.env_cfg.dt = 0.01;
@@ -612,15 +612,15 @@ IGNORE_TEST(MoveForwardTests, VisualizeWithIdealParameters)
     cfg_no_walls.env_cfg.vertical_position_variance = 0.0;
 
     Config cfg_one_wall;
-    cfg_one_wall.ctrl_cfg.single_wall_target = 276u;
-    cfg_one_wall.ctrl_cfg.motor_speed = 250u;
-    cfg_one_wall.ctrl_cfg.kp_velocity = 471;
-    cfg_one_wall.ctrl_cfg.kd_velocity = 327;
-    cfg_one_wall.ctrl_cfg.kp_angle = 1401;
-    cfg_one_wall.ctrl_cfg.kd_angle = 1086;
-    cfg_one_wall.ctrl_cfg.pid_scale = 511;
-    cfg_one_wall.ctrl_cfg.kp_ir = 1082;
-    cfg_one_wall.ctrl_cfg.kd_ir = 279;
+    cfg_one_wall.ctrl_cfg.single_wall_target = 303u;
+    cfg_one_wall.ctrl_cfg.motor_speed = 175u;
+    cfg_one_wall.ctrl_cfg.kp_velocity = 200;
+    cfg_one_wall.ctrl_cfg.kd_velocity = 292;
+    cfg_one_wall.ctrl_cfg.kp_angle = 3938;
+    cfg_one_wall.ctrl_cfg.kd_angle = 920;
+    cfg_one_wall.ctrl_cfg.pid_scale = 1555;
+    cfg_one_wall.ctrl_cfg.kp_ir = 688;
+    cfg_one_wall.ctrl_cfg.kd_ir = 203;
     cfg_one_wall.env_cfg.dt = 0.01;
     cfg_one_wall.env_cfg.motor_speed_scale = 1.0;
     cfg_one_wall.env_cfg.motor1_variance = 0.1;
@@ -636,14 +636,14 @@ IGNORE_TEST(MoveForwardTests, VisualizeWithIdealParameters)
 
     Config cfg_two_walls;
     cfg_two_walls.ctrl_cfg.single_wall_target = 0u;
-    cfg_two_walls.ctrl_cfg.motor_speed = 142u;
-    cfg_two_walls.ctrl_cfg.kp_velocity = 129;
-    cfg_two_walls.ctrl_cfg.kd_velocity = 152;
-    cfg_two_walls.ctrl_cfg.kp_angle = 439;
-    cfg_two_walls.ctrl_cfg.kd_angle = 319;
-    cfg_two_walls.ctrl_cfg.pid_scale = 507;
-    cfg_two_walls.ctrl_cfg.kp_ir = 588;
-    cfg_two_walls.ctrl_cfg.kd_ir = 26;
+    cfg_two_walls.ctrl_cfg.motor_speed = 162u;
+    cfg_two_walls.ctrl_cfg.kp_velocity = 810;
+    cfg_two_walls.ctrl_cfg.kd_velocity = 344;
+    cfg_two_walls.ctrl_cfg.kp_angle = 9314;
+    cfg_two_walls.ctrl_cfg.kd_angle = 706;
+    cfg_two_walls.ctrl_cfg.pid_scale = 4613;
+    cfg_two_walls.ctrl_cfg.kp_ir = 1980;
+    cfg_two_walls.ctrl_cfg.kd_ir = 425;
     cfg_two_walls.env_cfg.dt = 0.01;
     cfg_two_walls.env_cfg.motor_speed_scale = 1.0;
     cfg_two_walls.env_cfg.motor1_variance = 0.1;
