@@ -25,31 +25,57 @@ using namespace front_wall_detection;
 /*============================================================================*/
 constexpr double FLOAT_TOLERANCE{1e-6};
 
+ControlConfig ctr_lower{};
+ControlConfig ctr_upper{};
+EnvironmentConfig env_lower{};
+EnvironmentConfig env_upper{};
+
+void set_local_ctr_bound_variables(void)
+{
+    ctr_lower.reading_threshold = 0;
+
+    ctr_upper.reading_threshold = 1024;
+}
+
+void set_local_env_bound_variables(void)
+{
+    env_lower.ir_reading_scale = 0.9;
+    env_lower.mouse_angle = -(M_PI / 4);
+    env_lower.horizontal_position_variance = -0.9;
+    env_lower.vertical_position_variance = -0.9;
+
+    env_upper.ir_reading_scale = 1.1;
+    env_upper.mouse_angle = M_PI / 4;
+    env_upper.horizontal_position_variance = 0.9;
+    env_upper.vertical_position_variance = 0.9;
+}
+
+void set_config_bounds(void)
+{
+    set_ctr_config_bounds(ctr_lower, ctr_upper);
+    set_env_config_bounds(env_lower, env_upper);
+}
+
+void reset_local_and_assigned_config_bounds(void)
+{
+    ctr_lower = {};
+    ctr_upper = {};
+    env_lower = {};
+    env_upper = {};
+    reset_all_config_bounds();
+}
+
 Config create_no_variance_config(void)
 {
     Config cfg{};
-    cfg.ir_reading_scale = {1.0};
-    cfg.mouse_angle = {0.0};
-    cfg.horizontal_position_variance = {0.0};
-    cfg.vertical_position_variance = {0.0};
+    cfg.env_cfg.ir_reading_scale = {1.0};
+    cfg.env_cfg.mouse_angle = {0.0};
+    cfg.env_cfg.horizontal_position_variance = {0.0};
+    cfg.env_cfg.vertical_position_variance = {0.0};
 
-    cfg.reading_threshold = {300u};
+    cfg.ctrl_cfg.reading_threshold = {300u};
 
     return cfg;
-}
-
-ConfigSweeper create_no_variance_sweeper(void)
-{
-    ConfigSweeper sweeper{};
-
-    sweeper.ir_reading_scale = {1.0};
-    sweeper.mouse_angle = {0.0};
-    sweeper.horizontal_position_variance = {0.0};
-    sweeper.vertical_position_variance = {0.0};
-
-    sweeper.reading_threshold = {300u};
-
-    return sweeper;
 }
 
 bool are_results_equivalent(const Result& r1, const Result& r2)
@@ -76,89 +102,111 @@ TEST_GROUP(FrontWallDetectionTests)
 {
     void setup() override
     {
+        reset_local_and_assigned_config_bounds();
         disable_visualization();
     }
 
     void teardown() override
     {
         disable_visualization();
+        reset_local_and_assigned_config_bounds();
     }
 };
 
 /*============================================================================*/
 /*                                    Tests                                   */
 /*============================================================================*/
-TEST(FrontWallDetectionTests, ConfigSweeperProducesFirstValue)
+TEST(FrontWallDetectionTests, ResetAllConfigBoundsClearsBounds)
 {
-    ConfigSweeper sweeper{create_no_variance_sweeper()};
+    set_local_ctr_bound_variables();
+    set_local_env_bound_variables();
+    set_config_bounds();
 
-    CHECK(sweeper.next());
+    reset_all_config_bounds();
 
-    auto cfg{sweeper.value()};
+    auto [low, high] = get_control_bounds();
 
-    DOUBLES_EQUAL(1.0, cfg.ir_reading_scale, FLOAT_TOLERANCE);
-    CHECK_EQUAL(300u, cfg.reading_threshold);
-}
-
-TEST(FrontWallDetectionTests, ConfigSweeperIteratesAllCombinations)
-{
-    ConfigSweeper sweeper{create_no_variance_sweeper()};
-    sweeper.ir_reading_scale = {1.0, 1.05};
-    sweeper.reading_threshold = {100u, 200u};
-
-    int count{0};
-
-    while (sweeper.next()) {
-        sweeper.value();
-        count++;
+    for (size_t i{0}; i < low.size(); ++i) {
+        CHECK_EQUAL(0.0, low.at(i));
+        CHECK_EQUAL(0.0, high.at(i));
     }
-
-    CHECK_EQUAL(4, count); /* 2 ir_reading_scale * 2 reading_threshold */
 }
 
-TEST(FrontWallDetectionTests, ConfigSweeperStopsAtEnd)
+TEST(FrontWallDetectionTests, EncodeDecodeControlRoundTrip)
 {
-    ConfigSweeper sweeper{create_no_variance_sweeper()};
+    ControlConfig original;
+    original.reading_threshold = 123u;
 
-    CHECK(sweeper.next());
-    CHECK_FALSE(sweeper.next());
+    auto encoded{encode_control(original)};
+    auto decoded{decode_control(encoded)};
+
+    CHECK_EQUAL(original.reading_threshold, decoded.reading_threshold);
 }
 
-TEST(FrontWallDetectionTests, ConfigSweeperOrderIsStable)
+TEST(FrontWallDetectionTests, EncodeControlMaintainsFieldOrder)
 {
-    ConfigSweeper sweeper{create_no_variance_sweeper()};
-    sweeper.ir_reading_scale = {1.0, 1.05};
-    sweeper.reading_threshold = {100u, 200u};
+    ControlConfig cfg;
+    cfg.reading_threshold = 0;
 
-    std::vector<std::pair<double, uint32_t>> seen;
+    auto v{encode_control(cfg)};
 
-    while (sweeper.next()) {
-        auto cfg{sweeper.value()};
-        seen.emplace_back(cfg.ir_reading_scale, cfg.reading_threshold);
+    CHECK_EQUAL(0, v.at(0));
+}
+
+TEST(FrontWallDetectionTests, GetControlBoundsHasCorrectSize)
+{
+    auto [low, high] = get_control_bounds();
+
+    CHECK_EQUAL(1, low.size());
+    CHECK_EQUAL(1, high.size());
+}
+
+TEST(FrontWallDetectionTests, GetControlBoundsValuesAreCorrect)
+{
+    set_local_ctr_bound_variables();
+    set_config_bounds();
+
+    auto [low, high] = get_control_bounds();
+
+    CHECK_EQUAL(0, low.at(0));
+
+    CHECK_EQUAL(1024, high.at(0));
+}
+
+TEST(FrontWallDetectionTests, GetControlBoundsAreDecodeSafe)
+{
+    set_local_ctr_bound_variables();
+    set_config_bounds();
+
+    auto [low, high] = get_control_bounds();
+
+    auto low_cfg{decode_control(low)};
+    auto high_cfg{decode_control(high)};
+
+    CHECK_EQUAL(0, low_cfg.reading_threshold);
+    CHECK_EQUAL(1024, high_cfg.reading_threshold);
+}
+
+TEST(FrontWallDetectionTests, RandomEnvironmentValuesWithinExpectedRanges)
+{
+    set_local_env_bound_variables();
+    set_config_bounds();
+
+    for (int i{0}; i < 100; i++) {
+        auto e{generate_random_environment()};
+
+        CHECK((e.ir_reading_scale >= 0.9) && (e.ir_reading_scale <= 1.1));
+        CHECK((e.mouse_angle >= -(M_PI / 4)) && (e.mouse_angle <= M_PI / 4));
+        CHECK((e.horizontal_position_variance >= -0.9) && (e.horizontal_position_variance <= 0.9));
+        CHECK((e.vertical_position_variance >= -0.9) && (e.vertical_position_variance <= 0.9));
     }
-
-    CHECK_EQUAL(4, seen.size());
-
-    /* Expected order: ir_reading_scale outer, reading_threshold inner */
-    CHECK(seen.at(0) == std::make_pair(1.0, 100u));
-    CHECK(seen.at(1) == std::make_pair(1.0, 200u));
-    CHECK(seen.at(2) == std::make_pair(1.05, 100u));
-    CHECK(seen.at(3) == std::make_pair(1.05, 200u));
-}
-
-TEST(FrontWallDetectionTests, SimulationProducesValidResult)
-{
-    auto sweeper{create_no_variance_sweeper()};
-
-    CHECK(sweeper.next());
-    auto result{run_simulation(sweeper.value())};
 }
 
 TEST(FrontWallDetectionTests, ExtremeScaleTriggersClamping)
 {
     Config cfg{create_no_variance_config()};
 
-    cfg.ir_reading_scale = 100.0; /* force overflow */
+    cfg.env_cfg.ir_reading_scale = 100.0; /* force overflow */
 
     auto result{run_simulation(cfg)};
 
@@ -168,7 +216,7 @@ TEST(FrontWallDetectionTests, ExtremeScaleTriggersClamping)
 TEST(FrontWallDetectionTests, ZeroThresholdMeansWallAlwaysPresent)
 {
     Config cfg{create_no_variance_config()};
-    cfg.reading_threshold = 0;
+    cfg.ctrl_cfg.reading_threshold = 0;
 
     auto result{run_simulation(cfg)};
 
@@ -179,7 +227,7 @@ TEST(FrontWallDetectionTests, ZeroThresholdMeansWallAlwaysPresent)
 TEST(FrontWallDetectionTests, MaxThresholdMeansWallAlmostAlwaysAbsent)
 {
     Config cfg{create_no_variance_config()};
-    cfg.reading_threshold = 1024;
+    cfg.ctrl_cfg.reading_threshold = 1024;
 
     auto result{run_simulation(cfg)};
 
@@ -191,10 +239,10 @@ TEST(FrontWallDetectionTests, IrReadingScaleAffectsResults)
 {
     Config cfg{create_no_variance_config()};
 
-    cfg.ir_reading_scale = 0.1;
+    cfg.env_cfg.ir_reading_scale = 0.1;
     auto low_scale{run_simulation(cfg)};
 
-    cfg.ir_reading_scale = 2.0;
+    cfg.env_cfg.ir_reading_scale = 2.0;
     auto high_scale{run_simulation(cfg)};
 
     CHECK(!are_results_equivalent(low_scale, high_scale));
@@ -206,7 +254,7 @@ TEST(FrontWallDetectionTests, AngleAffectsResults)
 
     auto no_angle{run_simulation(cfg)};
 
-    cfg.mouse_angle = M_PI / 3;
+    cfg.env_cfg.mouse_angle = M_PI / 3;
     auto some_angle{run_simulation(cfg)};
 
     CHECK(!are_results_equivalent(no_angle, some_angle));
@@ -215,12 +263,12 @@ TEST(FrontWallDetectionTests, AngleAffectsResults)
 TEST(FrontWallDetectionTests, HorizontalVarianceAndAngleAffectsResults)
 {
     Config cfg{create_no_variance_config()};
-    cfg.mouse_angle = M_PI / 8;
+    cfg.env_cfg.mouse_angle = M_PI / 8;
 
-    cfg.horizontal_position_variance = -0.9;
+    cfg.env_cfg.horizontal_position_variance = -0.9;
     auto left{run_simulation(cfg)};
 
-    cfg.horizontal_position_variance = 0.9;
+    cfg.env_cfg.horizontal_position_variance = 0.9;
     auto right{run_simulation(cfg)};
 
     CHECK(!are_results_equivalent(left, right));
@@ -230,178 +278,36 @@ TEST(FrontWallDetectionTests, VerticalVarianceAffectsResults)
 {
     Config cfg{create_no_variance_config()};
 
-    cfg.vertical_position_variance = -0.9;
+    cfg.env_cfg.vertical_position_variance = -0.9;
     auto back{run_simulation(cfg)};
 
-    cfg.vertical_position_variance = 0.9;
+    cfg.env_cfg.vertical_position_variance = 0.9;
     auto front{run_simulation(cfg)};
 
     CHECK(!are_results_equivalent(back, front));
 }
 
-TEST(FrontWallDetectionTests, ComputeResultsMetricsEmptyInput)
+IGNORE_TEST(FrontWallDetectionTests, VisualizeWithIdealParameters)
 {
-    std::vector<Result> results{};
+    Config cfg;
+    cfg.ctrl_cfg.reading_threshold = 279u;
+    cfg.env_cfg.ir_reading_scale = 1.0;
 
-    auto metrics{compute_results_metrics(results)};
+    enable_visualization("ideal-parameters");
+    
 
-    DOUBLES_EQUAL(0.0, metrics.absent_wall_identification_rate, FLOAT_TOLERANCE);
-    DOUBLES_EQUAL(0.0, metrics.present_wall_identification_rate, FLOAT_TOLERANCE);
-}
+    std::vector<double> angles{-M_PI / 4, 0.0, M_PI / 4};
+    std::vector<double> offsets{-0.9, 0.0, 0.9};
 
-TEST(FrontWallDetectionTests, ComputeResultsMetricsFieldsAreIndependent)
-{
-    std::vector<Result> results{
-        {true,  false},
-        {true,  false},
-        {false, false},
-        {false, true }
-    };
+    for (double angle: angles) {
+        for (double h_offset: offsets) {
+            for (double v_offset: offsets) {
+                cfg.env_cfg.mouse_angle = angle;
+                cfg.env_cfg.horizontal_position_variance = h_offset;
+                cfg.env_cfg.vertical_position_variance = v_offset;
 
-    /* absent: 2 / 4 = 0.5 */
-    /* present: 1 / 4 = 0.25 */
-
-    auto metrics{compute_results_metrics(results)};
-
-    DOUBLES_EQUAL(0.5, metrics.absent_wall_identification_rate, FLOAT_TOLERANCE);
-    DOUBLES_EQUAL(0.25, metrics.present_wall_identification_rate, FLOAT_TOLERANCE);
-}
-
-TEST(FrontWallDetectionTests, BuildCandidatesGroupsByThreshold)
-{
-    Trial t1;
-    t1.config.reading_threshold = 100;
-
-    Trial t2{t1};
-
-    Trial t3;
-    t3.config.reading_threshold = 200;
-
-    std::vector<Trial> trials{t1, t2, t3};
-
-    auto candidates{build_candidates(trials)};
-
-    CHECK_EQUAL(2, candidates.size());
-}
-
-TEST(FrontWallDetectionTests, BuildCandidatesComputesResultsMetrics)
-{
-    Trial t1;
-    t1.result.identified_absent_wall = true;
-    t1.result.identified_present_wall = true;
-    t1.config.reading_threshold = 100;
-
-    Trial t2{t1};
-    t2.result.identified_absent_wall = false;
-    t2.result.identified_present_wall = true;
-
-    std::vector<Trial> trials{t1, t2};
-
-    auto candidates{build_candidates(trials)};
-
-    CHECK_EQUAL(1, candidates.size());
-    DOUBLES_EQUAL(0.5, candidates.at(0).results_metrics.absent_wall_identification_rate,
-                  FLOAT_TOLERANCE);
-    DOUBLES_EQUAL(1.0, candidates.at(0).results_metrics.present_wall_identification_rate,
-                  FLOAT_TOLERANCE);
-}
-
-TEST(FrontWallDetectionTests, SortCandidatesOrdersByDescendingScore)
-{
-    Candidate c1;
-    c1.key.threshold = 100;
-    c1.results_metrics = {0.2, 0.2}; /* avg = 0.2 */
-
-    Candidate c2;
-    c2.key.threshold = 200;
-    c2.results_metrics = {0.8, 0.8}; /* avg = 0.8 */
-
-    std::vector<Candidate> input{c1, c2};
-
-    auto sorted{sort_candidates_by_rate(input)};
-
-    CHECK_EQUAL(2, sorted.size());
-
-    /* highest avg first */
-    CHECK_EQUAL(200u, sorted.at(0).key.threshold);
-    CHECK_EQUAL(100u, sorted.at(1).key.threshold);
-}
-
-TEST(FrontWallDetectionTests, SortCandidatesOrdersByDescendingDiff)
-{
-    Candidate c1;
-    c1.key.threshold = 100;
-    c1.results_metrics = {0.1, 0.9}; /* avg = 0.5, diff = 0.8 */
-
-    Candidate c2;
-    c2.key.threshold = 200;
-    c2.results_metrics = {0.5, 0.5}; /* avg = 0.5, diff = 0 */
-
-    std::vector<Candidate> input{c1, c2};
-
-    auto sorted{sort_candidates_by_rate(input)};
-
-    CHECK_EQUAL(2, sorted.size());
-
-    /* lowest diff first */
-    CHECK_EQUAL(200u, sorted.at(0).key.threshold);
-    CHECK_EQUAL(100u, sorted.at(1).key.threshold);
-}
-
-TEST(FrontWallDetectionTests, SortCandidatesTieBreaksOnThreshold)
-{
-    Candidate c1;
-    c1.key.threshold = 100;
-    c1.results_metrics = {0.5, 0.5}; /* avg = 0.5 */
-
-    Candidate c2;
-    c2.key.threshold = 200;
-    c2.results_metrics = {0.5, 0.5}; /* same avg */
-
-    std::vector<Candidate> input{c2, c1};
-
-    auto sorted{sort_candidates_by_rate(input)};
-
-    CHECK_EQUAL(2, sorted.size());
-
-    /* lower threshold first */
-    CHECK_EQUAL(100u, sorted.at(0).key.threshold);
-    CHECK_EQUAL(200u, sorted.at(1).key.threshold);
-}
-
-TEST(FrontWallDetectionTests, RunMinimalSampleSimulation)
-{
-    ConfigSweeper sweeper{create_no_variance_sweeper()};
-
-    const std::string filename{"test_minimal_output.txt"};
-
-    run_full_front_wall_detection_experiment(filename, sweeper);
-}
-
-IGNORE_TEST(FrontWallDetectionTests, RunFullSimulationAndWriteResultsToFile)
-{
-    ConfigSweeper sweeper;
-
-    sweeper.ir_reading_scale = simulation_common::generate_sweep_values(0.90, 1.1, 5);
-    sweeper.mouse_angle = simulation_common::generate_sweep_values(-M_PI / 4, M_PI / 4, 9);
-    sweeper.horizontal_position_variance = simulation_common::generate_sweep_values(-0.9, 0.9, 5);
-    sweeper.vertical_position_variance = simulation_common::generate_sweep_values(-0.9, 0.9, 5);
-    sweeper.reading_threshold = simulation_common::generate_sweep_values<uint32_t>(0, 1024, 1025);
-
-    run_full_front_wall_detection_experiment("test_full_output.txt", sweeper);
-}
-
-IGNORE_TEST(FrontWallDetectionTests, RunFullSimulationForIdealThreshold)
-{
-    ConfigSweeper sweeper;
-
-    sweeper.ir_reading_scale = simulation_common::generate_sweep_values(0.90, 1.1, 5);
-    sweeper.mouse_angle = simulation_common::generate_sweep_values(-M_PI / 4, M_PI / 4, 9);
-    sweeper.horizontal_position_variance = simulation_common::generate_sweep_values(-0.9, 0.9, 5);
-    sweeper.vertical_position_variance = simulation_common::generate_sweep_values(-0.9, 0.9, 5);
-    sweeper.reading_threshold = {295};
-
-    enable_visualization();
-
-    run_full_front_wall_detection_experiment("test_ideal_output.txt", sweeper);
+                auto r1{run_simulation(cfg)};
+            }
+        }
+    }
 }

@@ -23,9 +23,8 @@ extern "C"
 #include <cmath>
 #include <cstdint>
 #include <filesystem>
-#include <fstream>
-#include <iomanip>
 #include <map>
+#include <random>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -49,9 +48,6 @@ using namespace front_wall_detection;
 void prepare_mock_for_front_wall_detection(const Config& cfg, const maze::Maze& maze,
                                            mouse::Mouse& mouse);
 
-void write_summary(std::ofstream& out, const std::vector<Candidate>& candidates, size_t total_size);
-void write_candidates(std::ofstream& out, const std::vector<Candidate>& candidates);
-
 } /* unnamed namespace */
 
 /*----------------------------------------------------------------------------*/
@@ -61,9 +57,14 @@ namespace
 {
 
 const std::string TEST_OUTPUT_DIRECTORY{"front-wall-detection-visualizer"};
+std::string TEST_OUTPUT_SUBDIRECTORY{""};
 bool visualizer_enabled{false};
 visualizer::Visualizer wall_absent_visualizer;
 visualizer::Visualizer wall_present_visualizer;
+ControlConfig ctr_lower_bounds{};
+ControlConfig ctr_upper_bounds{};
+EnvironmentConfig env_lower_bounds{};
+EnvironmentConfig env_upper_bounds{};
 
 } /* unnamed namespace */
 
@@ -73,40 +74,70 @@ visualizer::Visualizer wall_present_visualizer;
 namespace front_wall_detection
 {
 
-bool ConfigSweeper::next()
+void reset_all_config_bounds(void)
 {
-    if (!initialized_) {
-        sweeper.init_sizes({
-            ir_reading_scale.size(),
-            mouse_angle.size(),
-            horizontal_position_variance.size(),
-            vertical_position_variance.size(),
-            reading_threshold.size()
-        });
-
-        initialized_ = true;
-    }
-    return sweeper.next();
+    ctr_lower_bounds = {};
+    ctr_upper_bounds = {};
+    env_lower_bounds = {};
+    env_upper_bounds = {};
 }
 
-Config ConfigSweeper::value() const
+void set_ctr_config_bounds(const ControlConfig& lower, const ControlConfig& upper)
 {
-    const auto& idx{sweeper.get_indices()};
-    int i{0};
-
-    Config cfg{};
-
-    cfg.ir_reading_scale = ir_reading_scale.at(idx.at(i++));
-    cfg.mouse_angle = mouse_angle.at(idx.at(i++));
-    cfg.horizontal_position_variance = horizontal_position_variance.at(idx.at(i++));
-    cfg.vertical_position_variance = vertical_position_variance.at(idx.at(i++));
-    cfg.reading_threshold = reading_threshold.at(idx.at(i++));
-
-    return cfg;
+    ctr_lower_bounds = lower;
+    ctr_upper_bounds = upper;
 }
 
-void enable_visualization(void)
+void set_env_config_bounds(const EnvironmentConfig& lower, const EnvironmentConfig& upper)
 {
+    env_lower_bounds = lower;
+    env_upper_bounds = upper;
+}
+
+ControlConfig decode_control(const std::vector<double>& x)
+{
+    ControlConfig c{};
+    size_t i{0};
+
+    c.reading_threshold = static_cast<uint32_t>(x.at(i++));
+
+    return c;
+}
+
+std::vector<double> encode_control(const ControlConfig& cfg)
+{
+    return {static_cast<double>(cfg.reading_threshold)};
+}
+
+std::pair<std::vector<double>, std::vector<double>> get_control_bounds(void)
+{
+    return {encode_control(ctr_lower_bounds), encode_control(ctr_upper_bounds)};
+}
+
+EnvironmentConfig generate_random_environment(void)
+{
+    static thread_local std::mt19937 rng(std::random_device{}());
+
+    auto uniform = [&](double a, double b) {
+        return std::uniform_real_distribution<double>(a, b)(rng);
+    };
+
+    EnvironmentConfig e;
+    e.ir_reading_scale =
+        uniform(env_lower_bounds.ir_reading_scale, env_upper_bounds.ir_reading_scale);
+    e.mouse_angle =
+        uniform(env_lower_bounds.mouse_angle, env_upper_bounds.mouse_angle);
+    e.horizontal_position_variance =
+        uniform(env_lower_bounds.horizontal_position_variance, env_upper_bounds.horizontal_position_variance);
+    e.vertical_position_variance =
+        uniform(env_lower_bounds.vertical_position_variance, env_upper_bounds.vertical_position_variance);
+
+    return e;
+}
+
+void enable_visualization(const std::string& foldername)
+{
+    TEST_OUTPUT_SUBDIRECTORY = foldername;
     visualizer_enabled = true;
 }
 
@@ -119,11 +150,11 @@ std::string config_to_string(const Config& cfg)
 {
     std::ostringstream oss;
 
-    oss << simulation_common::double_to_filename(cfg.ir_reading_scale) << "-"
-        << simulation_common::double_to_filename(cfg.mouse_angle) << "-"
-        << simulation_common::double_to_filename(cfg.horizontal_position_variance) << "-"
-        << simulation_common::double_to_filename(cfg.vertical_position_variance) << "-"
-        << simulation_common::double_to_filename(cfg.reading_threshold);
+    oss << simulation_common::double_to_filename(cfg.env_cfg.ir_reading_scale) << "-"
+        << simulation_common::double_to_filename(cfg.env_cfg.mouse_angle) << "-"
+        << simulation_common::double_to_filename(cfg.env_cfg.horizontal_position_variance) << "-"
+        << simulation_common::double_to_filename(cfg.env_cfg.vertical_position_variance) << "-"
+        << simulation_common::double_to_filename(cfg.ctrl_cfg.reading_threshold);
 
     return oss.str();
 }
@@ -131,8 +162,9 @@ std::string config_to_string(const Config& cfg)
 Result run_simulation(const Config& cfg)
 {
     if (visualizer_enabled) {
-        std::filesystem::create_directories(TEST_OUTPUT_DIRECTORY);
+        std::filesystem::create_directories(TEST_OUTPUT_DIRECTORY + "/" + TEST_OUTPUT_SUBDIRECTORY);
     }
+
     std::vector<std::string> ascii_open{
         "+-+",
         "|S|",
@@ -176,11 +208,11 @@ Result run_simulation(const Config& cfg)
     update_ir_1_sensor_reading(ir_1_distance);
     update_ir_4_sensor_reading(ir_4_distance);
     ir_1_reading = read_ir_1_sensor();
-    ir_1_reading = scale_and_clamp_ir_sensor_reading(ir_1_reading, cfg.ir_reading_scale);
+    ir_1_reading = scale_and_clamp_ir_sensor_reading(ir_1_reading, cfg.env_cfg.ir_reading_scale);
     ir_4_reading = read_ir_4_sensor();
-    ir_4_reading = scale_and_clamp_ir_sensor_reading(ir_4_reading, cfg.ir_reading_scale);
+    ir_4_reading = scale_and_clamp_ir_sensor_reading(ir_4_reading, cfg.env_cfg.ir_reading_scale);
     average_reading = (ir_1_reading + ir_4_reading) / 2;
-    identified_absent_wall = (average_reading < cfg.reading_threshold) ? true : false;
+    identified_absent_wall = (average_reading < cfg.ctrl_cfg.reading_threshold) ? true : false;
 
     if (visualizer_enabled) {
         if (identified_absent_wall) {
@@ -198,11 +230,11 @@ Result run_simulation(const Config& cfg)
     update_ir_1_sensor_reading(ir_1_distance);
     update_ir_4_sensor_reading(ir_4_distance);
     ir_1_reading = read_ir_1_sensor();
-    ir_1_reading = scale_and_clamp_ir_sensor_reading(ir_1_reading, cfg.ir_reading_scale);
+    ir_1_reading = scale_and_clamp_ir_sensor_reading(ir_1_reading, cfg.env_cfg.ir_reading_scale);
     ir_4_reading = read_ir_4_sensor();
-    ir_4_reading = scale_and_clamp_ir_sensor_reading(ir_4_reading, cfg.ir_reading_scale);
+    ir_4_reading = scale_and_clamp_ir_sensor_reading(ir_4_reading, cfg.env_cfg.ir_reading_scale);
     average_reading = (ir_1_reading + ir_4_reading) / 2;
-    identified_present_wall = (average_reading >= cfg.reading_threshold) ? true : false;
+    identified_present_wall = (average_reading >= cfg.ctrl_cfg.reading_threshold) ? true : false;
 
     if (visualizer_enabled) {
         if (identified_present_wall) {
@@ -215,107 +247,14 @@ Result run_simulation(const Config& cfg)
 
     if (visualizer_enabled) {
         wall_absent_visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/"
+                                                  + TEST_OUTPUT_SUBDIRECTORY + "/"
                                                   + config_to_string(cfg) + "-wa.png");
         wall_present_visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/"
-                                                   + config_to_string(cfg) + "-wp.png");
+                                                  + TEST_OUTPUT_SUBDIRECTORY + "/"
+                                                  + config_to_string(cfg) + "-wp.png");
     }
 
     return Result{identified_absent_wall, identified_present_wall};
-}
-
-ResultsMetrics compute_results_metrics(const std::vector<Result>& results)
-{
-    ResultsMetrics a;
-
-    a.absent_wall_identification_rate = simulation_common::compute_rate(
-        results, [](const Result& r) { return r.identified_absent_wall; });
-    a.present_wall_identification_rate = simulation_common::compute_rate(
-        results, [](const Result& r) { return r.identified_present_wall; });
-
-    return a;
-}
-
-std::vector<Candidate> build_candidates(const std::vector<Trial>& trials)
-{
-    auto grouped = simulation_common::group_by(
-        trials,
-        [](const Trial& t) { return CandidateKey{t.config.reading_threshold}; },
-        [](const Trial& t) { return t.result; });
-
-    std::vector<Candidate> out;
-    out.reserve(grouped.size());
-
-    for (const auto& [key, group_results] : grouped) {
-        Candidate c;
-        c.key = key;
-        c.results_metrics = compute_results_metrics(group_results);
-        out.push_back(c);
-    }
-
-    return out;
-}
-
-std::vector<Candidate> sort_candidates_by_rate(const std::vector<Candidate>& candidates)
-{
-    constexpr double FLOAT_TOLERANCE{1e-6};
-    std::vector<Candidate> out{candidates};
-
-    auto score = [](const Candidate& c) {
-        double absent{c.results_metrics.absent_wall_identification_rate};
-        double present{c.results_metrics.present_wall_identification_rate};
-
-        double average{(absent + present) / 2.0};
-        double diff{std::abs(absent - present)};
-
-        return average - diff;
-    };
-
-    std::sort(out.begin(), out.end(), [&](const Candidate& a, const Candidate& b) {
-        double sa{score(a)};
-        double sb{score(b)};
-
-        if (std::abs(sa - sb) > FLOAT_TOLERANCE) {
-            return sa > sb;
-        }
-
-        return a.key.threshold < b.key.threshold;
-    });
-
-    return out;
-}
-
-void write_analysis_to_file(const std::string& filename, const std::vector<Candidate>& candidates,
-                            size_t total_size)
-{
-    std::ofstream out(filename);
-    if (!out.is_open()) {
-        throw std::runtime_error("Failed to open output file: " + filename);
-    }
-    out << std::fixed << std::setprecision(3);
-
-    write_summary(out, candidates, total_size);
-
-    out << "\n=== ALL CANDIDATES ===\n";
-    write_candidates(out, candidates);
-}
-
-void run_full_front_wall_detection_experiment(const std::string& filename, ConfigSweeper& sweeper)
-{
-    std::vector<Trial> trials;
-    std::vector<Result> all_results;
-
-    while (sweeper.next()) {
-        Config cfg{sweeper.value()};
-
-        auto result{run_simulation(cfg)};
-
-        trials.push_back({cfg, result});
-        all_results.push_back(result);
-    }
-
-    auto sorted_candidates{sort_candidates_by_rate(build_candidates(trials))};
-
-    write_analysis_to_file(filename, sorted_candidates, all_results.size());
 }
 
 } /* front_wall_detection namespace */
@@ -337,33 +276,10 @@ void prepare_mock_for_front_wall_detection(const Config& cfg, const maze::Maze& 
                                  / 2};
     double max_vertical_offset{(maze::OFFICIAL_WALL_LENGTH_SIZE - mouse.hitbox.vertical_size) / 2};
 
-    mouse.rotate(cfg.mouse_angle);
-    mouse.translate(maze.mouse_start.x + (max_horizontal_offset * cfg.horizontal_position_variance),
-                    maze.mouse_start.y + (max_vertical_offset * cfg.vertical_position_variance));
-}
-
-void write_summary(std::ofstream& out, const std::vector<Candidate>& candidates, size_t total_size)
-{
-    out << "=== SUMMARY ===\n";
-    out << "Total Trials : " << total_size << "\n";
-    out << "Candidates   : " << candidates.size() << "\n\n";
-}
-
-void write_candidates(std::ofstream& out, const std::vector<Candidate>& candidates)
-{
-    out << std::left
-        << std::setw(12) << "Threshold"
-        << std::setw(10) << "Absent"
-        << std::setw(10) << "Present"
-        << "\n";
-
-    for (const auto& c : candidates) {
-        out << std::left
-            << std::setw(12) << c.key.threshold
-            << std::setw(10) << c.results_metrics.absent_wall_identification_rate
-            << std::setw(10) << c.results_metrics.present_wall_identification_rate
-            << "\n";
-    }
+    mouse.rotate(cfg.env_cfg.mouse_angle);
+    mouse.translate(
+        maze.mouse_start.x + (max_horizontal_offset * cfg.env_cfg.horizontal_position_variance),
+        maze.mouse_start.y + (max_vertical_offset * cfg.env_cfg.vertical_position_variance));
 }
 
 } /* unnamed namespace */
