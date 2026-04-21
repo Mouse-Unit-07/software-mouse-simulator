@@ -14,15 +14,22 @@
 namespace side_wall_detection
 {
 
-struct Config {
+struct ControlConfig {
+    uint32_t reading_threshold;
+};
+
+struct EnvironmentConfig {
     double maze_size_scale;
     double ir_reading_scale;
     double mouse_angle;
     double horizontal_position_variance;
     double vertical_position_variance;
     int total_steps;
+};
 
-    uint32_t reading_threshold;
+struct Config {
+    ControlConfig ctrl_cfg;
+    EnvironmentConfig env_cfg;
 };
 
 struct Result {
@@ -37,6 +44,14 @@ struct Result {
 /*----------------------------------------------------------------------------*/
 namespace side_wall_detection
 {
+
+void reset_all_config_bounds(void);
+void set_ctr_config_bounds(const ControlConfig& lower, const ControlConfig& upper);
+void set_env_config_bounds(const EnvironmentConfig& lower, const EnvironmentConfig& upper);
+ControlConfig decode_control(const std::vector<double>& x);
+std::vector<double> encode_control(const ControlConfig& cfg);
+std::pair<std::vector<double>, std::vector<double>> get_control_bounds(void);
+EnvironmentConfig generate_random_environment(void);
 
 void enable_visualization(void);
 void disable_visualization(void);
