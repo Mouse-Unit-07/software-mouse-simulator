@@ -57,6 +57,7 @@ namespace
 {
 
 const std::string TEST_OUTPUT_DIRECTORY{"front-wall-detection-visualizer"};
+std::string TEST_OUTPUT_SUBDIRECTORY{""};
 bool visualizer_enabled{false};
 visualizer::Visualizer wall_absent_visualizer;
 visualizer::Visualizer wall_present_visualizer;
@@ -134,8 +135,9 @@ EnvironmentConfig generate_random_environment(void)
     return e;
 }
 
-void enable_visualization(void)
+void enable_visualization(const std::string& foldername)
 {
+    TEST_OUTPUT_SUBDIRECTORY = foldername;
     visualizer_enabled = true;
 }
 
@@ -160,8 +162,9 @@ std::string config_to_string(const Config& cfg)
 Result run_simulation(const Config& cfg)
 {
     if (visualizer_enabled) {
-        std::filesystem::create_directories(TEST_OUTPUT_DIRECTORY);
+        std::filesystem::create_directories(TEST_OUTPUT_DIRECTORY + "/" + TEST_OUTPUT_SUBDIRECTORY);
     }
+
     std::vector<std::string> ascii_open{
         "+-+",
         "|S|",
@@ -244,9 +247,11 @@ Result run_simulation(const Config& cfg)
 
     if (visualizer_enabled) {
         wall_absent_visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/"
+                                                  + TEST_OUTPUT_SUBDIRECTORY + "/"
                                                   + config_to_string(cfg) + "-wa.png");
         wall_present_visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/"
-                                                   + config_to_string(cfg) + "-wp.png");
+                                                  + TEST_OUTPUT_SUBDIRECTORY + "/"
+                                                  + config_to_string(cfg) + "-wp.png");
     }
 
     return Result{identified_absent_wall, identified_present_wall};

@@ -7,8 +7,8 @@
 set(ALL_TEST_SOURCES
     ${ALL_TEST_SOURCES}
     ${CMAKE_CURRENT_SOURCE_DIR}/test_front_wall_detection_optimizer.cpp
-    ${CMAKE_SOURCE_DIR}/src/optimizer/rotation/front_wall_detection_optimizer.cpp
-    ${CMAKE_SOURCE_DIR}/src/optimizer/rotation/front_wall_detection_optimizer.hpp
+    ${CMAKE_SOURCE_DIR}/src/optimizer/front_wall_detection/front_wall_detection_optimizer.cpp
+    ${CMAKE_SOURCE_DIR}/src/optimizer/front_wall_detection/front_wall_detection_optimizer.hpp
     PARENT_SCOPE
 )
 

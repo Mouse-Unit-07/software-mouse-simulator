@@ -286,3 +286,28 @@ TEST(FrontWallDetectionTests, VerticalVarianceAffectsResults)
 
     CHECK(!are_results_equivalent(back, front));
 }
+
+IGNORE_TEST(FrontWallDetectionTests, VisualizeWithIdealParameters)
+{
+    Config cfg;
+    cfg.ctrl_cfg.reading_threshold = 279u;
+    cfg.env_cfg.ir_reading_scale = 1.0;
+
+    enable_visualization("ideal-parameters");
+    
+
+    std::vector<double> angles{-M_PI / 4, 0.0, M_PI / 4};
+    std::vector<double> offsets{-0.9, 0.0, 0.9};
+
+    for (double angle: angles) {
+        for (double h_offset: offsets) {
+            for (double v_offset: offsets) {
+                cfg.env_cfg.mouse_angle = angle;
+                cfg.env_cfg.horizontal_position_variance = h_offset;
+                cfg.env_cfg.vertical_position_variance = v_offset;
+
+                auto r1{run_simulation(cfg)};
+            }
+        }
+    }
+}
