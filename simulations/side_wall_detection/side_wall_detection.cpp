@@ -58,6 +58,7 @@ namespace
 {
 
 const std::string TEST_OUTPUT_DIRECTORY{"wall-detection-visualizer"};
+std::string TEST_OUTPUT_SUBDIRECTORY{""};
 bool visualizer_enabled{false};
 visualizer::Visualizer wall_absent_visualizer;
 visualizer::Visualizer wall_present_visualizer;
@@ -139,8 +140,9 @@ EnvironmentConfig generate_random_environment(void)
     return e;
 }
 
-void enable_visualization(void)
+void enable_visualization(const std::string& foldername)
 {
+    TEST_OUTPUT_SUBDIRECTORY = foldername;
     visualizer_enabled = true;
 }
 
@@ -167,7 +169,7 @@ std::string config_to_string(const Config& cfg)
 Result run_simulation(const Config& cfg)
 {
     if (visualizer_enabled) {
-        std::filesystem::create_directories(TEST_OUTPUT_DIRECTORY);
+        std::filesystem::create_directories(TEST_OUTPUT_DIRECTORY + "/" + TEST_OUTPUT_SUBDIRECTORY);
     }
 
     /* create maze */
@@ -213,13 +215,15 @@ Result run_simulation(const Config& cfg)
         open_maze_distance = maze::compute_ray_distance_in_closed_space(
             open_maze, mouse.hitbox.center, mouse.ir_3_sensor);
         update_ir_3_sensor_reading(open_maze_distance);
-        reading = scale_and_clamp_ir_sensor_reading(read_ir_3_sensor(), cfg.env_cfg.ir_reading_scale);
+        reading =
+            scale_and_clamp_ir_sensor_reading(read_ir_3_sensor(), cfg.env_cfg.ir_reading_scale);
         wall_absent_at_step.at(i) = (reading < cfg.ctrl_cfg.reading_threshold) ? true : false;
 
         closed_maze_distance = maze::compute_ray_distance_in_closed_space(
             closed_maze, mouse.hitbox.center, mouse.ir_3_sensor);
         update_ir_3_sensor_reading(closed_maze_distance);
-        reading = scale_and_clamp_ir_sensor_reading(read_ir_3_sensor(), cfg.env_cfg.ir_reading_scale);
+        reading =
+            scale_and_clamp_ir_sensor_reading(read_ir_3_sensor(), cfg.env_cfg.ir_reading_scale);
         wall_present_at_step.at(i) = (reading >= cfg.ctrl_cfg.reading_threshold) ? true : false;
 
         if (visualizer_enabled) {
@@ -239,8 +243,10 @@ Result run_simulation(const Config& cfg)
 
     if (visualizer_enabled) {
         wall_absent_visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/"
+                                                  + TEST_OUTPUT_SUBDIRECTORY + "/"
                                                   + config_to_string(cfg) + "-wa.png");
         wall_present_visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/"
+                                                   + TEST_OUTPUT_SUBDIRECTORY + "/"
                                                    + config_to_string(cfg) + "-wp.png");
     }
 
@@ -257,7 +263,8 @@ WindowResult find_best_window(const std::vector<double>& rates, double window_fr
         return {};
     }
 
-    const size_t window_size{std::max<size_t>(1, static_cast<size_t>(std::ceil(window_fraction * n)))};
+    const size_t window_size{
+        std::max<size_t>(1, static_cast<size_t>(std::ceil(window_fraction * n)))};
 
     std::deque<size_t> dq; /* stores indices, monotonic increasing (for min) */
 
@@ -315,8 +322,9 @@ void prepare_mock_for_side_wall_detection(const Config& cfg, const maze::Maze& m
     double max_vertical_offset{(maze::OFFICIAL_WALL_LENGTH_SIZE - mouse.hitbox.vertical_size) / 2};
 
     mouse.rotate(cfg.env_cfg.mouse_angle);
-    mouse.translate(maze.mouse_start.x + (max_horizontal_offset * cfg.env_cfg.horizontal_position_variance),
-                    maze.mouse_start.y + (max_vertical_offset * cfg.env_cfg.vertical_position_variance));
+    mouse.translate(
+        maze.mouse_start.x + (max_horizontal_offset * cfg.env_cfg.horizontal_position_variance),
+        maze.mouse_start.y + (max_vertical_offset * cfg.env_cfg.vertical_position_variance));
 }
 
 } /* unnamed namespace */

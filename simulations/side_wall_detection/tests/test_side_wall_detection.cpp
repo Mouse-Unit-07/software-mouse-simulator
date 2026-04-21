@@ -461,8 +461,34 @@ IGNORE_TEST(SideWallDetectionTests, VisualizationDoesNotAffectResults)
     disable_visualization();
     auto r1{run_simulation(cfg)};
 
-    enable_visualization();
+    enable_visualization("visualization-does-not-affect-results");
     auto r2{run_simulation(cfg)};
 
     CHECK(are_results_equivalent(r1, r2));
+}
+
+IGNORE_TEST(SideWallDetectionTests, VisualizeWithIdealParameters)
+{
+    Config cfg;
+    cfg.ctrl_cfg.reading_threshold = 175u;
+    cfg.env_cfg.maze_size_scale = 1.0;
+    cfg.env_cfg.ir_reading_scale = 1.0;
+    cfg.env_cfg.total_steps = 100;
+
+    enable_visualization("ideal-parameters");
+
+    std::vector<double> angles{-M_PI / 6, 0.0, M_PI / 6};
+    std::vector<double> offsets{-0.5, 0.0, 0.5};
+
+    for (double angle : angles) {
+        for (double h_offset : offsets) {
+            for (double v_offset : offsets) {
+                cfg.env_cfg.mouse_angle = angle;
+                cfg.env_cfg.horizontal_position_variance = h_offset;
+                cfg.env_cfg.vertical_position_variance = v_offset;
+
+                auto r1{run_simulation(cfg)};
+            }
+        }
+    }
 }
