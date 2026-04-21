@@ -20,6 +20,8 @@ extern "C"
 }
 
 #include <algorithm>
+#include <cmath>
+#include <deque>
 #include <filesystem>
 #include <functional>
 #include <map>
@@ -246,6 +248,51 @@ Result run_simulation(const Config& cfg)
         std::move(wall_absent_at_step),
         std::move(wall_present_at_step),
     };
+}
+
+WindowResult find_best_window(const std::vector<double>& rates, double window_fraction)
+{
+    const size_t n{rates.size()};
+    if ((n == 0) || (window_fraction <= 0.0)) {
+        return {};
+    }
+
+    const size_t window_size{std::max<size_t>(1, static_cast<size_t>(std::ceil(window_fraction * n)))};
+
+    std::deque<size_t> dq; /* stores indices, monotonic increasing (for min) */
+
+    double best_rate{-1.0};
+    size_t best_start{0};
+
+    for (size_t i{0}; i < n; ++i) {
+        /* maintain increasing deque (front = minimum) */
+        while (!dq.empty() && rates[dq.back()] >= rates[i]) {
+            dq.pop_back();
+        }
+        dq.push_back(i);
+
+        /* remove out-of-window indices */
+        if (dq.front() + window_size <= i) {
+            dq.pop_front();
+        }
+
+        /* evaluate window once fully formed */
+        if ((i + 1) >= window_size) {
+            const size_t start{i + 1 - window_size};
+            const double window_min{rates[dq.front()]};
+
+            if (window_min > best_rate) {
+                best_rate = window_min;
+                best_start = start;
+            }
+        }
+    }
+
+    WindowResult result;
+    result.rate = (best_rate < 0.0) ? 0.0 : best_rate;
+    result.start_fraction = static_cast<double>(best_start) / n;
+
+    return result;
 }
 
 } /* side_wall_detection namespace */

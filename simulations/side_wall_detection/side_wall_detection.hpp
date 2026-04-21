@@ -37,6 +37,11 @@ struct Result {
     std::vector<bool> wall_present_at_step;
 };
 
+struct WindowResult {
+    double rate{0.0}; /* max achievable min rate */
+    double start_fraction{0.0}; /* start of the window */
+};
+
 } /* side_wall_detection namespace */
 
 /*----------------------------------------------------------------------------*/
@@ -58,6 +63,9 @@ void disable_visualization(void);
 
 std::string config_to_string(const Config& cfg);
 Result run_simulation(const Config& cfg);
+
+
+WindowResult find_best_window(const std::vector<double>& rates, double window_fraction);
 
 } /* side_wall_detection namespace */
 

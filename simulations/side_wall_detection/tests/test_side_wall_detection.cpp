@@ -335,6 +335,125 @@ TEST(SideWallDetectionTests, VerticalVarianceChangesResults)
     CHECK(!are_results_equivalent(r1, r2));
 }
 
+TEST(SideWallDetectionTests, FindBestWindowEmptyInput)
+{
+    std::vector<double> rates{};
+    auto result{find_best_window(rates, 0.5)};
+
+    DOUBLES_EQUAL(0.0, result.rate, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, result.start_fraction, FLOAT_TOLERANCE);
+}
+
+TEST(SideWallDetectionTests, FindBestWindowZeroSize)
+{
+    std::vector<double> rates{0.1, 0.2, 0.3};
+    auto result{find_best_window(rates, 0.0)};
+
+    DOUBLES_EQUAL(0.0, result.rate, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, result.start_fraction, FLOAT_TOLERANCE);
+}
+
+TEST(SideWallDetectionTests, FindBestWindowSingleElement)
+{
+    std::vector<double> rates{0.75};
+    auto result{find_best_window(rates, 1.0)};
+
+    DOUBLES_EQUAL(0.75, result.rate, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, result.start_fraction, FLOAT_TOLERANCE);
+}
+
+TEST(SideWallDetectionTests, FindBestWindowFullWindow)
+{
+    std::vector<double> rates{0.9, 0.8, 0.7, 0.85};
+    auto result{find_best_window(rates, 1.0)};
+
+    /* full window -> min of entire vector */
+    DOUBLES_EQUAL(0.7, result.rate, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, result.start_fraction, FLOAT_TOLERANCE);
+}
+
+TEST(SideWallDetectionTests, FindBestWindowHalfWindowBasic)
+{
+    std::vector<double> rates{0.9, 0.8, 0.7, 0.85};
+    auto result{find_best_window(rates, 0.5)}; /* window size = 2 */
+
+    /*
+        windows:
+        [0.9,0.8] -> 0.8
+        [0.8,0.7] -> 0.7
+        [0.7,0.85] -> 0.7
+
+        best = 0.8 at start index 0
+    */
+    DOUBLES_EQUAL(0.8, result.rate, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, result.start_fraction, FLOAT_TOLERANCE);
+}
+
+TEST(SideWallDetectionTests, FindBestWindowSelectsLaterBetterWindow)
+{
+    std::vector<double> rates{0.2, 0.2, 0.9, 0.9};
+    auto result{find_best_window(rates, 0.5)}; /* window size = 2 */
+
+    /*
+        [0.2,0.2] -> 0.2
+        [0.2,0.9] -> 0.2
+        [0.9,0.9] -> 0.9  <-- best
+    */
+    DOUBLES_EQUAL(0.9, result.rate, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(2.0 / 4.0, result.start_fraction, FLOAT_TOLERANCE);
+}
+
+TEST(SideWallDetectionTests, FindBestWindowAllEqualValues)
+{
+    std::vector<double> rates{0.5, 0.5, 0.5, 0.5};
+    auto result{find_best_window(rates, 0.5)}; /* window size = 2 */
+
+    /* all windows equal → first one chosen */
+    DOUBLES_EQUAL(0.5, result.rate, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, result.start_fraction, FLOAT_TOLERANCE);
+}
+
+TEST(SideWallDetectionTests, FindBestWindowWindowSizeRoundsUp)
+{
+    std::vector<double> rates{0.9, 0.8, 0.7};
+    auto result{find_best_window(rates, 0.34)};
+    /*
+        ceil(0.34 * 3) = ceil(1.02) = 2
+        behaves like window size 2
+    */
+
+    DOUBLES_EQUAL(0.8, result.rate, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, result.start_fraction, FLOAT_TOLERANCE);
+}
+
+TEST(SideWallDetectionTests, FindBestWindowWindowSizeBecomesOne)
+{
+    std::vector<double> rates{0.1, 0.9, 0.3};
+    auto result{find_best_window(rates, 0.01)};
+    /*
+        window size = 1 → pick max element
+    */
+
+    DOUBLES_EQUAL(0.9, result.rate, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(1.0 / 3.0, result.start_fraction, FLOAT_TOLERANCE);
+}
+
+TEST(SideWallDetectionTests, FindBestWindowPrefersFirstOnTie)
+{
+    std::vector<double> rates{0.8, 0.7, 0.8, 0.7};
+    auto result{find_best_window(rates, 0.5)}; /* window size = 2 */
+
+    /*
+        [0.8,0.7] -> 0.7
+        [0.7,0.8] -> 0.7
+        [0.8,0.7] -> 0.7
+
+        tie → first window should win
+    */
+    DOUBLES_EQUAL(0.7, result.rate, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, result.start_fraction, FLOAT_TOLERANCE);
+}
+
 IGNORE_TEST(SideWallDetectionTests, VisualizationDoesNotAffectResults)
 {
     Config cfg{create_no_variance_config()};
