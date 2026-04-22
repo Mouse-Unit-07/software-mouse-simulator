@@ -213,7 +213,7 @@ ParetoResult run_move_forward_staged(size_t population, size_t gen_stage1, size_
 
     std::vector<PagmoVec> seeds{};
     for (auto idx : best_indices) {
-        seeds.push_back(stage1.X[idx]);
+        seeds.push_back(stage1.X.at(idx));
     }
 
     /* Stage 2: Full optimization */
@@ -228,7 +228,7 @@ ParetoResult run_move_forward_staged(size_t population, size_t gen_stage1, size_
     /* Fill remaining population */
     size_t i{0};
     while (pop.size() < population) {
-        pop.push_back(seeds[i % seeds.size()]);
+        pop.push_back(seeds.at(i % seeds.size()));
         ++i;
     }
 
