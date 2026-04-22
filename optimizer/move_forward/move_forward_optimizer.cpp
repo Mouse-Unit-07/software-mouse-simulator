@@ -39,12 +39,7 @@ std::vector<size_t> get_best_feasible_indices(const std::vector<PagmoVec>& F, si
 /*----------------------------------------------------------------------------*/
 /*                               Private Globals                              */
 /*----------------------------------------------------------------------------*/
-/* none */
-
-/*----------------------------------------------------------------------------*/
-/*                             Public Definitions                             */
-/*----------------------------------------------------------------------------*/
-namespace move_forward_optimizer
+namespace
 {
 
 struct Stage1Objectives {
@@ -191,6 +186,14 @@ public:
     int sims_{100};
     move_forward::WallMode mode_{move_forward::WallMode::NO_WALLS};
 };
+
+} /* unnamed namespace */
+
+/*----------------------------------------------------------------------------*/
+/*                             Public Definitions                             */
+/*----------------------------------------------------------------------------*/
+namespace move_forward_optimizer
+{
 
 ParetoResult run_move_forward_staged(size_t population, size_t gen_stage1, size_t gen_stage2,
                                      int sims_stage1, int sims_stage2, move_forward::WallMode mode)
