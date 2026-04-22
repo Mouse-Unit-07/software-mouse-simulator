@@ -125,7 +125,6 @@ ParetoResult run_front_wall_detection_staged(std::size_t population, std::size_t
     return {pop.get_x(), pop.get_f()};
 }
 
-
 void write_pareto_to_file(const std::string& filename, const ParetoResult& result)
 {
     auto out{optimizer_common::open_output_file(filename)};

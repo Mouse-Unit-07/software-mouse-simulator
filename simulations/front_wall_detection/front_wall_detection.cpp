@@ -250,8 +250,8 @@ Result run_simulation(const Config& cfg)
                                                   + TEST_OUTPUT_SUBDIRECTORY + "/"
                                                   + config_to_string(cfg) + "-wa.png");
         wall_present_visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/"
-                                                  + TEST_OUTPUT_SUBDIRECTORY + "/"
-                                                  + config_to_string(cfg) + "-wp.png");
+                                                   + TEST_OUTPUT_SUBDIRECTORY + "/"
+                                                   + config_to_string(cfg) + "-wp.png");
     }
 
     return Result{identified_absent_wall, identified_present_wall};

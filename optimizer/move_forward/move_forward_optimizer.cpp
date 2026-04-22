@@ -59,11 +59,7 @@ struct Stage1Objectives {
 
     static Stage1Objectives from_vec(const PagmoVec& v)
     {
-        return {
-            v.at(0),
-            v.at(1),
-            v.at(2)
-        };
+        return {v.at(0), v.at(1), v.at(2)};
     }
 };
 
@@ -81,13 +77,7 @@ struct Stage2Objectives {
 
     static Stage2Objectives from_vec(const PagmoVec& v)
     {
-        return {
-            v.at(0),
-            v.at(1),
-            v.at(2),
-            v.at(3),
-            v.at(4)
-        };
+        return {v.at(0), v.at(1), v.at(2), v.at(3), v.at(4)};
     }
 };
 
@@ -302,7 +292,7 @@ void write_move_forward_pareto_to_file(const std::string& filename, const Pareto
         const auto& f{result.F.at(i)};
         const auto ctrl{move_forward::decode_control(x)};
         const auto obj{Stage2Objectives::from_vec(f)};
-        
+
         const std::string key{optimizer_common::control_to_key(x)};
         double time{0.0};
         auto it{time_cache.find(key)};
