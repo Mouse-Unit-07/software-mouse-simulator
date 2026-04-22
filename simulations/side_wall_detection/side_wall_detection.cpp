@@ -326,6 +326,8 @@ Result run_simulation(const Config& cfg)
         wall_present_visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/"
                                                    + TEST_OUTPUT_SUBDIRECTORY + "/"
                                                    + config_to_string(cfg) + "-wp.png");
+        wall_absent_visualizer.reset_beam_color();
+        wall_present_visualizer.reset_beam_color();
     }
 
     uint64_t open_avg{open_sum / target_window_steps};

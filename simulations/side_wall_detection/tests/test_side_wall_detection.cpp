@@ -370,6 +370,7 @@ IGNORE_TEST(SideWallDetectionTests, VisualizeWithIdealParameters)
 {
     Config cfg{};
     cfg.ctrl_cfg.reading_threshold = 60u;
+    cfg.ctrl_cfg.reading_start_offset = 0.0;
     cfg.ctrl_cfg.slope_threshold = 153u;
     cfg.env_cfg.maze_size_scale = 1.0;
     cfg.env_cfg.ir_reading_scale = 1.0;
