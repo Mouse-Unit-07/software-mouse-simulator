@@ -31,7 +31,7 @@ namespace
 
 using PagmoVec = pagmo::vector_double;
 
-std::unordered_map<std::string, std::array<double, 4>> window_start_cache;
+std::unordered_map<std::string, std::pair<double, double>> rate_cache;
 
 } /* unnamed namespace */
 
@@ -41,25 +41,21 @@ std::unordered_map<std::string, std::array<double, 4>> window_start_cache;
 namespace
 {
 
-constexpr double W30{0.3};
-constexpr double W60{0.6};
-constexpr double W90{0.9};
-constexpr double W100{1.0};
-
 struct Objectives {
-    double w30{};
-    double w60{};
-    double w90{};
-    double w100{};
+    double combined_rate{};
+    double start_offset{};
 
     PagmoVec to_vec() const
     {
-        return {-w30, -w60, -w90, -w100};
+        return {-combined_rate, start_offset};
     }
 
     static Objectives from_vec(const PagmoVec& v)
     {
-        return {-v.at(0), -v.at(1), -v.at(2), -v.at(3)};
+        Objectives obj{};
+        obj.combined_rate = -v.at(0);
+        obj.start_offset = v.at(1);
+        return obj;
     }
 };
 
@@ -76,10 +72,8 @@ public:
     {
         const auto control{side_wall_detection::decode_control(x)};
 
-        std::vector<double> avg_absent;
-        std::vector<double> avg_present;
-
-        int steps{0};
+        int absent_correct_count{0};
+        int present_correct_count{0};
 
         for (int i{0}; i < sims_; ++i) {
             side_wall_detection::Config cfg{
@@ -89,49 +83,19 @@ public:
 
             const auto r{side_wall_detection::run_simulation(cfg)};
 
-            if (i == 0) {
-                steps = static_cast<int>(r.wall_absent_at_step.size());
-                avg_absent.assign(steps, 0.0);
-                avg_present.assign(steps, 0.0);
-            }
-
-            for (int s{0}; s < steps; ++s) {
-                avg_absent.at(s) += r.wall_absent_at_step.at(s) ? 1.0 : 0.0;
-                avg_present.at(s) += r.wall_present_at_step.at(s) ? 1.0 : 0.0;
-            }
+            absent_correct_count += r.wall_absent_correct ? 1 : 0;
+            present_correct_count += r.wall_present_correct ? 1 : 0;
         }
 
-        for (int s{0}; s < steps; ++s) {
-            avg_absent.at(s) /= sims_;
-            avg_present.at(s) /= sims_;
-        }
+        const double absent_rate{static_cast<double>(absent_correct_count) / sims_};
+        const double present_rate{static_cast<double>(present_correct_count) / sims_};
+        const double combined_rate{std::sqrt(absent_rate * present_rate)};
 
-        /* combine absent/present into correctness */
-        std::vector<double> correctness(steps);
-        for (int s{0}; s < steps; ++s) {
-            correctness.at(s) = std::sqrt(avg_absent.at(s) * avg_present.at(s));
-        }
+        rate_cache[optimizer_common::control_to_key(x)] = {absent_rate, present_rate};
 
         Objectives obj;
-
-        auto r30{side_wall_detection::find_best_window(correctness, W30)};
-        auto r60{side_wall_detection::find_best_window(correctness, W60)};
-        auto r90{side_wall_detection::find_best_window(correctness, W90)};
-        auto r100{side_wall_detection::find_best_window(correctness, W100)};
-
-        obj.w30 = r30.rate;
-        obj.w60 = r60.rate;
-        obj.w90 = r90.rate;
-        obj.w100 = r100.rate;
-
-        /* cache start fractions */
-        window_start_cache[optimizer_common::control_to_key(x)] =
-            std::array<double, 4>{
-                r30.start_fraction,
-                r60.start_fraction,
-                r90.start_fraction,
-                r100.start_fraction
-            };
+        obj.combined_rate = combined_rate;
+        obj.start_offset = control.reading_start_offset;
 
         return obj.to_vec();
     }
@@ -143,7 +107,7 @@ public:
 
     pagmo::vector_double::size_type get_nobj() const
     {
-        return 4;
+        return 2;
     }
 
 private:
@@ -187,15 +151,11 @@ void write_pareto_to_file(const std::string& filename, const ParetoResult& resul
     out << std::left
         << std::setw(W_IDX) << "#"
         << std::setw(W_THRESH) << "threshold"
+        << std::setw(W_START) << "start_off"
         << " | "
-        << std::setw(W_RATE)  << "w30"
-        << std::setw(W_START) << "s30"
-        << std::setw(W_RATE)  << "w60"
-        << std::setw(W_START) << "s60"
-        << std::setw(W_RATE)  << "w90"
-        << std::setw(W_START) << "s90"
-        << std::setw(W_RATE)  << "w100"
-        << std::setw(W_START) << "s100"
+        << std::setw(W_RATE) << "combined"
+        << std::setw(W_RATE) << "absent"
+        << std::setw(W_RATE) << "present"
         << "\n";
 
     out << std::string(100, '-') << "\n";
@@ -208,25 +168,23 @@ void write_pareto_to_file(const std::string& filename, const ParetoResult& resul
         const auto ctrl{side_wall_detection::decode_control(x)};
         const auto obj{Objectives::from_vec(result.F.at(i))};
 
-        std::array<double, 4> starts{0.0, 0.0, 0.0, 0.0};
+        double absent{0.0};
+        double present{0.0};
 
-        auto it(window_start_cache.find(optimizer_common::control_to_key(x)));
-        if (it != window_start_cache.end()) {
-            starts = it->second;
+        auto it = rate_cache.find(optimizer_common::control_to_key(x));
+        if (it != rate_cache.end()) {
+            absent = it->second.first;
+            present = it->second.second;
         }
 
         out << std::left
-            << std::setw(W_IDX)    << i
+            << std::setw(W_IDX) << i
             << std::setw(W_THRESH) << ctrl.reading_threshold
+            << std::setw(W_START) << ctrl.reading_start_offset
             << " | "
-            << std::setw(W_RATE)  << obj.w30
-            << std::setw(W_START) << starts.at(0)
-            << std::setw(W_RATE)  << obj.w60
-            << std::setw(W_START) << starts.at(1)
-            << std::setw(W_RATE)  << obj.w90
-            << std::setw(W_START) << starts.at(2)
-            << std::setw(W_RATE)  << obj.w100
-            << std::setw(W_START) << starts.at(3)
+            << std::setw(W_RATE) << obj.combined_rate
+            << std::setw(W_RATE) << absent
+            << std::setw(W_RATE) << present
             << "\n";
     }
 }

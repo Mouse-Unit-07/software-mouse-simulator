@@ -16,6 +16,7 @@ namespace side_wall_detection
 
 struct ControlConfig {
     uint32_t reading_threshold;
+    double reading_start_offset; /* 0-0.9 */
 };
 
 struct EnvironmentConfig {
@@ -33,13 +34,8 @@ struct Config {
 };
 
 struct Result {
-    std::vector<bool> wall_absent_at_step;
-    std::vector<bool> wall_present_at_step;
-};
-
-struct WindowResult {
-    double rate{0.0}; /* max achievable min rate */
-    double start_fraction{0.0}; /* start of the window */
+    bool wall_absent_correct;
+    bool wall_present_correct;
 };
 
 } /* side_wall_detection namespace */
@@ -63,8 +59,6 @@ void disable_visualization(void);
 
 std::string config_to_string(const Config& cfg);
 Result run_simulation(const Config& cfg);
-
-WindowResult find_best_window(const std::vector<double>& rates, double window_fraction);
 
 } /* side_wall_detection namespace */
 

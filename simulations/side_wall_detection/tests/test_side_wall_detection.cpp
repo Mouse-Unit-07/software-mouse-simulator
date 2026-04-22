@@ -33,8 +33,10 @@ EnvironmentConfig env_upper{};
 void set_local_ctr_bound_variables(void)
 {
     ctr_lower.reading_threshold = 0;
+    ctr_lower.reading_start_offset = 0.0;
 
     ctr_upper.reading_threshold = 1024;
+    ctr_upper.reading_start_offset = 0.9;
 }
 
 void set_local_env_bound_variables(void)
@@ -78,30 +80,16 @@ Config create_no_variance_config(void)
     cfg.env_cfg.horizontal_position_variance = 0.0;
     cfg.env_cfg.vertical_position_variance = 0.0;
     cfg.env_cfg.total_steps = 100;
-    cfg.ctrl_cfg.reading_threshold = 80u; /* arbitrary threshold */
+    cfg.ctrl_cfg.reading_threshold = 200u; /* arbitrary threshold */
+    cfg.ctrl_cfg.reading_start_offset = 0.0;
 
     return cfg;
 }
 
 bool are_results_equivalent(const Result& r1, const Result& r2)
 {
-    if (r1.wall_absent_at_step.size() != r2.wall_absent_at_step.size()) {
-        return false;
-    }
-    if (r1.wall_present_at_step.size() != r2.wall_present_at_step.size()) {
-        return false;
-    }
-
-    for (size_t i{0}; i < r1.wall_absent_at_step.size(); ++i) {
-        if (r1.wall_absent_at_step.at(i) != r2.wall_absent_at_step.at(i)) {
-            return false;
-        }
-        if (r1.wall_present_at_step.at(i) != r2.wall_present_at_step.at(i)) {
-            return false;
-        }
-    }
-
-    return true;
+    return (r1.wall_absent_correct == r2.wall_absent_correct)
+           && (r1.wall_present_correct == r2.wall_present_correct);
 }
 
 /*============================================================================*/
@@ -150,29 +138,33 @@ TEST(SideWallDetectionTests, EncodeDecodeControlRoundTrip)
 {
     ControlConfig original;
     original.reading_threshold = 123u;
+    original.reading_start_offset = 0.5;
 
     auto encoded{encode_control(original)};
     auto decoded{decode_control(encoded)};
 
     CHECK_EQUAL(original.reading_threshold, decoded.reading_threshold);
+    DOUBLES_EQUAL(original.reading_start_offset, decoded.reading_start_offset, FLOAT_TOLERANCE);
 }
 
 TEST(SideWallDetectionTests, EncodeControlMaintainsFieldOrder)
 {
     ControlConfig cfg;
-    cfg.reading_threshold = 0;
+    cfg.reading_threshold = 10;
+    cfg.reading_start_offset = 0.25;
 
     auto v{encode_control(cfg)};
 
-    CHECK_EQUAL(0, v.at(0));
+    CHECK_EQUAL(10, v.at(0));
+    DOUBLES_EQUAL(0.25, v.at(1), FLOAT_TOLERANCE);
 }
 
 TEST(SideWallDetectionTests, GetControlBoundsHasCorrectSize)
 {
     auto [low, high] = get_control_bounds();
 
-    CHECK_EQUAL(1, low.size());
-    CHECK_EQUAL(1, high.size());
+    CHECK_EQUAL(2, low.size());
+    CHECK_EQUAL(2, high.size());
 }
 
 TEST(SideWallDetectionTests, GetControlBoundsValuesAreCorrect)
@@ -183,8 +175,10 @@ TEST(SideWallDetectionTests, GetControlBoundsValuesAreCorrect)
     auto [low, high] = get_control_bounds();
 
     CHECK_EQUAL(0, low.at(0));
+    DOUBLES_EQUAL(0.0, low.at(1), FLOAT_TOLERANCE);
 
     CHECK_EQUAL(1024, high.at(0));
+    DOUBLES_EQUAL(0.9, high.at(1), FLOAT_TOLERANCE);
 }
 
 TEST(SideWallDetectionTests, GetControlBoundsAreDecodeSafe)
@@ -198,7 +192,10 @@ TEST(SideWallDetectionTests, GetControlBoundsAreDecodeSafe)
     auto high_cfg{decode_control(high)};
 
     CHECK_EQUAL(0, low_cfg.reading_threshold);
+    DOUBLES_EQUAL(0.0, low_cfg.reading_start_offset, FLOAT_TOLERANCE);
+
     CHECK_EQUAL(1024, high_cfg.reading_threshold);
+    DOUBLES_EQUAL(0.9, high_cfg.reading_start_offset, FLOAT_TOLERANCE);
 }
 
 TEST(SideWallDetectionTests, RandomEnvironmentValuesWithinExpectedRanges)
@@ -218,39 +215,40 @@ TEST(SideWallDetectionTests, RandomEnvironmentValuesWithinExpectedRanges)
     }
 }
 
-TEST(SideWallDetectionTests, SimulationHandlesZeroSteps)
+TEST(SideWallDetectionTests, ZeroStepsHandledGracefully)
 {
     Config cfg{create_no_variance_config()};
     cfg.env_cfg.total_steps = 0;
 
     auto result{run_simulation(cfg)};
 
-    CHECK_EQUAL(0, result.wall_absent_at_step.size());
-    CHECK_EQUAL(0, result.wall_present_at_step.size());
+    CHECK_FALSE(result.wall_absent_correct);
+    CHECK_FALSE(result.wall_present_correct);
 }
 
-TEST(SideWallDetectionTests, WallAbsentAllFalseWhenThresholdIsZero)
+TEST(SideWallDetectionTests, ThresholdZeroBehavior)
 {
     Config cfg{create_no_variance_config()};
-    cfg.ctrl_cfg.reading_threshold = 0u; /* nothing should pass */
+    cfg.ctrl_cfg.reading_threshold = 0u;
 
     auto result{run_simulation(cfg)};
 
-    for (bool v : result.wall_absent_at_step) {
-        CHECK_FALSE(v);
-    }
+    CHECK_FALSE(result.wall_absent_correct);
+    CHECK(result.wall_present_correct);
 }
 
-TEST(SideWallDetectionTests, WallPresentAllTrueWhenThresholdIsZero)
+TEST(SideWallDetectionTests, ReadingStartOffsetAffectsResults)
 {
-    Config cfg{create_no_variance_config()};
-    cfg.ctrl_cfg.reading_threshold = 0u; /* everything should pass */
+    Config cfg1{create_no_variance_config()};
+    Config cfg2{cfg1};
 
-    auto result{run_simulation(cfg)};
+    cfg1.ctrl_cfg.reading_start_offset = 0.0;
+    cfg2.ctrl_cfg.reading_start_offset = 0.9;
 
-    for (bool v : result.wall_present_at_step) {
-        CHECK(v);
-    }
+    auto r1{run_simulation(cfg1)};
+    auto r2{run_simulation(cfg2)};
+
+    CHECK(!are_results_equivalent(r1, r2));
 }
 
 TEST(SideWallDetectionTests, IdenticalConfigsProduceIdenticalResults)
@@ -287,18 +285,6 @@ TEST(SideWallDetectionTests, IrReadingScaleChangesResults)
     CHECK(!are_results_equivalent(r1, r2));
 }
 
-TEST(SideWallDetectionTests, ZeroIrReadingScaleCollapsesToAllTrueWhenThresholdIsMax)
-{
-    Config cfg{create_no_variance_config()};
-    cfg.ctrl_cfg.reading_threshold = 1024u;
-
-    auto result{run_simulation(cfg)};
-
-    for (bool v : result.wall_absent_at_step) {
-        CHECK(v);
-    }
-}
-
 TEST(SideWallDetectionTests, MouseAngleChangesResults)
 {
     Config cfg1{create_no_variance_config()};
@@ -333,125 +319,6 @@ TEST(SideWallDetectionTests, VerticalVarianceChangesResults)
     auto r2{run_simulation(cfg2)};
 
     CHECK(!are_results_equivalent(r1, r2));
-}
-
-TEST(SideWallDetectionTests, FindBestWindowEmptyInput)
-{
-    std::vector<double> rates{};
-    auto result{find_best_window(rates, 0.5)};
-
-    DOUBLES_EQUAL(0.0, result.rate, FLOAT_TOLERANCE);
-    DOUBLES_EQUAL(0.0, result.start_fraction, FLOAT_TOLERANCE);
-}
-
-TEST(SideWallDetectionTests, FindBestWindowZeroSize)
-{
-    std::vector<double> rates{0.1, 0.2, 0.3};
-    auto result{find_best_window(rates, 0.0)};
-
-    DOUBLES_EQUAL(0.0, result.rate, FLOAT_TOLERANCE);
-    DOUBLES_EQUAL(0.0, result.start_fraction, FLOAT_TOLERANCE);
-}
-
-TEST(SideWallDetectionTests, FindBestWindowSingleElement)
-{
-    std::vector<double> rates{0.75};
-    auto result{find_best_window(rates, 1.0)};
-
-    DOUBLES_EQUAL(0.75, result.rate, FLOAT_TOLERANCE);
-    DOUBLES_EQUAL(0.0, result.start_fraction, FLOAT_TOLERANCE);
-}
-
-TEST(SideWallDetectionTests, FindBestWindowFullWindow)
-{
-    std::vector<double> rates{0.9, 0.8, 0.7, 0.85};
-    auto result{find_best_window(rates, 1.0)};
-
-    /* full window -> min of entire vector */
-    DOUBLES_EQUAL(0.7, result.rate, FLOAT_TOLERANCE);
-    DOUBLES_EQUAL(0.0, result.start_fraction, FLOAT_TOLERANCE);
-}
-
-TEST(SideWallDetectionTests, FindBestWindowHalfWindowBasic)
-{
-    std::vector<double> rates{0.9, 0.8, 0.7, 0.85};
-    auto result{find_best_window(rates, 0.5)}; /* window size = 2 */
-
-    /*
-        windows:
-        [0.9,0.8] -> 0.8
-        [0.8,0.7] -> 0.7
-        [0.7,0.85] -> 0.7
-
-        best = 0.8 at start index 0
-    */
-    DOUBLES_EQUAL(0.8, result.rate, FLOAT_TOLERANCE);
-    DOUBLES_EQUAL(0.0, result.start_fraction, FLOAT_TOLERANCE);
-}
-
-TEST(SideWallDetectionTests, FindBestWindowSelectsLaterBetterWindow)
-{
-    std::vector<double> rates{0.2, 0.2, 0.9, 0.9};
-    auto result{find_best_window(rates, 0.5)}; /* window size = 2 */
-
-    /*
-        [0.2,0.2] -> 0.2
-        [0.2,0.9] -> 0.2
-        [0.9,0.9] -> 0.9  <-- best
-    */
-    DOUBLES_EQUAL(0.9, result.rate, FLOAT_TOLERANCE);
-    DOUBLES_EQUAL(2.0 / 4.0, result.start_fraction, FLOAT_TOLERANCE);
-}
-
-TEST(SideWallDetectionTests, FindBestWindowAllEqualValues)
-{
-    std::vector<double> rates{0.5, 0.5, 0.5, 0.5};
-    auto result{find_best_window(rates, 0.5)}; /* window size = 2 */
-
-    /* all windows equal → first one chosen */
-    DOUBLES_EQUAL(0.5, result.rate, FLOAT_TOLERANCE);
-    DOUBLES_EQUAL(0.0, result.start_fraction, FLOAT_TOLERANCE);
-}
-
-TEST(SideWallDetectionTests, FindBestWindowWindowSizeRoundsUp)
-{
-    std::vector<double> rates{0.9, 0.8, 0.7};
-    auto result{find_best_window(rates, 0.34)};
-    /*
-        ceil(0.34 * 3) = ceil(1.02) = 2
-        behaves like window size 2
-    */
-
-    DOUBLES_EQUAL(0.8, result.rate, FLOAT_TOLERANCE);
-    DOUBLES_EQUAL(0.0, result.start_fraction, FLOAT_TOLERANCE);
-}
-
-TEST(SideWallDetectionTests, FindBestWindowWindowSizeBecomesOne)
-{
-    std::vector<double> rates{0.1, 0.9, 0.3};
-    auto result{find_best_window(rates, 0.01)};
-    /*
-        window size = 1 → pick max element
-    */
-
-    DOUBLES_EQUAL(0.9, result.rate, FLOAT_TOLERANCE);
-    DOUBLES_EQUAL(1.0 / 3.0, result.start_fraction, FLOAT_TOLERANCE);
-}
-
-TEST(SideWallDetectionTests, FindBestWindowPrefersFirstOnTie)
-{
-    std::vector<double> rates{0.8, 0.7, 0.8, 0.7};
-    auto result{find_best_window(rates, 0.5)}; /* window size = 2 */
-
-    /*
-        [0.8,0.7] -> 0.7
-        [0.7,0.8] -> 0.7
-        [0.8,0.7] -> 0.7
-
-        tie → first window should win
-    */
-    DOUBLES_EQUAL(0.7, result.rate, FLOAT_TOLERANCE);
-    DOUBLES_EQUAL(0.0, result.start_fraction, FLOAT_TOLERANCE);
 }
 
 IGNORE_TEST(SideWallDetectionTests, VisualizationDoesNotAffectResults)

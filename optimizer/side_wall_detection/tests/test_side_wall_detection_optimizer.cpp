@@ -33,24 +33,26 @@ side_wall_detection::EnvironmentConfig env_upper{};
 void set_local_ctr_bound_variables(void)
 {
     ctr_lower.reading_threshold = 0;
+    ctr_lower.reading_start_offset = 0.0;
 
-    ctr_upper.reading_threshold = 1024;
+    ctr_upper.reading_threshold = 500;
+    ctr_upper.reading_start_offset = 0.9;
 }
 
 void set_local_env_bound_variables(void)
 {
     env_lower.maze_size_scale = 0.9;
     env_lower.ir_reading_scale = 0.9;
-    env_lower.mouse_angle = -(M_PI / 6);
-    env_lower.horizontal_position_variance = -0.5;
-    env_lower.vertical_position_variance = -0.5;
+    env_lower.mouse_angle = -(M_PI / 4);
+    env_lower.horizontal_position_variance = -0.9;
+    env_lower.vertical_position_variance = -0.9;
     env_lower.total_steps = 100;
 
     env_upper.maze_size_scale = 1.1;
     env_upper.ir_reading_scale = 1.1;
-    env_upper.mouse_angle = M_PI / 6;
-    env_upper.horizontal_position_variance = 0.5;
-    env_upper.vertical_position_variance = 0.5;
+    env_upper.mouse_angle = M_PI / 4;
+    env_upper.horizontal_position_variance = 0.9;
+    env_upper.vertical_position_variance = 0.9;
     env_upper.total_steps = 100;
 }
 
@@ -105,8 +107,8 @@ TEST(SideWallDetectionOptimizerTests, ParetoStructureIsValid)
     CHECK_EQUAL(8, result.F.size());
 
     for (size_t i{0}; i < result.X.size(); ++i) {
-        CHECK_EQUAL(1, result.X.at(i).size()); /* control space */
-        CHECK_EQUAL(4, result.F.at(i).size()); /* objective space */
+        CHECK_EQUAL(2, result.X.at(i).size()); /* control space */
+        CHECK_EQUAL(2, result.F.at(i).size()); /* objective space */
     }
 }
 
@@ -160,15 +162,11 @@ TEST(SideWallDetectionOptimizerTests, ObjectivesAreInValidRanges)
     auto result{run_side_wall_detection_filter(8, 3, 2)};
 
     for (const auto& f : result.F) {
-        double w30 = -f.at(0);
-        double w60 = -f.at(1);
-        double w90 = -f.at(2);
-        double w100 = -f.at(3);
+        double combined{-f.at(0)};
+        double offset{f.at(1)};
 
-        CHECK((w30 >= 0.0) && (w30 <= 1.0));
-        CHECK((w60 >= 0.0) && (w60 <= 1.0));
-        CHECK((w90 >= 0.0) && (w90 <= 1.0));
-        CHECK((w100 >= 0.0) && (w100 <= 1.0));
+        CHECK((combined >= 0.0) && (combined <= 1.0));
+        CHECK((offset >= 0.0) && (offset <= 0.9));
     }
 }
 
@@ -191,8 +189,8 @@ IGNORE_TEST(SideWallDetectionOptimizerTests, DumpPareto)
     set_local_env_bound_variables();
     set_config_bounds();
 
-    /* takes ~24min */
-    auto result{run_side_wall_detection_filter(64, 30, 1000)};
+    /* takes ~5min */
+    auto result{run_side_wall_detection_filter(64, 50, 1000)};
 
     write_pareto_to_file("swd.txt", result);
 }
