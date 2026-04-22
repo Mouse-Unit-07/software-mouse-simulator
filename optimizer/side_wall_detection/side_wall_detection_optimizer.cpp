@@ -31,7 +31,7 @@ namespace
 
 using PagmoVec = pagmo::vector_double;
 
-std::unordered_map<std::string, std::pair<double, double>> rate_cache;
+std::unordered_map<std::string, std::pair<double, double>> rate_cache{};
 
 } /* unnamed namespace */
 

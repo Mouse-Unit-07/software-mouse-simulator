@@ -134,7 +134,7 @@ TEST(FrontWallDetectionTests, ResetAllConfigBoundsClearsBounds)
 
 TEST(FrontWallDetectionTests, EncodeDecodeControlRoundTrip)
 {
-    ControlConfig original;
+    ControlConfig original{};
     original.reading_threshold = 123u;
 
     auto encoded{encode_control(original)};
@@ -145,7 +145,7 @@ TEST(FrontWallDetectionTests, EncodeDecodeControlRoundTrip)
 
 TEST(FrontWallDetectionTests, EncodeControlMaintainsFieldOrder)
 {
-    ControlConfig cfg;
+    ControlConfig cfg{};
     cfg.reading_threshold = 0;
 
     auto v{encode_control(cfg)};
@@ -289,7 +289,7 @@ TEST(FrontWallDetectionTests, VerticalVarianceAffectsResults)
 
 IGNORE_TEST(FrontWallDetectionTests, VisualizeWithIdealParameters)
 {
-    Config cfg;
+    Config cfg{};
     cfg.ctrl_cfg.reading_threshold = 279u;
     cfg.env_cfg.ir_reading_scale = 1.0;
 

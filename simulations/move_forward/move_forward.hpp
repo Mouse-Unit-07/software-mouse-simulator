@@ -15,35 +15,35 @@ namespace move_forward
 {
 
 struct ControlConfig {
-    uint32_t single_wall_target;
-    uint8_t motor_speed;
-    int32_t kp_velocity;
-    int32_t kd_velocity;
-    int32_t kp_angle;
-    int32_t kd_angle;
-    int32_t pid_scale;
-    int32_t kp_ir;
-    int32_t kd_ir;
+    uint32_t single_wall_target{};
+    uint8_t motor_speed{};
+    int32_t kp_velocity{};
+    int32_t kd_velocity{};
+    int32_t kp_angle{};
+    int32_t kd_angle{};
+    int32_t pid_scale{};
+    int32_t kp_ir{};
+    int32_t kd_ir{};
 };
 
 struct EnvironmentConfig {
-    double dt;
-    double motor_speed_scale;
-    double motor1_variance;
-    double motor2_variance;
-    double slip_factor;
-    double wheel_circumference_scale;
-    double wheel_base_scale;
-    double maze_size_scale;
-    double ir_reading_scale;
-    double mouse_angle;
-    double horizontal_position_variance;
-    double vertical_position_variance;
+    double dt{};
+    double motor_speed_scale{};
+    double motor1_variance{};
+    double motor2_variance{};
+    double slip_factor{};
+    double wheel_circumference_scale{};
+    double wheel_base_scale{};
+    double maze_size_scale{};
+    double ir_reading_scale{};
+    double mouse_angle{};
+    double horizontal_position_variance{};
+    double vertical_position_variance{};
 };
 
 struct Config {
-    ControlConfig ctrl_cfg;
-    EnvironmentConfig env_cfg;
+    ControlConfig ctrl_cfg{};
+    EnvironmentConfig env_cfg{};
 };
 
 struct Result {

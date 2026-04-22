@@ -14,8 +14,8 @@ namespace front_wall_detection_optimizer
 {
 
 struct ParetoResult {
-    std::vector<std::vector<double>> X;
-    std::vector<std::vector<double>> F;
+    std::vector<std::vector<double>> X{};
+    std::vector<std::vector<double>> F{};
 };
 
 ParetoResult run_front_wall_detection_staged(std::size_t population, std::size_t generations,

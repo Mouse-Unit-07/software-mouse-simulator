@@ -14,8 +14,8 @@ namespace rotation_optimizer
 {
 
 struct ParetoResult {
-    std::vector<std::vector<double>> X;
-    std::vector<std::vector<double>> F;
+    std::vector<std::vector<double>> X{};
+    std::vector<std::vector<double>> F{};
 };
 
 ParetoResult run_rotation_staged(std::size_t population, std::size_t gen_stage1,

@@ -82,7 +82,7 @@ public:
             present += r.identified_present_wall ? 1.0 : 0.0;
         }
 
-        Objectives obj;
+        Objectives obj{};
         obj.absent = absent / sims_;
         obj.present = present / sims_;
 

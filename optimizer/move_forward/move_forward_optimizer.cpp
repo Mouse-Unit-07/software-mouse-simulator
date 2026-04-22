@@ -30,7 +30,7 @@ namespace
 
 using PagmoVec = pagmo::vector_double;
 
-std::unordered_map<std::string, double> time_cache;
+std::unordered_map<std::string, double> time_cache{};
 
 std::vector<size_t> get_best_feasible_indices(const std::vector<PagmoVec>& F, size_t keep_n);
 
@@ -128,7 +128,7 @@ public:
 
 private:
     int sims_{100};
-    move_forward::WallMode mode_;
+    move_forward::WallMode mode_{move_forward::WallMode::NO_WALLS};
 };
 
 class MoveForwardUDP {
@@ -189,7 +189,7 @@ public:
     }
 
     int sims_{100};
-    move_forward::WallMode mode_;
+    move_forward::WallMode mode_{move_forward::WallMode::NO_WALLS};
 };
 
 ParetoResult run_move_forward_staged(size_t population, size_t gen_stage1, size_t gen_stage2,
@@ -208,7 +208,7 @@ ParetoResult run_move_forward_staged(size_t population, size_t gen_stage1, size_
     /* Extract non-dominated solutions */
     auto best_indices{get_best_feasible_indices(stage1.F, population)};
 
-    std::vector<PagmoVec> seeds;
+    std::vector<PagmoVec> seeds{};
     for (auto idx : best_indices) {
         seeds.push_back(stage1.X[idx]);
     }

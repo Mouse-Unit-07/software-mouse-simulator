@@ -15,28 +15,28 @@ namespace side_wall_detection
 {
 
 struct ControlConfig {
-    uint32_t reading_threshold;
-    double reading_start_offset; /* 0-0.9 */
-    uint32_t slope_threshold;
+    uint32_t reading_threshold{};
+    double reading_start_offset{}; /* 0-0.9 */
+    uint32_t slope_threshold{};
 };
 
 struct EnvironmentConfig {
-    double maze_size_scale;
-    double ir_reading_scale;
-    double mouse_angle;
-    double horizontal_position_variance;
-    double vertical_position_variance;
-    int total_steps;
+    double maze_size_scale{};
+    double ir_reading_scale{};
+    double mouse_angle{};
+    double horizontal_position_variance{};
+    double vertical_position_variance{};
+    int total_steps{};
 };
 
 struct Config {
-    ControlConfig ctrl_cfg;
-    EnvironmentConfig env_cfg;
+    ControlConfig ctrl_cfg{};
+    EnvironmentConfig env_cfg{};
 };
 
 struct Result {
-    bool wall_absent_correct;
-    bool wall_present_correct;
+    bool wall_absent_correct{false};
+    bool wall_present_correct{false};
 };
 
 } /* side_wall_detection namespace */

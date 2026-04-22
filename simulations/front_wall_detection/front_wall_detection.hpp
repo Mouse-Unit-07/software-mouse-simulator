@@ -15,24 +15,24 @@ namespace front_wall_detection
 {
 
 struct ControlConfig {
-    uint32_t reading_threshold;
+    uint32_t reading_threshold{};
 };
 
 struct EnvironmentConfig {
-    double ir_reading_scale;
-    double mouse_angle;
-    double horizontal_position_variance;
-    double vertical_position_variance;
+    double ir_reading_scale{};
+    double mouse_angle{};
+    double horizontal_position_variance{};
+    double vertical_position_variance{};
 };
 
 struct Config {
-    ControlConfig ctrl_cfg;
-    EnvironmentConfig env_cfg;
+    ControlConfig ctrl_cfg{};
+    EnvironmentConfig env_cfg{};
 };
 
 struct Result {
-    bool identified_absent_wall;
-    bool identified_present_wall;
+    bool identified_absent_wall{false};
+    bool identified_present_wall{false};
 };
 
 } /* front_wall_detection namespace */

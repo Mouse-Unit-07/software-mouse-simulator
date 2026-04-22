@@ -80,8 +80,8 @@ TEST_GROUP(VisualizerTests)
 /*============================================================================*/
 IGNORE_TEST(VisualizerTests, DrawEmptyMaze)
 {
-    Visualizer visualizer;
-    maze::Maze maze;
+    Visualizer visualizer{};
+    maze::Maze maze{};
     maze.rows = 4;
     maze.cols = 4;
 
@@ -91,7 +91,7 @@ IGNORE_TEST(VisualizerTests, DrawEmptyMaze)
 
 IGNORE_TEST(VisualizerTests, DrawMazeWithObstacles)
 {
-    Visualizer visualizer;
+    Visualizer visualizer{};
     std::vector<std::string> ascii
     {
         "+-+ +",
@@ -108,7 +108,7 @@ IGNORE_TEST(VisualizerTests, DrawMazeWithObstacles)
 
 IGNORE_TEST(VisualizerTests, DrawFullMaze)
 {
-    Visualizer visualizer;
+    Visualizer visualizer{};
     std::vector<std::string> ascii
     {
         "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+",
@@ -151,7 +151,7 @@ IGNORE_TEST(VisualizerTests, DrawFullMaze)
 
 IGNORE_TEST(VisualizerTests, DrawMouseOnMaze)
 {
-    Visualizer visualizer;
+    Visualizer visualizer{};
     std::vector<std::string> ascii
     {
         "+-+ +",
@@ -161,7 +161,7 @@ IGNORE_TEST(VisualizerTests, DrawMouseOnMaze)
         "+ +-+"
     };
     maze::Maze maze{maze::build_maze_from_ascii(ascii, 0)};
-    mouse::Mouse mouse;
+    mouse::Mouse mouse{};
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
     
     visualizer.draw_maze(100.0f, maze);
@@ -171,7 +171,7 @@ IGNORE_TEST(VisualizerTests, DrawMouseOnMaze)
 
 IGNORE_TEST(VisualizerTests, DrawMouseSensorBeams)
 {
-    Visualizer visualizer;
+    Visualizer visualizer{};
     std::vector<std::string> ascii
     {
         "+-+ +",
@@ -181,7 +181,7 @@ IGNORE_TEST(VisualizerTests, DrawMouseSensorBeams)
         "+ +-+"
     };
     maze::Maze maze{maze::build_maze_from_ascii(ascii, 0)};
-    mouse::Mouse mouse;
+    mouse::Mouse mouse{};
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
     
     visualizer.draw_maze(100.0f, maze);
@@ -195,7 +195,7 @@ IGNORE_TEST(VisualizerTests, DrawMouseSensorBeams)
 
 IGNORE_TEST(VisualizerTests, ChangeAndResetBeamColor)
 {
-    Visualizer visualizer;
+    Visualizer visualizer{};
     std::vector<std::string> ascii
     {
         "+-+ +",
@@ -205,7 +205,7 @@ IGNORE_TEST(VisualizerTests, ChangeAndResetBeamColor)
         "+ +-+"
     };
     maze::Maze maze{maze::build_maze_from_ascii(ascii, 0)};
-    mouse::Mouse mouse;
+    mouse::Mouse mouse{};
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
 
     visualizer.draw_maze(100.0f, maze);
@@ -223,7 +223,7 @@ IGNORE_TEST(VisualizerTests, ChangeAndResetBeamColor)
 
 IGNORE_TEST(VisualizerTests, ChangeAndResetMouseColor)
 {
-    Visualizer visualizer;
+    Visualizer visualizer{};
     std::vector<std::string> ascii
     {
         "+-+",
@@ -231,7 +231,7 @@ IGNORE_TEST(VisualizerTests, ChangeAndResetMouseColor)
         "+-+"
     };
     maze::Maze maze{maze::build_maze_from_ascii(ascii, 0)};
-    mouse::Mouse mouse;
+    mouse::Mouse mouse{};
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
 
     visualizer.draw_maze(100.0f, maze);
@@ -254,7 +254,7 @@ IGNORE_TEST(VisualizerTests, ChangeAndResetMouseColor)
 
 IGNORE_TEST(VisualizerTests, DrawMouseSensorBeamsToNearestWalls)
 {
-    Visualizer visualizer;
+    Visualizer visualizer{};
     std::vector<std::string> ascii
     {
         "+-+-+-+",
@@ -266,7 +266,7 @@ IGNORE_TEST(VisualizerTests, DrawMouseSensorBeamsToNearestWalls)
         "+-+-+-+"
     };
     maze::Maze maze{maze::build_maze_from_ascii(ascii, 0)};
-    mouse::Mouse mouse;
+    mouse::Mouse mouse{};
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
     mouse.rotate(-M_PI / 4);
 
@@ -278,7 +278,7 @@ IGNORE_TEST(VisualizerTests, DrawMouseSensorBeamsToNearestWalls)
 
 IGNORE_TEST(VisualizerTests, DrawMouseAndBeamsOnLargeScaledMaze)
 {
-    Visualizer visualizer;
+    Visualizer visualizer{};
     std::vector<std::string> ascii
     {
         "+-+-+-+",
@@ -290,7 +290,7 @@ IGNORE_TEST(VisualizerTests, DrawMouseAndBeamsOnLargeScaledMaze)
         "+-+-+-+"
     };
     maze::Maze maze{maze::build_maze_from_ascii(ascii, 5)};
-    mouse::Mouse mouse;
+    mouse::Mouse mouse{};
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
     mouse.rotate(-M_PI / 4);
 
@@ -302,7 +302,7 @@ IGNORE_TEST(VisualizerTests, DrawMouseAndBeamsOnLargeScaledMaze)
 
 IGNORE_TEST(VisualizerTests, DrawMouseAndBeamsOnSmallScaledMaze)
 {
-    Visualizer visualizer;
+    Visualizer visualizer{};
     std::vector<std::string> ascii
     {
         "+-+-+-+",
@@ -314,7 +314,7 @@ IGNORE_TEST(VisualizerTests, DrawMouseAndBeamsOnSmallScaledMaze)
         "+-+-+-+"
     };
     maze::Maze maze{maze::build_maze_from_ascii(ascii, 0.2)};
-    mouse::Mouse mouse;
+    mouse::Mouse mouse{};
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
     mouse.rotate(-M_PI / 4);
 

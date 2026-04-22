@@ -30,7 +30,7 @@ namespace
 
 using PagmoVec = pagmo::vector_double;
 
-std::unordered_map<std::string, double> time_cache;
+std::unordered_map<std::string, double> time_cache{};
 
 std::vector<size_t> get_best_indices(const std::vector<PagmoVec>& F, size_t keep_n);
 
@@ -125,7 +125,7 @@ public:
     }
 
 private:
-    int sims_;
+    int sims_{100};
 };
 
 class RotationUDP {
@@ -181,7 +181,7 @@ public:
     }
 
 private:
-    int sims_;
+    int sims_{100};
 };
 
 ParetoResult run_rotation_staged(std::size_t population, std::size_t gen_stage1,
@@ -200,7 +200,7 @@ ParetoResult run_rotation_staged(std::size_t population, std::size_t gen_stage1,
 
     auto best_indices{get_best_indices(stage1.F, population)};
 
-    std::vector<PagmoVec> seeds;
+    std::vector<PagmoVec> seeds{};
     for (auto idx : best_indices) {
         seeds.push_back(stage1.X.at(idx));
     }

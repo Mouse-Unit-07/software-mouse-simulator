@@ -77,7 +77,7 @@ Maze build_maze_from_ascii(const std::vector<std::string>& ascii, double obstacl
         throw std::invalid_argument(error);
     }
 
-    Maze maze;
+    Maze maze{};
 
     int ascii_rows{static_cast<int>(ascii.size())};
     int ascii_cols{static_cast<int>(ascii.at(0).size())};
