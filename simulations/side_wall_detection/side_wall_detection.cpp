@@ -102,13 +102,16 @@ ControlConfig decode_control(const std::vector<double>& x)
 
     c.reading_threshold = static_cast<uint32_t>(x.at(i++));
     c.reading_start_offset = x.at(i++);
+    c.slope_threshold = static_cast<uint32_t>(x.at(i++));
 
     return c;
 }
 
 std::vector<double> encode_control(const ControlConfig& cfg)
 {
-    return {static_cast<double>(cfg.reading_threshold), cfg.reading_start_offset};
+    return {static_cast<double>(cfg.reading_threshold),
+            cfg.reading_start_offset,
+            static_cast<double>(cfg.slope_threshold)};
 }
 
 std::pair<std::vector<double>, std::vector<double>> get_control_bounds(void)
@@ -162,7 +165,9 @@ std::string config_to_string(const Config& cfg)
         << simulation_common::double_to_filename(cfg.env_cfg.horizontal_position_variance) << "-"
         << simulation_common::double_to_filename(cfg.env_cfg.vertical_position_variance) << "-"
         << cfg.env_cfg.total_steps << "-"
-        << simulation_common::double_to_filename(cfg.ctrl_cfg.reading_threshold);
+        << simulation_common::double_to_filename(cfg.ctrl_cfg.reading_threshold) << "-"
+        << simulation_common::double_to_filename(cfg.ctrl_cfg.reading_start_offset) << "-"
+        << simulation_common::double_to_filename(cfg.ctrl_cfg.slope_threshold);
 
     return oss.str();
 }
@@ -203,34 +208,110 @@ Result run_simulation(const Config& cfg)
         wall_present_visualizer.draw_mouse_on_maze(mouse);
     }
 
-    int window_steps{cfg.env_cfg.total_steps / 10};
-    if (window_steps == 0) {
+    int target_window_steps{cfg.env_cfg.total_steps / 10};
+    if (target_window_steps == 0) {
         return {false, false};
     }
-    
+    int current_window_steps{0};
+
     uint64_t open_sum{0};
     uint64_t closed_sum{0};
 
+    uint32_t prev_open_reading{0};
+    uint32_t prev_closed_reading{0};
+    bool has_prev{false};
+
+    bool open_slope_presence_triggered{false};
+    bool open_slope_absence_triggered{false};
+    bool closed_slope_presence_triggered{false};
+    bool closed_slope_absence_triggered{false};
+
     double open_maze_distance{0};
     double closed_maze_distance{0};
-    uint32_t reading{0u};
 
-    for (int i{0}; i < window_steps; i++) {
+    int total_steps{
+        cfg.env_cfg.total_steps
+        - static_cast<int>(cfg.env_cfg.total_steps * cfg.ctrl_cfg.reading_start_offset)};
+
+    for (int i{0}; i < total_steps; i++) {
         open_maze_distance = maze::compute_ray_distance_in_closed_space(
             open_maze, mouse.hitbox.center, mouse.ir_3_sensor);
         update_ir_3_sensor_reading(open_maze_distance);
-        reading =
-            scale_and_clamp_ir_sensor_reading(read_ir_3_sensor(), cfg.env_cfg.ir_reading_scale);
-        open_sum += reading;
+        uint32_t open_reading{
+            scale_and_clamp_ir_sensor_reading(read_ir_3_sensor(), cfg.env_cfg.ir_reading_scale)};
+
+        if (has_prev) {
+            if (open_reading > prev_open_reading) {
+                if ((open_reading - prev_open_reading) >= cfg.ctrl_cfg.slope_threshold) {
+                    open_slope_presence_triggered = true;
+                }
+            } else if (prev_open_reading > open_reading) {
+                if ((prev_open_reading - open_reading) >= cfg.ctrl_cfg.slope_threshold) {
+                    open_slope_absence_triggered = true;
+                }
+            }
+        }
+        prev_open_reading = open_reading;
 
         closed_maze_distance = maze::compute_ray_distance_in_closed_space(
             closed_maze, mouse.hitbox.center, mouse.ir_3_sensor);
         update_ir_3_sensor_reading(closed_maze_distance);
-        reading =
-            scale_and_clamp_ir_sensor_reading(read_ir_3_sensor(), cfg.env_cfg.ir_reading_scale);
-        closed_sum += reading;
+        uint32_t closed_reading{
+            scale_and_clamp_ir_sensor_reading(read_ir_3_sensor(), cfg.env_cfg.ir_reading_scale)};
+
+        if (has_prev) {
+            if (closed_reading > prev_closed_reading) {
+                if ((closed_reading - prev_open_reading) >= cfg.ctrl_cfg.slope_threshold) {
+                    closed_slope_presence_triggered = true;
+                }
+            } else if (prev_closed_reading > closed_reading) {
+                if ((prev_closed_reading - closed_reading) >= cfg.ctrl_cfg.slope_threshold) {
+                    closed_slope_absence_triggered = true;
+                }
+            }
+        }
+        prev_closed_reading = closed_reading;
+        
+        has_prev = true;
+
+        double current_progress{static_cast<double>(i) / cfg.env_cfg.total_steps};
+        if ((current_progress >= cfg.ctrl_cfg.reading_start_offset)
+            && (current_window_steps < target_window_steps)) {
+            open_sum += open_reading;
+            closed_sum += closed_reading;
+            current_window_steps++;
+
+            if (visualizer_enabled) {
+                if (current_window_steps == target_window_steps) {
+                    if ((open_sum / target_window_steps) < cfg.ctrl_cfg.reading_threshold) {
+                        wall_absent_visualizer.change_beam_color_to_red();
+                    } else {
+                        wall_absent_visualizer.reset_beam_color();
+                    }
+
+                    if ((closed_sum / target_window_steps) >= cfg.ctrl_cfg.reading_threshold) {
+                        wall_present_visualizer.change_beam_color_to_red();
+                    } else {
+                        wall_present_visualizer.reset_beam_color();
+                    }
+                }
+            }
+        } else if (visualizer_enabled) {
+            wall_absent_visualizer.reset_beam_color();
+            wall_present_visualizer.reset_beam_color();
+        }
 
         if (visualizer_enabled) {
+            if (open_slope_absence_triggered && !open_slope_presence_triggered) {
+                wall_absent_visualizer.change_beam_color_to_red();
+            } else if (open_slope_presence_triggered) {
+                wall_absent_visualizer.reset_beam_color();
+            }
+            if (closed_slope_presence_triggered && !closed_slope_absence_triggered) {
+                wall_present_visualizer.change_beam_color_to_red();
+            } else if (closed_slope_absence_triggered) {
+                wall_present_visualizer.reset_beam_color();
+            }
             wall_absent_visualizer.draw_ir_3_sensor_beam(mouse, open_maze_distance);
             wall_present_visualizer.draw_ir_3_sensor_beam(mouse, closed_maze_distance);
         }
@@ -247,11 +328,31 @@ Result run_simulation(const Config& cfg)
                                                    + config_to_string(cfg) + "-wp.png");
     }
 
-    uint64_t open_avg{open_sum / window_steps};
-    uint64_t closed_avg{closed_sum / window_steps};
+    uint64_t open_avg{open_sum / target_window_steps};
+    uint64_t closed_avg{closed_sum / target_window_steps};
 
-    bool absent_correct{open_avg < cfg.ctrl_cfg.reading_threshold};
-    bool present_correct{closed_avg >= cfg.ctrl_cfg.reading_threshold};
+    bool absent_correct{false};
+    bool present_correct{false};
+
+    if (open_slope_absence_triggered && open_slope_presence_triggered) {
+        absent_correct = false;
+    } else if (open_slope_absence_triggered) {
+        absent_correct = true;
+    } else if (open_slope_presence_triggered) {
+        absent_correct = false;
+    } else {
+        absent_correct = (open_avg < cfg.ctrl_cfg.reading_threshold);
+    }
+
+    if (closed_slope_absence_triggered && closed_slope_presence_triggered) {
+        present_correct = false;
+    } else if (closed_slope_presence_triggered) {
+        present_correct = true;
+    } else if (closed_slope_absence_triggered) {
+        present_correct = false;
+    } else {
+        present_correct = (closed_avg >= cfg.ctrl_cfg.reading_threshold);
+    }
 
     return Result{
         absent_correct,

@@ -32,25 +32,27 @@ side_wall_detection::EnvironmentConfig env_upper{};
 
 void set_local_ctr_bound_variables(void)
 {
-    ctr_lower.reading_threshold = 0;
+    ctr_lower.reading_threshold = 0u;
     ctr_lower.reading_start_offset = 0.0;
+    ctr_lower.slope_threshold = 0u;
 
-    ctr_upper.reading_threshold = 500;
+    ctr_upper.reading_threshold = 500u;
     ctr_upper.reading_start_offset = 0.9;
+    ctr_upper.slope_threshold = 500u;
 }
 
 void set_local_env_bound_variables(void)
 {
     env_lower.maze_size_scale = 0.9;
     env_lower.ir_reading_scale = 0.9;
-    env_lower.mouse_angle = -(M_PI / 4);
+    env_lower.mouse_angle = -(M_PI / 6);
     env_lower.horizontal_position_variance = -0.9;
     env_lower.vertical_position_variance = -0.9;
     env_lower.total_steps = 100;
 
     env_upper.maze_size_scale = 1.1;
     env_upper.ir_reading_scale = 1.1;
-    env_upper.mouse_angle = M_PI / 4;
+    env_upper.mouse_angle = M_PI / 6;
     env_upper.horizontal_position_variance = 0.9;
     env_upper.vertical_position_variance = 0.9;
     env_upper.total_steps = 100;
@@ -107,7 +109,7 @@ TEST(SideWallDetectionOptimizerTests, ParetoStructureIsValid)
     CHECK_EQUAL(8, result.F.size());
 
     for (size_t i{0}; i < result.X.size(); ++i) {
-        CHECK_EQUAL(2, result.X.at(i).size()); /* control space */
+        CHECK_EQUAL(3, result.X.at(i).size()); /* control space */
         CHECK_EQUAL(2, result.F.at(i).size()); /* objective space */
     }
 }
@@ -187,10 +189,14 @@ IGNORE_TEST(SideWallDetectionOptimizerTests, DumpPareto)
 {
     set_local_ctr_bound_variables();
     set_local_env_bound_variables();
+    ctr_lower.reading_threshold = 59u;
+    ctr_lower.slope_threshold = 152u;
+    ctr_upper.reading_threshold = 61u;
+    ctr_upper.slope_threshold = 154u;
     set_config_bounds();
 
-    /* takes ~5min */
-    auto result{run_side_wall_detection_filter(64, 50, 1000)};
+    /* takes ~20min */
+    auto result{run_side_wall_detection_filter(64, 50, 500)};
 
     write_pareto_to_file("swd.txt", result);
 }

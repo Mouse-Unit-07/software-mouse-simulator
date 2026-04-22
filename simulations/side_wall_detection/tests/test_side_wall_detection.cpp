@@ -32,11 +32,13 @@ EnvironmentConfig env_upper{};
 
 void set_local_ctr_bound_variables(void)
 {
-    ctr_lower.reading_threshold = 0;
+    ctr_lower.reading_threshold = 0u;
     ctr_lower.reading_start_offset = 0.0;
+    ctr_lower.slope_threshold = 0u;
 
-    ctr_upper.reading_threshold = 1024;
+    ctr_upper.reading_threshold = 1024u;
     ctr_upper.reading_start_offset = 0.9;
+    ctr_upper.slope_threshold = 1024u;
 }
 
 void set_local_env_bound_variables(void)
@@ -82,6 +84,7 @@ Config create_no_variance_config(void)
     cfg.env_cfg.total_steps = 100;
     cfg.ctrl_cfg.reading_threshold = 200u; /* arbitrary threshold */
     cfg.ctrl_cfg.reading_start_offset = 0.0;
+    cfg.ctrl_cfg.slope_threshold = 1000;
 
     return cfg;
 }
@@ -163,8 +166,8 @@ TEST(SideWallDetectionTests, GetControlBoundsHasCorrectSize)
 {
     auto [low, high] = get_control_bounds();
 
-    CHECK_EQUAL(2, low.size());
-    CHECK_EQUAL(2, high.size());
+    CHECK_EQUAL(3, low.size());
+    CHECK_EQUAL(3, high.size());
 }
 
 TEST(SideWallDetectionTests, GetControlBoundsValuesAreCorrect)
@@ -237,6 +240,20 @@ TEST(SideWallDetectionTests, ThresholdZeroBehavior)
     CHECK(result.wall_present_correct);
 }
 
+TEST(SideWallDetectionTests, ReadingThresholdAffectsResults)
+{
+    Config cfg1{create_no_variance_config()};
+    Config cfg2{cfg1};
+
+    cfg1.ctrl_cfg.reading_threshold = 1024;
+    cfg2.ctrl_cfg.reading_threshold = 200;
+
+    auto r1{run_simulation(cfg1)};
+    auto r2{run_simulation(cfg2)};
+
+    CHECK(!are_results_equivalent(r1, r2));
+}
+
 TEST(SideWallDetectionTests, ReadingStartOffsetAffectsResults)
 {
     Config cfg1{create_no_variance_config()};
@@ -244,6 +261,21 @@ TEST(SideWallDetectionTests, ReadingStartOffsetAffectsResults)
 
     cfg1.ctrl_cfg.reading_start_offset = 0.0;
     cfg2.ctrl_cfg.reading_start_offset = 0.9;
+
+    auto r1{run_simulation(cfg1)};
+    auto r2{run_simulation(cfg2)};
+
+    CHECK(!are_results_equivalent(r1, r2));
+}
+
+TEST(SideWallDetectionTests, SlopeThresholdAffectsResults)
+{
+    Config cfg1{create_no_variance_config()};
+    cfg1.env_cfg.mouse_angle = M_PI / 16;
+    Config cfg2{cfg1};
+
+    cfg1.ctrl_cfg.slope_threshold = 1024;
+    cfg2.ctrl_cfg.slope_threshold = 200;
 
     auto r1{run_simulation(cfg1)};
     auto r2{run_simulation(cfg2)};
@@ -337,15 +369,16 @@ IGNORE_TEST(SideWallDetectionTests, VisualizationDoesNotAffectResults)
 IGNORE_TEST(SideWallDetectionTests, VisualizeWithIdealParameters)
 {
     Config cfg;
-    cfg.ctrl_cfg.reading_threshold = 175u;
+    cfg.ctrl_cfg.reading_threshold = 60u;
+    cfg.ctrl_cfg.slope_threshold = 153u;
     cfg.env_cfg.maze_size_scale = 1.0;
     cfg.env_cfg.ir_reading_scale = 1.0;
     cfg.env_cfg.total_steps = 100;
 
     enable_visualization("ideal-parameters");
 
-    std::vector<double> angles{-M_PI / 6, 0.0, M_PI / 6};
-    std::vector<double> offsets{-0.5, 0.0, 0.5};
+    std::vector<double> angles{-M_PI / 8, -M_PI / 16, 0.0, M_PI / 16, M_PI / 8};
+    std::vector<double> offsets{-0.9, -0.5, 0.0, 0.5, 0.9};
 
     for (double angle : angles) {
         for (double h_offset : offsets) {

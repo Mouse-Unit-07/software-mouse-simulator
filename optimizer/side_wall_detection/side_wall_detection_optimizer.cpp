@@ -141,7 +141,8 @@ void write_pareto_to_file(const std::string& filename, const ParetoResult& resul
     auto out{optimizer_common::open_output_file(filename)};
 
     constexpr int W_IDX{4};
-    constexpr int W_THRESH{10};
+    constexpr int W_R_THRESH{8};
+    constexpr int W_S_THRESH{8};
 
     constexpr int W_RATE{10};
     constexpr int W_START{10};
@@ -150,7 +151,8 @@ void write_pareto_to_file(const std::string& filename, const ParetoResult& resul
 
     out << std::left
         << std::setw(W_IDX) << "#"
-        << std::setw(W_THRESH) << "threshold"
+        << std::setw(W_R_THRESH) << "r_thr"
+        << std::setw(W_S_THRESH) << "s_thr"
         << std::setw(W_START) << "start_off"
         << " | "
         << std::setw(W_RATE) << "combined"
@@ -179,7 +181,8 @@ void write_pareto_to_file(const std::string& filename, const ParetoResult& resul
 
         out << std::left
             << std::setw(W_IDX) << i
-            << std::setw(W_THRESH) << ctrl.reading_threshold
+            << std::setw(W_R_THRESH) << ctrl.reading_threshold
+            << std::setw(W_S_THRESH) << ctrl.slope_threshold
             << std::setw(W_START) << ctrl.reading_start_offset
             << " | "
             << std::setw(W_RATE) << obj.combined_rate

@@ -17,6 +17,7 @@ namespace side_wall_detection
 struct ControlConfig {
     uint32_t reading_threshold;
     double reading_start_offset; /* 0-0.9 */
+    uint32_t slope_threshold;
 };
 
 struct EnvironmentConfig {
