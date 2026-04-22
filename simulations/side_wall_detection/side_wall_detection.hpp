@@ -14,69 +14,29 @@
 namespace side_wall_detection
 {
 
-struct DetectionWindow {
-    int window_start{-1};
-    int window_size{0};
+struct ControlConfig {
+    uint32_t reading_threshold;
+    double reading_start_offset; /* 0-0.9 */
+    uint32_t slope_threshold;
 };
 
-struct Config {
+struct EnvironmentConfig {
     double maze_size_scale;
     double ir_reading_scale;
     double mouse_angle;
     double horizontal_position_variance;
     double vertical_position_variance;
     int total_steps;
-
-    uint32_t reading_threshold;
 };
 
-class ConfigSweeper {
-public:
-    std::vector<double> maze_size_scale;
-    std::vector<double> ir_reading_scale;
-    std::vector<double> mouse_angle;
-    std::vector<double> horizontal_position_variance;
-    std::vector<double> vertical_position_variance;
-    std::vector<int> total_steps;
-
-    std::vector<uint32_t> reading_threshold;
-
-    bool next();
-    Config value() const;
-
-private:
-    simulation_common::CommonConfigSweeper sweeper;
-    bool initialized_{false};
+struct Config {
+    ControlConfig ctrl_cfg;
+    EnvironmentConfig env_cfg;
 };
 
 struct Result {
-    std::vector<bool> wall_absent_at_step;
-    std::vector<bool> wall_present_at_step;
-};
-
-struct Trial {
-    Config config;
-    Result result;
-};
-
-struct ResultsMetrics {
-    DetectionWindow detection_window;
-    std::vector<double> present_detection_rate_at_step;
-    std::vector<double> absent_detection_rate_at_step;
-};
-
-struct CandidateKey {
-    uint32_t threshold;
-
-    bool operator<(const CandidateKey& other) const
-    {
-        return threshold < other.threshold;
-    }
-};
-
-struct Candidate {
-    CandidateKey key;
-    ResultsMetrics results_metrics;
+    bool wall_absent_correct;
+    bool wall_present_correct;
 };
 
 } /* side_wall_detection namespace */
@@ -87,21 +47,19 @@ struct Candidate {
 namespace side_wall_detection
 {
 
-void enable_visualization(void);
+void reset_all_config_bounds(void);
+void set_ctr_config_bounds(const ControlConfig& lower, const ControlConfig& upper);
+void set_env_config_bounds(const EnvironmentConfig& lower, const EnvironmentConfig& upper);
+ControlConfig decode_control(const std::vector<double>& x);
+std::vector<double> encode_control(const ControlConfig& cfg);
+std::pair<std::vector<double>, std::vector<double>> get_control_bounds(void);
+EnvironmentConfig generate_random_environment(void);
+
+void enable_visualization(const std::string& foldername);
 void disable_visualization(void);
 
 std::string config_to_string(const Config& cfg);
 Result run_simulation(const Config& cfg);
-
-ResultsMetrics compute_results_metrics(const std::vector<Result>& results);
-std::vector<Candidate> build_candidates(const std::vector<Trial>& trials);
-std::vector<Candidate> filter_candidates_by_rate(const std::vector<Candidate>& candidates,
-                                                 double required_rate);
-
-void write_analysis_to_file(const std::string& filename, const std::vector<Candidate>& candidates,
-                            size_t total_size, double min_correct_rate);
-void run_full_side_wall_detection_experiment(const std::string& filename, ConfigSweeper& sweeper,
-                                             double min_correct_rate);
 
 } /* side_wall_detection namespace */
 

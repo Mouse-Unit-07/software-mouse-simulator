@@ -25,55 +25,74 @@ using namespace side_wall_detection;
 /*============================================================================*/
 constexpr double FLOAT_TOLERANCE{1e-6};
 
+ControlConfig ctr_lower{};
+ControlConfig ctr_upper{};
+EnvironmentConfig env_lower{};
+EnvironmentConfig env_upper{};
+
+void set_local_ctr_bound_variables(void)
+{
+    ctr_lower.reading_threshold = 0u;
+    ctr_lower.reading_start_offset = 0.0;
+    ctr_lower.slope_threshold = 0u;
+
+    ctr_upper.reading_threshold = 1024u;
+    ctr_upper.reading_start_offset = 0.9;
+    ctr_upper.slope_threshold = 1024u;
+}
+
+void set_local_env_bound_variables(void)
+{
+    env_lower.maze_size_scale = 0.9;
+    env_lower.ir_reading_scale = 0.9;
+    env_lower.mouse_angle = -(M_PI / 4);
+    env_lower.horizontal_position_variance = -0.9;
+    env_lower.vertical_position_variance = -0.9;
+    env_lower.total_steps = 100;
+
+    env_upper.maze_size_scale = 1.1;
+    env_upper.ir_reading_scale = 1.1;
+    env_upper.mouse_angle = M_PI / 4;
+    env_upper.horizontal_position_variance = 0.9;
+    env_upper.vertical_position_variance = 0.9;
+    env_upper.total_steps = 100;
+}
+
+void set_config_bounds(void)
+{
+    set_ctr_config_bounds(ctr_lower, ctr_upper);
+    set_env_config_bounds(env_lower, env_upper);
+}
+
+void reset_local_and_assigned_config_bounds(void)
+{
+    ctr_lower = {};
+    ctr_upper = {};
+    env_lower = {};
+    env_upper = {};
+    reset_all_config_bounds();
+}
+
 Config create_no_variance_config(void)
 {
     Config cfg{};
-    cfg.maze_size_scale = 1.0;
-    cfg.ir_reading_scale = 1.0;
-    cfg.mouse_angle = 0.0;
-    cfg.horizontal_position_variance = 0.0;
-    cfg.vertical_position_variance = 0.0;
-    cfg.total_steps = 100;
-    cfg.reading_threshold = 80u; /* arbitrary threshold */
+    cfg.env_cfg.maze_size_scale = 1.0;
+    cfg.env_cfg.ir_reading_scale = 1.0;
+    cfg.env_cfg.mouse_angle = 0.0;
+    cfg.env_cfg.horizontal_position_variance = 0.0;
+    cfg.env_cfg.vertical_position_variance = 0.0;
+    cfg.env_cfg.total_steps = 100;
+    cfg.ctrl_cfg.reading_threshold = 200u; /* arbitrary threshold */
+    cfg.ctrl_cfg.reading_start_offset = 0.0;
+    cfg.ctrl_cfg.slope_threshold = 1000;
 
     return cfg;
 }
 
-ConfigSweeper create_no_variance_sweeper(void)
-{
-    ConfigSweeper sweeper;
-
-    sweeper.maze_size_scale = {1.0};
-    sweeper.ir_reading_scale = {1.0};
-    sweeper.mouse_angle = {0.0};
-    sweeper.horizontal_position_variance = {0.0};
-    sweeper.vertical_position_variance = {0.0};
-    sweeper.total_steps = {100};
-
-    sweeper.reading_threshold = {80u};
-
-    return sweeper;
-}
-
 bool are_results_equivalent(const Result& r1, const Result& r2)
 {
-    if (r1.wall_absent_at_step.size() != r2.wall_absent_at_step.size()) {
-        return false;
-    }
-    if (r1.wall_present_at_step.size() != r2.wall_present_at_step.size()) {
-        return false;
-    }
-
-    for (size_t i{0}; i < r1.wall_absent_at_step.size(); ++i) {
-        if (r1.wall_absent_at_step.at(i) != r2.wall_absent_at_step.at(i)) {
-            return false;
-        }
-        if (r1.wall_present_at_step.at(i) != r2.wall_present_at_step.at(i)) {
-            return false;
-        }
-    }
-
-    return true;
+    return (r1.wall_absent_correct == r2.wall_absent_correct)
+           && (r1.wall_present_correct == r2.wall_present_correct);
 }
 
 /*============================================================================*/
@@ -88,109 +107,180 @@ TEST_GROUP(SideWallDetectionTests)
 {
     void setup() override
     {
+        reset_local_and_assigned_config_bounds();
         disable_visualization();
     }
 
     void teardown() override
     {
         disable_visualization();
+        reset_local_and_assigned_config_bounds();
     }
 };
 
 /*============================================================================*/
 /*                                    Tests                                   */
 /*============================================================================*/
-TEST(SideWallDetectionTests, ConfigSweeperProducesFirstValue)
+TEST(SideWallDetectionTests, ResetAllConfigBoundsClearsBounds)
 {
-    ConfigSweeper sweeper{create_no_variance_sweeper()};
+    set_local_ctr_bound_variables();
+    set_local_env_bound_variables();
+    set_config_bounds();
 
-    CHECK(sweeper.next());
+    reset_all_config_bounds();
 
-    auto cfg{sweeper.value()};
+    auto [low, high] = get_control_bounds();
 
-    CHECK_EQUAL(1.0, cfg.maze_size_scale);
-    CHECK_EQUAL(80u, cfg.reading_threshold);
-}
-
-TEST(SideWallDetectionTests, ConfigSweeperIteratesAllCombinations)
-{
-    ConfigSweeper sweeper{create_no_variance_sweeper()};
-    sweeper.maze_size_scale = {1.0, 1.05};
-    sweeper.reading_threshold = {100u, 200u};
-
-    int count{0};
-
-    while (sweeper.next()) {
-        sweeper.value();
-        count++;
+    for (size_t i{0}; i < low.size(); ++i) {
+        CHECK_EQUAL(0.0, low.at(i));
+        CHECK_EQUAL(0.0, high.at(i));
     }
-
-    CHECK_EQUAL(4, count); /* 2 maze_size_scale * 2 reading_threshold */
 }
 
-TEST(SideWallDetectionTests, ConfigSweeperStopsAtEnd)
+TEST(SideWallDetectionTests, EncodeDecodeControlRoundTrip)
 {
-    ConfigSweeper sweeper{create_no_variance_sweeper()};
+    ControlConfig original;
+    original.reading_threshold = 123u;
+    original.reading_start_offset = 0.5;
 
-    CHECK(sweeper.next());
-    CHECK_FALSE(sweeper.next());
+    auto encoded{encode_control(original)};
+    auto decoded{decode_control(encoded)};
+
+    CHECK_EQUAL(original.reading_threshold, decoded.reading_threshold);
+    DOUBLES_EQUAL(original.reading_start_offset, decoded.reading_start_offset, FLOAT_TOLERANCE);
 }
 
-TEST(SideWallDetectionTests, ConfigSweeperOrderIsStable)
+TEST(SideWallDetectionTests, EncodeControlMaintainsFieldOrder)
 {
-    ConfigSweeper sweeper{create_no_variance_sweeper()};
-    sweeper.maze_size_scale = {1.0, 1.05};
-    sweeper.reading_threshold = {100u, 200u};
+    ControlConfig cfg;
+    cfg.reading_threshold = 10;
+    cfg.reading_start_offset = 0.25;
 
-    std::vector<std::pair<double, uint32_t>> seen;
+    auto v{encode_control(cfg)};
 
-    while (sweeper.next()) {
-        auto cfg{sweeper.value()};
-        seen.emplace_back(cfg.maze_size_scale, cfg.reading_threshold);
+    CHECK_EQUAL(10, v.at(0));
+    DOUBLES_EQUAL(0.25, v.at(1), FLOAT_TOLERANCE);
+}
+
+TEST(SideWallDetectionTests, GetControlBoundsHasCorrectSize)
+{
+    auto [low, high] = get_control_bounds();
+
+    CHECK_EQUAL(3, low.size());
+    CHECK_EQUAL(3, high.size());
+}
+
+TEST(SideWallDetectionTests, GetControlBoundsValuesAreCorrect)
+{
+    set_local_ctr_bound_variables();
+    set_config_bounds();
+
+    auto [low, high] = get_control_bounds();
+
+    CHECK_EQUAL(0, low.at(0));
+    DOUBLES_EQUAL(0.0, low.at(1), FLOAT_TOLERANCE);
+
+    CHECK_EQUAL(1024, high.at(0));
+    DOUBLES_EQUAL(0.9, high.at(1), FLOAT_TOLERANCE);
+}
+
+TEST(SideWallDetectionTests, GetControlBoundsAreDecodeSafe)
+{
+    set_local_ctr_bound_variables();
+    set_config_bounds();
+
+    auto [low, high] = get_control_bounds();
+
+    auto low_cfg{decode_control(low)};
+    auto high_cfg{decode_control(high)};
+
+    CHECK_EQUAL(0, low_cfg.reading_threshold);
+    DOUBLES_EQUAL(0.0, low_cfg.reading_start_offset, FLOAT_TOLERANCE);
+
+    CHECK_EQUAL(1024, high_cfg.reading_threshold);
+    DOUBLES_EQUAL(0.9, high_cfg.reading_start_offset, FLOAT_TOLERANCE);
+}
+
+TEST(SideWallDetectionTests, RandomEnvironmentValuesWithinExpectedRanges)
+{
+    set_local_env_bound_variables();
+    set_config_bounds();
+
+    for (int i{0}; i < 100; i++) {
+        auto e{generate_random_environment()};
+
+        CHECK((e.maze_size_scale >= 0.9) && (e.maze_size_scale <= 1.1));
+        CHECK((e.ir_reading_scale >= 0.9) && (e.ir_reading_scale <= 1.1));
+        CHECK((e.mouse_angle >= -(M_PI / 4)) && (e.mouse_angle <= M_PI / 4));
+        CHECK((e.horizontal_position_variance >= -0.9) && (e.horizontal_position_variance <= 0.9));
+        CHECK((e.vertical_position_variance >= -0.9) && (e.vertical_position_variance <= 0.9));
+        CHECK(e.total_steps == 100);
     }
-
-    CHECK_EQUAL(4, seen.size());
-
-    /* Expected order: maze_size_scale outer, reading_threshold inner */
-    CHECK(seen.at(0) == std::make_pair(1.0, 100u));
-    CHECK(seen.at(1) == std::make_pair(1.0, 200u));
-    CHECK(seen.at(2) == std::make_pair(1.05, 100u));
-    CHECK(seen.at(3) == std::make_pair(1.05, 200u));
 }
 
-TEST(SideWallDetectionTests, SimulationHandlesZeroSteps)
+TEST(SideWallDetectionTests, ZeroStepsHandledGracefully)
 {
     Config cfg{create_no_variance_config()};
-    cfg.total_steps = 0;
+    cfg.env_cfg.total_steps = 0;
 
     auto result{run_simulation(cfg)};
 
-    CHECK_EQUAL(0, result.wall_absent_at_step.size());
-    CHECK_EQUAL(0, result.wall_present_at_step.size());
+    CHECK_FALSE(result.wall_absent_correct);
+    CHECK_FALSE(result.wall_present_correct);
 }
 
-TEST(SideWallDetectionTests, WallAbsentAllFalseWhenThresholdIsZero)
+TEST(SideWallDetectionTests, ThresholdZeroBehavior)
 {
     Config cfg{create_no_variance_config()};
-    cfg.reading_threshold = 0u; /* nothing should pass */
+    cfg.ctrl_cfg.reading_threshold = 0u;
 
     auto result{run_simulation(cfg)};
 
-    for (bool v : result.wall_absent_at_step) {
-        CHECK_FALSE(v);
-    }
+    CHECK_FALSE(result.wall_absent_correct);
+    CHECK(result.wall_present_correct);
 }
 
-TEST(SideWallDetectionTests, WallPresentAllTrueWhenThresholdIsZero)
+TEST(SideWallDetectionTests, ReadingThresholdAffectsResults)
 {
-    Config cfg{create_no_variance_config()};
-    cfg.reading_threshold = 0u; /* everything should pass */
+    Config cfg1{create_no_variance_config()};
+    Config cfg2{cfg1};
 
-    auto result{run_simulation(cfg)};
+    cfg1.ctrl_cfg.reading_threshold = 1024;
+    cfg2.ctrl_cfg.reading_threshold = 200;
 
-    for (bool v : result.wall_present_at_step) {
-        CHECK(v);
-    }
+    auto r1{run_simulation(cfg1)};
+    auto r2{run_simulation(cfg2)};
+
+    CHECK(!are_results_equivalent(r1, r2));
+}
+
+TEST(SideWallDetectionTests, ReadingStartOffsetAffectsResults)
+{
+    Config cfg1{create_no_variance_config()};
+    Config cfg2{cfg1};
+
+    cfg1.ctrl_cfg.reading_start_offset = 0.0;
+    cfg2.ctrl_cfg.reading_start_offset = 0.9;
+
+    auto r1{run_simulation(cfg1)};
+    auto r2{run_simulation(cfg2)};
+
+    CHECK(!are_results_equivalent(r1, r2));
+}
+
+TEST(SideWallDetectionTests, SlopeThresholdAffectsResults)
+{
+    Config cfg1{create_no_variance_config()};
+    cfg1.env_cfg.mouse_angle = M_PI / 16;
+    Config cfg2{cfg1};
+
+    cfg1.ctrl_cfg.slope_threshold = 1024;
+    cfg2.ctrl_cfg.slope_threshold = 200;
+
+    auto r1{run_simulation(cfg1)};
+    auto r2{run_simulation(cfg2)};
+
+    CHECK(!are_results_equivalent(r1, r2));
 }
 
 TEST(SideWallDetectionTests, IdenticalConfigsProduceIdenticalResults)
@@ -207,7 +297,7 @@ TEST(SideWallDetectionTests, MazeSizeScaleChangesResults)
 {
     Config cfg1{create_no_variance_config()};
     Config cfg2{cfg1};
-    cfg2.maze_size_scale = 10.0;
+    cfg2.env_cfg.maze_size_scale = 10.0;
 
     auto r1{run_simulation(cfg1)};
     auto r2{run_simulation(cfg2)};
@@ -219,7 +309,7 @@ TEST(SideWallDetectionTests, IrReadingScaleChangesResults)
 {
     Config cfg1{create_no_variance_config()};
     Config cfg2{cfg1};
-    cfg2.ir_reading_scale = 0.5;
+    cfg2.env_cfg.ir_reading_scale = 0.5;
 
     auto r1{run_simulation(cfg1)};
     auto r2{run_simulation(cfg2)};
@@ -227,23 +317,11 @@ TEST(SideWallDetectionTests, IrReadingScaleChangesResults)
     CHECK(!are_results_equivalent(r1, r2));
 }
 
-TEST(SideWallDetectionTests, ZeroIrReadingScaleCollapsesToAllTrueWhenThresholdIsMax)
-{
-    Config cfg{create_no_variance_config()};
-    cfg.reading_threshold = 1024u;
-
-    auto result{run_simulation(cfg)};
-
-    for (bool v : result.wall_absent_at_step) {
-        CHECK(v);
-    }
-}
-
 TEST(SideWallDetectionTests, MouseAngleChangesResults)
 {
     Config cfg1{create_no_variance_config()};
     Config cfg2{cfg1};
-    cfg2.mouse_angle = M_PI / 2;
+    cfg2.env_cfg.mouse_angle = M_PI / 2;
 
     auto r1{run_simulation(cfg1)};
     auto r2{run_simulation(cfg2)};
@@ -255,7 +333,7 @@ TEST(SideWallDetectionTests, HorizontalVarianceChangesResults)
 {
     Config cfg1{create_no_variance_config()};
     Config cfg2{cfg1};
-    cfg2.horizontal_position_variance = -0.9;
+    cfg2.env_cfg.horizontal_position_variance = -0.9;
 
     auto r1{run_simulation(cfg1)};
     auto r2{run_simulation(cfg2)};
@@ -267,7 +345,7 @@ TEST(SideWallDetectionTests, VerticalVarianceChangesResults)
 {
     Config cfg1{create_no_variance_config()};
     Config cfg2{cfg1};
-    cfg2.vertical_position_variance = -0.9;
+    cfg2.env_cfg.vertical_position_variance = -0.9;
 
     auto r1{run_simulation(cfg1)};
     auto r2{run_simulation(cfg2)};
@@ -282,151 +360,35 @@ IGNORE_TEST(SideWallDetectionTests, VisualizationDoesNotAffectResults)
     disable_visualization();
     auto r1{run_simulation(cfg)};
 
-    enable_visualization();
+    enable_visualization("visualization-does-not-affect-results");
     auto r2{run_simulation(cfg)};
 
     CHECK(are_results_equivalent(r1, r2));
 }
 
-TEST(SideWallDetectionTests, ComputeResultsMetricsComputesRatesCorrectly)
+IGNORE_TEST(SideWallDetectionTests, VisualizeWithIdealParameters)
 {
-    Result r1;
-    r1.wall_absent_at_step = {true, true, false, true, true, true};
-    r1.wall_present_at_step = {true, true, true, true, true, true};
+    Config cfg;
+    cfg.ctrl_cfg.reading_threshold = 60u;
+    cfg.ctrl_cfg.slope_threshold = 153u;
+    cfg.env_cfg.maze_size_scale = 1.0;
+    cfg.env_cfg.ir_reading_scale = 1.0;
+    cfg.env_cfg.total_steps = 100;
 
-    Result r2{r1};
+    enable_visualization("ideal-parameters");
 
-    std::vector<Result> results{r1, r2};
+    std::vector<double> angles{-M_PI / 8, -M_PI / 16, 0.0, M_PI / 16, M_PI / 8};
+    std::vector<double> offsets{-0.9, -0.5, 0.0, 0.5, 0.9};
 
-    auto m{compute_results_metrics(results)};
+    for (double angle : angles) {
+        for (double h_offset : offsets) {
+            for (double v_offset : offsets) {
+                cfg.env_cfg.mouse_angle = angle;
+                cfg.env_cfg.horizontal_position_variance = h_offset;
+                cfg.env_cfg.vertical_position_variance = v_offset;
 
-    std::vector<double> expected_present{1, 1, 1, 1, 1, 1};
-    std::vector<double> expected_absent{1, 1, 0, 1, 1, 1};
-
-    for (size_t i{0}; i < expected_present.size(); ++i) {
-        DOUBLES_EQUAL(expected_present.at(i), m.present_detection_rate_at_step.at(i),
-                      FLOAT_TOLERANCE);
-
-        DOUBLES_EQUAL(expected_absent.at(i), m.absent_detection_rate_at_step.at(i),
-                      FLOAT_TOLERANCE);
+                auto r1{run_simulation(cfg)};
+            }
+        }
     }
-}
-
-TEST(SideWallDetectionTests, BuildCandidatesGroupsByThreshold)
-{
-    Trial t1;
-    t1.result.wall_absent_at_step = {true, true};
-    t1.result.wall_present_at_step = {true, true};
-    t1.config.reading_threshold = 100;
-
-    Trial t2{t1};
-
-    Trial t3;
-    t3.result.wall_absent_at_step = {false, false};
-    t3.result.wall_present_at_step = {true, true};
-    t3.config.reading_threshold = 200;
-
-    std::vector<Trial> trials{t1, t2, t3};
-
-    auto candidates{build_candidates(trials)};
-
-    CHECK_EQUAL(2, candidates.size());
-}
-
-TEST(SideWallDetectionTests, BuildCandidatesDoesNotComputeMetricsPerGroup)
-{
-    Trial t1;
-    t1.result.wall_absent_at_step = {true, true, false};
-    t1.result.wall_present_at_step = {true, true, true};
-    t1.config.reading_threshold = 100;
-
-    Trial t2{t1};
-
-    std::vector<Trial> trials{t1, t2};
-
-    auto candidates{build_candidates(trials)};
-
-    CHECK_EQUAL(1, candidates.size());
-
-    const auto& m{candidates.at(0).results_metrics};
-
-    CHECK_EQUAL(-1, m.detection_window.window_start);
-    CHECK_EQUAL(0, m.detection_window.window_size);
-}
-
-TEST(SideWallDetectionTests, FilterCandidatesPerfectDetection)
-{
-    Candidate c;
-    c.key.threshold = 100;
-    c.results_metrics.present_detection_rate_at_step = {1.0, 1.0, 0.0, 1.0};
-    c.results_metrics.absent_detection_rate_at_step = {1.0, 1.0, 0.0, 1.0};
-
-    std::vector<Candidate> candidates{c};
-
-    auto filtered{filter_candidates_by_rate(candidates, 1.0)};
-
-    CHECK_EQUAL(1, filtered.size());
-    CHECK_EQUAL(0, filtered.at(0).results_metrics.detection_window.window_start);
-    CHECK_EQUAL(2, filtered.at(0).results_metrics.detection_window.window_size);
-}
-
-TEST(SideWallDetectionTests, FilterCandidatesPartialCorrectDetection)
-{
-    Candidate c;
-    c.key.threshold = 100;
-    c.results_metrics.present_detection_rate_at_step = {1.0, 0.5, 0.5, 1.0};
-    c.results_metrics.absent_detection_rate_at_step = {1.0, 0.5, 0.5, 1.0};
-
-    std::vector<Candidate> candidates{c};
-
-    auto filtered{filter_candidates_by_rate(candidates, 0.5)};
-
-    CHECK_EQUAL(1, filtered.size());
-    CHECK_EQUAL(0, filtered.at(0).results_metrics.detection_window.window_start);
-    CHECK_EQUAL(4, filtered.at(0).results_metrics.detection_window.window_size);
-}
-
-TEST(SideWallDetectionTests, FilterCandidatesNoValidWindow)
-{
-    Candidate c;
-    c.key.threshold = 100;
-    c.results_metrics.present_detection_rate_at_step = {0.0, 0.0, 0.5};
-    c.results_metrics.absent_detection_rate_at_step = {0.0, 0.0, 0.5};
-
-    std::vector<Candidate> candidates{c};
-
-    auto filtered{filter_candidates_by_rate(candidates, 0.75)};
-
-    CHECK_EQUAL(0, filtered.size());
-}
-
-IGNORE_TEST(SideWallDetectionTests, RunFullSimulationAndWriteResultsToFile)
-{
-    ConfigSweeper sweeper;
-
-    sweeper.maze_size_scale = simulation_common::generate_sweep_values(0.95, 1.05, 3);
-    sweeper.ir_reading_scale = simulation_common::generate_sweep_values(0.95, 1.05, 3);
-    sweeper.mouse_angle = simulation_common::generate_sweep_values(-M_PI / 8, M_PI / 8, 3);
-    sweeper.horizontal_position_variance = simulation_common::generate_sweep_values(-0.5, 0.5, 3);
-    sweeper.vertical_position_variance = simulation_common::generate_sweep_values(-0.5, 0.5, 3);
-    sweeper.total_steps = {100};
-    sweeper.reading_threshold = simulation_common::generate_sweep_values<uint32_t>(0, 300, 300);
-
-    run_full_side_wall_detection_experiment("test_full_output.txt", sweeper, 0.2);
-}
-
-IGNORE_TEST(SideWallDetectionTests, RunFullSimulationForIdealThreshold)
-{
-    ConfigSweeper sweeper;
-
-    sweeper.maze_size_scale = simulation_common::generate_sweep_values(0.95, 1.05, 3);
-    sweeper.ir_reading_scale = simulation_common::generate_sweep_values(0.95, 1.05, 3);
-    sweeper.mouse_angle = simulation_common::generate_sweep_values(-M_PI / 8, M_PI / 8, 3);
-    sweeper.horizontal_position_variance = simulation_common::generate_sweep_values(-0.5, 0.5, 3);
-    sweeper.vertical_position_variance = simulation_common::generate_sweep_values(-0.5, 0.5, 3);
-    sweeper.total_steps = {100};
-    sweeper.reading_threshold = {78};
-
-    enable_visualization();
-    run_full_side_wall_detection_experiment("test_ideal_output.txt", sweeper, 0.5);
 }
