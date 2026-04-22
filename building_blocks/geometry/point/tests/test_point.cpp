@@ -46,7 +46,7 @@ TEST_GROUP(PointTests)
 /*============================================================================*/
 TEST(PointTests, CoordinatesAreZeroOnDefaultConstructor)
 {
-    Point p;
+    Point p{};
     CHECK(p.x == 0.0);
     CHECK(p.y == 0.0);
 }

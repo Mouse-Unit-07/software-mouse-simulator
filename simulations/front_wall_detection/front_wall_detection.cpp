@@ -59,8 +59,8 @@ namespace
 const std::string TEST_OUTPUT_DIRECTORY{"front-wall-detection-visualizer"};
 std::string TEST_OUTPUT_SUBDIRECTORY{""};
 bool visualizer_enabled{false};
-visualizer::Visualizer wall_absent_visualizer;
-visualizer::Visualizer wall_present_visualizer;
+visualizer::Visualizer wall_absent_visualizer{};
+visualizer::Visualizer wall_present_visualizer{};
 ControlConfig ctr_lower_bounds{};
 ControlConfig ctr_upper_bounds{};
 EnvironmentConfig env_lower_bounds{};
@@ -122,7 +122,7 @@ EnvironmentConfig generate_random_environment(void)
         return std::uniform_real_distribution<double>(a, b)(rng);
     };
 
-    EnvironmentConfig e;
+    EnvironmentConfig e{};
     e.ir_reading_scale =
         uniform(env_lower_bounds.ir_reading_scale, env_upper_bounds.ir_reading_scale);
     e.mouse_angle =
@@ -148,7 +148,7 @@ void disable_visualization(void)
 
 std::string config_to_string(const Config& cfg)
 {
-    std::ostringstream oss;
+    std::ostringstream oss{};
 
     oss << simulation_common::double_to_filename(cfg.env_cfg.ir_reading_scale) << "-"
         << simulation_common::double_to_filename(cfg.env_cfg.mouse_angle) << "-"
@@ -183,7 +183,7 @@ Result run_simulation(const Config& cfg)
     };
     maze::Maze closed_maze{maze::build_maze_from_ascii(ascii_closed, 0.0)};
 
-    mouse::Mouse mouse;
+    mouse::Mouse mouse{};
     prepare_mock_for_front_wall_detection(cfg, open_maze, mouse);
 
     if (visualizer_enabled) {
@@ -250,8 +250,8 @@ Result run_simulation(const Config& cfg)
                                                   + TEST_OUTPUT_SUBDIRECTORY + "/"
                                                   + config_to_string(cfg) + "-wa.png");
         wall_present_visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/"
-                                                  + TEST_OUTPUT_SUBDIRECTORY + "/"
-                                                  + config_to_string(cfg) + "-wp.png");
+                                                   + TEST_OUTPUT_SUBDIRECTORY + "/"
+                                                   + config_to_string(cfg) + "-wp.png");
     }
 
     return Result{identified_absent_wall, identified_present_wall};

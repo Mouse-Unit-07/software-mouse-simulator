@@ -148,7 +148,7 @@ EnvironmentConfig generate_random_environment(void)
         return std::uniform_real_distribution<double>(a, b)(rng);
     };
 
-    EnvironmentConfig e;
+    EnvironmentConfig e{};
     e.dt =
         uniform(env_lower_bounds.dt, env_upper_bounds.dt);
     e.motor_speed_scale =
@@ -335,7 +335,7 @@ Result run_single_simulation(const Config& cfg, const maze::Maze& maze, enum Wal
         std::filesystem::create_directories(TEST_OUTPUT_DIRECTORY + "/" + TEST_OUTPUT_SUBDIRECTORY);
     }
 
-    mouse::Mouse mouse;
+    mouse::Mouse mouse{};
     const double IDEAL_MOUSE_ANGLE{mouse.hitbox.angle_rad};
     prepare_mock_for_move_forward(cfg, maze, mouse);
     const double INITIAL_MOUSE_VERTICAL_POSITION{mouse.hitbox.center.y};

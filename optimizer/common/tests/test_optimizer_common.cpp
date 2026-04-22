@@ -57,7 +57,7 @@ TEST(OptimizerCommonTests, OpenOutputFileCreatesFileAndAppliesFormatting)
     std::ifstream in(filename);
     CHECK(in.is_open());
 
-    std::string contents;
+    std::string contents{};
     in >> contents;
 
     /* verify fixed + precision(6) */

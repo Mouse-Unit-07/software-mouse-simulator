@@ -140,7 +140,7 @@ EnvironmentConfig generate_random_environment(void)
         return std::uniform_real_distribution<double>(a, b)(rng);
     };
 
-    EnvironmentConfig e;
+    EnvironmentConfig e{};
     e.dt =
         uniform(env_lower_bounds.dt, env_upper_bounds.dt);
     e.motor_speed_scale =
@@ -205,7 +205,7 @@ Result run_simulation(const Config& cfg)
     };
     maze::Maze maze{maze::build_maze_from_ascii(ascii, 0.0)};
 
-    mouse::Mouse mouse;
+    mouse::Mouse mouse{};
     prepare_mock_for_rotation(cfg, maze, mouse);
 
     if (visualizer_enabled) {

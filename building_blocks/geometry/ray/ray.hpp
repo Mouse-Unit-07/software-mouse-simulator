@@ -15,8 +15,8 @@ namespace geometry
 
 class Ray {
 public:
-    Point origin;
-    Point direction;
+    Point origin{};
+    Point direction{};
     Ray(const Point& origin, double angle_rad);
 
     void translate(double dx, double dy) noexcept;

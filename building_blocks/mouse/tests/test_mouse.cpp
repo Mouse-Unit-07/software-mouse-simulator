@@ -49,14 +49,14 @@ TEST_GROUP(MouseTests)
 /*============================================================================*/
 TEST(MouseTests, ConstructorInitializesCoordinatesToZero)
 {
-    Mouse test_mouse;
+    Mouse test_mouse{};
     DOUBLES_EQUAL(0.0, test_mouse.hitbox.center.x, 1e-6);
     DOUBLES_EQUAL(0.0, test_mouse.hitbox.center.y, 1e-6);
 }
 
 TEST(MouseTests, TranslateMovesHitboxAndRays)
 {
-    Mouse test_mouse;
+    Mouse test_mouse{};
 
     double test_dx{10.0};
     double test_dy{5.0};
@@ -81,7 +81,7 @@ TEST(MouseTests, TranslateMovesHitboxAndRays)
 
 TEST(MouseTests, RotateMovesHitboxAndRaysAboutHitboxCenter)
 {
-    Mouse test_mouse;
+    Mouse test_mouse{};
 
     double test_angle{M_PI / 4.0};
     geometry::Point center{test_mouse.hitbox.center};
@@ -106,9 +106,9 @@ TEST(MouseTests, RotateMovesHitboxAndRaysAboutHitboxCenter)
 
 TEST(MouseTests, EqualityAndInequalityOperatorOverloaded)
 {
-    Mouse test_mouse;
-    Mouse test_mouse_2;
-    Mouse test_mouse_3;
+    Mouse test_mouse{};
+    Mouse test_mouse_2{};
+    Mouse test_mouse_3{};
     CHECK(test_mouse == test_mouse_2);
     CHECK(test_mouse == test_mouse_3);
 

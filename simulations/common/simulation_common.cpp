@@ -8,15 +8,10 @@
 /*----------------------------------------------------------------------------*/
 /*                               Include Files                                */
 /*----------------------------------------------------------------------------*/
-#include <algorithm>
 #include <cmath>
-#include <functional>
 #include <iomanip>
-#include <map>
 #include <sstream>
-#include <stdexcept>
 #include <string>
-#include <vector>
 #include "simulation_common.hpp"
 
 /*----------------------------------------------------------------------------*/
@@ -35,133 +30,60 @@
 namespace simulation_common
 {
 
-void CommonConfigSweeper::init_sizes(std::vector<size_t> sizes)
-{
-    sizes_ = std::move(sizes);
-    for (int x : sizes_) {
-        if (x == 0) {
-            throw std::invalid_argument("size of zero found- parameter missing in sweeper");
-        }
-    }
-
-    indices_.assign(sizes_.size(), 0);
-}
-
-bool CommonConfigSweeper::next(void)
-{
-    if (first_) {
-        first_ = false;
-        return true;
-    }
-
-    for (int i{static_cast<int>(indices_.size()) - 1}; i >= 0; --i) {
-        indices_.at(i)++;
-
-        if (indices_.at(i) < sizes_.at(i)) {
-            return true;
-        }
-
-        indices_.at(i) = 0;
-    }
-
-    return false;
-}
-
-const std::vector<size_t>& CommonConfigSweeper::get_indices(void) const
-{
-    return indices_;
-}
-
-MetricStats compute_stats(const std::vector<double>& data)
-{
-    MetricStats s{};
-
-    if (data.empty()) {
-        return s;
-    }
-
-    double sum{0.0};
-    s.min = data.at(0);
-    s.max = data.at(0);
-
-    for (double v : data) {
-        sum += v;
-        if (v < s.min) {
-            s.min = v;
-        }
-        if (v > s.max) {
-            s.max = v;
-        }
-    }
-
-    s.mean = sum / data.size();
-
-    double variance{0.0};
-    for (double v : data) {
-        double d{v - s.mean};
-        variance += d * d;
-    }
-
-    s.stddev = sqrt(variance / data.size());
-    return s;
-}
-
-double collapse_metric(const simulation_common::MetricStats& s)
-{
-    /* avoid s.min and s.max to omit outliers */
-    return s.mean + s.stddev;
-}
-
-double safe_norm(double v, double max)
-{
-    if (max <= 1e-6) {
-        return 0.0;
-    }
-    return v / max;
-}
-
-double compute_metric_score(double collapsed, double global_max)
-{
-    double norm{safe_norm(collapsed, global_max)};
-
-    /* 2 fields in collapsed */
-    return norm / 2.0;
-}
-
 std::string double_to_filename(double v, int precision)
 {
-    std::ostringstream oss;
+    std::ostringstream oss{};
 
-    /* Treat near-integers as integers (handles floating point noise) */
-    double rounded = std::round(v);
+    double rounded{std::round(v)};
     if (std::abs(v - rounded) < 1e-9) {
-        oss << static_cast<int>(rounded);
+        oss << static_cast<long long>(rounded);
     } else {
-        oss << std::fixed << std::setprecision(precision) << v;
+        oss << std::fixed << std::setprecision(precision + 6) << v;
     }
 
     std::string s{oss.str()};
 
-    /* Trim trailing zeros for floats */
-    if (s.find('.') != std::string::npos) {
-        while (!s.empty() && s.back() == '0') {
-            s.pop_back();
+    /* Handle sign early */
+    bool negative{false};
+    if (!s.empty() && s[0] == '-') {
+        negative = true;
+        s.erase(0, 1);
+    }
+
+    /* Split integer/fractional */
+    size_t dot{s.find('.')};
+    std::string int_part{(dot == std::string::npos) ? s : s.substr(0, dot)};
+    std::string frac_part{(dot == std::string::npos) ? "" : s.substr(dot + 1)};
+
+    /* Remove trailing zeros in fractional part */
+    while (!frac_part.empty() && frac_part.back() == '0') {
+        frac_part.pop_back();
+    }
+
+    std::string out{};
+
+    if (int_part != "0") {
+        /* normal case: integer part exists */
+        out = int_part;
+        if (!frac_part.empty()) {
+            out += 'p' + frac_part.substr(0, precision);
         }
-        if (!s.empty() && s.back() == '.') {
-            s.pop_back();
+    } else {
+        /* sub-1 case: strip leading zeros in fractional part */
+        size_t first_non_zero{frac_part.find_first_not_of('0')};
+
+        if (first_non_zero == std::string::npos) {
+            out = "0";
+        } else {
+            out = "p" + frac_part.substr(first_non_zero, precision);
         }
     }
 
-    /* Replace characters for filename safety */
-    for (char& c : s) {
-        if (c == '.') {
-            c = 'p';
-        } else if (c == '-') {
-            c = 'n';
-        }
+    if (negative) {
+        out = "n" + out;
     }
 
-    return s;
+    return out;
 }
 
 } /* simulation_common namespace */

@@ -41,7 +41,7 @@ struct Visualizer::Impl {
     double cell_size_pixels{};
     double frame_width_pixels{};
     double scale{};
-    sf::RenderTexture texture;
+    sf::RenderTexture texture{};
     sf::Color ray_beam_color{sf::Color::Cyan};
     sf::Color mouse_color{sf::Color::Red};
 
@@ -70,7 +70,7 @@ struct Visualizer::Impl {
 
     void draw_cells(const maze::Maze& maze)
     {
-        sf::RectangleShape cell;
+        sf::RectangleShape cell{};
         cell.setSize({static_cast<float>(cell_size_pixels), static_cast<float>(cell_size_pixels)});
         cell.setFillColor(sf::Color::Transparent);
         cell.setOutlineColor(sf::Color(60, 60, 60));
@@ -95,7 +95,7 @@ struct Visualizer::Impl {
 
     void draw_mouse_start(const maze::Maze& maze)
     {
-        sf::CircleShape marker;
+        sf::CircleShape marker{};
         marker.setRadius(cell_size_pixels * 0.05);
         marker.setFillColor(sf::Color::Green);
 

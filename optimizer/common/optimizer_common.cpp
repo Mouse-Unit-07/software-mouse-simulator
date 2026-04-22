@@ -42,7 +42,7 @@ std::ofstream open_output_file(const std::string& filename)
 
 std::string control_to_key(const std::vector<double>& x)
 {
-    std::ostringstream oss;
+    std::ostringstream oss{};
     oss << std::fixed << std::setprecision(6);
     for (double v : x) {
         oss << v << ",";

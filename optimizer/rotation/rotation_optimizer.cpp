@@ -30,7 +30,7 @@ namespace
 
 using PagmoVec = pagmo::vector_double;
 
-std::unordered_map<std::string, double> time_cache;
+std::unordered_map<std::string, double> time_cache{};
 
 std::vector<size_t> get_best_indices(const std::vector<PagmoVec>& F, size_t keep_n);
 
@@ -39,12 +39,7 @@ std::vector<size_t> get_best_indices(const std::vector<PagmoVec>& F, size_t keep
 /*----------------------------------------------------------------------------*/
 /*                               Private Globals                              */
 /*----------------------------------------------------------------------------*/
-/* none */
-
-/*----------------------------------------------------------------------------*/
-/*                             Public Definitions                             */
-/*----------------------------------------------------------------------------*/
-namespace rotation_optimizer
+namespace
 {
 
 struct Stage1Objectives {
@@ -125,7 +120,7 @@ public:
     }
 
 private:
-    int sims_;
+    int sims_{100};
 };
 
 class RotationUDP {
@@ -181,8 +176,16 @@ public:
     }
 
 private:
-    int sims_;
+    int sims_{100};
 };
+
+} /* unnamed namespace */
+
+/*----------------------------------------------------------------------------*/
+/*                             Public Definitions                             */
+/*----------------------------------------------------------------------------*/
+namespace rotation_optimizer
+{
 
 ParetoResult run_rotation_staged(std::size_t population, std::size_t gen_stage1,
                                  std::size_t gen_stage2, int sims_stage1, int sims_stage2)
@@ -200,7 +203,7 @@ ParetoResult run_rotation_staged(std::size_t population, std::size_t gen_stage1,
 
     auto best_indices{get_best_indices(stage1.F, population)};
 
-    std::vector<PagmoVec> seeds;
+    std::vector<PagmoVec> seeds{};
     for (auto idx : best_indices) {
         seeds.push_back(stage1.X.at(idx));
     }
@@ -310,8 +313,8 @@ std::vector<size_t> get_best_indices(const std::vector<PagmoVec>& F, size_t keep
     constexpr double FLOAT_TOLERANCE{1e-3};
 
     std::sort(idx.begin(), idx.end(), [&](size_t a, size_t b) {
-        const auto A{rotation_optimizer::Stage1Objectives::from_vec(F.at(a))};
-        const auto B{rotation_optimizer::Stage1Objectives::from_vec(F.at(b))};
+        const auto A{Stage1Objectives::from_vec(F.at(a))};
+        const auto B{Stage1Objectives::from_vec(F.at(b))};
 
         if (std::abs(A.collision - B.collision) > FLOAT_TOLERANCE)
             return A.collision < B.collision;

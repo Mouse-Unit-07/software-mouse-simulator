@@ -13,11 +13,6 @@
 namespace optimizer_common
 {
 
-struct ParetoResult {
-    std::vector<std::vector<double>> X;
-    std::vector<std::vector<double>> F;
-};
-
 std::ofstream open_output_file(const std::string& filename);
 std::string control_to_key(const std::vector<double>& x);
 

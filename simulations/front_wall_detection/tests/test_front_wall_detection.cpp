@@ -134,7 +134,7 @@ TEST(FrontWallDetectionTests, ResetAllConfigBoundsClearsBounds)
 
 TEST(FrontWallDetectionTests, EncodeDecodeControlRoundTrip)
 {
-    ControlConfig original;
+    ControlConfig original{};
     original.reading_threshold = 123u;
 
     auto encoded{encode_control(original)};
@@ -145,7 +145,7 @@ TEST(FrontWallDetectionTests, EncodeDecodeControlRoundTrip)
 
 TEST(FrontWallDetectionTests, EncodeControlMaintainsFieldOrder)
 {
-    ControlConfig cfg;
+    ControlConfig cfg{};
     cfg.reading_threshold = 0;
 
     auto v{encode_control(cfg)};
@@ -289,19 +289,18 @@ TEST(FrontWallDetectionTests, VerticalVarianceAffectsResults)
 
 IGNORE_TEST(FrontWallDetectionTests, VisualizeWithIdealParameters)
 {
-    Config cfg;
+    Config cfg{};
     cfg.ctrl_cfg.reading_threshold = 279u;
     cfg.env_cfg.ir_reading_scale = 1.0;
 
     enable_visualization("ideal-parameters");
-    
 
     std::vector<double> angles{-M_PI / 4, 0.0, M_PI / 4};
     std::vector<double> offsets{-0.9, 0.0, 0.9};
 
-    for (double angle: angles) {
-        for (double h_offset: offsets) {
-            for (double v_offset: offsets) {
+    for (double angle : angles) {
+        for (double h_offset : offsets) {
+            for (double v_offset : offsets) {
                 cfg.env_cfg.mouse_angle = angle;
                 cfg.env_cfg.horizontal_position_variance = h_offset;
                 cfg.env_cfg.vertical_position_variance = v_offset;

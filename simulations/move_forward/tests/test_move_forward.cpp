@@ -223,7 +223,7 @@ TEST(MoveForwardTests, ResetAllConfigBoundsClearsBounds)
 
 TEST(MoveForwardTests, EncodeDecodeControlRoundTrip)
 {
-    ControlConfig original;
+    ControlConfig original{};
     original.single_wall_target = 456u;
     original.motor_speed = 123u;
     original.kp_velocity = 1000;
@@ -250,7 +250,7 @@ TEST(MoveForwardTests, EncodeDecodeControlRoundTrip)
 
 TEST(MoveForwardTests, EncodeControlMaintainsFieldOrder)
 {
-    ControlConfig cfg;
+    ControlConfig cfg{};
     cfg.single_wall_target = 0;
     cfg.motor_speed = 1;
     cfg.kp_velocity = 2;
@@ -588,7 +588,7 @@ IGNORE_TEST(MoveForwardTests, VisualizationDoesNotAffectResults)
 
 IGNORE_TEST(MoveForwardTests, VisualizeWithIdealParameters)
 {
-    Config cfg_no_walls;
+    Config cfg_no_walls{};
     cfg_no_walls.ctrl_cfg.single_wall_target = 0u;
     cfg_no_walls.ctrl_cfg.motor_speed = 147u;
     cfg_no_walls.ctrl_cfg.kp_velocity = 89;
@@ -611,7 +611,7 @@ IGNORE_TEST(MoveForwardTests, VisualizeWithIdealParameters)
     cfg_no_walls.env_cfg.horizontal_position_variance = 0.0;
     cfg_no_walls.env_cfg.vertical_position_variance = 0.0;
 
-    Config cfg_one_wall;
+    Config cfg_one_wall{};
     cfg_one_wall.ctrl_cfg.single_wall_target = 249u;
     cfg_one_wall.ctrl_cfg.motor_speed = 171u;
     cfg_one_wall.ctrl_cfg.kp_velocity = 54;
@@ -634,7 +634,7 @@ IGNORE_TEST(MoveForwardTests, VisualizeWithIdealParameters)
     cfg_one_wall.env_cfg.horizontal_position_variance = 0.0;
     cfg_one_wall.env_cfg.vertical_position_variance = 0.0;
 
-    Config cfg_two_walls;
+    Config cfg_two_walls{};
     cfg_two_walls.ctrl_cfg.single_wall_target = 0u;
     cfg_two_walls.ctrl_cfg.motor_speed = 159u;
     cfg_two_walls.ctrl_cfg.kp_velocity = 1391;

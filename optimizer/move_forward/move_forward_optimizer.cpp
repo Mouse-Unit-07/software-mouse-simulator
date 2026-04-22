@@ -30,7 +30,7 @@ namespace
 
 using PagmoVec = pagmo::vector_double;
 
-std::unordered_map<std::string, double> time_cache;
+std::unordered_map<std::string, double> time_cache{};
 
 std::vector<size_t> get_best_feasible_indices(const std::vector<PagmoVec>& F, size_t keep_n);
 
@@ -39,12 +39,7 @@ std::vector<size_t> get_best_feasible_indices(const std::vector<PagmoVec>& F, si
 /*----------------------------------------------------------------------------*/
 /*                               Private Globals                              */
 /*----------------------------------------------------------------------------*/
-/* none */
-
-/*----------------------------------------------------------------------------*/
-/*                             Public Definitions                             */
-/*----------------------------------------------------------------------------*/
-namespace move_forward_optimizer
+namespace
 {
 
 struct Stage1Objectives {
@@ -59,11 +54,7 @@ struct Stage1Objectives {
 
     static Stage1Objectives from_vec(const PagmoVec& v)
     {
-        return {
-            v.at(0),
-            v.at(1),
-            v.at(2)
-        };
+        return {v.at(0), v.at(1), v.at(2)};
     }
 };
 
@@ -81,13 +72,7 @@ struct Stage2Objectives {
 
     static Stage2Objectives from_vec(const PagmoVec& v)
     {
-        return {
-            v.at(0),
-            v.at(1),
-            v.at(2),
-            v.at(3),
-            v.at(4)
-        };
+        return {v.at(0), v.at(1), v.at(2), v.at(3), v.at(4)};
     }
 };
 
@@ -138,7 +123,7 @@ public:
 
 private:
     int sims_{100};
-    move_forward::WallMode mode_;
+    move_forward::WallMode mode_{move_forward::WallMode::NO_WALLS};
 };
 
 class MoveForwardUDP {
@@ -199,8 +184,16 @@ public:
     }
 
     int sims_{100};
-    move_forward::WallMode mode_;
+    move_forward::WallMode mode_{move_forward::WallMode::NO_WALLS};
 };
+
+} /* unnamed namespace */
+
+/*----------------------------------------------------------------------------*/
+/*                             Public Definitions                             */
+/*----------------------------------------------------------------------------*/
+namespace move_forward_optimizer
+{
 
 ParetoResult run_move_forward_staged(size_t population, size_t gen_stage1, size_t gen_stage2,
                                      int sims_stage1, int sims_stage2, move_forward::WallMode mode)
@@ -218,9 +211,9 @@ ParetoResult run_move_forward_staged(size_t population, size_t gen_stage1, size_
     /* Extract non-dominated solutions */
     auto best_indices{get_best_feasible_indices(stage1.F, population)};
 
-    std::vector<PagmoVec> seeds;
+    std::vector<PagmoVec> seeds{};
     for (auto idx : best_indices) {
-        seeds.push_back(stage1.X[idx]);
+        seeds.push_back(stage1.X.at(idx));
     }
 
     /* Stage 2: Full optimization */
@@ -235,7 +228,7 @@ ParetoResult run_move_forward_staged(size_t population, size_t gen_stage1, size_
     /* Fill remaining population */
     size_t i{0};
     while (pop.size() < population) {
-        pop.push_back(seeds[i % seeds.size()]);
+        pop.push_back(seeds.at(i % seeds.size()));
         ++i;
     }
 
@@ -302,7 +295,7 @@ void write_move_forward_pareto_to_file(const std::string& filename, const Pareto
         const auto& f{result.F.at(i)};
         const auto ctrl{move_forward::decode_control(x)};
         const auto obj{Stage2Objectives::from_vec(f)};
-        
+
         const std::string key{optimizer_common::control_to_key(x)};
         double time{0.0};
         auto it{time_cache.find(key)};

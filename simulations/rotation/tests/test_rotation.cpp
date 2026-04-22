@@ -90,7 +90,7 @@ void reset_local_and_assigned_config_bounds(void)
 
 Config create_no_variance_config(void)
 {
-    Config cfg;
+    Config cfg{};
 
     cfg.env_cfg.motor_speed_scale = 1.0;
     cfg.env_cfg.dt = 0.01;
@@ -176,7 +176,7 @@ TEST(RotationTests, ResetAllConfigBoundsClearsBounds)
 
 TEST(RotationTests, EncodeDecodeControlRoundTrip)
 {
-    ControlConfig original;
+    ControlConfig original{};
     original.motor_speed = 123u;
     original.kp_velocity = 1000;
     original.kd_velocity = -250;
@@ -197,7 +197,7 @@ TEST(RotationTests, EncodeDecodeControlRoundTrip)
 
 TEST(RotationTests, EncodeControlMaintainsFieldOrder)
 {
-    ControlConfig cfg;
+    ControlConfig cfg{};
     cfg.motor_speed = 0;
     cfg.kp_velocity = 1;
     cfg.kd_velocity = 2;

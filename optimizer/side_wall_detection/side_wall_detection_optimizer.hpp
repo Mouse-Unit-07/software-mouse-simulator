@@ -14,8 +14,8 @@ namespace side_wall_detection_optimizer
 {
 
 struct ParetoResult {
-    std::vector<std::vector<double>> X;
-    std::vector<std::vector<double>> F;
+    std::vector<std::vector<double>> X{};
+    std::vector<std::vector<double>> F{};
 };
 
 ParetoResult run_side_wall_detection_filter(std::size_t population, std::size_t generations,

@@ -52,7 +52,7 @@ namespace geometry
 
 std::optional<double> compute_ray_hitbox_distance(const Ray& ray, const RectangularHitbox& hitbox)
 {
-    std::optional<double> closest;
+    std::optional<double> closest{};
 
     auto update = [&](std::optional<double> d) {
         if (!d) {
@@ -158,8 +158,10 @@ void project_hitbox_onto_axis(const RectangularHitbox& box, const Point& axis, d
 bool are_hitboxes_separated_on_axis(const RectangularHitbox& a, const RectangularHitbox& b,
                                     const Point& axis)
 {
-    double minA, maxA;
-    double minB, maxB;
+    double minA{};
+    double maxA{};
+    double minB{};
+    double maxB{};
 
     project_hitbox_onto_axis(a, axis, minA, maxA);
     project_hitbox_onto_axis(b, axis, minB, maxB);

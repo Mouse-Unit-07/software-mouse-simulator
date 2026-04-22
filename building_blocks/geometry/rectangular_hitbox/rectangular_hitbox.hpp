@@ -15,14 +15,14 @@ namespace geometry
 
 class RectangularHitbox {
 public:
-    Point center;
-    Point top_right;
-    Point top_left;
-    Point bottom_left;
-    Point bottom_right;
-    double horizontal_size;
-    double vertical_size;
-    double angle_rad;
+    Point center{};
+    Point top_right{};
+    Point top_left{};
+    Point bottom_left{};
+    Point bottom_right{};
+    double horizontal_size{};
+    double vertical_size{};
+    double angle_rad{};
     RectangularHitbox(const Point& center, double horizontal_size, double vertical_size);
 
     void translate(double dx, double dy) noexcept;

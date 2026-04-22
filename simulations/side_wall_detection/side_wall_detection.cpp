@@ -127,7 +127,7 @@ EnvironmentConfig generate_random_environment(void)
         return std::uniform_real_distribution<double>(a, b)(rng);
     };
 
-    EnvironmentConfig e;
+    EnvironmentConfig e{};
     e.maze_size_scale =
         uniform(env_lower_bounds.maze_size_scale, env_upper_bounds.maze_size_scale);
     e.ir_reading_scale =
@@ -157,7 +157,7 @@ void disable_visualization(void)
 
 std::string config_to_string(const Config& cfg)
 {
-    std::ostringstream oss;
+    std::ostringstream oss{};
 
     oss << simulation_common::double_to_filename(cfg.env_cfg.maze_size_scale) << "-"
         << simulation_common::double_to_filename(cfg.env_cfg.ir_reading_scale) << "-"
@@ -198,7 +198,7 @@ Result run_simulation(const Config& cfg)
     maze::Maze closed_maze{maze::build_maze_from_ascii(ascii_closed, maze::OFFICIAL_POST_SIZE * (cfg.env_cfg.maze_size_scale - 1))};
 
     /* prepare mouse for wall detection */
-    mouse::Mouse mouse;
+    mouse::Mouse mouse{};
     prepare_mock_for_side_wall_detection(cfg, open_maze, mouse);
 
     if (visualizer_enabled) {
@@ -326,6 +326,8 @@ Result run_simulation(const Config& cfg)
         wall_present_visualizer.save_to_image_file(TEST_OUTPUT_DIRECTORY + "/"
                                                    + TEST_OUTPUT_SUBDIRECTORY + "/"
                                                    + config_to_string(cfg) + "-wp.png");
+        wall_absent_visualizer.reset_beam_color();
+        wall_present_visualizer.reset_beam_color();
     }
 
     uint64_t open_avg{open_sum / target_window_steps};

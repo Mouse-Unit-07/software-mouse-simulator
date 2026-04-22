@@ -20,7 +20,7 @@ constexpr double OFFICIAL_WALL_WIDTH_SIZE{12.07};
 constexpr double CELL_SIZE{OFFICIAL_WALL_LENGTH_SIZE + OFFICIAL_POST_SIZE};
 
 struct Cell {
-    std::vector<size_t> obstacles;
+    std::vector<size_t> obstacles{};
 };
 
 class Maze {
@@ -28,9 +28,9 @@ public:
     int rows{0};
     int cols{0};
     double cell_size{0.0};
-    std::vector<geometry::RectangularHitbox> obstacles;
-    std::vector<Cell> cells;
-    geometry::Point mouse_start;
+    std::vector<geometry::RectangularHitbox> obstacles{};
+    std::vector<Cell> cells{};
+    geometry::Point mouse_start{};
 
     const Cell& get_cell(int row, int col) const;
 };

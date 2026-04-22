@@ -14,8 +14,8 @@ namespace move_forward_optimizer
 {
 
 struct ParetoResult {
-    std::vector<std::vector<double>> X;
-    std::vector<std::vector<double>> F;
+    std::vector<std::vector<double>> X{};
+    std::vector<std::vector<double>> F{};
 };
 
 ParetoResult run_move_forward_staged(size_t population, size_t gen_stage1, size_t gen_stage2,
