@@ -583,7 +583,7 @@ IGNORE_TEST(MoveForwardTests, VisualizationDoesNotAffectResults)
 
     CHECK(are_results_equivalent(no_wall_disabled, no_wall_enabled));
     CHECK(are_results_equivalent(one_wall_disabled, one_wall_enabled));
-    CHECK(are_results_equivalent(one_wall_disabled, two_wall_enabled));
+    CHECK(are_results_equivalent(two_wall_disabled, two_wall_enabled));
 }
 
 IGNORE_TEST(MoveForwardTests, VisualizeWithIdealParameters)
@@ -658,7 +658,7 @@ IGNORE_TEST(MoveForwardTests, VisualizeWithIdealParameters)
     cfg_two_walls.env_cfg.vertical_position_variance = 0.0;
 
     enable_visualization("ideal-parameters");
-    auto r1{run_simulation(cfg_no_walls, WallMode::NO_WALLS)};
-    auto r2{run_simulation(cfg_one_wall, WallMode::LEFT_WALL_ONLY)};
-    auto r3{run_simulation(cfg_two_walls, WallMode::BOTH_WALLS)};
+    run_simulation(cfg_no_walls, WallMode::NO_WALLS);
+    run_simulation(cfg_one_wall, WallMode::LEFT_WALL_ONLY);
+    run_simulation(cfg_two_walls, WallMode::BOTH_WALLS);
 }

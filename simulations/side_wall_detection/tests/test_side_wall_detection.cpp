@@ -388,7 +388,7 @@ IGNORE_TEST(SideWallDetectionTests, VisualizeWithIdealParameters)
                 cfg.env_cfg.horizontal_position_variance = h_offset;
                 cfg.env_cfg.vertical_position_variance = v_offset;
 
-                auto r1{run_simulation(cfg)};
+                run_simulation(cfg);
             }
         }
     }

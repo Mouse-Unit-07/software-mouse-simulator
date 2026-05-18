@@ -61,7 +61,7 @@ TEST(OptimizerCommonTests, OpenOutputFileCreatesFileAndAppliesFormatting)
     in >> contents;
 
     /* verify fixed + precision(6) */
-    CHECK_EQUAL("1.234568", contents);
+    STRCMP_EQUAL("1.234568", contents.c_str());
 
     std::remove(filename.c_str());
 }
@@ -79,7 +79,7 @@ TEST(OptimizerCommonTests, ControlToKeyBasicFormatting)
 
     const auto key{control_to_key(x)};
 
-    CHECK_EQUAL("1.000000,2.500000,3.123457,", key);
+    STRCMP_EQUAL("1.000000,2.500000,3.123457,", key.c_str());
 }
 
 TEST(OptimizerCommonTests, ControlToKeyDifferentInputsProduceDifferentKeys)
@@ -99,7 +99,7 @@ TEST(OptimizerCommonTests, ControlToKeyEmptyVector)
 
     const auto key{control_to_key(x)};
 
-    CHECK_EQUAL("", key);
+    STRCMP_EQUAL("", key.c_str());
 }
 
 TEST(OptimizerCommonTests, ControlToKeyRoundingBehavior)

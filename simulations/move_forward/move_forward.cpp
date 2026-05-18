@@ -440,7 +440,7 @@ Result run_single_simulation(const Config& cfg, const maze::Maze& maze, enum Wal
         set_wheel_motor_1_speed(static_cast<uint8_t>(speed1));
         set_wheel_motor_2_speed(static_cast<uint8_t>(speed2));
 
-        auto delta{update_mock_by_dt(cfg, mouse)};
+        update_mock_by_dt(cfg, mouse);
         total_time += cfg.env_cfg.dt;
 
         if (visualizer_enabled) {

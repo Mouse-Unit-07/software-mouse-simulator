@@ -441,5 +441,5 @@ IGNORE_TEST(RotationTests, VisualizeWithIdealParameters)
     cfg.env_cfg.rotation_angle = M_PI / 2;
 
     enable_visualization("ideal-parameters");
-    auto r2{run_simulation(cfg)};
+    run_simulation(cfg);
 }
