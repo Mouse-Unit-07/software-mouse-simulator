@@ -245,8 +245,8 @@ Result run_simulation(const Config& cfg, enum WallMode mode)
         "   ",
         "   "
     };
-    maze::Maze maze_none{maze::build_maze_from_ascii(
-        ascii_no_walls, maze::OFFICIAL_POST_SIZE * (cfg.env_cfg.maze_size_scale - 1))};
+    maze::Maze maze_none{maze::build_maze_from_ascii(ascii_no_walls,
+                                                     cfg.env_cfg.maze_size_scale)};
 
     std::vector<std::string> ascii_left_wall{
         "+-+",
@@ -259,8 +259,8 @@ Result run_simulation(const Config& cfg, enum WallMode mode)
         "  |",
         "  +"
     };
-    maze::Maze maze_left{maze::build_maze_from_ascii(
-        ascii_left_wall, maze::OFFICIAL_POST_SIZE * (cfg.env_cfg.maze_size_scale - 1))};
+    maze::Maze maze_left{maze::build_maze_from_ascii(ascii_left_wall,
+                                                     cfg.env_cfg.maze_size_scale)};
 
     std::vector<std::string> ascii_both_walls{
         "+-+",
@@ -273,8 +273,8 @@ Result run_simulation(const Config& cfg, enum WallMode mode)
         "| |",
         "+ +"
     };
-    maze::Maze maze_both{maze::build_maze_from_ascii(
-        ascii_both_walls, maze::OFFICIAL_POST_SIZE * (cfg.env_cfg.maze_size_scale - 1))};
+    maze::Maze maze_both{maze::build_maze_from_ascii(ascii_both_walls,
+                                                     cfg.env_cfg.maze_size_scale)};
 
     Result out;
     if (mode == WallMode::NO_WALLS) {

@@ -203,7 +203,7 @@ Result run_simulation(const Config& cfg)
         "|S|",
         "+-+"
     };
-    maze::Maze maze{maze::build_maze_from_ascii(ascii, 0.0)};
+    maze::Maze maze{maze::build_maze_from_ascii(ascii, 1.0)};
 
     mouse::Mouse mouse{};
     prepare_mock_for_rotation(cfg, maze, mouse);

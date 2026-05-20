@@ -70,7 +70,7 @@ const Cell& Maze::get_cell(int row, int col) const
     return cells.at(row * cols + col);
 }
 
-Maze build_maze_from_ascii(const std::vector<std::string>& ascii, double post_size_adjustment)
+Maze build_maze_from_ascii(const std::vector<std::string>& ascii, double post_size_scale)
 {
     const std::string error{validate_ascii_maze(ascii)};
     if (!error.empty()) {
@@ -87,7 +87,8 @@ Maze build_maze_from_ascii(const std::vector<std::string>& ascii, double post_si
 
     maze.cells.resize(maze.rows * maze.cols);
 
-    double adjusted_cell_size{CELL_SIZE + (post_size_adjustment * 2)};
+    double adjusted_cell_size{OFFICIAL_WALL_LENGTH_SIZE + (OFFICIAL_POST_SIZE * post_size_scale)};
+    double post_size_adjustment{(OFFICIAL_POST_SIZE * post_size_scale) - OFFICIAL_POST_SIZE};
 
     maze.cell_size = adjusted_cell_size;
 

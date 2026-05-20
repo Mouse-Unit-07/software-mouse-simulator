@@ -43,7 +43,7 @@ public:
 namespace maze
 {
 
-Maze build_maze_from_ascii(const std::vector<std::string>& ascii, double post_size_adjustment);
+Maze build_maze_from_ascii(const std::vector<std::string>& ascii, double post_size_scale);
 
 double compute_ray_distance_in_closed_space(const maze::Maze& maze, const geometry::Point& point,
                                             const geometry::Ray& ir_sensor);

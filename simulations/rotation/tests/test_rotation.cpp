@@ -336,7 +336,7 @@ TEST(RotationTests, SimulationCanDetectCollision)
         "+-+-+"
     };
 
-    maze::Maze maze{maze::build_maze_from_ascii(ascii, 0.0)};
+    maze::Maze maze{maze::build_maze_from_ascii(ascii, 1.0)};
 
     Config cfg{create_no_variance_config()};
     cfg.ctrl_cfg.motor_speed = 255u;
@@ -355,7 +355,7 @@ TEST(RotationTests, NoTranslationAndAngleErrorForPerfectTestVariables)
         "|S|",
         "+-+"
     };
-    maze::Maze maze{maze::build_maze_from_ascii(ascii, 0.0)};
+    maze::Maze maze{maze::build_maze_from_ascii(ascii, 1.0)};
 
     /* slow movement, tiny dt, and no motor variances */
     Config cfg{create_no_variance_config()};
