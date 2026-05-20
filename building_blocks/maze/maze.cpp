@@ -29,13 +29,17 @@ using namespace maze;
 
 std::string validate_ascii_maze(const std::vector<std::string>& ascii);
 
-geometry::RectangularHitbox create_post(const geometry::Point& center, double post_size_adjustment);
+geometry::RectangularHitbox create_post(const geometry::Point& center,
+                                        double post_size_adjustment);
 geometry::RectangularHitbox create_vertical_wall(const geometry::Point& center,
-                                                 double post_size_adjustment);
+                                                 double post_size_adjustment,
+                                                 double wall_size_adjustment);
 geometry::RectangularHitbox create_horizontal_wall(const geometry::Point& center,
-                                                   double post_size_adjustment);
+                                                   double post_size_adjustment,
+                                                   double wall_size_adjustment);
 
-geometry::Point ascii_to_world(int r, int c, double post_size_adjustment);
+geometry::Point ascii_to_world(int r, int c, double post_size_adjustment,
+                               double wall_size_adjustment);
 void attach_to_cell(Maze& maze, size_t obstacle_index, int row, int col);
 void attach_vertical_wall_cells(Maze& maze, size_t obstacle_index, int r, int c);
 void attach_horizontal_wall_cells(Maze& maze, size_t obstacle_index, int r, int c);
@@ -70,7 +74,8 @@ const Cell& Maze::get_cell(int row, int col) const
     return cells.at(row * cols + col);
 }
 
-Maze build_maze_from_ascii(const std::vector<std::string>& ascii, double post_size_scale)
+Maze build_maze_from_ascii(const std::vector<std::string>& ascii, double post_size_scale,
+                           double wall_size_scale)
 {
     const std::string error{validate_ascii_maze(ascii)};
     if (!error.empty()) {
@@ -87,26 +92,31 @@ Maze build_maze_from_ascii(const std::vector<std::string>& ascii, double post_si
 
     maze.cells.resize(maze.rows * maze.cols);
 
-    double adjusted_cell_size{OFFICIAL_WALL_LENGTH_SIZE + (OFFICIAL_POST_SIZE * post_size_scale)};
+    double adjusted_cell_size{(OFFICIAL_WALL_LENGTH_SIZE * wall_size_scale)
+                              + (OFFICIAL_POST_SIZE * post_size_scale)};
     double post_size_adjustment{(OFFICIAL_POST_SIZE * post_size_scale) - OFFICIAL_POST_SIZE};
+    double wall_size_adjustment{(OFFICIAL_WALL_LENGTH_SIZE * wall_size_scale)
+                                - OFFICIAL_WALL_LENGTH_SIZE};
 
     maze.cell_size = adjusted_cell_size;
 
     for (int r{0}; r < ascii_rows; r++) {
         for (int c{0}; c < ascii_cols; c++) {
             char ch{ascii.at(r).at(c)};
-            geometry::Point center{ascii_to_world(r, c, post_size_adjustment)};
+            geometry::Point center{ascii_to_world(r, c, post_size_adjustment, wall_size_adjustment)};
 
             if (ch == '+') {
                 maze.obstacles.push_back(create_post(center, post_size_adjustment));
                 size_t obstacle_index{maze.obstacles.size() - 1};
                 attach_post_cells(maze, obstacle_index, r, c);
             } else if (ch == '|') {
-                maze.obstacles.push_back(create_vertical_wall(center, post_size_adjustment));
+                maze.obstacles.push_back(create_vertical_wall(center, post_size_adjustment,
+                                                              wall_size_adjustment));
                 size_t obstacle_index{maze.obstacles.size() - 1};
                 attach_vertical_wall_cells(maze, obstacle_index, r, c);
             } else if (ch == '-') {
-                maze.obstacles.push_back(create_horizontal_wall(center, post_size_adjustment));
+                maze.obstacles.push_back(create_horizontal_wall(center, post_size_adjustment,
+                                                                wall_size_adjustment));
                 size_t obstacle_index{maze.obstacles.size() - 1};
                 attach_horizontal_wall_cells(maze, obstacle_index, r, c);
             } else if (ch == 'S') {
@@ -221,29 +231,32 @@ geometry::RectangularHitbox create_post(const geometry::Point& center, double po
 }
 
 geometry::RectangularHitbox create_vertical_wall(const geometry::Point& center,
-                                                 double post_size_adjustment)
+                                                 double post_size_adjustment,
+                                                 double wall_size_adjustment)
 {
     return geometry::RectangularHitbox{
         center,
         OFFICIAL_WALL_WIDTH_SIZE + post_size_adjustment,
-        OFFICIAL_WALL_LENGTH_SIZE
+        OFFICIAL_WALL_LENGTH_SIZE + wall_size_adjustment
     };
 }
 
 geometry::RectangularHitbox create_horizontal_wall(const geometry::Point& center,
-                                                   double post_size_adjustment)
+                                                   double post_size_adjustment,
+                                                   double wall_size_adjustment)
 {
     return geometry::RectangularHitbox{
         center,
-        OFFICIAL_WALL_LENGTH_SIZE,
+        OFFICIAL_WALL_LENGTH_SIZE + wall_size_adjustment,
         OFFICIAL_WALL_WIDTH_SIZE + post_size_adjustment
     };
 }
 
-geometry::Point ascii_to_world(int r, int c, double post_size_adjustment)
+geometry::Point ascii_to_world(int r, int c, double post_size_adjustment,
+                               double wall_size_adjustment)
 {
     double post{OFFICIAL_POST_SIZE + post_size_adjustment};
-    double wall{OFFICIAL_WALL_LENGTH_SIZE};
+    double wall{OFFICIAL_WALL_LENGTH_SIZE + wall_size_adjustment};
 
     double pitch{post + wall};
 

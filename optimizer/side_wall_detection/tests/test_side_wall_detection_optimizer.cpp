@@ -43,14 +43,16 @@ void set_local_ctr_bound_variables(void)
 
 void set_local_env_bound_variables(void)
 {
-    env_lower.maze_size_scale = 0.9;
+    env_lower.maze_post_size_scale = 0.9;
+    env_lower.maze_wall_size_scale = 0.9;
     env_lower.ir_reading_scale = 0.9;
     env_lower.mouse_angle = -(M_PI / 6);
     env_lower.horizontal_position_variance = -0.9;
     env_lower.vertical_position_variance = -0.9;
     env_lower.total_steps = 100;
 
-    env_upper.maze_size_scale = 1.1;
+    env_upper.maze_post_size_scale = 1.1;
+    env_upper.maze_wall_size_scale = 1.1;
     env_upper.ir_reading_scale = 1.1;
     env_upper.mouse_angle = M_PI / 6;
     env_upper.horizontal_position_variance = 0.9;

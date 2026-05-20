@@ -128,8 +128,10 @@ EnvironmentConfig generate_random_environment(void)
     };
 
     EnvironmentConfig e{};
-    e.maze_size_scale =
-        uniform(env_lower_bounds.maze_size_scale, env_upper_bounds.maze_size_scale);
+    e.maze_post_size_scale =
+        uniform(env_lower_bounds.maze_post_size_scale, env_upper_bounds.maze_post_size_scale);
+    e.maze_wall_size_scale =
+        uniform(env_lower_bounds.maze_wall_size_scale, env_upper_bounds.maze_wall_size_scale);
     e.ir_reading_scale =
         uniform(env_lower_bounds.ir_reading_scale, env_upper_bounds.ir_reading_scale);
     e.mouse_angle =
@@ -159,7 +161,8 @@ std::string config_to_string(const Config& cfg)
 {
     std::ostringstream oss{};
 
-    oss << simulation_common::double_to_filename(cfg.env_cfg.maze_size_scale) << "-"
+    oss << simulation_common::double_to_filename(cfg.env_cfg.maze_post_size_scale) << "-"
+        << simulation_common::double_to_filename(cfg.env_cfg.maze_wall_size_scale) << "-"
         << simulation_common::double_to_filename(cfg.env_cfg.ir_reading_scale) << "-"
         << simulation_common::double_to_filename(cfg.env_cfg.mouse_angle) << "-"
         << simulation_common::double_to_filename(cfg.env_cfg.horizontal_position_variance) << "-"
@@ -186,7 +189,9 @@ Result run_simulation(const Config& cfg)
         "|   |",
         "+-+-+"
     };
-    maze::Maze open_maze{maze::build_maze_from_ascii(ascii_open, cfg.env_cfg.maze_size_scale)};
+    maze::Maze open_maze{maze::build_maze_from_ascii(ascii_open,
+                                                     cfg.env_cfg.maze_post_size_scale,
+                                                     cfg.env_cfg.maze_wall_size_scale)};
 
     std::vector<std::string> ascii_closed{
         "  +-+",
@@ -196,7 +201,8 @@ Result run_simulation(const Config& cfg)
         "  +-+"
     };
     maze::Maze closed_maze{maze::build_maze_from_ascii(ascii_closed,
-                                                       cfg.env_cfg.maze_size_scale)};
+                                                       cfg.env_cfg.maze_post_size_scale,
+                                                       cfg.env_cfg.maze_wall_size_scale)};
 
     /* prepare mouse for wall detection */
     mouse::Mouse mouse{};

@@ -43,14 +43,16 @@ void set_local_ctr_bound_variables(void)
 
 void set_local_env_bound_variables(void)
 {
-    env_lower.maze_size_scale = 0.9;
+    env_lower.maze_post_size_scale = 0.9;
+    env_lower.maze_wall_size_scale = 0.9;
     env_lower.ir_reading_scale = 0.9;
     env_lower.mouse_angle = -(M_PI / 4);
     env_lower.horizontal_position_variance = -0.9;
     env_lower.vertical_position_variance = -0.9;
     env_lower.total_steps = 100;
 
-    env_upper.maze_size_scale = 1.1;
+    env_upper.maze_post_size_scale = 1.1;
+    env_upper.maze_wall_size_scale = 1.1;
     env_upper.ir_reading_scale = 1.1;
     env_upper.mouse_angle = M_PI / 4;
     env_upper.horizontal_position_variance = 0.9;
@@ -76,7 +78,8 @@ void reset_local_and_assigned_config_bounds(void)
 Config create_no_variance_config(void)
 {
     Config cfg{};
-    cfg.env_cfg.maze_size_scale = 1.0;
+    cfg.env_cfg.maze_post_size_scale = 1.0;
+    cfg.env_cfg.maze_wall_size_scale = 1.0;
     cfg.env_cfg.ir_reading_scale = 1.0;
     cfg.env_cfg.mouse_angle = 0.0;
     cfg.env_cfg.horizontal_position_variance = 0.0;
@@ -209,7 +212,8 @@ TEST(SideWallDetectionTests, RandomEnvironmentValuesWithinExpectedRanges)
     for (int i{0}; i < 100; i++) {
         auto e{generate_random_environment()};
 
-        CHECK((e.maze_size_scale >= 0.9) && (e.maze_size_scale <= 1.1));
+        CHECK((e.maze_post_size_scale >= 0.9) && (e.maze_post_size_scale <= 1.1));
+        CHECK((e.maze_wall_size_scale >= 0.9) && (e.maze_wall_size_scale <= 1.1));
         CHECK((e.ir_reading_scale >= 0.9) && (e.ir_reading_scale <= 1.1));
         CHECK((e.mouse_angle >= -(M_PI / 4)) && (e.mouse_angle <= M_PI / 4));
         CHECK((e.horizontal_position_variance >= -0.9) && (e.horizontal_position_variance <= 0.9));
@@ -293,11 +297,23 @@ TEST(SideWallDetectionTests, IdenticalConfigsProduceIdenticalResults)
     CHECK(are_results_equivalent(r1, r2));
 }
 
-TEST(SideWallDetectionTests, MazeSizeScaleChangesResults)
+TEST(SideWallDetectionTests, MazePostSizeScaleChangesResults)
 {
     Config cfg1{create_no_variance_config()};
     Config cfg2{cfg1};
-    cfg2.env_cfg.maze_size_scale = 10.0;
+    cfg2.env_cfg.maze_post_size_scale = 10.0;
+
+    auto r1{run_simulation(cfg1)};
+    auto r2{run_simulation(cfg2)};
+
+    CHECK(!are_results_equivalent(r1, r2));
+}
+
+TEST(SideWallDetectionTests, MazeWallSizeScaleChangesResults)
+{
+    Config cfg1{create_no_variance_config()};
+    Config cfg2{cfg1};
+    cfg2.env_cfg.maze_wall_size_scale = 2.0;
 
     auto r1{run_simulation(cfg1)};
     auto r2{run_simulation(cfg2)};
@@ -372,7 +388,8 @@ IGNORE_TEST(SideWallDetectionTests, VisualizeWithIdealParameters)
     cfg.ctrl_cfg.reading_threshold = 60u;
     cfg.ctrl_cfg.reading_start_offset = 0.0;
     cfg.ctrl_cfg.slope_threshold = 153u;
-    cfg.env_cfg.maze_size_scale = 1.0;
+    cfg.env_cfg.maze_post_size_scale = 1.0;
+    cfg.env_cfg.maze_wall_size_scale = 1.0;
     cfg.env_cfg.ir_reading_scale = 1.0;
     cfg.env_cfg.total_steps = 100;
 
