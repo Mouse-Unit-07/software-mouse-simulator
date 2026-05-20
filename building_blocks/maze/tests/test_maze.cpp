@@ -360,9 +360,9 @@ TEST(MazeTests, SingleCellWallsTouchPosts)
     CHECK(touching_count == 12);
 }
 
-TEST(MazeTests, WallAdjustmentsModifySizes)
+TEST(MazeTests, PostSizeAdjustmentModifiesWallSizes)
 {
-    const double size_adjustment{1.07};
+    const double post_size_adjustment{1.07};
 
     std::vector<std::string> ascii
     {
@@ -370,28 +370,26 @@ TEST(MazeTests, WallAdjustmentsModifySizes)
         "|S|",
         "+-+"
     };
-    Maze maze{build_maze_from_ascii(ascii, size_adjustment)};
+    Maze maze{build_maze_from_ascii(ascii, post_size_adjustment)};
 
     for (const auto& o : maze.obstacles) {
         if (o.horizontal_size > o.vertical_size) {
-            DOUBLES_EQUAL(OFFICIAL_WALL_LENGTH_SIZE + size_adjustment, o.horizontal_size,
-                          FLOAT_TOLERANCE);
-            DOUBLES_EQUAL(OFFICIAL_WALL_WIDTH_SIZE + size_adjustment, o.vertical_size,
+            DOUBLES_EQUAL(OFFICIAL_WALL_LENGTH_SIZE, o.horizontal_size, FLOAT_TOLERANCE);
+            DOUBLES_EQUAL(OFFICIAL_WALL_WIDTH_SIZE + post_size_adjustment, o.vertical_size,
                           FLOAT_TOLERANCE);
         }
 
         if (o.vertical_size > o.horizontal_size) {
-            DOUBLES_EQUAL(OFFICIAL_WALL_WIDTH_SIZE + size_adjustment, o.horizontal_size,
+            DOUBLES_EQUAL(OFFICIAL_WALL_WIDTH_SIZE + post_size_adjustment, o.horizontal_size,
                           FLOAT_TOLERANCE);
-            DOUBLES_EQUAL(OFFICIAL_WALL_LENGTH_SIZE + size_adjustment, o.vertical_size,
-                          FLOAT_TOLERANCE);
+            DOUBLES_EQUAL(OFFICIAL_WALL_LENGTH_SIZE, o.vertical_size, FLOAT_TOLERANCE);
         }
     }
 }
 
-TEST(MazeTests, PostAdjustmentsModifySizes)
+TEST(MazeTests, PostSizeAdjustmentModifiesPostSizes)
 {
-    const double size_adjustment{1.07};
+    const double post_size_adjustment{1.07};
 
     std::vector<std::string> ascii
     {
@@ -399,19 +397,19 @@ TEST(MazeTests, PostAdjustmentsModifySizes)
         "|S|",
         "+-+"
     };
-    Maze maze{build_maze_from_ascii(ascii, size_adjustment)};
+    Maze maze{build_maze_from_ascii(ascii, post_size_adjustment)};
 
     for (const auto& o : maze.obstacles) {
         if (fabs(o.horizontal_size - o.vertical_size) < FLOAT_TOLERANCE) {
-            DOUBLES_EQUAL(OFFICIAL_POST_SIZE + size_adjustment, o.horizontal_size, FLOAT_TOLERANCE);
-            DOUBLES_EQUAL(OFFICIAL_POST_SIZE + size_adjustment, o.vertical_size, FLOAT_TOLERANCE);
+            DOUBLES_EQUAL(OFFICIAL_POST_SIZE + post_size_adjustment, o.horizontal_size, FLOAT_TOLERANCE);
+            DOUBLES_EQUAL(OFFICIAL_POST_SIZE + post_size_adjustment, o.vertical_size, FLOAT_TOLERANCE);
         }
     }
 }
 
-TEST(MazeTests, AdjustedWallsAndPostsTouch)
+TEST(MazeTests, PostSizeAdjustedWallsAndPostsTouch)
 {
-    const double size_adjustment{-1.07};
+    const double post_size_adjustment{-1.07};
 
     std::vector<std::string> ascii
     {
@@ -419,7 +417,7 @@ TEST(MazeTests, AdjustedWallsAndPostsTouch)
         "|S|",
         "+-+"
     };
-    Maze maze{build_maze_from_ascii(ascii, size_adjustment)};
+    Maze maze{build_maze_from_ascii(ascii, post_size_adjustment)};
     int touching_count{count_touching_obstacles(maze)};
 
     /* 8 full unique touches + 4 diagonal corner touches */
