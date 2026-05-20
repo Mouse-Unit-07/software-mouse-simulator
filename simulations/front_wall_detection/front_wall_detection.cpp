@@ -272,9 +272,8 @@ void prepare_mock_for_front_wall_detection(const Config& cfg, const maze::Maze& 
 {
     reset_mock_device_drivers();
 
-    double max_horizontal_offset{(maze::OFFICIAL_WALL_LENGTH_SIZE - mouse.hitbox.horizontal_size)
-                                 / 2};
-    double max_vertical_offset{(maze::OFFICIAL_WALL_LENGTH_SIZE - mouse.hitbox.vertical_size) / 2};
+    double max_horizontal_offset{(maze.wall_length_size - mouse.hitbox.horizontal_size) / 2};
+    double max_vertical_offset{(maze.wall_length_size - mouse.hitbox.vertical_size) / 2};
 
     mouse.rotate(cfg.env_cfg.mouse_angle);
     mouse.translate(

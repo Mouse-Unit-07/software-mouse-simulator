@@ -314,9 +314,8 @@ void prepare_mock_for_move_forward(const Config& cfg, const maze::Maze& maze, mo
     set_wheel_circumference_scale(cfg.env_cfg.wheel_circumference_scale);
     set_wheel_base_scale(cfg.env_cfg.wheel_base_scale);
 
-    double max_horizontal_offset{(maze::OFFICIAL_WALL_LENGTH_SIZE - mouse.hitbox.horizontal_size)
-                                 / 2};
-    double max_vertical_offset{(maze::OFFICIAL_WALL_LENGTH_SIZE - mouse.hitbox.vertical_size) / 2};
+    double max_horizontal_offset{(maze.wall_length_size - mouse.hitbox.horizontal_size) / 2};
+    double max_vertical_offset{(maze.wall_length_size - mouse.hitbox.vertical_size) / 2};
 
     mouse.rotate(cfg.env_cfg.mouse_angle);
     mouse.translate(

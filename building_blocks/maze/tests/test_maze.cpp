@@ -31,6 +31,12 @@ using namespace maze;
 /*============================================================================*/
 constexpr double FLOAT_TOLERANCE{1e-6};
 
+constexpr double OFFICIAL_POST_SIZE{12.07};
+constexpr double OFFICIAL_WALL_LENGTH_SIZE{166.37};
+constexpr double OFFICIAL_WALL_WIDTH_SIZE{12.07};
+
+constexpr double CELL_SIZE{OFFICIAL_WALL_LENGTH_SIZE + OFFICIAL_POST_SIZE};
+
 /* count all unique touches, including hitbox corners */
 int count_touching_obstacles(const Maze& maze)
 {
@@ -233,6 +239,24 @@ TEST(MazeTests, MouseStartPlacedAtCellCenter)
     DOUBLES_EQUAL(expected_y, maze.mouse_start.y, FLOAT_TOLERANCE);
 }
 
+TEST(MazeTests, MouseStartPlacedCorrectlyOnSizeAdjustedMaze)
+{
+    std::vector<std::string> ascii
+    {
+        "+-+-+",
+        "|   |",
+        "+ +-+",
+        "|  S|",
+        "+-+-+"
+    };
+    Maze maze{build_maze_from_ascii(ascii, 1.5, 0.5)};
+    double expected_x{(maze.cell_size) + (maze.cell_size / 2.0)};
+    double expected_y{(maze.cell_size) + (maze.cell_size / 2.0)};
+
+    DOUBLES_EQUAL(expected_x, maze.mouse_start.x, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(expected_y, maze.mouse_start.y, FLOAT_TOLERANCE);
+}
+
 TEST(MazeTests, CorrectNumberOfPostCreated)
 {
     std::vector<std::string> ascii
@@ -362,7 +386,25 @@ TEST(MazeTests, SingleCellWallsTouchPosts)
     CHECK(touching_count == 12);
 }
 
-TEST(MazeTests, PostAndWallSizeAdjustmentsModifySizes)
+TEST(MazeTests, PostAndWallSizeAdjustmentsModifyMazeSizeFields)
+{
+    const double post_size_adjustment{1.1};
+    const double wall_size_adjustment{1.2};
+
+    std::vector<std::string> ascii
+    {
+        "+-+",
+        "|S|",
+        "+-+"
+    };
+    Maze maze{build_maze_from_ascii(ascii, post_size_adjustment, wall_size_adjustment)};
+
+    DOUBLES_EQUAL(maze.post_size, OFFICIAL_POST_SIZE * post_size_adjustment, FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(maze.wall_length_size, OFFICIAL_WALL_LENGTH_SIZE * wall_size_adjustment,
+                  FLOAT_TOLERANCE);
+}
+
+TEST(MazeTests, PostAndWallSizeAdjustmentsModifyMazeObjectSizes)
 {
     const double post_size_adjustment{1.1};
     const double wall_size_adjustment{1.2};

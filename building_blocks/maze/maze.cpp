@@ -61,7 +61,16 @@ std::optional<double> compute_ir_sensor_distance(const maze::Maze& maze,
 /*----------------------------------------------------------------------------*/
 /*                               Private Globals                              */
 /*----------------------------------------------------------------------------*/
-/* none */
+namespace
+{
+
+    constexpr double OFFICIAL_POST_SIZE{12.07};
+    constexpr double OFFICIAL_WALL_LENGTH_SIZE{166.37};
+    constexpr double OFFICIAL_WALL_WIDTH_SIZE{12.07};
+
+    constexpr double CELL_SIZE{OFFICIAL_WALL_LENGTH_SIZE + OFFICIAL_POST_SIZE};
+
+} /* unnamed namespace*/
 
 /*----------------------------------------------------------------------------*/
 /*                             Public Definitions                             */
@@ -99,6 +108,8 @@ Maze build_maze_from_ascii(const std::vector<std::string>& ascii, double post_si
                                 - OFFICIAL_WALL_LENGTH_SIZE};
 
     maze.cell_size = adjusted_cell_size;
+    maze.post_size = OFFICIAL_POST_SIZE * post_size_scale;
+    maze.wall_length_size = OFFICIAL_WALL_LENGTH_SIZE * wall_size_scale;
 
     for (int r{0}; r < ascii_rows; r++) {
         for (int c{0}; c < ascii_cols; c++) {
