@@ -156,11 +156,29 @@ TEST(FrontWallDetectionOptimizerTests, ObjectivesAreInValidRanges)
     auto result{run_front_wall_detection_staged(8, 3, 2)};
 
     for (const auto& f : result.F) {
-        double identified_absent_wall{-f.at(0)};
-        double identified_present_wall{-f.at(1)};
+        double combined_rate{-f.at(0)};
+        double window_size{-f.at(1)};
 
-        CHECK((identified_absent_wall >= 0.0) && (identified_absent_wall <= 1.0));
-        CHECK((identified_present_wall >= 0.0) && (identified_present_wall <= 1.0));
+        CHECK((combined_rate >= 0.0) && (combined_rate <= 1.0));
+        CHECK((window_size >= 0.0) && (window_size <= 1.8));
+    }
+}
+
+TEST(FrontWallDetectionOptimizerTests, ObjectivesContainFiniteValues)
+{
+    set_local_ctr_bound_variables();
+    set_local_env_bound_variables();
+    set_config_bounds();
+
+    auto result{run_front_wall_detection_staged(8, 3, 2)};
+
+    for (const auto& f : result.F) {
+
+        double combined_rate{-f.at(0)};
+        double window_size{-f.at(1)};
+
+        CHECK(std::isfinite(combined_rate));
+        CHECK(std::isfinite(window_size));
     }
 }
 

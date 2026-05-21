@@ -32,6 +32,8 @@ namespace
 
 using PagmoVec = pagmo::vector_double;
 
+std::unordered_map<std::string, std::pair<double, double>> rate_cache{};
+
 struct VerticalVarianceWindow {
     double max_positive{-std::numeric_limits<double>::infinity()};
     double min_negative{std::numeric_limits<double>::infinity()};
@@ -48,18 +50,23 @@ namespace
 {
 
 struct Objectives {
-    double absent{};
-    double present{};
+    double combined_rate{};
+    double vertical_window{};
 
     PagmoVec to_vec() const
     {
-        /* negate for minimization */
-        return {-absent, -present};
+        return {
+            -combined_rate,
+            -vertical_window
+        };
     }
 
     static Objectives from_vec(const PagmoVec& v)
     {
-        return {-v.at(0), -v.at(1)};
+        Objectives obj{};
+        obj.combined_rate = -v.at(0);
+        obj.vertical_window = -v.at(1);
+        return obj;
     }
 };
 
@@ -78,6 +85,8 @@ public:
 
         double absent{0.0};
         double present{0.0};
+        double max_positive{0.0};
+        double min_negative{0.0};
 
         for (int i{0}; i < sims_; ++i) {
             front_wall_detection::Config cfg{
@@ -92,24 +101,35 @@ public:
 
             /* cache valid vertical positioning window */
             if (r.identified_absent_wall && r.identified_present_wall) {
-                auto& window{vertical_window_cache[optimizer_common::control_to_key(x)]};
-
                 const double variance{cfg.env_cfg.vertical_position_variance};
+
                 if (variance >= 0.0) {
-                    if (variance > window.max_positive) {
-                        window.max_positive = variance;
+                    if (variance > max_positive) {
+                        max_positive = variance;
                     }
                 } else {
-                    if (variance < window.min_negative) {
-                        window.min_negative = variance;
+                    if (variance < min_negative) {
+                        min_negative = variance;
                     }
                 }
             }
         }
 
+        const double absent_rate{absent / sims_};
+        const double present_rate{present / sims_};
+        const double combined_rate{std::sqrt(absent_rate * present_rate)};
+
+        const double vertical_window{max_positive - min_negative};
+
+        /* cache metrics for reporting */
+        const std::string key{optimizer_common::control_to_key(x)};
+
+        rate_cache[key] = {absent_rate, present_rate};
+        vertical_window_cache[key] = {max_positive, min_negative};
+
         Objectives obj{};
-        obj.absent = absent / sims_;
-        obj.present = present / sims_;
+        obj.combined_rate = combined_rate;
+        obj.vertical_window = vertical_window;
 
         return obj.to_vec();
     }
@@ -156,6 +176,8 @@ void write_pareto_to_file(const std::string& filename, const ParetoResult& resul
 
     constexpr int W_IDX{4};
     constexpr int W_THRESH{12};
+    constexpr int W_COMB{16};
+    constexpr int W_WINDOW{16};
     constexpr int W_ABS{16};
     constexpr int W_PRE{16};
     constexpr int W_NEG{16};
@@ -167,29 +189,40 @@ void write_pareto_to_file(const std::string& filename, const ParetoResult& resul
         << std::setw(W_IDX)    << "#"
         << std::setw(W_THRESH) << "threshold"
         << " | "
+        << std::setw(W_COMB)   << "combined"
+        << std::setw(W_WINDOW) << "window"
         << std::setw(W_ABS)    << "absent_rate"
         << std::setw(W_PRE)    << "present_rate"
         << std::setw(W_NEG)    << "neg_vert"
         << std::setw(W_POS)    << "pos_vert"
         << "\n";
 
-    out << std::string(92, '-') << "\n";
+    out << std::string(140, '-') << "\n";
 
     for (size_t i{0}; i < result.X.size(); ++i) {
         const auto& x{result.X.at(i)};
         const auto& f{result.F.at(i)};
         const auto ctrl{front_wall_detection::decode_control(x)};
         const auto obj{Objectives::from_vec(f)};
+        double absent_rate{0.0};
+        double present_rate{0.0};
         double max_positive{0.0};
         double min_negative{0.0};
 
         const std::string key{optimizer_common::control_to_key(x)};
+        
+        auto rate_it{rate_cache.find(key)};
+        if (rate_it != rate_cache.end()) {
+            absent_rate = rate_it->second.first;
+            present_rate = rate_it->second.second;
+        }
+
         auto it{vertical_window_cache.find(key)};
         if (it != vertical_window_cache.end()) {
-            if (it->second.max_positive != std::numeric_limits<double>::infinity()) {
+            if (it->second.max_positive != -std::numeric_limits<double>::infinity()) {
                 max_positive = it->second.max_positive;
             }
-            if (it->second.min_negative != -std::numeric_limits<double>::infinity()) {
+            if (it->second.min_negative != std::numeric_limits<double>::infinity()) {
                 min_negative = it->second.min_negative;
             }
         }
@@ -198,8 +231,10 @@ void write_pareto_to_file(const std::string& filename, const ParetoResult& resul
             << std::setw(W_IDX)    << i
             << std::setw(W_THRESH) << ctrl.reading_threshold
             << " | "
-            << std::setw(W_ABS)    << obj.absent
-            << std::setw(W_PRE)    << obj.present
+            << std::setw(W_COMB)   << obj.combined_rate
+            << std::setw(W_WINDOW) << obj.vertical_window
+            << std::setw(W_ABS)    << absent_rate
+            << std::setw(W_PRE)    << present_rate
             << std::setw(W_NEG)    << min_negative
             << std::setw(W_POS)    << max_positive
             << "\n";
