@@ -172,7 +172,7 @@ Result run_simulation(const Config& cfg)
         "| |",
         "+-+"
     };
-    maze::Maze open_maze{maze::build_maze_from_ascii(ascii_open, 0.0)};
+    maze::Maze open_maze{maze::build_maze_from_ascii(ascii_open, 1.0, 1.0)};
 
     std::vector<std::string> ascii_closed{
         "+-+",
@@ -181,7 +181,7 @@ Result run_simulation(const Config& cfg)
         "   ",
         "   "
     };
-    maze::Maze closed_maze{maze::build_maze_from_ascii(ascii_closed, 0.0)};
+    maze::Maze closed_maze{maze::build_maze_from_ascii(ascii_closed, 1.0, 1.0)};
 
     mouse::Mouse mouse{};
     prepare_mock_for_front_wall_detection(cfg, open_maze, mouse);
@@ -272,9 +272,8 @@ void prepare_mock_for_front_wall_detection(const Config& cfg, const maze::Maze& 
 {
     reset_mock_device_drivers();
 
-    double max_horizontal_offset{(maze::OFFICIAL_WALL_LENGTH_SIZE - mouse.hitbox.horizontal_size)
-                                 / 2};
-    double max_vertical_offset{(maze::OFFICIAL_WALL_LENGTH_SIZE - mouse.hitbox.vertical_size) / 2};
+    double max_horizontal_offset{(maze.wall_length_size - mouse.hitbox.horizontal_size) / 2};
+    double max_vertical_offset{(maze.wall_length_size - mouse.hitbox.vertical_size) / 2};
 
     mouse.rotate(cfg.env_cfg.mouse_angle);
     mouse.translate(

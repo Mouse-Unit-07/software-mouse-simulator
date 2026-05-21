@@ -23,8 +23,17 @@ uint32_t compute_ir_sensor_reading_from_distance_mm(double distance);
 /*----------------------------------------------------------------------------*/
 /*                               Private Globals                              */
 /*----------------------------------------------------------------------------*/
-/* constant portion of equation to translate distance to IR sensor reading */
-static const double CONSTANT_IR_SCALE = ((2.71272 * (2.2 / 3.2)) / 1.8) * 1024.0;
+static const double ADC_COUNTS_PER_VOLT = ((2.2 / (1.0 + 2.2) ) / 1.8) * 1024;
+
+static const double PIECEWISE_BREAKPOINT_CM = 4.0;
+
+/* short-range linear fit */
+static const double LINEAR_SLOPE = -0.35220170;
+static const double LINEAR_OFFSET = 2.50291193;
+
+/* long-range inverse fit */
+static const double INVERSE_NUMERATOR = 5.36005479;
+static const double INVERSE_OFFSET = -0.13938373;
 
 static const double MAX_MOTOR_RPM = 4900.0;
 static const double ENCODER_EVENTS_PER_REVOLUTION = 60.8077;
@@ -296,7 +305,17 @@ void set_wheel_motor_2_direction_backward(void)
 uint32_t compute_ir_sensor_reading_from_distance_mm(double distance)
 {
     /* below formula converts cm -> reading, so convert distance mm -> cm */
-    double value = CONSTANT_IR_SCALE * pow(0.858585, distance / 10.0);
+    double distance_cm = distance / 10.0;
+    double voltage = 0.0;
+
+    if (distance_cm <= PIECEWISE_BREAKPOINT_CM) {
+        voltage = (LINEAR_SLOPE * distance_cm) + LINEAR_OFFSET;
+    }
+    else {
+        voltage = (INVERSE_NUMERATOR / distance_cm) + INVERSE_OFFSET;
+    }
+
+    double value = voltage * ADC_COUNTS_PER_VOLT;
 
     if (value < 0.0) {
         value = 0.0;
@@ -306,5 +325,5 @@ uint32_t compute_ir_sensor_reading_from_distance_mm(double distance)
         value = 1024.0;
     }
 
-    return (uint32_t)value;
+    return (uint32_t)lround(value);
 }

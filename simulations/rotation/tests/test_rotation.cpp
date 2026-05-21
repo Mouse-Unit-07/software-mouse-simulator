@@ -336,7 +336,7 @@ TEST(RotationTests, SimulationCanDetectCollision)
         "+-+-+"
     };
 
-    maze::Maze maze{maze::build_maze_from_ascii(ascii, 0.0)};
+    maze::Maze maze{maze::build_maze_from_ascii(ascii, 1.0, 1.0)};
 
     Config cfg{create_no_variance_config()};
     cfg.ctrl_cfg.motor_speed = 255u;
@@ -355,7 +355,7 @@ TEST(RotationTests, NoTranslationAndAngleErrorForPerfectTestVariables)
         "|S|",
         "+-+"
     };
-    maze::Maze maze{maze::build_maze_from_ascii(ascii, 0.0)};
+    maze::Maze maze{maze::build_maze_from_ascii(ascii, 1.0, 1.0)};
 
     /* slow movement, tiny dt, and no motor variances */
     Config cfg{create_no_variance_config()};
@@ -441,5 +441,5 @@ IGNORE_TEST(RotationTests, VisualizeWithIdealParameters)
     cfg.env_cfg.rotation_angle = M_PI / 2;
 
     enable_visualization("ideal-parameters");
-    auto r2{run_simulation(cfg)};
+    run_simulation(cfg);
 }

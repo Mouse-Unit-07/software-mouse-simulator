@@ -62,7 +62,8 @@ void set_local_env_bound_variables(void)
     env_lower.slip_factor = 0.9;
     env_lower.wheel_circumference_scale = 0.9;
     env_lower.wheel_base_scale = 0.9;
-    env_lower.maze_size_scale = 0.9;
+    env_lower.maze_post_size_scale = 0.9;
+    env_lower.maze_wall_size_scale = 0.9;
     env_lower.ir_reading_scale = 0.9;
     env_lower.mouse_angle = -(M_PI / 4);
     env_lower.horizontal_position_variance = -0.5;
@@ -75,7 +76,8 @@ void set_local_env_bound_variables(void)
     env_upper.slip_factor = 1.1;
     env_upper.wheel_circumference_scale = 1.1;
     env_upper.wheel_base_scale = 1.1;
-    env_upper.maze_size_scale = 1.1;
+    env_upper.maze_post_size_scale = 1.1;
+    env_upper.maze_wall_size_scale = 1.1;
     env_upper.ir_reading_scale = 1.1;
     env_upper.mouse_angle = M_PI / 4;
     env_upper.horizontal_position_variance = 0.5;

@@ -163,8 +163,10 @@ EnvironmentConfig generate_random_environment(void)
         uniform(env_lower_bounds.wheel_circumference_scale, env_upper_bounds.wheel_circumference_scale);
     e.wheel_base_scale =
         uniform(env_lower_bounds.wheel_base_scale, env_upper_bounds.wheel_base_scale);
-    e.maze_size_scale =
-        uniform(env_lower_bounds.maze_size_scale, env_upper_bounds.maze_size_scale);
+    e.maze_post_size_scale =
+        uniform(env_lower_bounds.maze_post_size_scale, env_upper_bounds.maze_post_size_scale);
+    e.maze_wall_size_scale =
+        uniform(env_lower_bounds.maze_wall_size_scale, env_upper_bounds.maze_wall_size_scale);
     e.ir_reading_scale =
         uniform(env_lower_bounds.ir_reading_scale, env_upper_bounds.ir_reading_scale);
     e.mouse_angle =
@@ -200,7 +202,8 @@ std::string config_to_string(const Config& cfg)
         << simulation_common::double_to_filename(cfg.env_cfg.slip_factor) << "-"
         << simulation_common::double_to_filename(cfg.env_cfg.wheel_circumference_scale) << "-"
         << simulation_common::double_to_filename(cfg.env_cfg.wheel_base_scale) << "-"
-        << simulation_common::double_to_filename(cfg.env_cfg.maze_size_scale) << "-"
+        << simulation_common::double_to_filename(cfg.env_cfg.maze_post_size_scale) << "-"
+        << simulation_common::double_to_filename(cfg.env_cfg.maze_wall_size_scale) << "-"
         << simulation_common::double_to_filename(cfg.env_cfg.ir_reading_scale) << "-"
         << simulation_common::double_to_filename(cfg.env_cfg.mouse_angle) << "-"
         << simulation_common::double_to_filename(cfg.env_cfg.horizontal_position_variance) << "-"
@@ -245,8 +248,9 @@ Result run_simulation(const Config& cfg, enum WallMode mode)
         "   ",
         "   "
     };
-    maze::Maze maze_none{maze::build_maze_from_ascii(
-        ascii_no_walls, maze::OFFICIAL_POST_SIZE * (cfg.env_cfg.maze_size_scale - 1))};
+    maze::Maze maze_none{maze::build_maze_from_ascii(ascii_no_walls,
+                                                     cfg.env_cfg.maze_post_size_scale,
+                                                     cfg.env_cfg.maze_wall_size_scale)};
 
     std::vector<std::string> ascii_left_wall{
         "+-+",
@@ -259,8 +263,9 @@ Result run_simulation(const Config& cfg, enum WallMode mode)
         "  |",
         "  +"
     };
-    maze::Maze maze_left{maze::build_maze_from_ascii(
-        ascii_left_wall, maze::OFFICIAL_POST_SIZE * (cfg.env_cfg.maze_size_scale - 1))};
+    maze::Maze maze_left{maze::build_maze_from_ascii(ascii_left_wall,
+                                                     cfg.env_cfg.maze_post_size_scale,
+                                                     cfg.env_cfg.maze_wall_size_scale)};
 
     std::vector<std::string> ascii_both_walls{
         "+-+",
@@ -273,8 +278,9 @@ Result run_simulation(const Config& cfg, enum WallMode mode)
         "| |",
         "+ +"
     };
-    maze::Maze maze_both{maze::build_maze_from_ascii(
-        ascii_both_walls, maze::OFFICIAL_POST_SIZE * (cfg.env_cfg.maze_size_scale - 1))};
+    maze::Maze maze_both{maze::build_maze_from_ascii(ascii_both_walls,
+                                                     cfg.env_cfg.maze_post_size_scale,
+                                                     cfg.env_cfg.maze_wall_size_scale)};
 
     Result out;
     if (mode == WallMode::NO_WALLS) {
@@ -308,9 +314,8 @@ void prepare_mock_for_move_forward(const Config& cfg, const maze::Maze& maze, mo
     set_wheel_circumference_scale(cfg.env_cfg.wheel_circumference_scale);
     set_wheel_base_scale(cfg.env_cfg.wheel_base_scale);
 
-    double max_horizontal_offset{(maze::OFFICIAL_WALL_LENGTH_SIZE - mouse.hitbox.horizontal_size)
-                                 / 2};
-    double max_vertical_offset{(maze::OFFICIAL_WALL_LENGTH_SIZE - mouse.hitbox.vertical_size) / 2};
+    double max_horizontal_offset{(maze.wall_length_size - mouse.hitbox.horizontal_size) / 2};
+    double max_vertical_offset{(maze.wall_length_size - mouse.hitbox.vertical_size) / 2};
 
     mouse.rotate(cfg.env_cfg.mouse_angle);
     mouse.translate(
@@ -440,7 +445,7 @@ Result run_single_simulation(const Config& cfg, const maze::Maze& maze, enum Wal
         set_wheel_motor_1_speed(static_cast<uint8_t>(speed1));
         set_wheel_motor_2_speed(static_cast<uint8_t>(speed2));
 
-        auto delta{update_mock_by_dt(cfg, mouse)};
+        update_mock_by_dt(cfg, mouse);
         total_time += cfg.env_cfg.dt;
 
         if (visualizer_enabled) {

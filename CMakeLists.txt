@@ -29,6 +29,12 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(pagmo2)
 
+if(MINGW)
+    target_compile_options(pagmo PRIVATE -Wno-cpp)
+endif()
+
+set_target_properties(pagmo PROPERTIES SYSTEM ON)
+
 find_package(Threads REQUIRED)
 
 add_subdirectory(building_blocks/geometry/interactions)

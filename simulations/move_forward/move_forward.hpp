@@ -34,7 +34,8 @@ struct EnvironmentConfig {
     double slip_factor{};
     double wheel_circumference_scale{};
     double wheel_base_scale{};
-    double maze_size_scale{};
+    double maze_post_size_scale{};
+    double maze_wall_size_scale{};
     double ir_reading_scale{};
     double mouse_angle{};
     double horizontal_position_variance{};

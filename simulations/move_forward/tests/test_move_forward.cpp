@@ -67,7 +67,8 @@ void set_local_env_bound_variables(void)
     env_lower.slip_factor = 0.9;
     env_lower.wheel_circumference_scale = 0.9;
     env_lower.wheel_base_scale = 0.9;
-    env_lower.maze_size_scale = 0.9;
+    env_lower.maze_post_size_scale = 0.9;
+    env_lower.maze_wall_size_scale = 0.9;
     env_lower.ir_reading_scale = 0.9;
     env_lower.mouse_angle = -(M_PI / 4);
     env_lower.horizontal_position_variance = -0.5;
@@ -80,7 +81,8 @@ void set_local_env_bound_variables(void)
     env_upper.slip_factor = 1.1;
     env_upper.wheel_circumference_scale = 1.1;
     env_upper.wheel_base_scale = 1.1;
-    env_upper.maze_size_scale = 1.1;
+    env_upper.maze_post_size_scale = 1.1;
+    env_upper.maze_wall_size_scale = 1.1;
     env_upper.ir_reading_scale = 1.1;
     env_upper.mouse_angle = M_PI / 4;
     env_upper.horizontal_position_variance = 0.5;
@@ -113,7 +115,8 @@ Config create_no_variance_config(void)
     cfg.env_cfg.slip_factor = 1.0;
     cfg.env_cfg.wheel_circumference_scale = 1.0;
     cfg.env_cfg.wheel_base_scale = 1.0;
-    cfg.env_cfg.maze_size_scale = 1.0;
+    cfg.env_cfg.maze_post_size_scale = 1.0;
+    cfg.env_cfg.maze_wall_size_scale = 1.0;
     cfg.env_cfg.ir_reading_scale = 1.0;
     cfg.env_cfg.mouse_angle = 0.0;
     cfg.env_cfg.horizontal_position_variance = 0.0;
@@ -339,7 +342,8 @@ TEST(MoveForwardTests, RandomEnvironmentValuesWithinExpectedRanges)
         CHECK((e.slip_factor >= 0.9) && (e.slip_factor <= 1.1));
         CHECK((e.wheel_circumference_scale >= 0.9) && (e.wheel_circumference_scale <= 1.1));
         CHECK((e.wheel_base_scale >= 0.9) && (e.wheel_base_scale <= 1.1));
-        CHECK((e.maze_size_scale >= 0.9) && (e.maze_size_scale <= 1.1));
+        CHECK((e.maze_post_size_scale >= 0.9) && (e.maze_post_size_scale <= 1.1));
+        CHECK((e.maze_wall_size_scale >= 0.9) && (e.maze_wall_size_scale <= 1.1));
         CHECK((e.ir_reading_scale >= 0.9) && (e.ir_reading_scale <= 1.1));
         CHECK((e.mouse_angle >= -(M_PI / 4)) && (e.mouse_angle <= (M_PI / 4)));
         CHECK((e.horizontal_position_variance >= -0.5) && (e.horizontal_position_variance <= 0.5));
@@ -440,11 +444,22 @@ TEST(MoveForwardTests, WheelBaseScaleAffectsResults)
     CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
 }
 
-TEST(MoveForwardTests, MazeSizeScaleAffectsResults)
+TEST(MoveForwardTests, MazePostSizeScaleAffectsResults)
 {
     Config cfg1{create_no_variance_config()};
     Config cfg2{create_no_variance_config()};
-    cfg2.env_cfg.maze_size_scale = 0.5;
+    cfg2.env_cfg.maze_post_size_scale = 0.5;
+
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
+    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
+}
+
+TEST(MoveForwardTests, MazeWallSizeScaleAffectsResults)
+{
+    Config cfg1{create_no_variance_config()};
+    Config cfg2{create_no_variance_config()};
+    cfg2.env_cfg.maze_wall_size_scale = 0.5;
 
     CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
     CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
@@ -583,7 +598,7 @@ IGNORE_TEST(MoveForwardTests, VisualizationDoesNotAffectResults)
 
     CHECK(are_results_equivalent(no_wall_disabled, no_wall_enabled));
     CHECK(are_results_equivalent(one_wall_disabled, one_wall_enabled));
-    CHECK(are_results_equivalent(one_wall_disabled, two_wall_enabled));
+    CHECK(are_results_equivalent(two_wall_disabled, two_wall_enabled));
 }
 
 IGNORE_TEST(MoveForwardTests, VisualizeWithIdealParameters)
@@ -605,7 +620,8 @@ IGNORE_TEST(MoveForwardTests, VisualizeWithIdealParameters)
     cfg_no_walls.env_cfg.slip_factor = 1.0;
     cfg_no_walls.env_cfg.wheel_circumference_scale = 1.0;
     cfg_no_walls.env_cfg.wheel_base_scale = 1.0;
-    cfg_no_walls.env_cfg.maze_size_scale = 1.0;
+    cfg_no_walls.env_cfg.maze_post_size_scale = 1.0;
+    cfg_no_walls.env_cfg.maze_wall_size_scale = 1.0;
     cfg_no_walls.env_cfg.ir_reading_scale = 1.0;
     cfg_no_walls.env_cfg.mouse_angle = 0.0;
     cfg_no_walls.env_cfg.horizontal_position_variance = 0.0;
@@ -628,7 +644,8 @@ IGNORE_TEST(MoveForwardTests, VisualizeWithIdealParameters)
     cfg_one_wall.env_cfg.slip_factor = 1.0;
     cfg_one_wall.env_cfg.wheel_circumference_scale = 1.0;
     cfg_one_wall.env_cfg.wheel_base_scale = 1.0;
-    cfg_one_wall.env_cfg.maze_size_scale = 1.0;
+    cfg_one_wall.env_cfg.maze_post_size_scale = 1.0;
+    cfg_one_wall.env_cfg.maze_wall_size_scale = 1.0;
     cfg_one_wall.env_cfg.ir_reading_scale = 1.0;
     cfg_one_wall.env_cfg.mouse_angle = 0.0;
     cfg_one_wall.env_cfg.horizontal_position_variance = 0.0;
@@ -651,14 +668,15 @@ IGNORE_TEST(MoveForwardTests, VisualizeWithIdealParameters)
     cfg_two_walls.env_cfg.slip_factor = 1.0;
     cfg_two_walls.env_cfg.wheel_circumference_scale = 1.0;
     cfg_two_walls.env_cfg.wheel_base_scale = 1.0;
-    cfg_two_walls.env_cfg.maze_size_scale = 1.0;
+    cfg_two_walls.env_cfg.maze_post_size_scale = 1.0;
+    cfg_two_walls.env_cfg.maze_wall_size_scale = 1.0;
     cfg_two_walls.env_cfg.ir_reading_scale = 1.0;
     cfg_two_walls.env_cfg.mouse_angle = 0.0;
     cfg_two_walls.env_cfg.horizontal_position_variance = 0.0;
     cfg_two_walls.env_cfg.vertical_position_variance = 0.0;
 
     enable_visualization("ideal-parameters");
-    auto r1{run_simulation(cfg_no_walls, WallMode::NO_WALLS)};
-    auto r2{run_simulation(cfg_one_wall, WallMode::LEFT_WALL_ONLY)};
-    auto r3{run_simulation(cfg_two_walls, WallMode::BOTH_WALLS)};
+    run_simulation(cfg_no_walls, WallMode::NO_WALLS);
+    run_simulation(cfg_one_wall, WallMode::LEFT_WALL_ONLY);
+    run_simulation(cfg_two_walls, WallMode::BOTH_WALLS);
 }
