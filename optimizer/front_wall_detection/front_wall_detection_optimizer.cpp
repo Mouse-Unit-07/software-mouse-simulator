@@ -55,10 +55,7 @@ struct Objectives {
 
     PagmoVec to_vec() const
     {
-        return {
-            -combined_rate,
-            -vertical_window
-        };
+        return {-combined_rate, -vertical_window};
     }
 
     static Objectives from_vec(const PagmoVec& v)
@@ -210,7 +207,7 @@ void write_pareto_to_file(const std::string& filename, const ParetoResult& resul
         double min_negative{0.0};
 
         const std::string key{optimizer_common::control_to_key(x)};
-        
+
         auto rate_it{rate_cache.find(key)};
         if (rate_it != rate_cache.end()) {
             absent_rate = rate_it->second.first;

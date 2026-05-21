@@ -23,7 +23,7 @@ uint32_t compute_ir_sensor_reading_from_distance_mm(double distance);
 /*----------------------------------------------------------------------------*/
 /*                               Private Globals                              */
 /*----------------------------------------------------------------------------*/
-static const double ADC_COUNTS_PER_VOLT = ((2.2 / (1.0 + 2.2) ) / 1.8) * 1024;
+static const double ADC_COUNTS_PER_VOLT = ((2.2 / (1.0 + 2.2)) / 1.8) * 1024;
 
 static const double PIECEWISE_BREAKPOINT_CM = 4.0;
 
@@ -310,8 +310,7 @@ uint32_t compute_ir_sensor_reading_from_distance_mm(double distance)
 
     if (distance_cm <= PIECEWISE_BREAKPOINT_CM) {
         voltage = (LINEAR_SLOPE * distance_cm) + LINEAR_OFFSET;
-    }
-    else {
+    } else {
         voltage = (INVERSE_NUMERATOR / distance_cm) + INVERSE_OFFSET;
     }
 

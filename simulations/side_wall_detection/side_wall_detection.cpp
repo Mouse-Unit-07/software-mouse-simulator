@@ -278,7 +278,7 @@ Result run_simulation(const Config& cfg)
             }
         }
         prev_closed_reading = closed_reading;
-        
+
         has_prev = true;
 
         double current_progress{static_cast<double>(i) / cfg.env_cfg.total_steps};

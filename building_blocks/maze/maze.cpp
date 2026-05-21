@@ -29,8 +29,7 @@ using namespace maze;
 
 std::string validate_ascii_maze(const std::vector<std::string>& ascii);
 
-geometry::RectangularHitbox create_post(const geometry::Point& center,
-                                        double post_size_adjustment);
+geometry::RectangularHitbox create_post(const geometry::Point& center, double post_size_adjustment);
 geometry::RectangularHitbox create_vertical_wall(const geometry::Point& center,
                                                  double post_size_adjustment,
                                                  double wall_size_adjustment);
@@ -64,11 +63,11 @@ std::optional<double> compute_ir_sensor_distance(const maze::Maze& maze,
 namespace
 {
 
-    constexpr double OFFICIAL_POST_SIZE{12.07};
-    constexpr double OFFICIAL_WALL_LENGTH_SIZE{166.37};
-    constexpr double OFFICIAL_WALL_WIDTH_SIZE{12.07};
+constexpr double OFFICIAL_POST_SIZE{12.07};
+constexpr double OFFICIAL_WALL_LENGTH_SIZE{166.37};
+constexpr double OFFICIAL_WALL_WIDTH_SIZE{12.07};
 
-    constexpr double CELL_SIZE{OFFICIAL_WALL_LENGTH_SIZE + OFFICIAL_POST_SIZE};
+constexpr double CELL_SIZE{OFFICIAL_WALL_LENGTH_SIZE + OFFICIAL_POST_SIZE};
 
 } /* unnamed namespace*/
 
@@ -114,20 +113,21 @@ Maze build_maze_from_ascii(const std::vector<std::string>& ascii, double post_si
     for (int r{0}; r < ascii_rows; r++) {
         for (int c{0}; c < ascii_cols; c++) {
             char ch{ascii.at(r).at(c)};
-            geometry::Point center{ascii_to_world(r, c, post_size_adjustment, wall_size_adjustment)};
+            geometry::Point center{
+                ascii_to_world(r, c, post_size_adjustment, wall_size_adjustment)};
 
             if (ch == '+') {
                 maze.obstacles.push_back(create_post(center, post_size_adjustment));
                 size_t obstacle_index{maze.obstacles.size() - 1};
                 attach_post_cells(maze, obstacle_index, r, c);
             } else if (ch == '|') {
-                maze.obstacles.push_back(create_vertical_wall(center, post_size_adjustment,
-                                                              wall_size_adjustment));
+                maze.obstacles.push_back(
+                    create_vertical_wall(center, post_size_adjustment, wall_size_adjustment));
                 size_t obstacle_index{maze.obstacles.size() - 1};
                 attach_vertical_wall_cells(maze, obstacle_index, r, c);
             } else if (ch == '-') {
-                maze.obstacles.push_back(create_horizontal_wall(center, post_size_adjustment,
-                                                                wall_size_adjustment));
+                maze.obstacles.push_back(
+                    create_horizontal_wall(center, post_size_adjustment, wall_size_adjustment));
                 size_t obstacle_index{maze.obstacles.size() - 1};
                 attach_horizontal_wall_cells(maze, obstacle_index, r, c);
             } else if (ch == 'S') {

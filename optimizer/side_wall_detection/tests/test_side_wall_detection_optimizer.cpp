@@ -191,10 +191,6 @@ IGNORE_TEST(SideWallDetectionOptimizerTests, DumpPareto)
 {
     set_local_ctr_bound_variables();
     set_local_env_bound_variables();
-    ctr_lower.reading_threshold = 59u;
-    ctr_lower.slope_threshold = 152u;
-    ctr_upper.reading_threshold = 61u;
-    ctr_upper.slope_threshold = 154u;
     set_config_bounds();
 
     /* takes ~20min */
