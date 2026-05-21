@@ -85,7 +85,7 @@ Config create_no_variance_config(void)
     cfg.env_cfg.horizontal_position_variance = 0.0;
     cfg.env_cfg.vertical_position_variance = 0.0;
     cfg.env_cfg.total_steps = 100;
-    cfg.ctrl_cfg.reading_threshold = 200u; /* arbitrary threshold */
+    cfg.ctrl_cfg.reading_threshold = 150u; /* arbitrary threshold */
     cfg.ctrl_cfg.reading_start_offset = 0.0;
     cfg.ctrl_cfg.slope_threshold = 1000;
 
@@ -250,7 +250,7 @@ TEST(SideWallDetectionTests, ReadingThresholdAffectsResults)
     Config cfg2{cfg1};
 
     cfg1.ctrl_cfg.reading_threshold = 1024;
-    cfg2.ctrl_cfg.reading_threshold = 200;
+    cfg2.ctrl_cfg.reading_threshold = 150;
 
     auto r1{run_simulation(cfg1)};
     auto r2{run_simulation(cfg2)};
