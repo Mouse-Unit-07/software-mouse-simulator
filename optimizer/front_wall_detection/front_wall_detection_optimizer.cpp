@@ -15,7 +15,9 @@
 #include <cstdint>
 #include <fstream>
 #include <iomanip>
+#include <limits>
 #include <map>
+#include <unordered_map>
 #include <vector>
 #include "simulation_common.hpp"
 #include "optimizer_common.hpp"
@@ -29,6 +31,13 @@ namespace
 {
 
 using PagmoVec = pagmo::vector_double;
+
+struct VerticalVarianceWindow {
+    double max_positive{-std::numeric_limits<double>::infinity()};
+    double min_negative{std::numeric_limits<double>::infinity()};
+};
+
+std::unordered_map<std::string, VerticalVarianceWindow> vertical_window_cache{};
 
 } /* unnamed namespace */
 
@@ -80,6 +89,22 @@ public:
 
             absent += r.identified_absent_wall ? 1.0 : 0.0;
             present += r.identified_present_wall ? 1.0 : 0.0;
+
+            /* cache valid vertical positioning window */
+            if (r.identified_absent_wall && r.identified_present_wall) {
+                auto& window{vertical_window_cache[optimizer_common::control_to_key(x)]};
+
+                const double variance{cfg.env_cfg.vertical_position_variance};
+                if (variance >= 0.0) {
+                    if (variance > window.max_positive) {
+                        window.max_positive = variance;
+                    }
+                } else {
+                    if (variance < window.min_negative) {
+                        window.min_negative = variance;
+                    }
+                }
+            }
         }
 
         Objectives obj{};
@@ -133,6 +158,8 @@ void write_pareto_to_file(const std::string& filename, const ParetoResult& resul
     constexpr int W_THRESH{12};
     constexpr int W_ABS{16};
     constexpr int W_PRE{16};
+    constexpr int W_NEG{16};
+    constexpr int W_POS{16};
 
     out << "===== FRONT WALL DETECTION PARETO FRONT =====\n\n";
 
@@ -142,15 +169,30 @@ void write_pareto_to_file(const std::string& filename, const ParetoResult& resul
         << " | "
         << std::setw(W_ABS)    << "absent_rate"
         << std::setw(W_PRE)    << "present_rate"
+        << std::setw(W_NEG)    << "neg_vert"
+        << std::setw(W_POS)    << "pos_vert"
         << "\n";
 
-    out << std::string(60, '-') << "\n";
+    out << std::string(92, '-') << "\n";
 
     for (size_t i{0}; i < result.X.size(); ++i) {
         const auto& x{result.X.at(i)};
         const auto& f{result.F.at(i)};
         const auto ctrl{front_wall_detection::decode_control(x)};
         const auto obj{Objectives::from_vec(f)};
+        double max_positive{0.0};
+        double min_negative{0.0};
+
+        const std::string key{optimizer_common::control_to_key(x)};
+        auto it{vertical_window_cache.find(key)};
+        if (it != vertical_window_cache.end()) {
+            if (it->second.max_positive != std::numeric_limits<double>::infinity()) {
+                max_positive = it->second.max_positive;
+            }
+            if (it->second.min_negative != -std::numeric_limits<double>::infinity()) {
+                min_negative = it->second.min_negative;
+            }
+        }
 
         out << std::left
             << std::setw(W_IDX)    << i
@@ -158,6 +200,8 @@ void write_pareto_to_file(const std::string& filename, const ParetoResult& resul
             << " | "
             << std::setw(W_ABS)    << obj.absent
             << std::setw(W_PRE)    << obj.present
+            << std::setw(W_NEG)    << min_negative
+            << std::setw(W_POS)    << max_positive
             << "\n";
     }
 }
