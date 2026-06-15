@@ -32,7 +32,7 @@ rotation::EnvironmentConfig env_upper{};
 
 void set_local_ctr_bound_variables(void)
 {
-    ctr_lower.motor_speed = 140;
+    ctr_lower.motor_speed = 55;
     ctr_lower.kp_velocity = 0;
     ctr_lower.kd_velocity = 0;
     ctr_lower.kp_angle = 0;
@@ -49,7 +49,7 @@ void set_local_ctr_bound_variables(void)
 
 void set_local_env_bound_variables(void)
 {
-    env_lower.dt = 0.01;
+    env_lower.dt = 0.001;
     env_lower.motor_speed_scale = 0.9;
     env_lower.motor1_variance = -0.2;
     env_lower.motor2_variance = -0.2;
@@ -58,7 +58,7 @@ void set_local_env_bound_variables(void)
     env_lower.wheel_base_scale = 0.9;
     env_lower.rotation_angle = M_PI / 4;
 
-    env_upper.dt = 0.01;
+    env_upper.dt = 0.001;
     env_upper.motor_speed_scale = 1.1;
     env_upper.motor1_variance = 0.2;
     env_upper.motor2_variance = 0.2;
@@ -206,7 +206,7 @@ IGNORE_TEST(RotationOptimizerTests, DumpRotationPareto)
     set_local_env_bound_variables();
     set_config_bounds();
 
-    /* takes ~2min */
+    /* takes ~10min */
     auto result{run_rotation_staged(64, 150, 500, 200, 50)};
 
     write_rotation_pareto_to_file("rotation.txt", result);
