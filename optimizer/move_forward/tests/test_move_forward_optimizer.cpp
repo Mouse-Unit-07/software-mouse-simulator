@@ -33,7 +33,7 @@ move_forward::EnvironmentConfig env_upper{};
 void set_local_ctr_bound_variables(void)
 {
     ctr_lower.single_wall_target = 0;
-    ctr_lower.motor_speed = 140;
+    ctr_lower.motor_speed = 55;
     ctr_lower.kp_velocity = 0;
     ctr_lower.kd_velocity = 0;
     ctr_lower.kp_angle = 0;
@@ -49,7 +49,7 @@ void set_local_ctr_bound_variables(void)
     ctr_upper.kp_angle = 100000;
     ctr_upper.kd_angle = 2000;
     ctr_upper.pid_scale = 10000;
-    ctr_upper.kp_ir = 2000;
+    ctr_upper.kp_ir = 10000;
     ctr_upper.kd_ir = 2000;
 }
 
@@ -230,11 +230,19 @@ TEST(MoveForwardOptimizerTests, MoveForwardParetoSizeIsStable)
 
 IGNORE_TEST(MoveForwardOptimizerTests, DumpMoveForwardParetoNoWalls)
 {
-    /* takes ~5min */
+    /* takes ~10-20min */
     set_local_ctr_bound_variables();
     set_local_env_bound_variables();
     env_lower.mouse_angle = 0.0;
     env_upper.mouse_angle = 0.0;
+    env_lower.ir_reading_scale = 1.0;
+    env_upper.ir_reading_scale = 1.0;
+    ctr_lower.single_wall_target = 0.0;
+    ctr_upper.single_wall_target = 1.0;
+    ctr_lower.kp_ir = 0;
+    ctr_upper.kp_ir = 1;
+    ctr_lower.kd_ir = 0;
+    ctr_upper.kd_ir = 1;
 
     set_config_bounds();
 
@@ -244,7 +252,7 @@ IGNORE_TEST(MoveForwardOptimizerTests, DumpMoveForwardParetoNoWalls)
 
 IGNORE_TEST(MoveForwardOptimizerTests, DumpMoveForwardParetoOneWall)
 {
-    /* takes ~10min */
+    /* takes ~10-20min */
     set_local_ctr_bound_variables();
     set_local_env_bound_variables();
     set_config_bounds();
@@ -258,9 +266,12 @@ IGNORE_TEST(MoveForwardOptimizerTests, DumpMoveForwardParetoBothWalls)
 {
     set_local_ctr_bound_variables();
     set_local_env_bound_variables();
+    ctr_lower.single_wall_target = 0.0;
+    ctr_upper.single_wall_target = 1.0;
+
     set_config_bounds();
 
-    /* takes ~11min */
+    /* takes ~10-20min */
     auto both_walls{
         run_move_forward_staged(64, 150, 500, 200, 50, move_forward::WallMode::BOTH_WALLS)};
     write_move_forward_pareto_to_file("mf_both_walls.txt", both_walls);

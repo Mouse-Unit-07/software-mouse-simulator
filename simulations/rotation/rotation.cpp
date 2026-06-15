@@ -278,8 +278,8 @@ Result run_simulation(const Config& cfg)
             adjusted_speed_2 = base_speed + control;
         }
 
-        adjusted_speed_1 = std::clamp(adjusted_speed_1, 140, 255);
-        adjusted_speed_2 = std::clamp(adjusted_speed_2, 140, 255);
+        adjusted_speed_1 = std::clamp(adjusted_speed_1, 55, 255);
+        adjusted_speed_2 = std::clamp(adjusted_speed_2, 55, 255);
         set_wheel_motor_1_speed(static_cast<uint8_t>(adjusted_speed_1));
         set_wheel_motor_2_speed(static_cast<uint8_t>(adjusted_speed_2));
 
