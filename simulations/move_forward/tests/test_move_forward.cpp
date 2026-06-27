@@ -135,7 +135,7 @@ Config create_no_variance_config(void)
     return cfg;
 }
 
-bool was_there_collision_or_timeout(const Result& result)
+bool was_there_collision_or_timeout(const Result &result)
 {
     if (result.collision || result.timeout) {
         return true;
@@ -144,7 +144,7 @@ bool was_there_collision_or_timeout(const Result& result)
     return false;
 }
 
-bool are_results_equivalent(const Result& r1, const Result& r2)
+bool are_results_equivalent(const Result &r1, const Result &r2)
 {
     if (std::abs(r1.total_time - r2.total_time) >= FLOAT_TOLERANCE) {
         return false;
@@ -170,7 +170,7 @@ bool are_results_equivalent(const Result& r1, const Result& r2)
     return true;
 }
 
-bool are_results_equivalent_for_wall_mode(const Config& cfg1, const Config& cfg2, WallMode mode)
+bool are_results_equivalent_for_wall_mode(const Config &cfg1, const Config &cfg2, WallMode mode)
 {
     auto r1{run_simulation(cfg1, mode)};
     auto r2{run_simulation(cfg2, mode)};

@@ -32,7 +32,7 @@ using PagmoVec = pagmo::vector_double;
 
 std::unordered_map<std::string, double> time_cache{};
 
-std::vector<size_t> get_best_indices(const std::vector<PagmoVec>& F, size_t keep_n);
+std::vector<size_t> get_best_indices(const std::vector<PagmoVec> &F, size_t keep_n);
 
 } /* unnamed namespace */
 
@@ -52,7 +52,7 @@ struct Stage1Objectives {
         return {collision, timeout, angle};
     }
 
-    static Stage1Objectives from_vec(const PagmoVec& v)
+    static Stage1Objectives from_vec(const PagmoVec &v)
     {
         return {v.at(0), v.at(1), v.at(2)};
     }
@@ -69,7 +69,7 @@ struct Stage2Objectives {
         return {collision, timeout, angle, translation};
     }
 
-    static Stage2Objectives from_vec(const PagmoVec& v)
+    static Stage2Objectives from_vec(const PagmoVec &v)
     {
         return {v.at(0), v.at(1), v.at(2), v.at(3)};
     }
@@ -84,7 +84,7 @@ public:
         /* no additional logic */
     }
 
-    PagmoVec fitness(const PagmoVec& x) const
+    PagmoVec fitness(const PagmoVec &x) const
     {
         const auto control{rotation::decode_control(x)};
 
@@ -132,7 +132,7 @@ public:
         /* no additional logic */
     }
 
-    PagmoVec fitness(const PagmoVec& x) const
+    PagmoVec fitness(const PagmoVec &x) const
     {
         const auto control{rotation::decode_control(x)};
 
@@ -212,7 +212,7 @@ ParetoResult run_rotation_staged(std::size_t population, std::size_t gen_stage1,
     pagmo::problem prob2{RotationUDP{sims_stage2}};
     pagmo::population pop2{prob2, 0};
 
-    for (auto& x : seeds) {
+    for (auto &x : seeds) {
         pop2.push_back(x);
     }
 
@@ -229,7 +229,7 @@ ParetoResult run_rotation_staged(std::size_t population, std::size_t gen_stage1,
     return {pop2.get_x(), pop2.get_f()};
 }
 
-void write_rotation_pareto_to_file(const std::string& filename, const ParetoResult& result)
+void write_rotation_pareto_to_file(const std::string &filename, const ParetoResult &result)
 {
     auto out{optimizer_common::open_output_file(filename)};
 
@@ -268,8 +268,8 @@ void write_rotation_pareto_to_file(const std::string& filename, const ParetoResu
     out << std::string(120, '-') << "\n";
 
     for (size_t i{0}; i < result.X.size(); ++i) {
-        const auto& x{result.X.at(i)};
-        const auto& f{result.F.at(i)};
+        const auto &x{result.X.at(i)};
+        const auto &f{result.F.at(i)};
         const auto ctrl{rotation::decode_control(x)};
         const auto obj{Stage2Objectives::from_vec(f)};
 
@@ -305,7 +305,7 @@ void write_rotation_pareto_to_file(const std::string& filename, const ParetoResu
 namespace
 {
 
-std::vector<size_t> get_best_indices(const std::vector<PagmoVec>& F, size_t keep_n)
+std::vector<size_t> get_best_indices(const std::vector<PagmoVec> &F, size_t keep_n)
 {
     std::vector<size_t> idx(F.size());
     std::iota(idx.begin(), idx.end(), 0);

@@ -30,7 +30,7 @@
 namespace optimizer_common
 {
 
-std::ofstream open_output_file(const std::string& filename)
+std::ofstream open_output_file(const std::string &filename)
 {
     std::ofstream out(filename);
     if (!out.is_open()) {
@@ -40,7 +40,7 @@ std::ofstream open_output_file(const std::string& filename)
     return out;
 }
 
-std::string control_to_key(const std::vector<double>& x)
+std::string control_to_key(const std::vector<double> &x)
 {
     std::ostringstream oss{};
     oss << std::fixed << std::setprecision(6);

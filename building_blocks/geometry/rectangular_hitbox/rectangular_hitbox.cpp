@@ -20,7 +20,7 @@ namespace
 
 using namespace geometry;
 
-bool check_hitbox_equality(const RectangularHitbox& h1, const RectangularHitbox& h2);
+bool check_hitbox_equality(const RectangularHitbox &h1, const RectangularHitbox &h2);
 double normalize_angle(double angle);
 
 } /* unnamed namespace */
@@ -36,7 +36,7 @@ double normalize_angle(double angle);
 namespace geometry
 {
 
-RectangularHitbox::RectangularHitbox(const Point& center, double horizontal_size,
+RectangularHitbox::RectangularHitbox(const Point &center, double horizontal_size,
                                      double vertical_size)
     : center{center}, horizontal_size{horizontal_size}, vertical_size{vertical_size}
 {
@@ -56,7 +56,7 @@ void RectangularHitbox::translate(double dx, double dy) noexcept
     bottom_right.translate(dx, dy);
 }
 
-void RectangularHitbox::rotate(const Point& center, double angle_rad) noexcept
+void RectangularHitbox::rotate(const Point &center, double angle_rad) noexcept
 {
     this->center.rotate(center, angle_rad);
     top_right.rotate(center, angle_rad);
@@ -66,17 +66,17 @@ void RectangularHitbox::rotate(const Point& center, double angle_rad) noexcept
     this->angle_rad = normalize_angle(this->angle_rad + angle_rad);
 }
 
-bool RectangularHitbox::operator==(const RectangularHitbox& other) const noexcept
+bool RectangularHitbox::operator==(const RectangularHitbox &other) const noexcept
 {
     return check_hitbox_equality(*this, other);
 }
 
-bool RectangularHitbox::operator!=(const RectangularHitbox& other) const noexcept
+bool RectangularHitbox::operator!=(const RectangularHitbox &other) const noexcept
 {
     return !check_hitbox_equality(*this, other);
 }
 
-} /* geometry namespace */
+} // namespace geometry
 
 /*----------------------------------------------------------------------------*/
 /*                             Private Definitions                            */
@@ -88,7 +88,7 @@ using namespace geometry;
 
 constexpr double FLOAT_TOLERANCE{1e-6};
 
-bool check_hitbox_equality(const RectangularHitbox& h1, const RectangularHitbox& h2)
+bool check_hitbox_equality(const RectangularHitbox &h1, const RectangularHitbox &h2)
 {
     return (std::abs(h1.horizontal_size - h2.horizontal_size) <= FLOAT_TOLERANCE)
            && (std::abs(h1.vertical_size - h2.vertical_size) <= FLOAT_TOLERANCE)

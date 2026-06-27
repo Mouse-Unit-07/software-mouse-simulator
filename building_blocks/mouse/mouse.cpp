@@ -22,7 +22,7 @@ namespace
 
 using namespace mouse;
 
-bool check_mouse_equality(const Mouse& m1, const Mouse& m2);
+bool check_mouse_equality(const Mouse &m1, const Mouse &m2);
 
 } /* unnamed namespace */
 
@@ -57,17 +57,17 @@ namespace mouse
 Mouse::Mouse()
     : hitbox{geometry::Point{0.0, 0.0}, MOUSE_HITBOX_HORIZONTAL_MM, MOUSE_HITBOX_VERTICAL_MM},
       ir_1_sensor{
-          geometry::Point{IR_1_OFFSET_FROM_MOUSE_CENTER.dx, IR_1_OFFSET_FROM_MOUSE_CENTER.dy},
-          M_PI / 2.0},
+              geometry::Point{IR_1_OFFSET_FROM_MOUSE_CENTER.dx, IR_1_OFFSET_FROM_MOUSE_CENTER.dy},
+              M_PI / 2.0},
       ir_2_sensor{
-          geometry::Point{IR_2_OFFSET_FROM_MOUSE_CENTER.dx, IR_2_OFFSET_FROM_MOUSE_CENTER.dy},
-          M_PI / 4.0},
+              geometry::Point{IR_2_OFFSET_FROM_MOUSE_CENTER.dx, IR_2_OFFSET_FROM_MOUSE_CENTER.dy},
+              M_PI / 4.0},
       ir_3_sensor{
-          geometry::Point{IR_3_OFFSET_FROM_MOUSE_CENTER.dx, IR_3_OFFSET_FROM_MOUSE_CENTER.dy},
-          M_PI * (3.0 / 4.0)},
+              geometry::Point{IR_3_OFFSET_FROM_MOUSE_CENTER.dx, IR_3_OFFSET_FROM_MOUSE_CENTER.dy},
+              M_PI * (3.0 / 4.0)},
       ir_4_sensor{
-          geometry::Point{IR_4_OFFSET_FROM_MOUSE_CENTER.dx, IR_4_OFFSET_FROM_MOUSE_CENTER.dy},
-          M_PI / 2.0}
+              geometry::Point{IR_4_OFFSET_FROM_MOUSE_CENTER.dx, IR_4_OFFSET_FROM_MOUSE_CENTER.dy},
+              M_PI / 2.0}
 {
     /* no additional logic */
 }
@@ -90,12 +90,12 @@ void Mouse::rotate(double angle_rad) noexcept
     ir_4_sensor.rotate(hitbox.center, angle_rad);
 }
 
-bool Mouse::operator==(const Mouse& other) const noexcept
+bool Mouse::operator==(const Mouse &other) const noexcept
 {
     return check_mouse_equality(*this, other);
 }
 
-bool Mouse::operator!=(const Mouse& other) const noexcept
+bool Mouse::operator!=(const Mouse &other) const noexcept
 {
     return !check_mouse_equality(*this, other);
 }
@@ -110,7 +110,7 @@ namespace
 
 using namespace mouse;
 
-bool check_mouse_equality(const Mouse& m1, const Mouse& m2)
+bool check_mouse_equality(const Mouse &m1, const Mouse &m2)
 {
     return (m1.hitbox == m2.hitbox) && (m1.ir_1_sensor == m2.ir_1_sensor)
            && (m1.ir_2_sensor == m2.ir_2_sensor) && (m1.ir_3_sensor == m2.ir_3_sensor)

@@ -78,7 +78,7 @@ Config create_no_variance_config(void)
     return cfg;
 }
 
-bool are_results_equivalent(const Result& r1, const Result& r2)
+bool are_results_equivalent(const Result &r1, const Result &r2)
 {
     if (r1.identified_absent_wall != r2.identified_absent_wall) {
         return false;

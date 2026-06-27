@@ -110,7 +110,7 @@ Config create_no_variance_config(void)
     return cfg;
 }
 
-bool are_results_equivalent(const Result& r1, const Result& r2)
+bool are_results_equivalent(const Result &r1, const Result &r2)
 {
     if (std::abs(r1.total_time - r2.total_time) >= FLOAT_TOLERANCE) {
         return false;

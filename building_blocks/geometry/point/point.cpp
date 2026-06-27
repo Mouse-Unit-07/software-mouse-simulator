@@ -24,7 +24,7 @@ namespace
 
 using namespace geometry;
 
-bool check_point_equality(const Point& p1, const Point& p2);
+bool check_point_equality(const Point &p1, const Point &p2);
 
 } /* unnamed namespace */
 
@@ -50,7 +50,7 @@ void Point::translate(double dx, double dy) noexcept
     y += dy;
 }
 
-void Point::rotate(const Point& center, double angle_rad) noexcept
+void Point::rotate(const Point &center, double angle_rad) noexcept
 {
     const double sine_of_angle{std::sin(angle_rad)};
     const double cosine_of_angle{std::cos(angle_rad)};
@@ -68,12 +68,12 @@ void Point::rotate(const Point& center, double angle_rad) noexcept
     y = center.y + rotated_y_relative;
 }
 
-bool Point::operator==(const Point& other) const noexcept
+bool Point::operator==(const Point &other) const noexcept
 {
     return check_point_equality(*this, other);
 }
 
-bool Point::operator!=(const Point& other) const noexcept
+bool Point::operator!=(const Point &other) const noexcept
 {
     return !check_point_equality(*this, other);
 }
@@ -88,7 +88,7 @@ namespace
 
 using namespace geometry;
 
-bool check_point_equality(const Point& p1, const Point& p2)
+bool check_point_equality(const Point &p1, const Point &p2)
 {
     constexpr double tolerance{1e-6};
 

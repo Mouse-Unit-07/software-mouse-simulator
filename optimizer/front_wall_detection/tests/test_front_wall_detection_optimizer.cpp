@@ -114,13 +114,13 @@ TEST(FrontWallDetectionOptimizerTests, ParetoHasNoNaNOrInf)
 
     auto result{run_front_wall_detection_staged(8, 3, 2)};
 
-    for (const auto& f : result.F) {
+    for (const auto &f : result.F) {
         for (double v : f) {
             CHECK(std::isfinite(v));
         }
     }
 
-    for (const auto& x : result.X) {
+    for (const auto &x : result.X) {
         for (double v : x) {
             CHECK(std::isfinite(v));
         }
@@ -136,10 +136,10 @@ TEST(FrontWallDetectionOptimizerTests, ControlWithinBounds)
     auto result{run_front_wall_detection_staged(8, 3, 2)};
 
     auto bounds{front_wall_detection::get_control_bounds()};
-    const auto& lb{bounds.first};
-    const auto& ub{bounds.second};
+    const auto &lb{bounds.first};
+    const auto &ub{bounds.second};
 
-    for (const auto& x : result.X) {
+    for (const auto &x : result.X) {
         for (size_t i{0}; i < x.size(); ++i) {
             CHECK(x.at(i) >= lb.at(i));
             CHECK(x.at(i) <= ub.at(i));
@@ -155,7 +155,7 @@ TEST(FrontWallDetectionOptimizerTests, ObjectivesAreInValidRanges)
 
     auto result{run_front_wall_detection_staged(8, 3, 2)};
 
-    for (const auto& f : result.F) {
+    for (const auto &f : result.F) {
         double combined_rate{-f.at(0)};
         double window_size{-f.at(1)};
 
@@ -172,7 +172,7 @@ TEST(FrontWallDetectionOptimizerTests, ObjectivesContainFiniteValues)
 
     auto result{run_front_wall_detection_staged(8, 3, 2)};
 
-    for (const auto& f : result.F) {
+    for (const auto &f : result.F) {
 
         double combined_rate{-f.at(0)};
         double window_size{-f.at(1)};

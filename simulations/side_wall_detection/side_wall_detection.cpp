@@ -46,8 +46,8 @@ namespace
 
 using namespace side_wall_detection;
 
-void prepare_mock_for_side_wall_detection(const Config& cfg, const maze::Maze& maze,
-                                          mouse::Mouse& mouse);
+void prepare_mock_for_side_wall_detection(const Config &cfg, const maze::Maze &maze,
+                                          mouse::Mouse &mouse);
 
 } /* unnamed namespace */
 
@@ -83,19 +83,19 @@ void reset_all_config_bounds(void)
     env_upper_bounds = {};
 }
 
-void set_ctr_config_bounds(const ControlConfig& lower, const ControlConfig& upper)
+void set_ctr_config_bounds(const ControlConfig &lower, const ControlConfig &upper)
 {
     ctr_lower_bounds = lower;
     ctr_upper_bounds = upper;
 }
 
-void set_env_config_bounds(const EnvironmentConfig& lower, const EnvironmentConfig& upper)
+void set_env_config_bounds(const EnvironmentConfig &lower, const EnvironmentConfig &upper)
 {
     env_lower_bounds = lower;
     env_upper_bounds = upper;
 }
 
-ControlConfig decode_control(const std::vector<double>& x)
+ControlConfig decode_control(const std::vector<double> &x)
 {
     ControlConfig c{};
     size_t i{0};
@@ -107,7 +107,7 @@ ControlConfig decode_control(const std::vector<double>& x)
     return c;
 }
 
-std::vector<double> encode_control(const ControlConfig& cfg)
+std::vector<double> encode_control(const ControlConfig &cfg)
 {
     return {static_cast<double>(cfg.reading_threshold),
             cfg.reading_start_offset,
@@ -146,7 +146,7 @@ EnvironmentConfig generate_random_environment(void)
     return e;
 }
 
-void enable_visualization(const std::string& foldername)
+void enable_visualization(const std::string &foldername)
 {
     TEST_OUTPUT_SUBDIRECTORY = foldername;
     visualizer_enabled = true;
@@ -157,7 +157,7 @@ void disable_visualization(void)
     visualizer_enabled = false;
 }
 
-std::string config_to_string(const Config& cfg)
+std::string config_to_string(const Config &cfg)
 {
     std::ostringstream oss{};
 
@@ -175,7 +175,7 @@ std::string config_to_string(const Config& cfg)
     return oss.str();
 }
 
-Result run_simulation(const Config& cfg)
+Result run_simulation(const Config &cfg)
 {
     if (visualizer_enabled) {
         std::filesystem::create_directories(TEST_OUTPUT_DIRECTORY + "/" + TEST_OUTPUT_SUBDIRECTORY);
@@ -237,15 +237,15 @@ Result run_simulation(const Config& cfg)
     double closed_maze_distance{0};
 
     int total_steps{
-        cfg.env_cfg.total_steps
-        - static_cast<int>(cfg.env_cfg.total_steps * cfg.ctrl_cfg.reading_start_offset)};
+            cfg.env_cfg.total_steps
+            - static_cast<int>(cfg.env_cfg.total_steps * cfg.ctrl_cfg.reading_start_offset)};
 
     for (int i{0}; i < total_steps; i++) {
         open_maze_distance = maze::compute_ray_distance_in_closed_space(
-            open_maze, mouse.hitbox.center, mouse.ir_3_sensor);
+                open_maze, mouse.hitbox.center, mouse.ir_3_sensor);
         update_ir_3_sensor_reading(open_maze_distance);
-        uint32_t open_reading{
-            scale_and_clamp_ir_sensor_reading(read_ir_3_sensor(), cfg.env_cfg.ir_reading_scale)};
+        uint32_t open_reading{scale_and_clamp_ir_sensor_reading(read_ir_3_sensor(),
+                                                                cfg.env_cfg.ir_reading_scale)};
 
         if (has_prev) {
             if (open_reading > prev_open_reading) {
@@ -261,10 +261,10 @@ Result run_simulation(const Config& cfg)
         prev_open_reading = open_reading;
 
         closed_maze_distance = maze::compute_ray_distance_in_closed_space(
-            closed_maze, mouse.hitbox.center, mouse.ir_3_sensor);
+                closed_maze, mouse.hitbox.center, mouse.ir_3_sensor);
         update_ir_3_sensor_reading(closed_maze_distance);
-        uint32_t closed_reading{
-            scale_and_clamp_ir_sensor_reading(read_ir_3_sensor(), cfg.env_cfg.ir_reading_scale)};
+        uint32_t closed_reading{scale_and_clamp_ir_sensor_reading(read_ir_3_sensor(),
+                                                                  cfg.env_cfg.ir_reading_scale)};
 
         if (has_prev) {
             if (closed_reading > prev_closed_reading) {
@@ -364,8 +364,8 @@ Result run_simulation(const Config& cfg)
     }
 
     return Result{
-        absent_correct,
-        present_correct,
+            absent_correct,
+            present_correct,
     };
 }
 
@@ -379,8 +379,8 @@ namespace
 
 using namespace side_wall_detection;
 
-void prepare_mock_for_side_wall_detection(const Config& cfg, const maze::Maze& maze,
-                                          mouse::Mouse& mouse)
+void prepare_mock_for_side_wall_detection(const Config &cfg, const maze::Maze &maze,
+                                          mouse::Mouse &mouse)
 {
     reset_mock_device_drivers();
 
@@ -389,8 +389,8 @@ void prepare_mock_for_side_wall_detection(const Config& cfg, const maze::Maze& m
 
     mouse.rotate(cfg.env_cfg.mouse_angle);
     mouse.translate(
-        maze.mouse_start.x + (max_horizontal_offset * cfg.env_cfg.horizontal_position_variance),
-        maze.mouse_start.y + (max_vertical_offset * cfg.env_cfg.vertical_position_variance));
+            maze.mouse_start.x + (max_horizontal_offset * cfg.env_cfg.horizontal_position_variance),
+            maze.mouse_start.y + (max_vertical_offset * cfg.env_cfg.vertical_position_variance));
 
     mouse.translate(0.0, cfg.ctrl_cfg.reading_start_offset * maze.cell_size);
 }

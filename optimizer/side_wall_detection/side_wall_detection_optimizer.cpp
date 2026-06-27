@@ -50,7 +50,7 @@ struct Objectives {
         return {-combined_rate, start_offset};
     }
 
-    static Objectives from_vec(const PagmoVec& v)
+    static Objectives from_vec(const PagmoVec &v)
     {
         Objectives obj{};
         obj.combined_rate = -v.at(0);
@@ -68,7 +68,7 @@ public:
         /* no additional logic */
     }
 
-    PagmoVec fitness(const PagmoVec& x) const
+    PagmoVec fitness(const PagmoVec &x) const
     {
         const auto control{side_wall_detection::decode_control(x)};
 
@@ -76,10 +76,8 @@ public:
         int present_correct_count{0};
 
         for (int i{0}; i < sims_; ++i) {
-            side_wall_detection::Config cfg{
-                control,
-                side_wall_detection::generate_random_environment()
-            };
+            side_wall_detection::Config cfg{control,
+                                            side_wall_detection::generate_random_environment()};
 
             const auto r{side_wall_detection::run_simulation(cfg)};
 
@@ -136,7 +134,7 @@ ParetoResult run_side_wall_detection_filter(std::size_t population, std::size_t 
     return {pop.get_x(), pop.get_f()};
 }
 
-void write_pareto_to_file(const std::string& filename, const ParetoResult& result)
+void write_pareto_to_file(const std::string &filename, const ParetoResult &result)
 {
     auto out{optimizer_common::open_output_file(filename)};
 
@@ -166,7 +164,7 @@ void write_pareto_to_file(const std::string& filename, const ParetoResult& resul
 
     for (size_t i{0}; i < result.X.size(); ++i) {
 
-        const auto& x{result.X.at(i)};
+        const auto &x{result.X.at(i)};
         const auto ctrl{side_wall_detection::decode_control(x)};
         const auto obj{Objectives::from_vec(result.F.at(i))};
 

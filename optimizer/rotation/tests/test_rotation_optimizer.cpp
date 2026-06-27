@@ -132,13 +132,13 @@ TEST(RotationOptimizerTests, RotationParetoHasNoNaNOrInf)
 
     auto result{run_rotation_staged(8, 3, 3, 2, 2)};
 
-    for (const auto& f : result.F) {
+    for (const auto &f : result.F) {
         for (double v : f) {
             CHECK(std::isfinite(v));
         }
     }
 
-    for (const auto& x : result.X) {
+    for (const auto &x : result.X) {
         for (double v : x) {
             CHECK(std::isfinite(v));
         }
@@ -154,10 +154,10 @@ TEST(RotationOptimizerTests, RotationControlWithinBounds)
     auto result{run_rotation_staged(8, 3, 3, 2, 2)};
 
     auto bounds{rotation::get_control_bounds()};
-    const auto& lb{bounds.first};
-    const auto& ub{bounds.second};
+    const auto &lb{bounds.first};
+    const auto &ub{bounds.second};
 
-    for (const auto& x : result.X) {
+    for (const auto &x : result.X) {
         for (size_t i{0}; i < x.size(); ++i) {
             CHECK(x.at(i) >= lb.at(i));
             CHECK(x.at(i) <= ub.at(i));
@@ -173,7 +173,7 @@ TEST(RotationOptimizerTests, RotationObjectivesAreInValidRanges)
 
     auto result{run_rotation_staged(8, 3, 3, 2, 2)};
 
-    for (const auto& f : result.F) {
+    for (const auto &f : result.F) {
         double collision{f.at(0)};
         double timeout{f.at(1)};
         double angle{f.at(2)};

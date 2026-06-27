@@ -38,7 +38,7 @@ static const double INVERSE_OFFSET = -0.13938373;
 static const double MAX_MOTOR_RPM = 4900.0;
 static const double ENCODER_EVENTS_PER_REVOLUTION = 60.8077;
 static double MAX_ENCODER_TICKS_PER_SECOND =
-    (MAX_MOTOR_RPM / 60.0) * (ENCODER_EVENTS_PER_REVOLUTION / 4);
+        (MAX_MOTOR_RPM / 60.0) * (ENCODER_EVENTS_PER_REVOLUTION / 4);
 
 static const double GEAR_RATIO = 13.0 / 44.0;
 static const double WHEEL_DIAMETER_MM = 32.0;
@@ -46,12 +46,12 @@ static const double WHEEL_BASE_MM = 87.56;
 static double WHEEL_CIRCUMFERENCE_MM = M_PI * WHEEL_DIAMETER_MM;
 
 static double const ENCODER_TICKS_PER_REVOLUTION =
-    (ENCODER_EVENTS_PER_REVOLUTION / 4) * (1 / GEAR_RATIO);
+        (ENCODER_EVENTS_PER_REVOLUTION / 4) * (1 / GEAR_RATIO);
 
 /* these two variables need to be accessible for movement simulation */
 double ENCODER_TICKS_PER_MILLIMETER = ENCODER_TICKS_PER_REVOLUTION / (M_PI * WHEEL_DIAMETER_MM);
 double ENCODER_TICKS_PER_ROTATION_ANGLE_RADIANS =
-    (ENCODER_TICKS_PER_REVOLUTION * WHEEL_BASE_MM) / (2 * M_PI * WHEEL_DIAMETER_MM);
+        (ENCODER_TICKS_PER_REVOLUTION * WHEEL_BASE_MM) / (2 * M_PI * WHEEL_DIAMETER_MM);
 
 static uint32_t mock_ir_1_sensor_reading = 0u;
 static uint32_t mock_ir_2_sensor_reading = 0u;
@@ -112,7 +112,7 @@ void update_encoder_1_ticks(double time_elapsed_sec)
                                       * motor_speed_scale * (1.0 + motor_1_variance)
                                       * motor_slip_factor;
     double change_in_ticks =
-        (encoder_ticks_per_second * time_elapsed_sec) * wheel_motor_1_direction;
+            (encoder_ticks_per_second * time_elapsed_sec) * wheel_motor_1_direction;
 
     encoder_1_ticks += change_in_ticks;
 }
@@ -123,7 +123,7 @@ void update_encoder_2_ticks(double time_elapsed_sec)
                                       * motor_speed_scale * (1.0 + motor_2_variance)
                                       * motor_slip_factor;
     double change_in_ticks =
-        (encoder_ticks_per_second * time_elapsed_sec) * wheel_motor_2_direction;
+            (encoder_ticks_per_second * time_elapsed_sec) * wheel_motor_2_direction;
 
     encoder_2_ticks += change_in_ticks;
 }

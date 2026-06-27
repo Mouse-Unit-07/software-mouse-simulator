@@ -92,7 +92,7 @@ Config create_no_variance_config(void)
     return cfg;
 }
 
-bool are_results_equivalent(const Result& r1, const Result& r2)
+bool are_results_equivalent(const Result &r1, const Result &r2)
 {
     return (r1.wall_absent_correct == r2.wall_absent_correct)
            && (r1.wall_present_correct == r2.wall_present_correct);

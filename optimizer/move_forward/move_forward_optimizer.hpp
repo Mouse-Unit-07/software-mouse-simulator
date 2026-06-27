@@ -20,7 +20,7 @@ struct ParetoResult {
 
 ParetoResult run_move_forward_staged(size_t population, size_t gen_stage1, size_t gen_stage2,
                                      int sims_stage1, int sims_stage2, move_forward::WallMode mode);
-void write_move_forward_pareto_to_file(const std::string& filename, const ParetoResult& result);
+void write_move_forward_pareto_to_file(const std::string &filename, const ParetoResult &result);
 
 } /* move_forward_optimizer namespace */
 

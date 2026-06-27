@@ -32,7 +32,7 @@ using PagmoVec = pagmo::vector_double;
 
 std::unordered_map<std::string, double> time_cache{};
 
-std::vector<size_t> get_best_feasible_indices(const std::vector<PagmoVec>& F, size_t keep_n);
+std::vector<size_t> get_best_feasible_indices(const std::vector<PagmoVec> &F, size_t keep_n);
 
 } /* unnamed namespace */
 
@@ -52,7 +52,7 @@ struct Stage1Objectives {
         return {collision, horizontal, timeout};
     }
 
-    static Stage1Objectives from_vec(const PagmoVec& v)
+    static Stage1Objectives from_vec(const PagmoVec &v)
     {
         return {v.at(0), v.at(1), v.at(2)};
     }
@@ -70,7 +70,7 @@ struct Stage2Objectives {
         return {collision, horizontal, timeout, vertical, angle};
     }
 
-    static Stage2Objectives from_vec(const PagmoVec& v)
+    static Stage2Objectives from_vec(const PagmoVec &v)
     {
         return {v.at(0), v.at(1), v.at(2), v.at(3), v.at(4)};
     }
@@ -85,7 +85,7 @@ public:
         /* no additional logic */
     }
 
-    PagmoVec fitness(const PagmoVec& x) const
+    PagmoVec fitness(const PagmoVec &x) const
     {
         const auto control{move_forward::decode_control(x)};
 
@@ -136,7 +136,7 @@ public:
         /* no additional logic */
     }
 
-    PagmoVec fitness(const PagmoVec& x) const
+    PagmoVec fitness(const PagmoVec &x) const
     {
         const auto control{move_forward::decode_control(x)};
 
@@ -221,7 +221,7 @@ ParetoResult run_move_forward_staged(size_t population, size_t gen_stage1, size_
     pagmo::population pop(prob, 0);
 
     /* Inject seeds */
-    for (auto& x : seeds) {
+    for (auto &x : seeds) {
         pop.push_back(x);
     }
 
@@ -240,7 +240,7 @@ ParetoResult run_move_forward_staged(size_t population, size_t gen_stage1, size_
     return {pop.get_x(), pop.get_f()};
 }
 
-void write_move_forward_pareto_to_file(const std::string& filename, const ParetoResult& result)
+void write_move_forward_pareto_to_file(const std::string &filename, const ParetoResult &result)
 {
     auto out{optimizer_common::open_output_file(filename)};
 
@@ -291,8 +291,8 @@ void write_move_forward_pareto_to_file(const std::string& filename, const Pareto
 
     /* rows */
     for (size_t i{0}; i < result.X.size(); ++i) {
-        const auto& x{result.X.at(i)};
-        const auto& f{result.F.at(i)};
+        const auto &x{result.X.at(i)};
+        const auto &f{result.F.at(i)};
         const auto ctrl{move_forward::decode_control(x)};
         const auto obj{Stage2Objectives::from_vec(f)};
 
@@ -335,7 +335,7 @@ namespace
 
 using namespace move_forward_optimizer;
 
-std::vector<size_t> get_best_feasible_indices(const std::vector<PagmoVec>& F, size_t keep_n)
+std::vector<size_t> get_best_feasible_indices(const std::vector<PagmoVec> &F, size_t keep_n)
 {
     std::vector<size_t> indices(F.size());
     std::iota(indices.begin(), indices.end(), 0);
