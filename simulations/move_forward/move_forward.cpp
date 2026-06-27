@@ -47,9 +47,9 @@ namespace
 
 using namespace move_forward;
 
-void prepare_mock_for_move_forward(const Config& cfg, const maze::Maze& maze, mouse::Mouse& mouse);
-mouse_delta update_mock_by_dt(const Config& cfg, mouse::Mouse& mouse);
-Result run_single_simulation(const Config& cfg, const maze::Maze& maze, enum WallMode mode);
+void prepare_mock_for_move_forward(const Config &cfg, const maze::Maze &maze, mouse::Mouse &mouse);
+mouse_delta update_mock_by_dt(const Config &cfg, mouse::Mouse &mouse);
+Result run_single_simulation(const Config &cfg, const maze::Maze &maze, enum WallMode mode);
 
 } /* unnamed namespace*/
 
@@ -92,19 +92,19 @@ void reset_all_config_bounds(void)
     env_upper_bounds = {};
 }
 
-void set_ctr_config_bounds(const ControlConfig& lower, const ControlConfig& upper)
+void set_ctr_config_bounds(const ControlConfig &lower, const ControlConfig &upper)
 {
     ctr_lower_bounds = lower;
     ctr_upper_bounds = upper;
 }
 
-void set_env_config_bounds(const EnvironmentConfig& lower, const EnvironmentConfig& upper)
+void set_env_config_bounds(const EnvironmentConfig &lower, const EnvironmentConfig &upper)
 {
     env_lower_bounds = lower;
     env_upper_bounds = upper;
 }
 
-ControlConfig decode_control(const std::vector<double>& x)
+ControlConfig decode_control(const std::vector<double> &x)
 {
     ControlConfig c{};
     size_t i{0};
@@ -122,7 +122,7 @@ ControlConfig decode_control(const std::vector<double>& x)
     return c;
 }
 
-std::vector<double> encode_control(const ControlConfig& cfg)
+std::vector<double> encode_control(const ControlConfig &cfg)
 {
     return {static_cast<double>(cfg.single_wall_target),
             static_cast<double>(cfg.motor_speed),
@@ -179,7 +179,7 @@ EnvironmentConfig generate_random_environment(void)
     return e;
 }
 
-void enable_visualization(const std::string& foldername)
+void enable_visualization(const std::string &foldername)
 {
     TEST_OUTPUT_SUBDIRECTORY = foldername;
     visualizer_enabled = true;
@@ -191,7 +191,7 @@ void disable_visualization(void)
     TEST_OUTPUT_SUBDIRECTORY = "";
 }
 
-std::string config_to_string(const Config& cfg)
+std::string config_to_string(const Config &cfg)
 {
     std::ostringstream oss;
 
@@ -235,7 +235,7 @@ std::string wall_mode_to_string(WallMode mode)
     }
 }
 
-Result run_simulation(const Config& cfg, enum WallMode mode)
+Result run_simulation(const Config &cfg, enum WallMode mode)
 {
     std::vector<std::string> ascii_no_walls{
         "+-+",
@@ -304,7 +304,7 @@ namespace
 
 using namespace move_forward;
 
-void prepare_mock_for_move_forward(const Config& cfg, const maze::Maze& maze, mouse::Mouse& mouse)
+void prepare_mock_for_move_forward(const Config &cfg, const maze::Maze &maze, mouse::Mouse &mouse)
 {
     reset_mock_device_drivers();
     set_motor_speed_scale(cfg.env_cfg.motor_speed_scale);
@@ -319,11 +319,11 @@ void prepare_mock_for_move_forward(const Config& cfg, const maze::Maze& maze, mo
 
     mouse.rotate(cfg.env_cfg.mouse_angle);
     mouse.translate(
-        maze.mouse_start.x + (max_horizontal_offset * cfg.env_cfg.horizontal_position_variance),
-        maze.mouse_start.y + (max_vertical_offset * cfg.env_cfg.vertical_position_variance));
+            maze.mouse_start.x + (max_horizontal_offset * cfg.env_cfg.horizontal_position_variance),
+            maze.mouse_start.y + (max_vertical_offset * cfg.env_cfg.vertical_position_variance));
 }
 
-mouse_delta update_mock_by_dt(const Config& cfg, mouse::Mouse& mouse)
+mouse_delta update_mock_by_dt(const Config &cfg, mouse::Mouse &mouse)
 {
     mouse_delta delta{compute_mouse_delta(mouse.hitbox.angle_rad, cfg.env_cfg.dt)};
     update_encoder_1_ticks(cfg.env_cfg.dt);
@@ -334,7 +334,7 @@ mouse_delta update_mock_by_dt(const Config& cfg, mouse::Mouse& mouse)
     return delta;
 }
 
-Result run_single_simulation(const Config& cfg, const maze::Maze& maze, enum WallMode mode)
+Result run_single_simulation(const Config &cfg, const maze::Maze &maze, enum WallMode mode)
 {
     if (visualizer_enabled) {
         std::filesystem::create_directories(TEST_OUTPUT_DIRECTORY + "/" + TEST_OUTPUT_SUBDIRECTORY);
@@ -374,7 +374,7 @@ Result run_single_simulation(const Config& cfg, const maze::Maze& maze, enum Wal
 
     const double TARGET_DISTANCE_MM{maze.cell_size * MAZE_SQUARE_COUNT};
     const int32_t TARGET_TICKS{
-        static_cast<int32_t>(TARGET_DISTANCE_MM * ENCODER_TICKS_PER_MILLIMETER)};
+            static_cast<int32_t>(TARGET_DISTANCE_MM * ENCODER_TICKS_PER_MILLIMETER)};
 
     while (((std::abs(get_encoder_1_ticks()) + std::abs(get_encoder_2_ticks())) / 2)
            < TARGET_TICKS) {
@@ -406,9 +406,9 @@ Result run_single_simulation(const Config& cfg, const maze::Maze& maze, enum Wal
             update_ir_3_sensor_reading(ir3_dist);
 
             int32_t ir2{static_cast<int32_t>(scale_and_clamp_ir_sensor_reading(
-                read_ir_2_sensor(), cfg.env_cfg.ir_reading_scale))};
+                    read_ir_2_sensor(), cfg.env_cfg.ir_reading_scale))};
             int32_t ir3{static_cast<int32_t>(scale_and_clamp_ir_sensor_reading(
-                read_ir_3_sensor(), cfg.env_cfg.ir_reading_scale))};
+                    read_ir_3_sensor(), cfg.env_cfg.ir_reading_scale))};
 
             const int32_t TARGET_IR_READING{static_cast<int32_t>(cfg.ctrl_cfg.single_wall_target)};
 
@@ -467,8 +467,8 @@ Result run_single_simulation(const Config& cfg, const maze::Maze& maze, enum Wal
         move_forward_visualizer.change_mouse_color_to_blue();
         move_forward_visualizer.draw_mouse_on_maze(mouse);
         move_forward_visualizer.save_to_image_file(
-            TEST_OUTPUT_DIRECTORY + "/" + TEST_OUTPUT_SUBDIRECTORY + "/" + config_to_string(cfg)
-            + "-" + wall_mode_to_string(mode) + ".png");
+                TEST_OUTPUT_DIRECTORY + "/" + TEST_OUTPUT_SUBDIRECTORY + "/" + config_to_string(cfg)
+                + "-" + wall_mode_to_string(mode) + ".png");
     }
 
     double target_y{INITIAL_MOUSE_VERTICAL_POSITION + (maze.cell_size * MAZE_SQUARE_COUNT)};

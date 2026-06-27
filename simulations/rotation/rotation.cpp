@@ -47,8 +47,8 @@ namespace
 
 using namespace rotation;
 
-void prepare_mock_for_rotation(const Config& cfg, const maze::Maze& maze, mouse::Mouse& mouse);
-mouse_delta update_mock_by_dt(const Config& cfg, mouse::Mouse& mouse);
+void prepare_mock_for_rotation(const Config &cfg, const maze::Maze &maze, mouse::Mouse &mouse);
+mouse_delta update_mock_by_dt(const Config &cfg, mouse::Mouse &mouse);
 
 } /* unnamed namespace */
 
@@ -90,19 +90,19 @@ void reset_all_config_bounds(void)
     env_upper_bounds = {};
 }
 
-void set_ctr_config_bounds(const ControlConfig& lower, const ControlConfig& upper)
+void set_ctr_config_bounds(const ControlConfig &lower, const ControlConfig &upper)
 {
     ctr_lower_bounds = lower;
     ctr_upper_bounds = upper;
 }
 
-void set_env_config_bounds(const EnvironmentConfig& lower, const EnvironmentConfig& upper)
+void set_env_config_bounds(const EnvironmentConfig &lower, const EnvironmentConfig &upper)
 {
     env_lower_bounds = lower;
     env_upper_bounds = upper;
 }
 
-ControlConfig decode_control(const std::vector<double>& x)
+ControlConfig decode_control(const std::vector<double> &x)
 {
     ControlConfig c{};
     size_t i{0};
@@ -117,7 +117,7 @@ ControlConfig decode_control(const std::vector<double>& x)
     return c;
 }
 
-std::vector<double> encode_control(const ControlConfig& cfg)
+std::vector<double> encode_control(const ControlConfig &cfg)
 {
     return {static_cast<double>(cfg.motor_speed),
             static_cast<double>(cfg.kp_velocity),
@@ -161,7 +161,7 @@ EnvironmentConfig generate_random_environment(void)
     return e;
 }
 
-void enable_visualization(const std::string& foldername)
+void enable_visualization(const std::string &foldername)
 {
     TEST_OUTPUT_SUBDIRECTORY = foldername;
     visualizer_enabled = true;
@@ -172,7 +172,7 @@ void disable_visualization(void)
     visualizer_enabled = false;
 }
 
-std::string config_to_string(const Config& cfg)
+std::string config_to_string(const Config &cfg)
 {
     std::ostringstream oss;
 
@@ -193,7 +193,7 @@ std::string config_to_string(const Config& cfg)
     return oss.str();
 }
 
-Result run_simulation(const Config& cfg)
+Result run_simulation(const Config &cfg)
 {
     if (visualizer_enabled) {
         std::filesystem::create_directories(TEST_OUTPUT_DIRECTORY + "/" + TEST_OUTPUT_SUBDIRECTORY);
@@ -239,7 +239,7 @@ Result run_simulation(const Config& cfg)
     int32_t prev_ang_error{0};
     double target_angle_absolute_value{std::abs(cfg.env_cfg.rotation_angle)};
     double raw_target{
-        std::abs(ENCODER_TICKS_PER_ROTATION_ANGLE_RADIANS * target_angle_absolute_value)};
+            std::abs(ENCODER_TICKS_PER_ROTATION_ANGLE_RADIANS * target_angle_absolute_value)};
     int32_t target_ticks{static_cast<int32_t>(raw_target)};
 
     while (((std::abs(get_encoder_1_ticks()) + std::abs(get_encoder_2_ticks())) / 2)
@@ -334,7 +334,7 @@ namespace
 
 using namespace rotation;
 
-void prepare_mock_for_rotation(const Config& cfg, const maze::Maze& maze, mouse::Mouse& mouse)
+void prepare_mock_for_rotation(const Config &cfg, const maze::Maze &maze, mouse::Mouse &mouse)
 {
     reset_mock_device_drivers();
     set_motor_speed_scale(cfg.env_cfg.motor_speed_scale);
@@ -347,7 +347,7 @@ void prepare_mock_for_rotation(const Config& cfg, const maze::Maze& maze, mouse:
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
 }
 
-mouse_delta update_mock_by_dt(const Config& cfg, mouse::Mouse& mouse)
+mouse_delta update_mock_by_dt(const Config &cfg, mouse::Mouse &mouse)
 {
     mouse_delta delta{compute_mouse_delta(mouse.hitbox.angle_rad, cfg.env_cfg.dt)};
     update_encoder_1_ticks(cfg.env_cfg.dt);

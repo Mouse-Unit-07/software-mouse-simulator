@@ -38,15 +38,15 @@ constexpr double OFFICIAL_WALL_WIDTH_SIZE{12.07};
 constexpr double CELL_SIZE{OFFICIAL_WALL_LENGTH_SIZE + OFFICIAL_POST_SIZE};
 
 /* count all unique touches, including hitbox corners */
-int count_touching_obstacles(const Maze& maze)
+int count_touching_obstacles(const Maze &maze)
 {
-    const auto& obstacles{maze.obstacles};
+    const auto &obstacles{maze.obstacles};
     int touching_count{0};
 
     for (size_t i{0}; i < obstacles.size(); i++) {
         for (size_t j{i + 1}; j < obstacles.size(); j++) {
-            const auto& a{obstacles.at(i)};
-            const auto& b{obstacles.at(j)};
+            const auto &a{obstacles.at(i)};
+            const auto &b{obstacles.at(j)};
 
             double dx{fabs(a.center.x - b.center.x)};
             double dy{fabs(a.center.y - b.center.y)};
@@ -100,7 +100,7 @@ TEST(MazeTests, ThrowsOnEmptyAsciiMaze)
     try {
         build_maze_from_ascii(ascii, 1.0, 1.0);
         FAIL("Expected exception not thrown");
-    } catch (const std::invalid_argument& e) {
+    } catch (const std::invalid_argument &e) {
         STRCMP_EQUAL("ASCII maze is empty", e.what());
     }
 }
@@ -117,7 +117,7 @@ TEST(MazeTests, ThrowsOnJaggedAsciiMaze)
     try {
         build_maze_from_ascii(ascii, 1.0, 1.0);
         FAIL("Expected exception not thrown");
-    } catch (const std::invalid_argument& e) {
+    } catch (const std::invalid_argument &e) {
         STRCMP_CONTAINS("ASCII maze is jagged", e.what());
     }
 }
@@ -134,7 +134,7 @@ TEST(MazeTests, ThrowsOnInvalidCharacterInAsciiMaze)
     try {
         build_maze_from_ascii(ascii, 1.0, 1.0);
         FAIL("Expected exception not thrown");
-    } catch (const std::invalid_argument& e) {
+    } catch (const std::invalid_argument &e) {
         STRCMP_CONTAINS("Invalid character 'X'", e.what());
     }
 }
@@ -151,7 +151,7 @@ TEST(MazeTests, ThrowsWhenNoStartPosition)
     try {
         build_maze_from_ascii(ascii, 1.0, 1.0);
         FAIL("Expected exception not thrown");
-    } catch (const std::invalid_argument& e) {
+    } catch (const std::invalid_argument &e) {
         STRCMP_EQUAL("No 'S' start position found", e.what());
     }
 }
@@ -168,7 +168,7 @@ TEST(MazeTests, ThrowsWhenMultipleStartPositions)
     try {
         build_maze_from_ascii(ascii, 1.0, 1.0);
         FAIL("Expected exception not thrown");
-    } catch (const std::invalid_argument& e) {
+    } catch (const std::invalid_argument &e) {
         STRCMP_EQUAL("Multiple 'S' start positions found", e.what());
     }
 }
@@ -200,11 +200,11 @@ TEST(MazeTests, CellCoordinatesAreTopLeftOrigin)
         "+ +-+"
     };
     Maze maze{build_maze_from_ascii(ascii, 1.0, 1.0)};
-    const Cell& top_left{maze.get_cell(0, 0)};
-    const Cell& bottom_right{maze.get_cell(1, 1)};
+    const Cell &top_left{maze.get_cell(0, 0)};
+    const Cell &bottom_right{maze.get_cell(1, 1)};
 
-    CHECK(top_left.obstacles.size() == 8);
-    CHECK(bottom_right.obstacles.size() == 7);
+    LONGS_EQUAL(8, top_left.obstacles.size());
+    LONGS_EQUAL(7, bottom_right.obstacles.size());
 }
 
 TEST(MazeTests, MouseStartCoordinatesCreated)
@@ -268,7 +268,7 @@ TEST(MazeTests, CorrectNumberOfPostCreated)
     Maze maze{build_maze_from_ascii(ascii, 1.0, 1.0)};
     int post_count{0};
 
-    for (const auto& obstacle : maze.obstacles) {
+    for (const auto &obstacle : maze.obstacles) {
         double width{obstacle.horizontal_size};
         double height{obstacle.vertical_size};
 
@@ -278,7 +278,7 @@ TEST(MazeTests, CorrectNumberOfPostCreated)
         }
     }
 
-    CHECK_EQUAL(4, post_count);
+    LONGS_EQUAL(4, post_count);
 }
 
 TEST(MazeTests, CorrectNumberOfVerticalWalls)
@@ -292,13 +292,13 @@ TEST(MazeTests, CorrectNumberOfVerticalWalls)
     Maze maze{build_maze_from_ascii(ascii, 1.0, 1.0)};
     int wall_count{0};
 
-    for (const auto& obstacle : maze.obstacles) {
+    for (const auto &obstacle : maze.obstacles) {
         if (obstacle.vertical_size > obstacle.horizontal_size) {
             wall_count++;
         }
     }
 
-    CHECK(wall_count == 2);
+    LONGS_EQUAL(2, wall_count);
 }
 
 TEST(MazeTests, CorrectNumberOfHorizontalWalls)
@@ -312,13 +312,13 @@ TEST(MazeTests, CorrectNumberOfHorizontalWalls)
     Maze maze{build_maze_from_ascii(ascii, 1.0, 1.0)};
     int wall_count{0};
 
-    for (const auto& obstacle : maze.obstacles) {
+    for (const auto &obstacle : maze.obstacles) {
         if (obstacle.vertical_size < obstacle.horizontal_size) {
             wall_count++;
         }
     }
 
-    CHECK(wall_count == 2);
+    LONGS_EQUAL(2, wall_count);
 }
 
 TEST(MazeTests, VerticalWallSharedBetweenCells)
@@ -330,8 +330,8 @@ TEST(MazeTests, VerticalWallSharedBetweenCells)
         "+-+-+"
     };
     Maze maze{build_maze_from_ascii(ascii, 1.0, 1.0)};
-    const Cell& left{maze.get_cell(0, 0)};
-    const Cell& right{maze.get_cell(0, 1)};
+    const Cell &left{maze.get_cell(0, 0)};
+    const Cell &right{maze.get_cell(0, 1)};
     bool shared{false};
 
     for (size_t a : left.obstacles) {
@@ -356,8 +356,8 @@ TEST(MazeTests, HorizontalWallSharedBetweenCells)
         "+-+"
     };
     Maze maze{build_maze_from_ascii(ascii, 1.0, 1.0)};
-    const Cell& bottom{maze.get_cell(0, 0)};
-    const Cell& top{maze.get_cell(1, 0)};
+    const Cell &bottom{maze.get_cell(0, 0)};
+    const Cell &top{maze.get_cell(1, 0)};
     bool shared{false};
 
     for (size_t a : bottom.obstacles) {
@@ -383,7 +383,7 @@ TEST(MazeTests, SingleCellWallsTouchPosts)
     int touching_count{count_touching_obstacles(maze)};
 
     /* 8 full unique touches + 4 diagonal corner touches */
-    CHECK(touching_count == 12);
+    LONGS_EQUAL(12, touching_count);
 }
 
 TEST(MazeTests, PostAndWallSizeAdjustmentsModifyMazeSizeFields)
@@ -417,7 +417,7 @@ TEST(MazeTests, PostAndWallSizeAdjustmentsModifyMazeObjectSizes)
     };
     Maze maze{build_maze_from_ascii(ascii, post_size_adjustment, wall_size_adjustment)};
 
-    for (const auto& o : maze.obstacles) {
+    for (const auto &o : maze.obstacles) {
         if (o.horizontal_size > o.vertical_size) {
             DOUBLES_EQUAL(OFFICIAL_WALL_LENGTH_SIZE * wall_size_adjustment, o.horizontal_size,
                           FLOAT_TOLERANCE);
@@ -456,7 +456,7 @@ TEST(MazeTests, PostSizeAdjustedWallsAndPostsTouch)
     int touching_count{count_touching_obstacles(maze)};
 
     /* 8 full unique touches + 4 diagonal corner touches */
-    CHECK(touching_count == 12);
+    LONGS_EQUAL(12, touching_count);
 }
 
 TEST(MazeTests, ClosedSpaceRayAlwaysReturnsDistance)
@@ -474,13 +474,13 @@ TEST(MazeTests, ClosedSpaceRayAlwaysReturnsDistance)
 
     for (int i{0}; i < 8; i++) {
         double distance_1{
-            compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_1_sensor)};
+                compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_1_sensor)};
         double distance_2{
-            compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_2_sensor)};
+                compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_2_sensor)};
         double distance_3{
-            compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_3_sensor)};
+                compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_3_sensor)};
         double distance_4{
-            compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_4_sensor)};
+                compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_4_sensor)};
 
         CHECK(distance_1 > 0.0);
         CHECK(distance_2 > 0.0);
@@ -506,13 +506,13 @@ TEST(MazeTests, IdealRayDistancesAreKnown)
 
     for (int i{0}; i < 4; i++) {
         double distance_1{
-            compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_1_sensor)};
+                compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_1_sensor)};
         double distance_2{
-            compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_2_sensor)};
+                compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_2_sensor)};
         double distance_3{
-            compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_3_sensor)};
+                compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_3_sensor)};
         double distance_4{
-            compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_4_sensor)};
+                compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_4_sensor)};
 
         DOUBLES_EQUAL(57.945, distance_1, 1e-3);
         DOUBLES_EQUAL(62.82644, distance_2, 1e-3);
@@ -542,13 +542,13 @@ TEST(MazeTests, RaysReturnPositiveDistancesInClosedThreeByThree)
 
     for (int i{0}; i < 8; i++) {
         double distance_1{
-            compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_1_sensor)};
+                compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_1_sensor)};
         double distance_2{
-            compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_2_sensor)};
+                compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_2_sensor)};
         double distance_3{
-            compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_3_sensor)};
+                compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_3_sensor)};
         double distance_4{
-            compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_4_sensor)};
+                compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_4_sensor)};
 
         CHECK(distance_1 > 0.0);
         CHECK(distance_2 > 0.0);
@@ -578,13 +578,13 @@ TEST(MazeTests, OpenSpaceReturnsZeroWhenNoHit)
 
     for (int i{0}; i < 8; i++) {
         double distance_1{
-            compute_ray_distance_in_open_space(maze, mouse.hitbox.center, mouse.ir_1_sensor)};
+                compute_ray_distance_in_open_space(maze, mouse.hitbox.center, mouse.ir_1_sensor)};
         double distance_2{
-            compute_ray_distance_in_open_space(maze, mouse.hitbox.center, mouse.ir_2_sensor)};
+                compute_ray_distance_in_open_space(maze, mouse.hitbox.center, mouse.ir_2_sensor)};
         double distance_3{
-            compute_ray_distance_in_open_space(maze, mouse.hitbox.center, mouse.ir_3_sensor)};
+                compute_ray_distance_in_open_space(maze, mouse.hitbox.center, mouse.ir_3_sensor)};
         double distance_4{
-            compute_ray_distance_in_open_space(maze, mouse.hitbox.center, mouse.ir_4_sensor)};
+                compute_ray_distance_in_open_space(maze, mouse.hitbox.center, mouse.ir_4_sensor)};
 
         DOUBLES_EQUAL(0.0, distance_1, FLOAT_TOLERANCE);
         DOUBLES_EQUAL(0.0, distance_2, FLOAT_TOLERANCE);
@@ -641,13 +641,13 @@ TEST(MazeTests, RayReturnsNearestObstacleDistance)
 
     for (int i{0}; i < 8; i++) {
         double distance_1{
-            compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_1_sensor)};
+                compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_1_sensor)};
         double distance_2{
-            compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_2_sensor)};
+                compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_2_sensor)};
         double distance_3{
-            compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_3_sensor)};
+                compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_3_sensor)};
         double distance_4{
-            compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_4_sensor)};
+                compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_4_sensor)};
 
         CHECK(distance_1 < maze.cell_size);
         CHECK(distance_2 < maze.cell_size);
@@ -721,27 +721,28 @@ TEST(MazeTests, MouseMovingNearWallsNoCollision)
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
 
     double distance_to_wall_center{(OFFICIAL_POST_SIZE + OFFICIAL_WALL_LENGTH_SIZE) / 2};
-    double horizontal_distance_to_cell_wall{
-        (distance_to_wall_center - (mouse.hitbox.horizontal_size / 2) - (OFFICIAL_POST_SIZE / 2))
-        - 1};
+    double horizontal_distance_to_cell_wall{(distance_to_wall_center
+                                             - (mouse.hitbox.horizontal_size / 2)
+                                             - (OFFICIAL_POST_SIZE / 2))
+                                            - 1};
     double vertical_distance_to_cell_wall{
-        (distance_to_wall_center - (mouse.hitbox.vertical_size / 2) - (OFFICIAL_POST_SIZE / 2))
-        - 1};
+            (distance_to_wall_center - (mouse.hitbox.vertical_size / 2) - (OFFICIAL_POST_SIZE / 2))
+            - 1};
 
     mouse.translate(0.0, vertical_distance_to_cell_wall);
-    CHECK(!does_hitbox_collide_with_maze(maze, mouse.hitbox));
+    CHECK_FALSE(does_hitbox_collide_with_maze(maze, mouse.hitbox));
     mouse.translate(0.0, -vertical_distance_to_cell_wall);
 
     mouse.translate(-horizontal_distance_to_cell_wall, 0.0);
-    CHECK(!does_hitbox_collide_with_maze(maze, mouse.hitbox));
+    CHECK_FALSE(does_hitbox_collide_with_maze(maze, mouse.hitbox));
     mouse.translate(horizontal_distance_to_cell_wall, 0.0);
 
     mouse.translate(-0.0, -vertical_distance_to_cell_wall);
-    CHECK(!does_hitbox_collide_with_maze(maze, mouse.hitbox));
+    CHECK_FALSE(does_hitbox_collide_with_maze(maze, mouse.hitbox));
     mouse.translate(0.0, vertical_distance_to_cell_wall);
 
     mouse.translate(horizontal_distance_to_cell_wall, 0.0);
-    CHECK(!does_hitbox_collide_with_maze(maze, mouse.hitbox));
+    CHECK_FALSE(does_hitbox_collide_with_maze(maze, mouse.hitbox));
     mouse.translate(-horizontal_distance_to_cell_wall, 0.0);
 }
 
@@ -759,10 +760,11 @@ TEST(MazeTests, MouseMovingJustOntoWallsCausesCollision)
     mouse.translate(maze.mouse_start.x, maze.mouse_start.y);
 
     double distance_to_wall_center{(OFFICIAL_POST_SIZE + OFFICIAL_WALL_LENGTH_SIZE) / 2};
-    double horizontal_distance_to_cell_wall{
-        (distance_to_wall_center - (mouse.hitbox.horizontal_size / 2) - (OFFICIAL_POST_SIZE / 2))};
-    double vertical_distance_to_cell_wall{
-        (distance_to_wall_center - (mouse.hitbox.vertical_size / 2) - (OFFICIAL_POST_SIZE / 2))};
+    double horizontal_distance_to_cell_wall{(distance_to_wall_center
+                                             - (mouse.hitbox.horizontal_size / 2)
+                                             - (OFFICIAL_POST_SIZE / 2))};
+    double vertical_distance_to_cell_wall{(
+            distance_to_wall_center - (mouse.hitbox.vertical_size / 2) - (OFFICIAL_POST_SIZE / 2))};
 
     mouse.translate(0.0, vertical_distance_to_cell_wall);
     CHECK(does_hitbox_collide_with_maze(maze, mouse.hitbox));

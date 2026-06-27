@@ -21,10 +21,10 @@ public:
     Point(double x, double y);
 
     void translate(double dx, double dy) noexcept;
-    void rotate(const Point& center, double angle_rad) noexcept;
+    void rotate(const Point &center, double angle_rad) noexcept;
 
-    bool operator==(const Point& other) const noexcept;
-    bool operator!=(const Point& other) const noexcept;
+    bool operator==(const Point &other) const noexcept;
+    bool operator!=(const Point &other) const noexcept;
 };
 
 } /* geometry namespace */

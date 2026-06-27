@@ -27,33 +27,33 @@ namespace
 
 using namespace maze;
 
-std::string validate_ascii_maze(const std::vector<std::string>& ascii);
+std::string validate_ascii_maze(const std::vector<std::string> &ascii);
 
-geometry::RectangularHitbox create_post(const geometry::Point& center, double post_size_adjustment);
-geometry::RectangularHitbox create_vertical_wall(const geometry::Point& center,
+geometry::RectangularHitbox create_post(const geometry::Point &center, double post_size_adjustment);
+geometry::RectangularHitbox create_vertical_wall(const geometry::Point &center,
                                                  double post_size_adjustment,
                                                  double wall_size_adjustment);
-geometry::RectangularHitbox create_horizontal_wall(const geometry::Point& center,
+geometry::RectangularHitbox create_horizontal_wall(const geometry::Point &center,
                                                    double post_size_adjustment,
                                                    double wall_size_adjustment);
 
 geometry::Point ascii_to_world(int r, int c, double post_size_adjustment,
                                double wall_size_adjustment);
-void attach_to_cell(Maze& maze, size_t obstacle_index, int row, int col);
-void attach_vertical_wall_cells(Maze& maze, size_t obstacle_index, int r, int c);
-void attach_horizontal_wall_cells(Maze& maze, size_t obstacle_index, int r, int c);
-void attach_post_cells(Maze& maze, size_t obstacle_index, int r, int c);
+void attach_to_cell(Maze &maze, size_t obstacle_index, int row, int col);
+void attach_vertical_wall_cells(Maze &maze, size_t obstacle_index, int r, int c);
+void attach_horizontal_wall_cells(Maze &maze, size_t obstacle_index, int r, int c);
+void attach_post_cells(Maze &maze, size_t obstacle_index, int r, int c);
 
-std::optional<std::pair<int, int>> get_cell_from_point(const Maze& maze, const geometry::Point& p);
-bool does_hitbox_collide_in_vicinity(const Maze& maze, const geometry::RectangularHitbox& hitbox,
+std::optional<std::pair<int, int>> get_cell_from_point(const Maze &maze, const geometry::Point &p);
+bool does_hitbox_collide_in_vicinity(const Maze &maze, const geometry::RectangularHitbox &hitbox,
                                      int row, int col);
-std::optional<double> compute_ray_distance_in_cell(const Maze& maze, const geometry::Ray& ray,
+std::optional<double> compute_ray_distance_in_cell(const Maze &maze, const geometry::Ray &ray,
                                                    int row, int col);
-std::optional<double> compute_ray_distance_in_vicinity(const Maze& maze, const geometry::Ray& ray,
+std::optional<double> compute_ray_distance_in_vicinity(const Maze &maze, const geometry::Ray &ray,
                                                        int row, int col);
-std::optional<double> compute_ir_sensor_distance(const maze::Maze& maze,
-                                                 const geometry::Point& point,
-                                                 const geometry::Ray& ir_sensor);
+std::optional<double> compute_ir_sensor_distance(const maze::Maze &maze,
+                                                 const geometry::Point &point,
+                                                 const geometry::Ray &ir_sensor);
 
 } /* unnamed namespace */
 
@@ -77,12 +77,12 @@ constexpr double CELL_SIZE{OFFICIAL_WALL_LENGTH_SIZE + OFFICIAL_POST_SIZE};
 namespace maze
 {
 
-const Cell& Maze::get_cell(int row, int col) const
+const Cell &Maze::get_cell(int row, int col) const
 {
     return cells.at(row * cols + col);
 }
 
-Maze build_maze_from_ascii(const std::vector<std::string>& ascii, double post_size_scale,
+Maze build_maze_from_ascii(const std::vector<std::string> &ascii, double post_size_scale,
                            double wall_size_scale)
 {
     const std::string error{validate_ascii_maze(ascii)};
@@ -114,7 +114,7 @@ Maze build_maze_from_ascii(const std::vector<std::string>& ascii, double post_si
         for (int c{0}; c < ascii_cols; c++) {
             char ch{ascii.at(r).at(c)};
             geometry::Point center{
-                ascii_to_world(r, c, post_size_adjustment, wall_size_adjustment)};
+                    ascii_to_world(r, c, post_size_adjustment, wall_size_adjustment)};
 
             if (ch == '+') {
                 maze.obstacles.push_back(create_post(center, post_size_adjustment));
@@ -122,12 +122,12 @@ Maze build_maze_from_ascii(const std::vector<std::string>& ascii, double post_si
                 attach_post_cells(maze, obstacle_index, r, c);
             } else if (ch == '|') {
                 maze.obstacles.push_back(
-                    create_vertical_wall(center, post_size_adjustment, wall_size_adjustment));
+                        create_vertical_wall(center, post_size_adjustment, wall_size_adjustment));
                 size_t obstacle_index{maze.obstacles.size() - 1};
                 attach_vertical_wall_cells(maze, obstacle_index, r, c);
             } else if (ch == '-') {
                 maze.obstacles.push_back(
-                    create_horizontal_wall(center, post_size_adjustment, wall_size_adjustment));
+                        create_horizontal_wall(center, post_size_adjustment, wall_size_adjustment));
                 size_t obstacle_index{maze.obstacles.size() - 1};
                 attach_horizontal_wall_cells(maze, obstacle_index, r, c);
             } else if (ch == 'S') {
@@ -143,8 +143,8 @@ Maze build_maze_from_ascii(const std::vector<std::string>& ascii, double post_si
     return maze;
 }
 
-double compute_ray_distance_in_closed_space(const maze::Maze& maze, const geometry::Point& point,
-                                            const geometry::Ray& ir_sensor)
+double compute_ray_distance_in_closed_space(const maze::Maze &maze, const geometry::Point &point,
+                                            const geometry::Ray &ir_sensor)
 {
     auto potential_distance{compute_ir_sensor_distance(maze, point, ir_sensor)};
     if (potential_distance.has_value()) {
@@ -154,8 +154,8 @@ double compute_ray_distance_in_closed_space(const maze::Maze& maze, const geomet
     }
 }
 
-double compute_ray_distance_in_open_space(const maze::Maze& maze, const geometry::Point& point,
-                                          const geometry::Ray& ir_sensor)
+double compute_ray_distance_in_open_space(const maze::Maze &maze, const geometry::Point &point,
+                                          const geometry::Ray &ir_sensor)
 {
     auto potential_distance{compute_ir_sensor_distance(maze, point, ir_sensor)};
     if (potential_distance.has_value()) {
@@ -165,8 +165,8 @@ double compute_ray_distance_in_open_space(const maze::Maze& maze, const geometry
     }
 }
 
-bool does_hitbox_collide_with_maze(const maze::Maze& maze,
-                                   const geometry::RectangularHitbox& hitbox)
+bool does_hitbox_collide_with_maze(const maze::Maze &maze,
+                                   const geometry::RectangularHitbox &hitbox)
 {
     auto rc{get_cell_from_point(maze, hitbox.center)};
     if (rc) {
@@ -189,7 +189,7 @@ bool does_hitbox_collide_with_maze(const maze::Maze& maze,
 namespace
 {
 
-std::string validate_ascii_maze(const std::vector<std::string>& ascii)
+std::string validate_ascii_maze(const std::vector<std::string> &ascii)
 {
     if (ascii.empty()) {
         return "ASCII maze is empty";
@@ -199,7 +199,7 @@ std::string validate_ascii_maze(const std::vector<std::string>& ascii)
     bool found_start{false};
 
     for (size_t r{0}; r < ascii.size(); ++r) {
-        const auto& row{ascii.at(r)};
+        const auto &row{ascii.at(r)};
 
         /* jagged check */
         if (row.size() != expected_cols) {
@@ -232,7 +232,7 @@ std::string validate_ascii_maze(const std::vector<std::string>& ascii)
     return ""; /* valid */
 }
 
-geometry::RectangularHitbox create_post(const geometry::Point& center, double post_size_adjustment)
+geometry::RectangularHitbox create_post(const geometry::Point &center, double post_size_adjustment)
 {
     return geometry::RectangularHitbox{
         center,
@@ -285,7 +285,7 @@ geometry::Point ascii_to_world(int r, int c, double post_size_adjustment,
     return {x, y};
 }
 
-void attach_to_cell(Maze& maze, size_t obstacle_index, int row, int col)
+void attach_to_cell(Maze &maze, size_t obstacle_index, int row, int col)
 {
     if (((row < 0) || (row >= maze.rows)) || ((col < 0) || (col >= maze.cols))) {
         return;
@@ -294,7 +294,7 @@ void attach_to_cell(Maze& maze, size_t obstacle_index, int row, int col)
     maze.cells.at(row * maze.cols + col).obstacles.push_back(obstacle_index);
 }
 
-void attach_vertical_wall_cells(Maze& maze, size_t obstacle_index, int r, int c)
+void attach_vertical_wall_cells(Maze &maze, size_t obstacle_index, int r, int c)
 {
     int cell_r{r / 2};
     int left_cell{(c / 2) - 1};
@@ -304,7 +304,7 @@ void attach_vertical_wall_cells(Maze& maze, size_t obstacle_index, int r, int c)
     attach_to_cell(maze, obstacle_index, cell_r, right_cell);
 }
 
-void attach_horizontal_wall_cells(Maze& maze, size_t obstacle_index, int r, int c)
+void attach_horizontal_wall_cells(Maze &maze, size_t obstacle_index, int r, int c)
 {
     int cell_c{c / 2};
     int bottom_cell{(r / 2) - 1};
@@ -314,7 +314,7 @@ void attach_horizontal_wall_cells(Maze& maze, size_t obstacle_index, int r, int 
     attach_to_cell(maze, obstacle_index, top_cell, cell_c);
 }
 
-void attach_post_cells(Maze& maze, size_t obstacle_index, int r, int c)
+void attach_post_cells(Maze &maze, size_t obstacle_index, int r, int c)
 {
     int base_r{(r / 2) - 1};
     int base_c{(c / 2) - 1};
@@ -325,7 +325,7 @@ void attach_post_cells(Maze& maze, size_t obstacle_index, int r, int c)
     attach_to_cell(maze, obstacle_index, base_r + 1, base_c + 1);
 }
 
-std::optional<std::pair<int, int>> get_cell_from_point(const Maze& maze, const geometry::Point& p)
+std::optional<std::pair<int, int>> get_cell_from_point(const Maze &maze, const geometry::Point &p)
 {
     const double cell{maze.cell_size};
 
@@ -347,7 +347,7 @@ std::optional<std::pair<int, int>> get_cell_from_point(const Maze& maze, const g
     return std::make_pair(row, col);
 }
 
-bool does_hitbox_collide_in_vicinity(const Maze& maze, const geometry::RectangularHitbox& hitbox,
+bool does_hitbox_collide_in_vicinity(const Maze &maze, const geometry::RectangularHitbox &hitbox,
                                      int row, int col)
 {
     for (int dr{-1}; dr <= 1; dr++) {
@@ -359,10 +359,10 @@ bool does_hitbox_collide_in_vicinity(const Maze& maze, const geometry::Rectangul
                 continue;
             }
 
-            const auto& cell{maze.get_cell(r, c)};
+            const auto &cell{maze.get_cell(r, c)};
 
             for (size_t idx : cell.obstacles) {
-                const auto& obstacle{maze.obstacles.at(idx)};
+                const auto &obstacle{maze.obstacles.at(idx)};
 
                 if (geometry::do_hitboxes_overlap(hitbox, obstacle)) {
                     return true;
@@ -374,19 +374,19 @@ bool does_hitbox_collide_in_vicinity(const Maze& maze, const geometry::Rectangul
     return false;
 }
 
-std::optional<double> compute_ray_distance_in_cell(const Maze& maze, const geometry::Ray& ray,
+std::optional<double> compute_ray_distance_in_cell(const Maze &maze, const geometry::Ray &ray,
                                                    int row, int col)
 {
     if (((row < 0) || (row >= maze.rows)) || ((col < 0) || (col >= maze.cols))) {
         return std::nullopt;
     }
 
-    const auto& cell{maze.get_cell(row, col)};
+    const auto &cell{maze.get_cell(row, col)};
 
     std::optional<double> closest{std::nullopt};
 
     for (size_t idx : cell.obstacles) {
-        const auto& obstacle{maze.obstacles.at(idx)};
+        const auto &obstacle{maze.obstacles.at(idx)};
 
         auto d{geometry::compute_ray_hitbox_distance(ray, obstacle)};
 
@@ -402,7 +402,7 @@ std::optional<double> compute_ray_distance_in_cell(const Maze& maze, const geome
     return closest;
 }
 
-std::optional<double> compute_ray_distance_in_vicinity(const Maze& maze, const geometry::Ray& ray,
+std::optional<double> compute_ray_distance_in_vicinity(const Maze &maze, const geometry::Ray &ray,
                                                        int row, int col)
 {
     std::optional<double> closest{std::nullopt};
@@ -424,9 +424,9 @@ std::optional<double> compute_ray_distance_in_vicinity(const Maze& maze, const g
     return closest;
 }
 
-std::optional<double> compute_ir_sensor_distance(const maze::Maze& maze,
-                                                 const geometry::Point& point,
-                                                 const geometry::Ray& ir_sensor)
+std::optional<double> compute_ir_sensor_distance(const maze::Maze &maze,
+                                                 const geometry::Point &point,
+                                                 const geometry::Ray &ir_sensor)
 {
     std::optional<double> distance{std::nullopt};
 

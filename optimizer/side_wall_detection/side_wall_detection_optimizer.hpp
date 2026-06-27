@@ -20,7 +20,7 @@ struct ParetoResult {
 
 ParetoResult run_side_wall_detection_filter(std::size_t population, std::size_t generations,
                                             int simulations_per_fitness);
-void write_pareto_to_file(const std::string& filename, const ParetoResult& result);
+void write_pareto_to_file(const std::string &filename, const ParetoResult &result);
 
 } /* side_wall_detection_optimizer namespace */
 

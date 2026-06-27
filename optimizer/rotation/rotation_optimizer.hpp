@@ -20,7 +20,7 @@ struct ParetoResult {
 
 ParetoResult run_rotation_staged(std::size_t population, std::size_t gen_stage1,
                                  std::size_t gen_stage2, int sims_stage1, int sims_stage2);
-void write_rotation_pareto_to_file(const std::string& filename, const ParetoResult& result);
+void write_rotation_pareto_to_file(const std::string &filename, const ParetoResult &result);
 
 } /* rotation_optimizer namespace */
 

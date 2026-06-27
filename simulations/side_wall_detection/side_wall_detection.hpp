@@ -49,18 +49,18 @@ namespace side_wall_detection
 {
 
 void reset_all_config_bounds(void);
-void set_ctr_config_bounds(const ControlConfig& lower, const ControlConfig& upper);
-void set_env_config_bounds(const EnvironmentConfig& lower, const EnvironmentConfig& upper);
-ControlConfig decode_control(const std::vector<double>& x);
-std::vector<double> encode_control(const ControlConfig& cfg);
+void set_ctr_config_bounds(const ControlConfig &lower, const ControlConfig &upper);
+void set_env_config_bounds(const EnvironmentConfig &lower, const EnvironmentConfig &upper);
+ControlConfig decode_control(const std::vector<double> &x);
+std::vector<double> encode_control(const ControlConfig &cfg);
 std::pair<std::vector<double>, std::vector<double>> get_control_bounds(void);
 EnvironmentConfig generate_random_environment(void);
 
-void enable_visualization(const std::string& foldername);
+void enable_visualization(const std::string &foldername);
 void disable_visualization(void);
 
-std::string config_to_string(const Config& cfg);
-Result run_simulation(const Config& cfg);
+std::string config_to_string(const Config &cfg);
+Result run_simulation(const Config &cfg);
 
 } /* side_wall_detection namespace */
 

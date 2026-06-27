@@ -10,8 +10,9 @@ add_library(ray_lib STATIC
 
 target_include_directories(ray_lib PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}
+    $<TARGET_PROPERTY:point_lib,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
-target_link_libraries(ray_lib PUBLIC
+target_link_libraries(ray_lib PRIVATE
     point_lib
 )

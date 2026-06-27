@@ -40,14 +40,14 @@ void draw_mouse_sensor_beams_to_nearest_walls(visualizer::Visualizer& visualizer
 {
     visualizer.draw_maze(100.0f, maze);
     visualizer.draw_mouse_on_maze(mouse);
-    double ir_1_distance{
-        maze::compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_1_sensor)};
-    double ir_2_distance{
-        maze::compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_2_sensor)};
-    double ir_3_distance{
-        maze::compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_3_sensor)};
-    double ir_4_distance{
-        maze::compute_ray_distance_in_closed_space(maze, mouse.hitbox.center, mouse.ir_4_sensor)};
+    double ir_1_distance{maze::compute_ray_distance_in_closed_space(maze, mouse.hitbox.center,
+                                                                    mouse.ir_1_sensor)};
+    double ir_2_distance{maze::compute_ray_distance_in_closed_space(maze, mouse.hitbox.center,
+                                                                    mouse.ir_2_sensor)};
+    double ir_3_distance{maze::compute_ray_distance_in_closed_space(maze, mouse.hitbox.center,
+                                                                    mouse.ir_3_sensor)};
+    double ir_4_distance{maze::compute_ray_distance_in_closed_space(maze, mouse.hitbox.center,
+                                                                    mouse.ir_4_sensor)};
     visualizer.draw_ir_1_sensor_beam(mouse, ir_1_distance);
     visualizer.draw_ir_2_sensor_beam(mouse, ir_2_distance);
     visualizer.draw_ir_3_sensor_beam(mouse, ir_3_distance);

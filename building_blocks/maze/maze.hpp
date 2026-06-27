@@ -28,7 +28,7 @@ public:
     std::vector<Cell> cells{};
     geometry::Point mouse_start{};
 
-    const Cell& get_cell(int row, int col) const;
+    const Cell &get_cell(int row, int col) const;
 };
 
 } /* maze namespace */
@@ -39,16 +39,16 @@ public:
 namespace maze
 {
 
-Maze build_maze_from_ascii(const std::vector<std::string>& ascii, double post_size_scale,
+Maze build_maze_from_ascii(const std::vector<std::string> &ascii, double post_size_scale,
                            double wall_size_scale);
 
-double compute_ray_distance_in_closed_space(const maze::Maze& maze, const geometry::Point& point,
-                                            const geometry::Ray& ir_sensor);
-double compute_ray_distance_in_open_space(const maze::Maze& maze, const geometry::Point& point,
-                                          const geometry::Ray& ir_sensor);
+double compute_ray_distance_in_closed_space(const maze::Maze &maze, const geometry::Point &point,
+                                            const geometry::Ray &ir_sensor);
+double compute_ray_distance_in_open_space(const maze::Maze &maze, const geometry::Point &point,
+                                          const geometry::Ray &ir_sensor);
 
-bool does_hitbox_collide_with_maze(const maze::Maze& maze,
-                                   const geometry::RectangularHitbox& hitbox);
+bool does_hitbox_collide_with_maze(const maze::Maze &maze,
+                                   const geometry::RectangularHitbox &hitbox);
 
 } /* maze namespace */
 

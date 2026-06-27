@@ -92,7 +92,7 @@ Config create_no_variance_config(void)
     return cfg;
 }
 
-bool are_results_equivalent(const Result& r1, const Result& r2)
+bool are_results_equivalent(const Result &r1, const Result &r2)
 {
     return (r1.wall_absent_correct == r2.wall_absent_correct)
            && (r1.wall_present_correct == r2.wall_present_correct);
@@ -135,8 +135,8 @@ TEST(SideWallDetectionTests, ResetAllConfigBoundsClearsBounds)
     auto [low, high] = get_control_bounds();
 
     for (size_t i{0}; i < low.size(); ++i) {
-        CHECK_EQUAL(0.0, low.at(i));
-        CHECK_EQUAL(0.0, high.at(i));
+        DOUBLES_EQUAL(0.0, low.at(i), FLOAT_TOLERANCE);
+        DOUBLES_EQUAL(0.0, high.at(i), FLOAT_TOLERANCE);
     }
 }
 
@@ -149,7 +149,7 @@ TEST(SideWallDetectionTests, EncodeDecodeControlRoundTrip)
     auto encoded{encode_control(original)};
     auto decoded{decode_control(encoded)};
 
-    CHECK_EQUAL(original.reading_threshold, decoded.reading_threshold);
+    LONGS_EQUAL(original.reading_threshold, decoded.reading_threshold);
     DOUBLES_EQUAL(original.reading_start_offset, decoded.reading_start_offset, FLOAT_TOLERANCE);
 }
 
@@ -161,7 +161,7 @@ TEST(SideWallDetectionTests, EncodeControlMaintainsFieldOrder)
 
     auto v{encode_control(cfg)};
 
-    CHECK_EQUAL(10, v.at(0));
+    DOUBLES_EQUAL(10.0, v.at(0), FLOAT_TOLERANCE);
     DOUBLES_EQUAL(0.25, v.at(1), FLOAT_TOLERANCE);
 }
 
@@ -169,8 +169,8 @@ TEST(SideWallDetectionTests, GetControlBoundsHasCorrectSize)
 {
     auto [low, high] = get_control_bounds();
 
-    CHECK_EQUAL(3, low.size());
-    CHECK_EQUAL(3, high.size());
+    LONGS_EQUAL(3, low.size());
+    LONGS_EQUAL(3, high.size());
 }
 
 TEST(SideWallDetectionTests, GetControlBoundsValuesAreCorrect)
@@ -180,10 +180,10 @@ TEST(SideWallDetectionTests, GetControlBoundsValuesAreCorrect)
 
     auto [low, high] = get_control_bounds();
 
-    CHECK_EQUAL(0, low.at(0));
+    DOUBLES_EQUAL(0.0, low.at(0), FLOAT_TOLERANCE);
     DOUBLES_EQUAL(0.0, low.at(1), FLOAT_TOLERANCE);
 
-    CHECK_EQUAL(1024, high.at(0));
+    DOUBLES_EQUAL(1024.0, high.at(0), FLOAT_TOLERANCE);
     DOUBLES_EQUAL(0.9, high.at(1), FLOAT_TOLERANCE);
 }
 
@@ -197,10 +197,10 @@ TEST(SideWallDetectionTests, GetControlBoundsAreDecodeSafe)
     auto low_cfg{decode_control(low)};
     auto high_cfg{decode_control(high)};
 
-    CHECK_EQUAL(0, low_cfg.reading_threshold);
+    LONGS_EQUAL(0u, low_cfg.reading_threshold);
     DOUBLES_EQUAL(0.0, low_cfg.reading_start_offset, FLOAT_TOLERANCE);
 
-    CHECK_EQUAL(1024, high_cfg.reading_threshold);
+    LONGS_EQUAL(1024u, high_cfg.reading_threshold);
     DOUBLES_EQUAL(0.9, high_cfg.reading_start_offset, FLOAT_TOLERANCE);
 }
 
@@ -255,7 +255,7 @@ TEST(SideWallDetectionTests, ReadingThresholdAffectsResults)
     auto r1{run_simulation(cfg1)};
     auto r2{run_simulation(cfg2)};
 
-    CHECK(!are_results_equivalent(r1, r2));
+    CHECK_FALSE(are_results_equivalent(r1, r2));
 }
 
 TEST(SideWallDetectionTests, ReadingStartOffsetAffectsResults)
@@ -284,7 +284,7 @@ TEST(SideWallDetectionTests, SlopeThresholdAffectsResults)
     auto r1{run_simulation(cfg1)};
     auto r2{run_simulation(cfg2)};
 
-    CHECK(!are_results_equivalent(r1, r2));
+    CHECK_FALSE(are_results_equivalent(r1, r2));
 }
 
 TEST(SideWallDetectionTests, IdenticalConfigsProduceIdenticalResults)
@@ -306,7 +306,7 @@ TEST(SideWallDetectionTests, MazePostSizeScaleChangesResults)
     auto r1{run_simulation(cfg1)};
     auto r2{run_simulation(cfg2)};
 
-    CHECK(!are_results_equivalent(r1, r2));
+    CHECK_FALSE(are_results_equivalent(r1, r2));
 }
 
 TEST(SideWallDetectionTests, MazeWallSizeScaleChangesResults)
@@ -318,7 +318,7 @@ TEST(SideWallDetectionTests, MazeWallSizeScaleChangesResults)
     auto r1{run_simulation(cfg1)};
     auto r2{run_simulation(cfg2)};
 
-    CHECK(!are_results_equivalent(r1, r2));
+    CHECK_FALSE(are_results_equivalent(r1, r2));
 }
 
 TEST(SideWallDetectionTests, IrReadingScaleChangesResults)
@@ -330,7 +330,7 @@ TEST(SideWallDetectionTests, IrReadingScaleChangesResults)
     auto r1{run_simulation(cfg1)};
     auto r2{run_simulation(cfg2)};
 
-    CHECK(!are_results_equivalent(r1, r2));
+    CHECK_FALSE(are_results_equivalent(r1, r2));
 }
 
 TEST(SideWallDetectionTests, MouseAngleChangesResults)
@@ -342,7 +342,7 @@ TEST(SideWallDetectionTests, MouseAngleChangesResults)
     auto r1{run_simulation(cfg1)};
     auto r2{run_simulation(cfg2)};
 
-    CHECK(!are_results_equivalent(r1, r2));
+    CHECK_FALSE(are_results_equivalent(r1, r2));
 }
 
 TEST(SideWallDetectionTests, HorizontalVarianceChangesResults)
@@ -354,7 +354,7 @@ TEST(SideWallDetectionTests, HorizontalVarianceChangesResults)
     auto r1{run_simulation(cfg1)};
     auto r2{run_simulation(cfg2)};
 
-    CHECK(!are_results_equivalent(r1, r2));
+    CHECK_FALSE(are_results_equivalent(r1, r2));
 }
 
 TEST(SideWallDetectionTests, VerticalVarianceChangesResults)
@@ -366,7 +366,7 @@ TEST(SideWallDetectionTests, VerticalVarianceChangesResults)
     auto r1{run_simulation(cfg1)};
     auto r2{run_simulation(cfg2)};
 
-    CHECK(!are_results_equivalent(r1, r2));
+    CHECK_FALSE(are_results_equivalent(r1, r2));
 }
 
 IGNORE_TEST(SideWallDetectionTests, VisualizationDoesNotAffectResults)

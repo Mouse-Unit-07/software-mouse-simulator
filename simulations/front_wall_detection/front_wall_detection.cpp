@@ -45,8 +45,8 @@ namespace
 
 using namespace front_wall_detection;
 
-void prepare_mock_for_front_wall_detection(const Config& cfg, const maze::Maze& maze,
-                                           mouse::Mouse& mouse);
+void prepare_mock_for_front_wall_detection(const Config &cfg, const maze::Maze &maze,
+                                           mouse::Mouse &mouse);
 
 } /* unnamed namespace */
 
@@ -82,19 +82,19 @@ void reset_all_config_bounds(void)
     env_upper_bounds = {};
 }
 
-void set_ctr_config_bounds(const ControlConfig& lower, const ControlConfig& upper)
+void set_ctr_config_bounds(const ControlConfig &lower, const ControlConfig &upper)
 {
     ctr_lower_bounds = lower;
     ctr_upper_bounds = upper;
 }
 
-void set_env_config_bounds(const EnvironmentConfig& lower, const EnvironmentConfig& upper)
+void set_env_config_bounds(const EnvironmentConfig &lower, const EnvironmentConfig &upper)
 {
     env_lower_bounds = lower;
     env_upper_bounds = upper;
 }
 
-ControlConfig decode_control(const std::vector<double>& x)
+ControlConfig decode_control(const std::vector<double> &x)
 {
     ControlConfig c{};
     size_t i{0};
@@ -104,7 +104,7 @@ ControlConfig decode_control(const std::vector<double>& x)
     return c;
 }
 
-std::vector<double> encode_control(const ControlConfig& cfg)
+std::vector<double> encode_control(const ControlConfig &cfg)
 {
     return {static_cast<double>(cfg.reading_threshold)};
 }
@@ -135,7 +135,7 @@ EnvironmentConfig generate_random_environment(void)
     return e;
 }
 
-void enable_visualization(const std::string& foldername)
+void enable_visualization(const std::string &foldername)
 {
     TEST_OUTPUT_SUBDIRECTORY = foldername;
     visualizer_enabled = true;
@@ -146,7 +146,7 @@ void disable_visualization(void)
     visualizer_enabled = false;
 }
 
-std::string config_to_string(const Config& cfg)
+std::string config_to_string(const Config &cfg)
 {
     std::ostringstream oss{};
 
@@ -159,7 +159,7 @@ std::string config_to_string(const Config& cfg)
     return oss.str();
 }
 
-Result run_simulation(const Config& cfg)
+Result run_simulation(const Config &cfg)
 {
     if (visualizer_enabled) {
         std::filesystem::create_directories(TEST_OUTPUT_DIRECTORY + "/" + TEST_OUTPUT_SUBDIRECTORY);
@@ -267,8 +267,8 @@ namespace
 
 using namespace front_wall_detection;
 
-void prepare_mock_for_front_wall_detection(const Config& cfg, const maze::Maze& maze,
-                                           mouse::Mouse& mouse)
+void prepare_mock_for_front_wall_detection(const Config &cfg, const maze::Maze &maze,
+                                           mouse::Mouse &mouse)
 {
     reset_mock_device_drivers();
 
@@ -277,8 +277,8 @@ void prepare_mock_for_front_wall_detection(const Config& cfg, const maze::Maze& 
 
     mouse.rotate(cfg.env_cfg.mouse_angle);
     mouse.translate(
-        maze.mouse_start.x + (max_horizontal_offset * cfg.env_cfg.horizontal_position_variance),
-        maze.mouse_start.y + (max_vertical_offset * cfg.env_cfg.vertical_position_variance));
+            maze.mouse_start.x + (max_horizontal_offset * cfg.env_cfg.horizontal_position_variance),
+            maze.mouse_start.y + (max_vertical_offset * cfg.env_cfg.vertical_position_variance));
 }
 
 } /* unnamed namespace */

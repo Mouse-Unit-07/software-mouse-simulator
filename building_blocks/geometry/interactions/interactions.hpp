@@ -13,9 +13,9 @@
 namespace geometry
 {
 
-std::optional<double> compute_ray_hitbox_distance(const Ray& ray, const RectangularHitbox& hitbox);
+std::optional<double> compute_ray_hitbox_distance(const Ray &ray, const RectangularHitbox &hitbox);
 
-bool do_hitboxes_overlap(const RectangularHitbox& a, const RectangularHitbox& b);
+bool do_hitboxes_overlap(const RectangularHitbox &a, const RectangularHitbox &b);
 
 } /* geometry namespace */
 

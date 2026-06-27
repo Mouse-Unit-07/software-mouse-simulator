@@ -78,7 +78,7 @@ Config create_no_variance_config(void)
     return cfg;
 }
 
-bool are_results_equivalent(const Result& r1, const Result& r2)
+bool are_results_equivalent(const Result &r1, const Result &r2)
 {
     if (r1.identified_absent_wall != r2.identified_absent_wall) {
         return false;
@@ -127,8 +127,8 @@ TEST(FrontWallDetectionTests, ResetAllConfigBoundsClearsBounds)
     auto [low, high] = get_control_bounds();
 
     for (size_t i{0}; i < low.size(); ++i) {
-        CHECK_EQUAL(0.0, low.at(i));
-        CHECK_EQUAL(0.0, high.at(i));
+        DOUBLES_EQUAL(0.0, low.at(i), FLOAT_TOLERANCE);
+        DOUBLES_EQUAL(0.0, high.at(i), FLOAT_TOLERANCE);
     }
 }
 
@@ -140,7 +140,7 @@ TEST(FrontWallDetectionTests, EncodeDecodeControlRoundTrip)
     auto encoded{encode_control(original)};
     auto decoded{decode_control(encoded)};
 
-    CHECK_EQUAL(original.reading_threshold, decoded.reading_threshold);
+    LONGS_EQUAL(original.reading_threshold, decoded.reading_threshold);
 }
 
 TEST(FrontWallDetectionTests, EncodeControlMaintainsFieldOrder)
@@ -150,15 +150,15 @@ TEST(FrontWallDetectionTests, EncodeControlMaintainsFieldOrder)
 
     auto v{encode_control(cfg)};
 
-    CHECK_EQUAL(0, v.at(0));
+    DOUBLES_EQUAL(0.0, v.at(0), FLOAT_TOLERANCE);
 }
 
 TEST(FrontWallDetectionTests, GetControlBoundsHasCorrectSize)
 {
     auto [low, high] = get_control_bounds();
 
-    CHECK_EQUAL(1, low.size());
-    CHECK_EQUAL(1, high.size());
+    LONGS_EQUAL(1, low.size());
+    LONGS_EQUAL(1, high.size());
 }
 
 TEST(FrontWallDetectionTests, GetControlBoundsValuesAreCorrect)
@@ -168,9 +168,8 @@ TEST(FrontWallDetectionTests, GetControlBoundsValuesAreCorrect)
 
     auto [low, high] = get_control_bounds();
 
-    CHECK_EQUAL(0, low.at(0));
-
-    CHECK_EQUAL(1024, high.at(0));
+    DOUBLES_EQUAL(0.0, low.at(0), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(1024.0, high.at(0), FLOAT_TOLERANCE);
 }
 
 TEST(FrontWallDetectionTests, GetControlBoundsAreDecodeSafe)
@@ -183,8 +182,8 @@ TEST(FrontWallDetectionTests, GetControlBoundsAreDecodeSafe)
     auto low_cfg{decode_control(low)};
     auto high_cfg{decode_control(high)};
 
-    CHECK_EQUAL(0, low_cfg.reading_threshold);
-    CHECK_EQUAL(1024, high_cfg.reading_threshold);
+    LONGS_EQUAL(0u, low_cfg.reading_threshold);
+    LONGS_EQUAL(1024u, high_cfg.reading_threshold);
 }
 
 TEST(FrontWallDetectionTests, RandomEnvironmentValuesWithinExpectedRanges)
@@ -210,7 +209,7 @@ TEST(FrontWallDetectionTests, ExtremeScaleTriggersClamping)
 
     auto result{run_simulation(cfg)};
 
-    CHECK(result.identified_present_wall == true || result.identified_present_wall == false);
+    CHECK((result.identified_present_wall == true) || (result.identified_present_wall == false));
 }
 
 TEST(FrontWallDetectionTests, ZeroThresholdMeansWallAlwaysPresent)
@@ -221,7 +220,7 @@ TEST(FrontWallDetectionTests, ZeroThresholdMeansWallAlwaysPresent)
     auto result{run_simulation(cfg)};
 
     CHECK(result.identified_present_wall);
-    CHECK(!result.identified_absent_wall);
+    CHECK_FALSE(result.identified_absent_wall);
 }
 
 TEST(FrontWallDetectionTests, MaxThresholdMeansWallAlmostAlwaysAbsent)
@@ -231,7 +230,7 @@ TEST(FrontWallDetectionTests, MaxThresholdMeansWallAlmostAlwaysAbsent)
 
     auto result{run_simulation(cfg)};
 
-    CHECK(!result.identified_present_wall);
+    CHECK_FALSE(result.identified_present_wall);
     CHECK(result.identified_absent_wall);
 }
 
@@ -245,7 +244,7 @@ TEST(FrontWallDetectionTests, IrReadingScaleAffectsResults)
     cfg.env_cfg.ir_reading_scale = 2.0;
     auto high_scale{run_simulation(cfg)};
 
-    CHECK(!are_results_equivalent(low_scale, high_scale));
+    CHECK_FALSE(are_results_equivalent(low_scale, high_scale));
 }
 
 TEST(FrontWallDetectionTests, AngleAffectsResults)
@@ -257,7 +256,7 @@ TEST(FrontWallDetectionTests, AngleAffectsResults)
     cfg.env_cfg.mouse_angle = M_PI / 3;
     auto some_angle{run_simulation(cfg)};
 
-    CHECK(!are_results_equivalent(no_angle, some_angle));
+    CHECK_FALSE(are_results_equivalent(no_angle, some_angle));
 }
 
 TEST(FrontWallDetectionTests, HorizontalVarianceAndAngleAffectsResults)
@@ -271,7 +270,7 @@ TEST(FrontWallDetectionTests, HorizontalVarianceAndAngleAffectsResults)
     cfg.env_cfg.horizontal_position_variance = 0.9;
     auto right{run_simulation(cfg)};
 
-    CHECK(!are_results_equivalent(left, right));
+    CHECK_FALSE(are_results_equivalent(left, right));
 }
 
 TEST(FrontWallDetectionTests, VerticalVarianceAffectsResults)
@@ -284,7 +283,7 @@ TEST(FrontWallDetectionTests, VerticalVarianceAffectsResults)
     cfg.env_cfg.vertical_position_variance = 0.9;
     auto front{run_simulation(cfg)};
 
-    CHECK(!are_results_equivalent(back, front));
+    CHECK_FALSE(are_results_equivalent(back, front));
 }
 
 IGNORE_TEST(FrontWallDetectionTests, VisualizeWithIdealParameters)

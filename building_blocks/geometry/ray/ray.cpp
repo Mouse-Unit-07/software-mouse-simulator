@@ -20,7 +20,7 @@ namespace
 
 using namespace geometry;
 
-bool check_ray_inequality(const Ray& r1, const Ray& r2);
+bool check_ray_inequality(const Ray &r1, const Ray &r2);
 
 } /* unnamed namespace */
 
@@ -35,7 +35,7 @@ bool check_ray_inequality(const Ray& r1, const Ray& r2);
 namespace geometry
 {
 
-Ray::Ray(const Point& origin, double angle_rad) : origin{origin}
+Ray::Ray(const Point &origin, double angle_rad) : origin{origin}
 {
     double dir_x{std::cos(angle_rad)};
     double dir_y{std::sin(angle_rad)};
@@ -48,18 +48,18 @@ void Ray::translate(double dx, double dy) noexcept
     origin.translate(dx, dy);
 }
 
-void Ray::rotate(const Point& center, double angle_rad) noexcept
+void Ray::rotate(const Point &center, double angle_rad) noexcept
 {
     origin.rotate(center, angle_rad);
     direction.rotate(Point{0.0, 0.0}, angle_rad);
 }
 
-bool Ray::operator==(const Ray& other) const noexcept
+bool Ray::operator==(const Ray &other) const noexcept
 {
     return check_ray_inequality(*this, other);
 }
 
-bool Ray::operator!=(const Ray& other) const noexcept
+bool Ray::operator!=(const Ray &other) const noexcept
 {
     return !check_ray_inequality(*this, other);
 }
@@ -74,7 +74,7 @@ namespace
 
 using namespace geometry;
 
-bool check_ray_inequality(const Ray& r1, const Ray& r2)
+bool check_ray_inequality(const Ray &r1, const Ray &r2)
 {
     return (r1.origin == r2.origin) && (r1.direction == r2.direction);
 }

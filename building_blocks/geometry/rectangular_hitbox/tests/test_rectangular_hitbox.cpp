@@ -38,14 +38,14 @@ void initialize_test_variables(void)
     test_horizontal_size = 10.0;
     test_vertical_size = 10.0;
     test_hitbox = RectangularHitbox{test_center, test_horizontal_size, test_vertical_size};
-    test_top_right =
-        Point{test_center.x + (test_horizontal_size / 2), test_center.y + (test_vertical_size / 2)};
-    test_top_left =
-        Point{test_center.x - (test_horizontal_size / 2), test_center.y + (test_vertical_size / 2)};
-    test_bottom_left =
-        Point{test_center.x - (test_horizontal_size / 2), test_center.y - (test_vertical_size / 2)};
-    test_bottom_right =
-        Point{test_center.x + (test_horizontal_size / 2), test_center.y - (test_vertical_size / 2)};
+    test_top_right = Point{test_center.x + (test_horizontal_size / 2),
+                           test_center.y + (test_vertical_size / 2)};
+    test_top_left = Point{test_center.x - (test_horizontal_size / 2),
+                          test_center.y + (test_vertical_size / 2)};
+    test_bottom_left = Point{test_center.x - (test_horizontal_size / 2),
+                             test_center.y - (test_vertical_size / 2)};
+    test_bottom_right = Point{test_center.x + (test_horizontal_size / 2),
+                              test_center.y - (test_vertical_size / 2)};
 }
 
 /*============================================================================*/

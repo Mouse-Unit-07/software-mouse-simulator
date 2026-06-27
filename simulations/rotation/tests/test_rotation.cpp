@@ -110,7 +110,7 @@ Config create_no_variance_config(void)
     return cfg;
 }
 
-bool are_results_equivalent(const Result& r1, const Result& r2)
+bool are_results_equivalent(const Result &r1, const Result &r2)
 {
     if (std::abs(r1.total_time - r2.total_time) >= FLOAT_TOLERANCE) {
         return false;
@@ -169,8 +169,8 @@ TEST(RotationTests, ResetAllConfigBoundsClearsBounds)
     auto [low, high] = get_control_bounds();
 
     for (size_t i{0}; i < low.size(); ++i) {
-        CHECK_EQUAL(0.0, low.at(i));
-        CHECK_EQUAL(0.0, high.at(i));
+        DOUBLES_EQUAL(0.0, low.at(i), FLOAT_TOLERANCE);
+        DOUBLES_EQUAL(0.0, high.at(i), FLOAT_TOLERANCE);
     }
 }
 
@@ -187,12 +187,12 @@ TEST(RotationTests, EncodeDecodeControlRoundTrip)
     auto encoded{encode_control(original)};
     auto decoded{decode_control(encoded)};
 
-    CHECK_EQUAL(original.motor_speed, decoded.motor_speed);
-    CHECK_EQUAL(original.kp_velocity, decoded.kp_velocity);
-    CHECK_EQUAL(original.kd_velocity, decoded.kd_velocity);
-    CHECK_EQUAL(original.kp_angle, decoded.kp_angle);
-    CHECK_EQUAL(original.kd_angle, decoded.kd_angle);
-    CHECK_EQUAL(original.pid_scale, decoded.pid_scale);
+    LONGS_EQUAL(original.motor_speed, decoded.motor_speed);
+    LONGS_EQUAL(original.kp_velocity, decoded.kp_velocity);
+    LONGS_EQUAL(original.kd_velocity, decoded.kd_velocity);
+    LONGS_EQUAL(original.kp_angle, decoded.kp_angle);
+    LONGS_EQUAL(original.kd_angle, decoded.kd_angle);
+    LONGS_EQUAL(original.pid_scale, decoded.pid_scale);
 }
 
 TEST(RotationTests, EncodeControlMaintainsFieldOrder)
@@ -207,20 +207,20 @@ TEST(RotationTests, EncodeControlMaintainsFieldOrder)
 
     auto v{encode_control(cfg)};
 
-    CHECK_EQUAL(0, v.at(0));
-    CHECK_EQUAL(1, v.at(1));
-    CHECK_EQUAL(2, v.at(2));
-    CHECK_EQUAL(3, v.at(3));
-    CHECK_EQUAL(4, v.at(4));
-    CHECK_EQUAL(5, v.at(5));
+    DOUBLES_EQUAL(0.0, v.at(0), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(1.0, v.at(1), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(2.0, v.at(2), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(3.0, v.at(3), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(4.0, v.at(4), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(5.0, v.at(5), FLOAT_TOLERANCE);
 }
 
 TEST(RotationTests, GetControlBoundsHasCorrectSize)
 {
     auto [low, high] = get_control_bounds();
 
-    CHECK_EQUAL(6, low.size());
-    CHECK_EQUAL(6, high.size());
+    LONGS_EQUAL(6, low.size());
+    LONGS_EQUAL(6, high.size());
 }
 
 TEST(RotationTests, GetControlBoundsValuesAreCorrect)
@@ -230,19 +230,19 @@ TEST(RotationTests, GetControlBoundsValuesAreCorrect)
 
     auto [low, high] = get_control_bounds();
 
-    CHECK_EQUAL(140, low.at(0));
-    CHECK_EQUAL(0, low.at(1));
-    CHECK_EQUAL(0, low.at(2));
-    CHECK_EQUAL(0, low.at(3));
-    CHECK_EQUAL(0, low.at(4));
-    CHECK_EQUAL(16, low.at(5));
+    DOUBLES_EQUAL(140.0, low.at(0), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, low.at(1), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, low.at(2), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, low.at(3), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, low.at(4), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(16.0, low.at(5), FLOAT_TOLERANCE);
 
-    CHECK_EQUAL(255, high.at(0));
-    CHECK_EQUAL(2000, high.at(1));
-    CHECK_EQUAL(2000, high.at(2));
-    CHECK_EQUAL(2000, high.at(3));
-    CHECK_EQUAL(2000, high.at(4));
-    CHECK_EQUAL(512, high.at(5));
+    DOUBLES_EQUAL(255.0, high.at(0), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(2000.0, high.at(1), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(2000.0, high.at(2), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(2000.0, high.at(3), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(2000.0, high.at(4), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(512.0, high.at(5), FLOAT_TOLERANCE);
 }
 
 TEST(RotationTests, GetControlBoundsAreDecodeSafe)
@@ -255,8 +255,8 @@ TEST(RotationTests, GetControlBoundsAreDecodeSafe)
     auto low_cfg{decode_control(low)};
     auto high_cfg{decode_control(high)};
 
-    CHECK_EQUAL(140, low_cfg.motor_speed);
-    CHECK_EQUAL(255, high_cfg.motor_speed);
+    LONGS_EQUAL(140u, low_cfg.motor_speed);
+    LONGS_EQUAL(255u, high_cfg.motor_speed);
 }
 
 TEST(RotationTests, RandomEnvironmentValuesWithinExpectedRanges)

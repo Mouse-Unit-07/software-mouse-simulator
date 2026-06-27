@@ -25,8 +25,8 @@ public:
     void translate(double dx, double dy) noexcept;
     void rotate(double angle_rad) noexcept;
 
-    bool operator==(const Mouse& other) const noexcept;
-    bool operator!=(const Mouse& other) const noexcept;
+    bool operator==(const Mouse &other) const noexcept;
+    bool operator!=(const Mouse &other) const noexcept;
 };
 
 } /* mouse namespace */
