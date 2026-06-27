@@ -10,9 +10,14 @@ add_library(move_forward_optimizer_lib STATIC
 
 target_include_directories(move_forward_optimizer_lib PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}
+    $<TARGET_PROPERTY:pagmo,INTERFACE_INCLUDE_DIRECTORIES>
+    $<TARGET_PROPERTY:Threads::Threads,INTERFACE_INCLUDE_DIRECTORIES>
+    $<TARGET_PROPERTY:simulation_common_lib,INTERFACE_INCLUDE_DIRECTORIES>
+    $<TARGET_PROPERTY:optimizer_common_lib,INTERFACE_INCLUDE_DIRECTORIES>
+    $<TARGET_PROPERTY:move_forward_lib,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
-target_link_libraries(move_forward_optimizer_lib PUBLIC
+target_link_libraries(move_forward_optimizer_lib PRIVATE
     pagmo
     Threads::Threads
     simulation_common_lib

@@ -10,9 +10,14 @@ add_library(visualizer_lib STATIC
 
 target_include_directories(visualizer_lib PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}
+    $<TARGET_PROPERTY:point_lib,INTERFACE_INCLUDE_DIRECTORIES>
+    $<TARGET_PROPERTY:ray_lib,INTERFACE_INCLUDE_DIRECTORIES>
+    $<TARGET_PROPERTY:rectangular_hitbox_lib,INTERFACE_INCLUDE_DIRECTORIES>
+    $<TARGET_PROPERTY:mouse_lib,INTERFACE_INCLUDE_DIRECTORIES>
+    $<TARGET_PROPERTY:maze_lib,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
-target_link_libraries(visualizer_lib PUBLIC
+target_link_libraries(visualizer_lib PRIVATE
     point_lib
     ray_lib
     rectangular_hitbox_lib
