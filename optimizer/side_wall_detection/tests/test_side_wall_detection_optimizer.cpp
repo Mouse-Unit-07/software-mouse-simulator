@@ -107,12 +107,12 @@ TEST(SideWallDetectionOptimizerTests, ParetoStructureIsValid)
 
     auto result{run_side_wall_detection_filter(8, 3, 2)};
 
-    CHECK_EQUAL(8, result.X.size());
-    CHECK_EQUAL(8, result.F.size());
+    LONGS_EQUAL(8, result.X.size());
+    LONGS_EQUAL(8, result.F.size());
 
     for (size_t i{0}; i < result.X.size(); ++i) {
-        CHECK_EQUAL(3, result.X.at(i).size()); /* control space */
-        CHECK_EQUAL(2, result.F.at(i).size()); /* objective space */
+        LONGS_EQUAL(3, result.X.at(i).size()); /* control space */
+        LONGS_EQUAL(2, result.F.at(i).size()); /* objective space */
     }
 }
 
@@ -183,8 +183,8 @@ TEST(SideWallDetectionOptimizerTests, ParetoSizeIsStable)
     auto a{run_side_wall_detection_filter(8, 3, 2)};
     auto b{run_side_wall_detection_filter(8, 3, 2)};
 
-    CHECK_EQUAL(a.X.size(), b.X.size());
-    CHECK_EQUAL(a.F.size(), b.F.size());
+    LONGS_EQUAL(a.X.size(), b.X.size());
+    LONGS_EQUAL(a.F.size(), b.F.size());
 }
 
 IGNORE_TEST(SideWallDetectionOptimizerTests, DumpPareto)

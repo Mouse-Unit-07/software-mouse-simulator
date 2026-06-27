@@ -203,8 +203,8 @@ TEST(MazeTests, CellCoordinatesAreTopLeftOrigin)
     const Cell &top_left{maze.get_cell(0, 0)};
     const Cell &bottom_right{maze.get_cell(1, 1)};
 
-    CHECK(top_left.obstacles.size() == 8);
-    CHECK(bottom_right.obstacles.size() == 7);
+    LONGS_EQUAL(8, top_left.obstacles.size());
+    LONGS_EQUAL(7, bottom_right.obstacles.size());
 }
 
 TEST(MazeTests, MouseStartCoordinatesCreated)
@@ -278,7 +278,7 @@ TEST(MazeTests, CorrectNumberOfPostCreated)
         }
     }
 
-    CHECK_EQUAL(4, post_count);
+    LONGS_EQUAL(4, post_count);
 }
 
 TEST(MazeTests, CorrectNumberOfVerticalWalls)
@@ -298,7 +298,7 @@ TEST(MazeTests, CorrectNumberOfVerticalWalls)
         }
     }
 
-    CHECK(wall_count == 2);
+    LONGS_EQUAL(2, wall_count);
 }
 
 TEST(MazeTests, CorrectNumberOfHorizontalWalls)
@@ -318,7 +318,7 @@ TEST(MazeTests, CorrectNumberOfHorizontalWalls)
         }
     }
 
-    CHECK(wall_count == 2);
+    LONGS_EQUAL(2, wall_count);
 }
 
 TEST(MazeTests, VerticalWallSharedBetweenCells)
@@ -383,7 +383,7 @@ TEST(MazeTests, SingleCellWallsTouchPosts)
     int touching_count{count_touching_obstacles(maze)};
 
     /* 8 full unique touches + 4 diagonal corner touches */
-    CHECK(touching_count == 12);
+    LONGS_EQUAL(12, touching_count);
 }
 
 TEST(MazeTests, PostAndWallSizeAdjustmentsModifyMazeSizeFields)
@@ -456,7 +456,7 @@ TEST(MazeTests, PostSizeAdjustedWallsAndPostsTouch)
     int touching_count{count_touching_obstacles(maze)};
 
     /* 8 full unique touches + 4 diagonal corner touches */
-    CHECK(touching_count == 12);
+    LONGS_EQUAL(12, touching_count);
 }
 
 TEST(MazeTests, ClosedSpaceRayAlwaysReturnsDistance)
@@ -730,19 +730,19 @@ TEST(MazeTests, MouseMovingNearWallsNoCollision)
             - 1};
 
     mouse.translate(0.0, vertical_distance_to_cell_wall);
-    CHECK(!does_hitbox_collide_with_maze(maze, mouse.hitbox));
+    CHECK_FALSE(does_hitbox_collide_with_maze(maze, mouse.hitbox));
     mouse.translate(0.0, -vertical_distance_to_cell_wall);
 
     mouse.translate(-horizontal_distance_to_cell_wall, 0.0);
-    CHECK(!does_hitbox_collide_with_maze(maze, mouse.hitbox));
+    CHECK_FALSE(does_hitbox_collide_with_maze(maze, mouse.hitbox));
     mouse.translate(horizontal_distance_to_cell_wall, 0.0);
 
     mouse.translate(-0.0, -vertical_distance_to_cell_wall);
-    CHECK(!does_hitbox_collide_with_maze(maze, mouse.hitbox));
+    CHECK_FALSE(does_hitbox_collide_with_maze(maze, mouse.hitbox));
     mouse.translate(0.0, vertical_distance_to_cell_wall);
 
     mouse.translate(horizontal_distance_to_cell_wall, 0.0);
-    CHECK(!does_hitbox_collide_with_maze(maze, mouse.hitbox));
+    CHECK_FALSE(does_hitbox_collide_with_maze(maze, mouse.hitbox));
     mouse.translate(-horizontal_distance_to_cell_wall, 0.0);
 }
 

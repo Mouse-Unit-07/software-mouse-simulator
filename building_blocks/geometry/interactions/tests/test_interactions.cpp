@@ -118,5 +118,5 @@ TEST(InteractionsTests, HitboxCollisionDetectable)
 
     CHECK(do_hitboxes_overlap(test_hitbox_1, test_hitbox_2));
     CHECK(do_hitboxes_overlap(test_hitbox_1, test_hitbox_3));
-    CHECK(!do_hitboxes_overlap(test_hitbox_2, test_hitbox_3));
+    CHECK_FALSE(do_hitboxes_overlap(test_hitbox_2, test_hitbox_3));
 }

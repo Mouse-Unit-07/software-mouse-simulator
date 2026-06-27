@@ -97,12 +97,12 @@ TEST(FrontWallDetectionOptimizerTests, ParetoStructureIsValid)
 
     auto result{run_front_wall_detection_staged(8, 3, 2)};
 
-    CHECK_EQUAL(8, result.X.size());
-    CHECK_EQUAL(8, result.F.size());
+    LONGS_EQUAL(8, result.X.size());
+    LONGS_EQUAL(8, result.F.size());
 
     for (size_t i{0}; i < result.X.size(); ++i) {
-        CHECK_EQUAL(1, result.X.at(i).size()); /* control space */
-        CHECK_EQUAL(2, result.F.at(i).size()); /* objective space */
+        LONGS_EQUAL(1, result.X.at(i).size()); /* control space */
+        LONGS_EQUAL(2, result.F.at(i).size()); /* objective space */
     }
 }
 

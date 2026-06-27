@@ -115,12 +115,12 @@ TEST(RotationOptimizerTests, RotationParetoStructureIsValid)
 
     auto result{run_rotation_staged(8, 3, 3, 2, 2)};
 
-    CHECK_EQUAL(8, result.X.size());
-    CHECK_EQUAL(8, result.F.size());
+    LONGS_EQUAL(8, result.X.size());
+    LONGS_EQUAL(8, result.F.size());
 
     for (size_t i{0}; i < result.X.size(); ++i) {
-        CHECK_EQUAL(6, result.X.at(i).size()); /* control space */
-        CHECK_EQUAL(4, result.F.at(i).size()); /* objective space */
+        LONGS_EQUAL(6, result.X.at(i).size()); /* control space */
+        LONGS_EQUAL(4, result.F.at(i).size()); /* objective space */
     }
 }
 
@@ -182,8 +182,8 @@ TEST(RotationOptimizerTests, RotationObjectivesAreInValidRanges)
         CHECK(angle >= 0.0);
         CHECK(translation >= 0.0);
 
-        CHECK(collision >= 0.0 && collision <= 1.0);
-        CHECK(timeout >= 0.0 && timeout <= 1.0);
+        CHECK((collision >= 0.0) && (collision <= 1.0));
+        CHECK((timeout >= 0.0) && (timeout <= 1.0));
     }
 }
 
@@ -196,8 +196,8 @@ TEST(RotationOptimizerTests, RotationParetoSizeIsStable)
     auto a{run_rotation_staged(8, 3, 3, 2, 2)};
     auto b{run_rotation_staged(8, 3, 3, 2, 2)};
 
-    CHECK_EQUAL(a.X.size(), b.X.size());
-    CHECK_EQUAL(a.F.size(), b.F.size());
+    LONGS_EQUAL(a.X.size(), b.X.size());
+    LONGS_EQUAL(a.F.size(), b.F.size());
 }
 
 IGNORE_TEST(RotationOptimizerTests, DumpRotationPareto)

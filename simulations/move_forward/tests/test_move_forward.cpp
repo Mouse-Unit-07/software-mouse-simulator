@@ -219,8 +219,8 @@ TEST(MoveForwardTests, ResetAllConfigBoundsClearsBounds)
     auto [low, high] = get_control_bounds();
 
     for (size_t i{0}; i < low.size(); ++i) {
-        CHECK_EQUAL(0.0, low.at(i));
-        CHECK_EQUAL(0.0, high.at(i));
+        DOUBLES_EQUAL(0.0, low.at(i), FLOAT_TOLERANCE);
+        DOUBLES_EQUAL(0.0, high.at(i), FLOAT_TOLERANCE);
     }
 }
 
@@ -240,15 +240,15 @@ TEST(MoveForwardTests, EncodeDecodeControlRoundTrip)
     auto encoded{encode_control(original)};
     auto decoded{decode_control(encoded)};
 
-    CHECK_EQUAL(original.single_wall_target, decoded.single_wall_target);
-    CHECK_EQUAL(original.motor_speed, decoded.motor_speed);
-    CHECK_EQUAL(original.kp_velocity, decoded.kp_velocity);
-    CHECK_EQUAL(original.kd_velocity, decoded.kd_velocity);
-    CHECK_EQUAL(original.kp_angle, decoded.kp_angle);
-    CHECK_EQUAL(original.kd_angle, decoded.kd_angle);
-    CHECK_EQUAL(original.pid_scale, decoded.pid_scale);
-    CHECK_EQUAL(original.kp_ir, decoded.kp_ir);
-    CHECK_EQUAL(original.kd_ir, decoded.kd_ir);
+    LONGS_EQUAL(original.single_wall_target, decoded.single_wall_target);
+    LONGS_EQUAL(original.motor_speed, decoded.motor_speed);
+    LONGS_EQUAL(original.kp_velocity, decoded.kp_velocity);
+    LONGS_EQUAL(original.kd_velocity, decoded.kd_velocity);
+    LONGS_EQUAL(original.kp_angle, decoded.kp_angle);
+    LONGS_EQUAL(original.kd_angle, decoded.kd_angle);
+    LONGS_EQUAL(original.pid_scale, decoded.pid_scale);
+    LONGS_EQUAL(original.kp_ir, decoded.kp_ir);
+    LONGS_EQUAL(original.kd_ir, decoded.kd_ir);
 }
 
 TEST(MoveForwardTests, EncodeControlMaintainsFieldOrder)
@@ -266,23 +266,23 @@ TEST(MoveForwardTests, EncodeControlMaintainsFieldOrder)
 
     auto v{encode_control(cfg)};
 
-    CHECK_EQUAL(0, v.at(0));
-    CHECK_EQUAL(1, v.at(1));
-    CHECK_EQUAL(2, v.at(2));
-    CHECK_EQUAL(3, v.at(3));
-    CHECK_EQUAL(4, v.at(4));
-    CHECK_EQUAL(5, v.at(5));
-    CHECK_EQUAL(6, v.at(6));
-    CHECK_EQUAL(7, v.at(7));
-    CHECK_EQUAL(8, v.at(8));
+    DOUBLES_EQUAL(0.0, v.at(0), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(1.0, v.at(1), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(2.0, v.at(2), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(3.0, v.at(3), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(4.0, v.at(4), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(5.0, v.at(5), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(6.0, v.at(6), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(7.0, v.at(7), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(8.0, v.at(8), FLOAT_TOLERANCE);
 }
 
 TEST(MoveForwardTests, GetControlBoundsHasCorrectSize)
 {
     auto [low, high] = get_control_bounds();
 
-    CHECK_EQUAL(9, low.size());
-    CHECK_EQUAL(9, high.size());
+    LONGS_EQUAL(9, low.size());
+    LONGS_EQUAL(9, high.size());
 }
 
 TEST(MoveForwardTests, GetControlBoundsValuesAreCorrect)
@@ -292,25 +292,25 @@ TEST(MoveForwardTests, GetControlBoundsValuesAreCorrect)
 
     auto [low, high] = get_control_bounds();
 
-    CHECK_EQUAL(0, low.at(0));
-    CHECK_EQUAL(140, low.at(1));
-    CHECK_EQUAL(0, low.at(2));
-    CHECK_EQUAL(0, low.at(3));
-    CHECK_EQUAL(0, low.at(4));
-    CHECK_EQUAL(0, low.at(5));
-    CHECK_EQUAL(16, low.at(6));
-    CHECK_EQUAL(0, low.at(7));
-    CHECK_EQUAL(0, low.at(8));
+    DOUBLES_EQUAL(0.0, low.at(0), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(140.0, low.at(1), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, low.at(2), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, low.at(3), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, low.at(4), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, low.at(5), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(16.0, low.at(6), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, low.at(7), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(0.0, low.at(8), FLOAT_TOLERANCE);
 
-    CHECK_EQUAL(1024, high.at(0));
-    CHECK_EQUAL(255, high.at(1));
-    CHECK_EQUAL(2000, high.at(2));
-    CHECK_EQUAL(2000, high.at(3));
-    CHECK_EQUAL(2000, high.at(4));
-    CHECK_EQUAL(2000, high.at(5));
-    CHECK_EQUAL(512, high.at(6));
-    CHECK_EQUAL(2000, high.at(7));
-    CHECK_EQUAL(2000, high.at(8));
+    DOUBLES_EQUAL(1024.0, high.at(0), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(255.0, high.at(1), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(2000.0, high.at(2), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(2000.0, high.at(3), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(2000.0, high.at(4), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(2000.0, high.at(5), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(512.0, high.at(6), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(2000.0, high.at(7), FLOAT_TOLERANCE);
+    DOUBLES_EQUAL(2000.0, high.at(8), FLOAT_TOLERANCE);
 }
 
 TEST(MoveForwardTests, GetControlBoundsAreDecodeSafe)
@@ -323,8 +323,8 @@ TEST(MoveForwardTests, GetControlBoundsAreDecodeSafe)
     auto low_cfg{decode_control(low)};
     auto high_cfg{decode_control(high)};
 
-    CHECK_EQUAL(140, low_cfg.motor_speed);
-    CHECK_EQUAL(255, high_cfg.motor_speed);
+    LONGS_EQUAL(140u, low_cfg.motor_speed);
+    LONGS_EQUAL(255u, high_cfg.motor_speed);
 }
 
 TEST(MoveForwardTests, RandomEnvironmentValuesWithinExpectedRanges)
@@ -367,7 +367,7 @@ TEST(MoveForwardTests, NoVarianceProducesNearPerfectResults)
     for (WallMode m : WALL_MODES) {
         auto result{run_simulation(cfg, m)};
 
-        CHECK(!was_there_collision_or_timeout(result));
+        CHECK_FALSE(was_there_collision_or_timeout(result));
         DOUBLES_EQUAL(0.0, result.final_angle_error, FLOAT_TOLERANCE);
         DOUBLES_EQUAL(0.0, result.final_horizontal_translation, FLOAT_TOLERANCE);
 
@@ -382,9 +382,9 @@ TEST(MoveForwardTests, DtAffectsResults)
     Config cfg2{create_no_variance_config()};
     cfg2.env_cfg.dt = 0.1;
 
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
 }
 
 TEST(MoveForwardTests, SpeedScaleAffectsResults)
@@ -393,9 +393,9 @@ TEST(MoveForwardTests, SpeedScaleAffectsResults)
     Config cfg2{create_no_variance_config()};
     cfg2.env_cfg.motor_speed_scale = 0.5;
 
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
 }
 
 TEST(MoveForwardTests, MotorVarianceAffectsResults)
@@ -405,9 +405,9 @@ TEST(MoveForwardTests, MotorVarianceAffectsResults)
     cfg2.env_cfg.motor1_variance = 0.1;
     cfg2.env_cfg.motor2_variance = -0.1;
 
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
 }
 
 TEST(MoveForwardTests, SlipFactorAffectsResults)
@@ -416,9 +416,9 @@ TEST(MoveForwardTests, SlipFactorAffectsResults)
     Config cfg2{create_no_variance_config()};
     cfg2.env_cfg.slip_factor = 0.5;
 
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
 }
 
 TEST(MoveForwardTests, WheelCircumferenceScaleAffectsResults)
@@ -427,9 +427,9 @@ TEST(MoveForwardTests, WheelCircumferenceScaleAffectsResults)
     Config cfg2{create_no_variance_config()};
     cfg2.env_cfg.wheel_circumference_scale = 0.5;
 
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
 }
 
 TEST(MoveForwardTests, WheelBaseScaleAffectsResults)
@@ -439,9 +439,9 @@ TEST(MoveForwardTests, WheelBaseScaleAffectsResults)
     Config cfg2{cfg1};
     cfg2.env_cfg.wheel_base_scale = 0.5;
 
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
 }
 
 TEST(MoveForwardTests, MazePostSizeScaleAffectsResults)
@@ -450,9 +450,9 @@ TEST(MoveForwardTests, MazePostSizeScaleAffectsResults)
     Config cfg2{create_no_variance_config()};
     cfg2.env_cfg.maze_post_size_scale = 0.5;
 
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
 }
 
 TEST(MoveForwardTests, MazeWallSizeScaleAffectsResults)
@@ -461,9 +461,9 @@ TEST(MoveForwardTests, MazeWallSizeScaleAffectsResults)
     Config cfg2{create_no_variance_config()};
     cfg2.env_cfg.maze_wall_size_scale = 0.5;
 
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
 }
 
 TEST(MoveForwardTests, IRReadingScaleAffectsOneAndTwoWallResultsOnly)
@@ -476,8 +476,8 @@ TEST(MoveForwardTests, IRReadingScaleAffectsOneAndTwoWallResultsOnly)
     cfg2.env_cfg.ir_reading_scale = 2.0;
 
     CHECK(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
 }
 
 TEST(MoveForwardTests, InitialAngleAffectsResults)
@@ -486,9 +486,9 @@ TEST(MoveForwardTests, InitialAngleAffectsResults)
     Config cfg2{create_no_variance_config()};
     cfg2.env_cfg.mouse_angle = M_PI / 16;
 
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
 }
 
 TEST(MoveForwardTests, HorizontalOffsetAffectsResults)
@@ -498,9 +498,9 @@ TEST(MoveForwardTests, HorizontalOffsetAffectsResults)
     Config cfg2{cfg1};
     cfg2.env_cfg.horizontal_position_variance = 0.5;
 
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
 }
 
 TEST(MoveForwardTests, SingleWallTargetAffectsOneWallResultsOnly)
@@ -513,7 +513,7 @@ TEST(MoveForwardTests, SingleWallTargetAffectsOneWallResultsOnly)
     cfg2.ctrl_cfg.single_wall_target = 500;
 
     CHECK(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
     CHECK(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
 }
 
@@ -524,9 +524,9 @@ TEST(MoveForwardTests, MotorSpeedAffectsResults)
     Config cfg2{create_no_variance_config()};
     cfg2.ctrl_cfg.motor_speed = 200;
 
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
 }
 
 TEST(MoveForwardTests, EncoderVelocityPdAffectResults)
@@ -537,9 +537,9 @@ TEST(MoveForwardTests, EncoderVelocityPdAffectResults)
     cfg2.ctrl_cfg.kp_velocity = 50;
     cfg2.ctrl_cfg.kd_velocity = 10;
 
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
 }
 
 TEST(MoveForwardTests, EncoderAnglePdAffectResults)
@@ -550,9 +550,9 @@ TEST(MoveForwardTests, EncoderAnglePdAffectResults)
     cfg2.ctrl_cfg.kp_angle = 50;
     cfg2.ctrl_cfg.kd_angle = 10;
 
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
 }
 
 TEST(MoveForwardTests, IrPdAffectOneAndTwoWallResultsOnly)
@@ -564,8 +564,8 @@ TEST(MoveForwardTests, IrPdAffectOneAndTwoWallResultsOnly)
     cfg2.ctrl_cfg.kd_ir = 50;
 
     CHECK(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::NO_WALLS));
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
-    CHECK(!are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::LEFT_WALL_ONLY));
+    CHECK_FALSE(are_results_equivalent_for_wall_mode(cfg1, cfg2, WallMode::BOTH_WALLS));
 }
 
 TEST(MoveForwardTests, WallModesProduceDifferentResults)
@@ -578,8 +578,8 @@ TEST(MoveForwardTests, WallModesProduceDifferentResults)
     auto one_wall{run_simulation(cfg, WallMode::LEFT_WALL_ONLY)};
     auto two_wall{run_simulation(cfg, WallMode::BOTH_WALLS)};
 
-    CHECK(!are_results_equivalent(no_wall, one_wall));
-    CHECK(!are_results_equivalent(one_wall, two_wall));
+    CHECK_FALSE(are_results_equivalent(no_wall, one_wall));
+    CHECK_FALSE(are_results_equivalent(one_wall, two_wall));
 }
 
 IGNORE_TEST(MoveForwardTests, VisualizationDoesNotAffectResults)

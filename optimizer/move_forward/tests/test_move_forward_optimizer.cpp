@@ -132,12 +132,12 @@ TEST(MoveForwardOptimizerTests, MoveForwardParetoStructureIsValid)
     for (move_forward::WallMode m : move_forward::WALL_MODES) {
         auto result{run_move_forward_staged(8, 3, 3, 2, 2, m)};
 
-        CHECK_EQUAL(8, result.X.size());
-        CHECK_EQUAL(8, result.F.size());
+        LONGS_EQUAL(8, result.X.size());
+        LONGS_EQUAL(8, result.F.size());
 
         for (size_t i{0}; i < result.X.size(); ++i) {
-            CHECK_EQUAL(9, result.X.at(i).size()); /* control space */
-            CHECK_EQUAL(5, result.F.at(i).size()); /* objective space */
+            LONGS_EQUAL(9, result.X.at(i).size()); /* control space */
+            LONGS_EQUAL(5, result.F.at(i).size()); /* objective space */
         }
     }
 }
@@ -207,8 +207,8 @@ TEST(MoveForwardOptimizerTests, MoveForwardObjectivesAreInValidRanges)
             CHECK(horizontal_translation >= 0.0);
             CHECK(vertical_translation >= 0.0);
 
-            CHECK(collision >= 0.0 && collision <= 1.0);
-            CHECK(timeout >= 0.0 && timeout <= 1.0);
+            CHECK((collision >= 0.0) && (collision <= 1.0));
+            CHECK((timeout >= 0.0) && (timeout <= 1.0));
         }
     }
 }
@@ -223,8 +223,8 @@ TEST(MoveForwardOptimizerTests, MoveForwardParetoSizeIsStable)
         auto a{run_move_forward_staged(8, 3, 3, 2, 2, m)};
         auto b{run_move_forward_staged(8, 3, 3, 2, 2, m)};
 
-        CHECK_EQUAL(a.X.size(), b.X.size());
-        CHECK_EQUAL(a.F.size(), b.F.size());
+        LONGS_EQUAL(a.X.size(), b.X.size());
+        LONGS_EQUAL(a.F.size(), b.F.size());
     }
 }
 
